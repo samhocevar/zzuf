@@ -31,6 +31,18 @@
 #include <stdarg.h>
 #include <dlfcn.h>
 
+#define STR(x) #x
+#define ORIG(x) x##_orig
+#define LOADSYM(x) \
+    do { \
+        ORIG(x) = dlsym(RTLD_NEXT, STR(x)); \
+        if(!ORIG(x)) \
+        { \
+            debug("could not load %s", STR(x)); \
+            abort(); \
+        } \
+    } while(0)
+
 static int do_debug = 0;
 static void debug(const char *format, ...)
 {
@@ -46,9 +58,9 @@ static void debug(const char *format, ...)
 }
 
 /* Library functions that we divert */
-static FILE * (*fopen_orig) (const char *path, const char *mode);
-static int (*open_orig) (const char *file, int oflag, ...);
-static int (*open64_orig) (const char *file, int oflag, ...);
+static FILE * (*fopen_orig)  (const char *path, const char *mode);
+static int    (*open_orig)   (const char *file, int oflag, ...);
+static int    (*open64_orig) (const char *file, int oflag, ...);
 
 /* Library initialisation shit */
 void zzufinit(void) __attribute__((constructor));
@@ -56,9 +68,9 @@ void zzufinit(void)
 {
     char *tmp;
 
-    fopen_orig = dlsym(RTLD_NEXT, "fopen");
-    open_orig  = dlsym(RTLD_NEXT, "open");
-    open64_orig  = dlsym(RTLD_NEXT, "open");
+    LOADSYM(fopen);
+    LOADSYM(open);
+    LOADSYM(open64);
 
     tmp = getenv("ZZUF_DEBUG");
     if(tmp && *tmp)
@@ -72,10 +84,6 @@ FILE *fopen(const char *path, const char *mode)
     return fopen_orig(path, mode);
 }
 
-#define STR(x) STR2(x)
-#define STR2(x) #x
-#define ORIG(x) ORIG2(x)
-#define ORIG2(x) x##_orig
 #define OPEN(ret, fn, file, oflag) \
     do { if(oflag & O_CREAT) \
     { \
