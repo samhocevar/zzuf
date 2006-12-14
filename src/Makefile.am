@@ -1,4 +1,4 @@
 
 bin_PROGRAMS = zzuf
-zzuf_SOURCES = zzuf.c
+zzuf_SOURCES = zzuf.c random.c
 

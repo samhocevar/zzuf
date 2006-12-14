@@ -25,7 +25,7 @@ if test "$build" != "$host" -a "${PKG_CONFIG_LIBDIR}" = ""; then
   export PKG_CONFIG_LIBDIR=/dev/null
 fi
 
-AC_CHECK_HEADERS(getopt.h)
+AC_CHECK_HEADERS(inttypes.h stdint.h getopt.h)
 
 AC_CHECK_FUNCS(getopt_long,
  [AC_DEFINE(HAVE_GETOPT_LONG, 1, Define to 1 if you have the `getopt_long' function.)],
