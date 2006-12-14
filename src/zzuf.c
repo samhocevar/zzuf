@@ -173,7 +173,7 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zuff [ -vh ] [ -i input ] [ -o output ]\n");
+    printf("Usage: zzuf [ -vh ] [ -i input ] [ -o output ]\n");
     printf("            [ -p percent ] [ -s seed ]\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("  -h, --help          display this help and exit\n");
