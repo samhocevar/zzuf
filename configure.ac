@@ -12,6 +12,7 @@ AM_CONFIG_HEADER(config.h)
 
 AM_PROG_CC_C_O
 AC_PROG_CPP
+AC_PROG_LIBTOOL
 
 dnl AC_PROG_EGREP only exists in autoconf 2.54+, so we use AC_EGREP_CPP right
 dnl now otherwise it might be set in an obscure if statement. Same thing for
