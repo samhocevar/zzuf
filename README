@@ -1,0 +1,5 @@
+About Zzuf
+==========
+Zzuf is a transparent application input fuzzer. It works by intercepting
+file operations and changing random bits in the program's input.
+

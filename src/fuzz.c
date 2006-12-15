@@ -1,0 +1,75 @@
+/*
+ *  zzuf - general purpose fuzzer
+ *  Copyright (c) 2006 Sam Hocevar <sam@zoy.org>
+ *                All Rights Reserved
+ *
+ *  $Id$
+ *
+ *  This program is free software. It comes without any warranty, to
+ *  the extent permitted by applicable law. You can redistribute it
+ *  and/or modify it under the terms of the Do What The Fuck You Want
+ *  To Public License, Version 2, as published by Sam Hocevar. See
+ *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ */
+
+/*
+ *  fuzz.c: fuzz functions
+ */
+
+#include "config.h"
+
+#if defined HAVE_STDINT_H
+#   include <stdint.h>
+#elif defined HAVE_INTTYPES_H
+#   include <inttypes.h>
+#endif
+#include <stdio.h>
+#include <string.h>
+
+#include "libzzuf.h"
+#include "debug.h"
+#include "random.h"
+#include "fuzz.h"
+
+#define CHUNK_SIZE 1024
+
+void zzuf_fuzz(int fd, uint8_t *buf, uint64_t len)
+{
+    uint8_t bits[CHUNK_SIZE];
+    uint64_t pos;
+    unsigned int i;
+
+    if(!files[fd].managed)
+        return;
+
+    pos = files[fd].pos;
+
+    debug("fuzzing %lu bytes", (unsigned long int)len);
+    debug("offset is %lu", (unsigned long int)pos);
+
+    for(i = pos / CHUNK_SIZE; i < (pos + len) / CHUNK_SIZE + 1; i++)
+    {
+        uint64_t offset;
+        int todo;
+
+        offset = i * CHUNK_SIZE;
+        todo = _zzuf_percent * CHUNK_SIZE;
+
+        zzuf_srand(_zzuf_seed ^ (i * 0x23ea84f7) ^ (todo * 0x783bc31f));
+        memset(bits, 0, CHUNK_SIZE);
+        while(todo--)
+        {
+            int idx = zzuf_rand(CHUNK_SIZE);
+            uint8_t byte = (1 << zzuf_rand(8));
+
+            if(offset + idx < pos)
+                continue;
+
+            if(offset + idx >= pos + len)
+                continue;
+
+            buf[idx] ^= byte;
+        }
+    }
+}
+

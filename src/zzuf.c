@@ -29,9 +29,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "random.h"
 
+static void set_ld_preload(char const *);
 static void version(void);
 #if defined(HAVE_GETOPT_H)
 static void usage(void);
@@ -39,11 +41,10 @@ static void usage(void);
 
 int main(int argc, char *argv[])
 {
-    char *input = NULL, *output = NULL;
-    FILE *in, *out;
-    char *data;
-    long int i, todo, size, seed = -1;
-    float percent = -1.0;
+    char buf[BUFSIZ];
+    char **newargv;
+    long int seed = 0;
+    float percent = 0.04;
 
 #if defined(HAVE_GETOPT_H)
     for(;;)
@@ -54,31 +55,23 @@ int main(int argc, char *argv[])
         static struct option long_options[] =
             {
                 /* Long option, needs arg, flag, short option */
-                { "input", 1, NULL, 'i' },
-                { "output", 1, NULL, 'o' },
                 { "seed", 1, NULL, 's' },
                 { "percent", 1, NULL, 'p' },
                 { "help", 0, NULL, 'h' },
                 { "version", 0, NULL, 'v' },
             };
 
-        int c = getopt_long(argc, argv, "i:o:s:p:hv",
+        int c = getopt_long(argc, argv, "s:p:hv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "i:o:s:p:hv");
+        int c = getopt(argc, argv, "s:p:hv");
 #   endif
         if(c == -1)
             break;
 
         switch(c)
         {
-        case 'i': /* --input */
-            input = optarg;
-            break;
-        case 'o': /* --output */
-            output = optarg;
-            break;
         case 's': /* --seed */
             seed = atol(optarg);
             break;
@@ -102,67 +95,50 @@ int main(int argc, char *argv[])
     int optind = 1;
 #endif
 
-    /* Open the files */
-    if(input)
+    if(optind >= argc)
     {
-        in = fopen(input, "rb");
-        if(!in)
-        {
-            fprintf(stderr, "could not open `%s'\n", input);
-            return 1;
-        }
-    }
-    else
-        in = stdin;
-
-    if(output)
-    {
-        out = fopen(output, "wb");
-        if(!out)
-        {
-            fprintf(stderr, "could not open `%s' for writing\n", output);
-            return 1;
-        }
-    }
-    else
-        out = stdout;
-
-    /* Checking parameters */
-    if(seed == -1)
-    {
-        unsigned long int a = getpid();
-        seed = (0x7931fea7 * a) ^ (0xb7390af7 + a);
-        fprintf(stderr, "no seed specified, using %lu\n", seed);
+        usage();
+        return -1;
     }
 
-    if(percent == -1.0)
-    {
-        percent = 0.1;
-        fprintf(stderr, "no percent specified, using %g\n", percent);
-    }
+    /* Create new argv */
+    newargv = malloc((argc - optind + 1) * sizeof(char *));
+    memcpy(newargv, argv + optind, (argc - optind) * sizeof(char *));
+    newargv[argc - optind] = (char *)NULL;
 
-    /* Read file contents */
-    fseek(in, 0, SEEK_END);
-    size = ftell(in);
-    data = malloc(size);
-    fseek(in, 0, SEEK_SET);
-    fread(data, size, 1, in);
-    fclose(in);
+    /* Preload libzzuf.so */
+    set_ld_preload(argv[0]);
 
-    /* Randomise shit */
-    zzuf_srand(seed);
-    todo = percent * 0.01 * size;
-    while(todo--)
-    {
-        i = zzuf_rand(size);
-        data[i] ^= 1 << zzuf_rand(8);
-    }
+    /* Set environment */
+    sprintf(buf, "%lu", (unsigned long int)seed);
+    setenv("ZZUF_SEED", buf, 1);
+    sprintf(buf, "%g", percent);
+    setenv("ZZUF_PERCENT", buf, 1);
 
-    /* Write result */
-    fwrite(data, size, 1, out);
-    fclose(out);
+    /* Call our process */
+    execvp(newargv[0], newargv);
 
     return 0;    
+}
+
+static void set_ld_preload(char const *progpath)
+{
+    char *libpath, *tmp;
+    int len = strlen(progpath);
+
+    libpath = malloc(len + strlen("/.libs/libzzuf.so") + 1);
+    strcpy(libpath, progpath);
+    tmp = strrchr(libpath, '/');
+    strcpy(tmp ? tmp + 1 : libpath, ".libs/libzzuf.so");
+    if(access(libpath, R_OK) == 0)
+    {
+        setenv("LD_PRELOAD", libpath, 1);
+        return;
+    }
+    free(libpath);
+
+    /* FIXME: use real path */
+    setenv("LD_PRELOAD", "/usr/lib/zzuf/libzzuf.so", 1);
 }
 
 static void version(void)
@@ -173,8 +149,7 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -vh ] [ -i input ] [ -o output ]\n");
-    printf("            [ -p percent ] [ -s seed ]\n");
+    printf("Usage: zzuf [ -vh ] [ -p percent ] [ -s seed ] PROG ARGS...\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("  -h, --help          display this help and exit\n");
     printf("  -v, --version       output version information and exit\n");
@@ -184,5 +159,4 @@ static void usage(void)
 #   endif
 }
 #endif
-
 

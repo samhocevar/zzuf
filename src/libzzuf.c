@@ -25,93 +25,66 @@
 #   include <inttypes.h>
 #endif
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include <stdarg.h>
 #include <dlfcn.h>
 
-#define STR(x) #x
-#define ORIG(x) x##_orig
-#define LOADSYM(x) \
-    do { \
-        ORIG(x) = dlsym(RTLD_NEXT, STR(x)); \
-        if(!ORIG(x)) \
-        { \
-            debug("could not load %s", STR(x)); \
-            abort(); \
-        } \
-    } while(0)
+#include "libzzuf.h"
+#include "debug.h"
+#include "preload.h"
 
-static int do_debug = 0;
-static void debug(const char *format, ...)
-{
-    if(!do_debug)
-        return;
+/* Global variables */
+int   _zzuf_debug   = 0;
+int   _zzuf_seed    = 0;
+float _zzuf_percent = 0.04f;
 
-    va_list args;
-    va_start(args, format);
-    fprintf(stderr, "** zzuf debug ** ");
-    vfprintf(stderr, format, args);
-    fprintf(stderr, "\n");
-    va_end(args);
-}
-
-/* Library functions that we divert */
-static FILE * (*fopen_orig)  (const char *path, const char *mode);
-static int    (*open_orig)   (const char *file, int oflag, ...);
-static int    (*open64_orig) (const char *file, int oflag, ...);
+#define MAXFD 1024
+struct zzuf files[MAXFD];
 
 /* Library initialisation shit */
-void zzufinit(void) __attribute__((constructor));
-void zzufinit(void)
+void zzuf_init(void)
 {
     char *tmp;
+    int i;
 
-    LOADSYM(fopen);
-    LOADSYM(open);
-    LOADSYM(open64);
+    if(zzuf_preload())
+        abort();
 
     tmp = getenv("ZZUF_DEBUG");
     if(tmp && *tmp)
-        do_debug = 1;
+        _zzuf_debug = 1;
+
+    tmp = getenv("ZZUF_SEED");
+    if(tmp && *tmp)
+        _zzuf_seed = atol(tmp);
+
+    tmp = getenv("ZZUF_PERCENT");
+    if(tmp && *tmp)
+        _zzuf_percent = atof(tmp);
+    if(_zzuf_percent < 0.0f)
+        _zzuf_percent = 0.0f;
+    else if(_zzuf_percent > 1.0f)
+        _zzuf_percent = 1.0f;
+
+    for(i = 0; i < MAXFD; i++)
+        files[i].managed = 0;
 }
 
-/* Our function wrappers */
-FILE *fopen(const char *path, const char *mode)
+/* Deinitialisation */
+void zzuf_fini(void)
 {
-    debug("fopen(\"%s\", \"%s\");", path, mode);
-    return fopen_orig(path, mode);
-}
+    int i;
 
-#define OPEN(ret, fn, file, oflag) \
-    do { if(oflag & O_CREAT) \
-    { \
-        int mode; \
-        va_list va; \
-        va_start(va, oflag); \
-        mode = va_arg(va, int); \
-        va_end(va); \
-        debug(STR(fn) "(\"%s\", %i, %i);", file, oflag, mode); \
-        ret = ORIG(fn)(file, oflag, mode); \
-    } \
-    else \
-    { \
-        debug(STR(fn) "(\"%s\", %i);", file, oflag); \
-        ret = ORIG(fn)(file, oflag); \
-    } } while(0)
+    for(i = 0; i < MAXFD; i++)
+    {
+        if(!files[i].managed)
+            continue;
 
-int open(const char *file, int oflag, ...)
-{
-    int ret;
-    OPEN(ret, open, file, oflag);
-    return ret;
-}
-
-int open64(const char *file, int oflag, ...)
-{
-    int ret;
-    OPEN(ret, open64, file, oflag);
-    return ret;
+        /* TODO */
+    }
 }
 
