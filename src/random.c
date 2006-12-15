@@ -27,20 +27,17 @@
 
 #include "random.h"
 
-void zzuf_srand(uint64_t seed)
+void zzuf_srand(uint32_t seed)
 {
-    uint32_t a = seed & 0xffffffff;
-    uint32_t b = seed >> 32;
-
-    srand((a ^ 0x12345678) * (b ^ 0x87654321));
+    srand(seed ^ 0x12345678);
 }
 
-uint64_t zzuf_rand(uint64_t max)
+uint32_t zzuf_rand(uint32_t max)
 {
     if(max <= RAND_MAX)
         return rand() % max;
 
     /* Could be better, but do we care? */
-    return (uint64_t)((max * 1.0) * (rand() / (RAND_MAX + 1.0)));
+    return (uint32_t)((max * 1.0) * (rand() / (RAND_MAX + 1.0)));
 }
 
