@@ -119,7 +119,11 @@ int main(int argc, char *argv[])
     set_ld_preload(argv[0]);
 
     /* Call our process */
-    execvp(newargv[0], newargv);
+    if(execvp(newargv[0], newargv))
+    {
+        perror(newargv[0]);
+        return -1;
+    }
 
     return 0;    
 }
