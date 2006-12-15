@@ -1,8 +1,14 @@
+
+  * detect crashes in the program's stdout/stderr (eg. mplayer)
+
   * Parallelise operations.
-  * Only very basic support for [f]open/[f]read, etc. see fscanf, fgets...
+  * improve our basic support for [f]open/[f]read, etc. (fscanf, fgets, also
+    see what sed is using)
 
   * socket support
   * marker support (eg. \r\n\r\n in HTTP responses)
+
+  * ASCII support, UTF-8 support
 
   * Huge todo: be format-aware
     - recompute checksums
