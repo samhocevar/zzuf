@@ -82,13 +82,20 @@ int zzuf_preload(void)
         if(!_zzuf_ready) \
             return ret; \
         debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
-        if(ret \
-            && (!_zzuf_include || !regexec(_zzuf_include, path, 0, NULL, 0)) \
-            && (!_zzuf_exclude || regexec(_zzuf_exclude, path, 0, NULL, 0))) \
+        if(ret) \
         { \
-            int fd = fileno(ret); \
-            files[fd].managed = 1; \
-            files[fd].pos = 0; \
+            if(_zzuf_include && \
+                regexec(_zzuf_include, path, 0, NULL, 0) == REG_NOMATCH) \
+                debug("file not included, ignoring"); \
+            else if(_zzuf_exclude && \
+                    regexec(_zzuf_exclude, path, 0, NULL, 0) != REG_NOMATCH) \
+                debug("file excluded, ignoring"); \
+            else \
+            { \
+                int fd = fileno(ret); \
+                files[fd].managed = 1; \
+                files[fd].pos = 0; \
+            } \
         } \
     } while(0)
 
@@ -105,6 +112,7 @@ FILE *fopen64(const char *path, const char *mode)
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t ret;
+    int fd;
 
     if(!_zzuf_ready)
         LOADSYM(fread);
@@ -112,12 +120,16 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     if(!_zzuf_ready)
         return ret;
 
+    fd = fileno(stream);
+    if(!files[fd].managed)
+        return ret;
+
     debug("fread(%p, %li, %li, \"%s\") = %li",
           ptr, (long int)size, (long int)nmemb, stream, (long int)ret);
     if(ret > 0)
     {
-        zzuf_fuzz(fileno(stream), ptr, ret * size);
-        files[fileno(stream)].pos += ret * size;
+        zzuf_fuzz(fd, ptr, ret * size);
+        files[fd].pos += ret * size;
     }
     return ret;
 }
@@ -148,12 +160,19 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         } \
         \
         if(ret >= 0 \
-            && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY) \
-            && (!_zzuf_include || !regexec(_zzuf_include, file, 0, NULL, 0)) \
-            && (!_zzuf_exclude || regexec(_zzuf_exclude, file, 0, NULL, 0))) \
+            && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY)) \
         { \
-            files[ret].managed = 1; \
-            files[ret].pos = 0; \
+            if(_zzuf_include && \
+                regexec(_zzuf_include, file, 0, NULL, 0) == REG_NOMATCH) \
+                debug("file not included, ignoring"); \
+            else if(_zzuf_exclude && \
+                    regexec(_zzuf_exclude, file, 0, NULL, 0) != REG_NOMATCH) \
+                debug("file excluded, ignoring"); \
+            else \
+            { \
+                files[ret].managed = 1; \
+                files[ret].pos = 0; \
+            } \
         } \
     } while(0)
 
@@ -175,6 +194,9 @@ ssize_t read(int fd, void *buf, size_t count)
         LOADSYM(fread);
     ret = read_orig(fd, buf, count);
     if(!_zzuf_ready)
+        return ret;
+
+    if(!files[fd].managed)
         return ret;
 
     debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);

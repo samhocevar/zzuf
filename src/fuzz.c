@@ -40,13 +40,7 @@ void zzuf_fuzz(int fd, uint8_t *buf, uint64_t len)
     uint64_t pos;
     unsigned int i;
 
-    if(!files[fd].managed)
-        return;
-
     pos = files[fd].pos;
-
-    debug("fuzzing %lu bytes", (unsigned long int)len);
-    debug("offset is %lu", (unsigned long int)pos);
 
     for(i = pos / CHUNK_SIZE; i < (pos + len) / CHUNK_SIZE + 1; i++)
     {

@@ -78,7 +78,6 @@ void zzuf_init(void)
     if(tmp && *tmp)
     {
         _zzuf_include = malloc(sizeof(*_zzuf_include));
-debug("zzuf_include = \"%s\"", tmp);
         regcomp(_zzuf_include, tmp, 0);
     }
 
@@ -86,7 +85,6 @@ debug("zzuf_include = \"%s\"", tmp);
     if(tmp && *tmp)
     {
         _zzuf_exclude = malloc(sizeof(*_zzuf_exclude));
-debug("zzuf_exclude = \"%s\"", tmp);
         regcomp(_zzuf_exclude, tmp, 0);
     }
 
