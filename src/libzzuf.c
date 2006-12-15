@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <regex.h>
 
 #include <stdarg.h>
 #include <dlfcn.h>
@@ -41,6 +42,8 @@
 int   _zzuf_debug   = 0;
 int   _zzuf_seed    = 0;
 float _zzuf_percent = 0.04f;
+regex_t * _zzuf_include = NULL;
+regex_t * _zzuf_exclude = NULL;
 
 #define MAXFD 1024
 struct zzuf files[MAXFD];
@@ -69,6 +72,22 @@ void zzuf_init(void)
         _zzuf_percent = 0.0f;
     else if(_zzuf_percent > 1.0f)
         _zzuf_percent = 1.0f;
+
+    tmp = getenv("ZZUF_INCLUDE");
+    if(tmp && *tmp)
+    {
+        _zzuf_include = malloc(sizeof(*_zzuf_include));
+debug("zzuf_include = \"%s\"", tmp);
+        regcomp(_zzuf_include, tmp, 0);
+    }
+
+    tmp = getenv("ZZUF_EXCLUDE");
+    if(tmp && *tmp)
+    {
+        _zzuf_exclude = malloc(sizeof(*_zzuf_exclude));
+debug("zzuf_exclude = \"%s\"", tmp);
+        regcomp(_zzuf_exclude, tmp, 0);
+    }
 
     for(i = 0; i < MAXFD; i++)
         files[i].managed = 0;

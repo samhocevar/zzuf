@@ -30,6 +30,8 @@ extern struct zzuf files[];
 extern int   _zzuf_debug;
 extern int   _zzuf_seed;
 extern float _zzuf_percent;
+extern regex_t * _zzuf_include;
+extern regex_t * _zzuf_exclude;
 
 /* Library initialisation shit */
 extern void zzuf_init(void) __attribute__((constructor));

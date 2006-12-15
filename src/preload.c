@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <regex.h>
 
 #include <stdarg.h>
 #include <dlfcn.h>
@@ -77,7 +78,9 @@ int zzuf_preload(void)
     { \
         ret = ORIG(fn)(path, mode); \
         debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
-        if(ret) \
+        if(ret \
+            && (!_zzuf_include || !regexec(_zzuf_include, path, 0, NULL, 0)) \
+            && (!_zzuf_exclude || regexec(_zzuf_exclude, path, 0, NULL, 0))) \
         { \
             int fd = fileno(ret); \
             files[fd].managed = 1; \
@@ -127,13 +130,13 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
             debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
         } \
         \
-        if(ret >= 0) \
+        if(ret >= 0 \
+            && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY) \
+            && (!_zzuf_include || !regexec(_zzuf_include, file, 0, NULL, 0)) \
+            && (!_zzuf_exclude || regexec(_zzuf_exclude, file, 0, NULL, 0))) \
         { \
-            if((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY) \
-            { \
-                files[ret].managed = 1; \
-                files[ret].pos = 0; \
-            } \
+            files[ret].managed = 1; \
+            files[ret].pos = 0; \
         } \
     } while(0)
 

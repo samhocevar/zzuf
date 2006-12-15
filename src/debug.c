@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <regex.h>
 
 #include "libzzuf.h"
 #include "debug.h"
