@@ -38,7 +38,7 @@
  * associated seed that can be computed from the zzuf seed, the chunk
  * index and the fuzziness density. This allows us to predictably fuzz
  * any part of the file without reading the whole file. */
-#define CHUNKSIZE 1024
+#define CHUNKBYTES 1024
 
 void zzuf_fuzz(int fd, uint8_t *buf, uint64_t len)
 {
@@ -48,19 +48,19 @@ void zzuf_fuzz(int fd, uint8_t *buf, uint64_t len)
     start = files[fd].pos;
     stop = start + len;
 
-    for(i = start / CHUNKSIZE; i < (stop + CHUNKSIZE - 1) / CHUNKSIZE; i++)
+    for(i = start / CHUNKBYTES; i < (stop + CHUNKBYTES - 1) / CHUNKBYTES; i++)
     {
         uint32_t chunkseed = i * MAGIC1;
 
-        /* Add some random dithering to handle ratio < 1.0/CHUNKSIZE */
+        /* Add some random dithering to handle ratio < 1.0/CHUNKBYTES */
         zzuf_srand(_zzuf_seed ^ chunkseed);
-        todo = (int)((_zzuf_ratio * (CHUNKSIZE * 1000) + zzuf_rand(1000))
+        todo = (int)((_zzuf_ratio * (8 * CHUNKBYTES * 1000) + zzuf_rand(1000))
                      / 1000.0);
         zzuf_srand(_zzuf_seed ^ chunkseed ^ (todo * MAGIC2));
 
         while(todo--)
         {
-            uint64_t idx = i * CHUNKSIZE + zzuf_rand(CHUNKSIZE);
+            uint64_t idx = i * CHUNKBYTES + zzuf_rand(CHUNKBYTES);
             uint8_t byte = (1 << zzuf_rand(8));
 
             if(idx < start || idx >= stop)

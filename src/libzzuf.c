@@ -41,7 +41,7 @@
 int   _zzuf_ready   = 0;
 int   _zzuf_debug   = 0;
 int   _zzuf_seed    = 0;
-float _zzuf_ratio   = 0.057f;
+float _zzuf_ratio   = 0.004f;
 regex_t * _zzuf_include = NULL;
 regex_t * _zzuf_exclude = NULL;
 
