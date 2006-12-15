@@ -39,11 +39,13 @@
 #include "preload.h"
 
 /* Library functions that we divert */
-static FILE *  (*fopen_orig)  (const char *path, const char *mode);
-static size_t  (*fread_orig)  (void *ptr, size_t size, size_t nmemb, FILE *stream);
-static int     (*open_orig)   (const char *file, int oflag, ...);
-static int     (*open64_orig) (const char *file, int oflag, ...);
-static ssize_t (*read_orig)   (int fd, void *buf, size_t count);
+static FILE *  (*fopen_orig)   (const char *path, const char *mode);
+static FILE *  (*fopen64_orig) (const char *path, const char *mode);
+static size_t  (*fread_orig)   (void *ptr, size_t size, size_t nmemb,
+                                FILE *stream);
+static int     (*open_orig)    (const char *file, int oflag, ...);
+static int     (*open64_orig)  (const char *file, int oflag, ...);
+static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
 
 #define STR(x) #x
 #define ORIG(x) x##_orig
@@ -58,6 +60,7 @@ static ssize_t (*read_orig)   (int fd, void *buf, size_t count);
 int zzuf_preload(void)
 {
     LOADSYM(fopen);
+    LOADSYM(fopen64);
     LOADSYM(fread);
     LOADSYM(open);
     LOADSYM(open64);
@@ -69,19 +72,27 @@ int zzuf_preload(void)
 }
 
 /* Our function wrappers */
+#define FOPEN(ret, fn, path, mode) \
+    do \
+    { \
+        ret = ORIG(fn)(path, mode); \
+        debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
+        if(ret) \
+        { \
+            int fd = fileno(ret); \
+            files[fd].managed = 1; \
+            files[fd].pos = 0; \
+        } \
+    } while(0)
+
 FILE *fopen(const char *path, const char *mode)
 {
-    FILE *f;
+    FILE *f; FOPEN(f, fopen, path, mode); return f;
+}
 
-    f = fopen_orig(path, mode);
-    debug("fopen(\"%s\", \"%s\") = %p", path, mode, f);
-    if(!f)
-        return NULL;
-
-    files[fileno(f)].managed = 1;
-    files[fileno(f)].pos = 0;
-
-    return f;
+FILE *fopen64(const char *path, const char *mode)
+{
+    FILE *f; FOPEN(f, fopen64, path, mode); return f;
 }
 
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
@@ -128,16 +139,12 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 int open(const char *file, int oflag, ...)
 {
-    int ret;
-    OPEN(ret, open, file, oflag);
-    return ret;
+    int ret; OPEN(ret, open, file, oflag); return ret;
 }
 
 int open64(const char *file, int oflag, ...)
 {
-    int ret;
-    OPEN(ret, open64, file, oflag);
-    return ret;
+    int ret; OPEN(ret, open64, file, oflag); return ret;
 }
 
 ssize_t read(int fd, void *buf, size_t count)
