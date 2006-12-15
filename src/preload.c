@@ -42,6 +42,7 @@
 /* Library functions that we divert */
 static FILE *  (*fopen_orig)   (const char *path, const char *mode);
 static FILE *  (*fopen64_orig) (const char *path, const char *mode);
+static int     (*fseek_orig)   (FILE *stream, long offset, int whence);
 static size_t  (*fread_orig)   (void *ptr, size_t size, size_t nmemb,
                                 FILE *stream);
 static int     (*open_orig)    (const char *file, int oflag, ...);
@@ -62,6 +63,7 @@ int zzuf_preload(void)
 {
     LOADSYM(fopen);
     LOADSYM(fopen64);
+    LOADSYM(fseek);
     LOADSYM(fread);
     LOADSYM(open);
     LOADSYM(open64);
@@ -109,6 +111,33 @@ FILE *fopen64(const char *path, const char *mode)
     FILE *f; FOPEN(f, fopen64, path, mode); return f;
 }
 
+int fseek(FILE *stream, long offset, int whence)
+{
+    int ret, fd;
+
+    if(!_zzuf_ready)
+        LOADSYM(fseek);
+    ret = fseek_orig(stream, offset, whence);
+    if(!_zzuf_ready)
+        return ret;
+
+    fd = fileno(stream);
+    if(!files[fd].managed)
+        return ret;
+
+    debug("fseek(%p, %li, %i) = %i", stream, offset, whence, ret);
+    if(ret == 0)
+    {
+        switch(whence)
+        {
+            case SEEK_SET: files[fd].pos = offset; break;
+            case SEEK_CUR: files[fd].pos += offset; break;
+            case SEEK_END: files[fd].pos = ftell(stream); break;
+        }
+    }
+    return ret;
+}
+
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t ret;
@@ -124,7 +153,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     if(!files[fd].managed)
         return ret;
 
-    debug("fread(%p, %li, %li, \"%s\") = %li",
+    debug("fread(%p, %li, %li, %p) = %li",
           ptr, (long int)size, (long int)nmemb, stream, (long int)ret);
     if(ret > 0)
     {
