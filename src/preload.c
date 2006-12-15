@@ -285,15 +285,8 @@ off64_t lseek64(int fd, off64_t offset, int whence)
 
     debug("lseek64(%i, %lli, %i) = %i", fd, (long long int)offset, whence, ret);
     if(ret != (off64_t)-1)
-    {
-        switch(whence)
-        {
-            case SEEK_SET: files[fd].pos = (int64_t)offset; break;
-            case SEEK_CUR: files[fd].pos += (int64_t)offset; break;
-            /* FIXME */
-            //case SEEK_END: files[fd].pos = ftell(stream); break;
-        }
-    }
+        files[fd].pos = (int64_t)ret;
+
     return ret;
 }
 
