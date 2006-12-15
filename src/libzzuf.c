@@ -28,7 +28,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <regex.h>
 
 #include <stdarg.h>
@@ -71,8 +70,8 @@ void zzuf_init(void)
         _zzuf_percent = atof(tmp);
     if(_zzuf_percent < 0.0f)
         _zzuf_percent = 0.0f;
-    else if(_zzuf_percent > 1.0f)
-        _zzuf_percent = 1.0f;
+    else if(_zzuf_percent > 100.0f)
+        _zzuf_percent = 100.0f;
 
     tmp = getenv("ZZUF_INCLUDE");
     if(tmp && *tmp)
