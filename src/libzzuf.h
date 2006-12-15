@@ -30,7 +30,7 @@ extern struct zzuf files[];
 extern int       _zzuf_ready;
 extern int       _zzuf_debug;
 extern int       _zzuf_seed;
-extern float     _zzuf_percent;
+extern float     _zzuf_ratio;
 extern regex_t * _zzuf_include;
 extern regex_t * _zzuf_exclude;
 

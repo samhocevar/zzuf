@@ -32,37 +32,41 @@
 #include "random.h"
 #include "fuzz.h"
 
-#define CHUNK_SIZE 1024
+#define MAGIC1 0x33ea84f7
+#define MAGIC2 0x783bc31f
+/* We arbitrarily split files into 1024-byte chunks. Each chunk has an
+ * associated seed that can be computed from the zzuf seed, the chunk
+ * index and the fuzziness density. This allows us to predictably fuzz
+ * any part of the file without reading the whole file. */
+#define CHUNKSIZE 1024
 
 void zzuf_fuzz(int fd, uint8_t *buf, uint64_t len)
 {
-    uint8_t bits[CHUNK_SIZE];
-    uint64_t pos;
-    unsigned int i;
+    uint64_t start, stop;
+    unsigned int i, todo;
 
-    pos = files[fd].pos;
+    start = files[fd].pos;
+    stop = start + len;
 
-    for(i = pos / CHUNK_SIZE;
-        i < (pos + len + CHUNK_SIZE - 1) / CHUNK_SIZE;
-        i++)
+    for(i = start / CHUNKSIZE; i < (stop + CHUNKSIZE - 1) / CHUNKSIZE; i++)
     {
-        int todo;
+        uint32_t chunkseed = i * MAGIC1;
 
-        /* Add some random dithering to handle percent < 1.0/CHUNK_SIZE */
-        zzuf_srand(_zzuf_seed ^ (i * 0x33ea84f7));
-        todo = (int)((_zzuf_percent * CHUNK_SIZE + zzuf_rand(100)) / 100.0);
-        zzuf_srand(_zzuf_seed ^ (i * 0x7f48ae33) ^ (todo * 0x783bc31f));
+        /* Add some random dithering to handle ratio < 1.0/CHUNKSIZE */
+        zzuf_srand(_zzuf_seed ^ chunkseed);
+        todo = (int)((_zzuf_ratio * (CHUNKSIZE * 1000) + zzuf_rand(1000))
+                     / 1000.0);
+        zzuf_srand(_zzuf_seed ^ chunkseed ^ (todo * MAGIC2));
 
-        memset(bits, 0, CHUNK_SIZE);
         while(todo--)
         {
-            uint64_t idx = i * CHUNK_SIZE + zzuf_rand(CHUNK_SIZE);
+            uint64_t idx = i * CHUNKSIZE + zzuf_rand(CHUNKSIZE);
             uint8_t byte = (1 << zzuf_rand(8));
 
-            if(idx < pos || idx >= pos + len)
+            if(idx < start || idx >= stop)
                 continue;
 
-            buf[idx - pos] ^= byte;
+            buf[idx - start] ^= byte;
         }
     }
 }

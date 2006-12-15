@@ -269,9 +269,9 @@ ssize_t read(int fd, void *buf, size_t count)
         files[fd].pos += ret;
     }
 
-    /* Sanity check */
+    /* Sanity check, can be OK though (for instance with a character device) */
     if((uint64_t)lseek64_orig(fd, 0, SEEK_CUR) != files[fd].pos)
-        fprintf(stderr, "ZZUF ERROR: OFFSET INCONSISTENCY\n");
+        debug("warning: offset inconsistency");
 
     return ret;
 }

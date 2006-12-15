@@ -1,2 +1,9 @@
   * Parallelise operations.
   * Only very basic support for [f]open/[f]read, etc. see fscanf, fgets...
+
+12:59 <rominet> est-ce qu'il marcherait sur un socket
+12:59 <sam> pas encore, mais c’est prévu
+12:59 <rominet> aussi il faudrait des options pour le déclencher qu'apres un
+                marker
+12:59 <rominet> genre dans la réponse HTTP, mais apres \r\n\r\n
+

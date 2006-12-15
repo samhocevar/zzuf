@@ -41,7 +41,7 @@
 int   _zzuf_ready   = 0;
 int   _zzuf_debug   = 0;
 int   _zzuf_seed    = 0;
-float _zzuf_percent = 0.04f;
+float _zzuf_ratio   = 0.057f;
 regex_t * _zzuf_include = NULL;
 regex_t * _zzuf_exclude = NULL;
 
@@ -65,13 +65,13 @@ void zzuf_init(void)
     if(tmp && *tmp)
         _zzuf_seed = atol(tmp);
 
-    tmp = getenv("ZZUF_PERCENT");
+    tmp = getenv("ZZUF_RATIO");
     if(tmp && *tmp)
-        _zzuf_percent = atof(tmp);
-    if(_zzuf_percent < 0.0f)
-        _zzuf_percent = 0.0f;
-    else if(_zzuf_percent > 100.0f)
-        _zzuf_percent = 100.0f;
+        _zzuf_ratio = atof(tmp);
+    if(_zzuf_ratio < 0.0f)
+        _zzuf_ratio = 0.0f;
+    else if(_zzuf_ratio > 5.0f)
+        _zzuf_ratio = 5.0f;
 
     tmp = getenv("ZZUF_INCLUDE");
     if(tmp && *tmp)

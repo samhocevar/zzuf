@@ -54,18 +54,18 @@ int main(int argc, char *argv[])
                 /* Long option, needs arg, flag, short option */
                 { "include", 1, NULL, 'i' },
                 { "exclude", 1, NULL, 'e' },
-                { "seed", 1, NULL, 's' },
-                { "percent", 1, NULL, 'p' },
-                { "debug", 1, NULL, 'd' },
-                { "help", 0, NULL, 'h' },
+                { "seed",    1, NULL, 's' },
+                { "ratio",   1, NULL, 'r' },
+                { "debug",   1, NULL, 'd' },
+                { "help",    0, NULL, 'h' },
                 { "version", 0, NULL, 'v' },
             };
 
-        int c = getopt_long(argc, argv, "i:e:s:p:dhv",
+        int c = getopt_long(argc, argv, "i:e:s:r:dhv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "i:e:s:p:dhv");
+        int c = getopt(argc, argv, "i:e:s:r:dhv");
 #   endif
         if(c == -1)
             break;
@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
         case 's': /* --seed */
             setenv("ZZUF_SEED", optarg, 1);
             break;
-        case 'p': /* --percent */
-            setenv("ZZUF_PERCENT", optarg, 1);
+        case 'r': /* --ratio */
+            setenv("ZZUF_RATIO", optarg, 1);
             break;
         case 'd': /* --debug */
             setenv("ZZUF_DEBUG", "1", 1);
@@ -156,8 +156,8 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -vdh ] [ -i regex ] [ -e regex ]\n");
-    printf("                     [ -p percent ] [ -s seed ] PROGRAM ARGS...\n");
+    printf("Usage: zzuf [ -vdh ] [ -i include ] [ -e exclude ]\n");
+    printf("                     [ -r ratio ] [ -s seed ] PROGRAM ARGS...\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("  -h, --help          display this help and exit\n");
     printf("  -v, --version       output version information and exit\n");
