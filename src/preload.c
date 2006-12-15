@@ -83,20 +83,20 @@ int zzuf_preload(void)
         ret = ORIG(fn)(path, mode); \
         if(!_zzuf_ready) \
             return ret; \
-        debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
         if(ret) \
         { \
             if(_zzuf_include && \
                 regexec(_zzuf_include, path, 0, NULL, 0) == REG_NOMATCH) \
-                debug("file not included, ignoring"); \
+                /* not included: ignore */ ; \
             else if(_zzuf_exclude && \
                     regexec(_zzuf_exclude, path, 0, NULL, 0) != REG_NOMATCH) \
-                debug("file excluded, ignoring"); \
+                /* excluded: ignore */ ; \
             else \
             { \
                 int fd = fileno(ret); \
                 files[fd].managed = 1; \
                 files[fd].pos = 0; \
+                debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
             } \
         } \
     } while(0)
@@ -166,39 +166,39 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 #define OPEN(ret, fn, file, oflag) \
     do \
     { \
+        int mode = 0; \
         if(!_zzuf_ready) \
             LOADSYM(fn); \
         if(oflag & O_CREAT) \
         { \
-            int mode; \
             va_list va; \
             va_start(va, oflag); \
             mode = va_arg(va, int); \
             va_end(va); \
             ret = ORIG(fn)(file, oflag, mode); \
-            if(!_zzuf_ready) \
-                return ret; \
-            debug(STR(fn) "(\"%s\", %i, %i) = %i", file, oflag, mode, ret); \
         } \
         else \
         { \
             ret = ORIG(fn)(file, oflag); \
-            if(!_zzuf_ready) \
-                return ret; \
-            debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
         } \
-        \
+        if(!_zzuf_ready) \
+            return ret; \
         if(ret >= 0 \
             && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY)) \
         { \
             if(_zzuf_include && \
                 regexec(_zzuf_include, file, 0, NULL, 0) == REG_NOMATCH) \
-                debug("file not included, ignoring"); \
+                /* not included: ignore */ ; \
             else if(_zzuf_exclude && \
                     regexec(_zzuf_exclude, file, 0, NULL, 0) != REG_NOMATCH) \
-                debug("file excluded, ignoring"); \
+                /* excluded: ignore */ ; \
             else \
             { \
+                if(oflag & O_CREAT) \
+                    debug(STR(fn) "(\"%s\", %i, %i) = %i", \
+                          file, oflag, mode, ret); \
+                else \
+                    debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
                 files[ret].managed = 1; \
                 files[ret].pos = 0; \
             } \
