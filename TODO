@@ -1,1 +1,2 @@
-  * Only very basic support for [f]open/[f]read, no seek, no close, etc.
+  * Parallelise operations.
+  * Only very basic support for [f]open/[f]read, etc. see fscanf, fgets...

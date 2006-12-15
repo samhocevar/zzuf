@@ -17,7 +17,11 @@
  */
 
 #include "config.h"
+
+/* Can't remember what that's for */
 #define _GNU_SOURCE
+/* Use this to get lseek64() */
+#define _LARGEFILE64_SOURCE
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
@@ -25,6 +29,7 @@
 #   include <inttypes.h>
 #endif
 #include <stdio.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -45,9 +50,13 @@ static FILE *  (*fopen64_orig) (const char *path, const char *mode);
 static int     (*fseek_orig)   (FILE *stream, long offset, int whence);
 static size_t  (*fread_orig)   (void *ptr, size_t size, size_t nmemb,
                                 FILE *stream);
+static int     (*fclose_orig)  (FILE *fp);
+
 static int     (*open_orig)    (const char *file, int oflag, ...);
 static int     (*open64_orig)  (const char *file, int oflag, ...);
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
+static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
+static int     (*close_orig)   (int fd);
 
 #define STR(x) #x
 #define ORIG(x) x##_orig
@@ -65,9 +74,13 @@ int zzuf_preload(void)
     LOADSYM(fopen64);
     LOADSYM(fseek);
     LOADSYM(fread);
+    LOADSYM(fclose);
+
     LOADSYM(open);
     LOADSYM(open64);
     LOADSYM(read);
+    LOADSYM(lseek64);
+    LOADSYM(close);
 
     debug("libzzuf initialised");
 
@@ -75,7 +88,7 @@ int zzuf_preload(void)
 }
 
 /* Our function wrappers */
-#define FOPEN(ret, fn, path, mode) \
+#define FOPEN(fn, path, mode) \
     do \
     { \
         if(!_zzuf_ready) \
@@ -103,12 +116,12 @@ int zzuf_preload(void)
 
 FILE *fopen(const char *path, const char *mode)
 {
-    FILE *f; FOPEN(f, fopen, path, mode); return f;
+    FILE *ret; FOPEN(fopen, path, mode); return ret;
 }
 
 FILE *fopen64(const char *path, const char *mode)
 {
-    FILE *f; FOPEN(f, fopen64, path, mode); return f;
+    FILE *ret; FOPEN(fopen64, path, mode); return ret;
 }
 
 int fseek(FILE *stream, long offset, int whence)
@@ -163,7 +176,27 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     return ret;
 }
 
-#define OPEN(ret, fn, file, oflag) \
+int fclose(FILE *fp)
+{
+    int ret, fd;
+
+    if(!_zzuf_ready)
+        LOADSYM(fclose);
+    fd = fileno(fp);
+    ret = fclose_orig(fp);
+    if(!_zzuf_ready)
+        return ret;
+
+    if(!files[fd].managed)
+        return ret;
+
+    debug("fclose(%p) = %i", fp, ret);
+    files[fd].managed = 0;
+
+    return ret;
+}
+
+#define OPEN(fn, file, oflag) \
     do \
     { \
         int mode = 0; \
@@ -207,12 +240,12 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 int open(const char *file, int oflag, ...)
 {
-    int ret; OPEN(ret, open, file, oflag); return ret;
+    int ret; OPEN(open, file, oflag); return ret;
 }
 
 int open64(const char *file, int oflag, ...)
 {
-    int ret; OPEN(ret, open64, file, oflag); return ret;
+    int ret; OPEN(open64, file, oflag); return ret;
 }
 
 ssize_t read(int fd, void *buf, size_t count)
@@ -220,7 +253,7 @@ ssize_t read(int fd, void *buf, size_t count)
     int ret;
 
     if(!_zzuf_ready)
-        LOADSYM(fread);
+        LOADSYM(read);
     ret = read_orig(fd, buf, count);
     if(!_zzuf_ready)
         return ret;
@@ -234,6 +267,52 @@ ssize_t read(int fd, void *buf, size_t count)
         zzuf_fuzz(fd, buf, ret);
         files[fd].pos += ret;
     }
+    return ret;
+}
+
+off64_t lseek64(int fd, off64_t offset, int whence)
+{
+    int ret;
+
+    if(!_zzuf_ready)
+        LOADSYM(lseek64);
+    ret = lseek64_orig(fd, offset, whence);
+    if(!_zzuf_ready)
+        return ret;
+
+    if(!files[fd].managed)
+        return ret;
+
+    debug("lseek64(%i, %lli, %i) = %i", fd, (long long int)offset, whence, ret);
+    if(ret != (off64_t)-1)
+    {
+        switch(whence)
+        {
+            case SEEK_SET: files[fd].pos = (int64_t)offset; break;
+            case SEEK_CUR: files[fd].pos += (int64_t)offset; break;
+            /* FIXME */
+            //case SEEK_END: files[fd].pos = ftell(stream); break;
+        }
+    }
+    return ret;
+}
+
+int close(int fd)
+{
+    int ret;
+
+    if(!_zzuf_ready)
+        LOADSYM(close);
+    ret = close_orig(fd);
+    if(!_zzuf_ready)
+        return ret;
+
+    if(!files[fd].managed)
+        return ret;
+
+    debug("close(%i) = %i", fd, ret);
+    files[fd].managed = 0;
+
     return ret;
 }
 
