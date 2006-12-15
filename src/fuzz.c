@@ -37,34 +37,32 @@
 void zzuf_fuzz(int fd, uint8_t *buf, uint64_t len)
 {
     uint8_t bits[CHUNK_SIZE];
-    uint64_t pos, offset;
+    uint64_t pos;
     unsigned int i;
 
     pos = files[fd].pos;
-    offset = pos % CHUNK_SIZE;
 
-    for(i = pos / CHUNK_SIZE; i < (pos + len) / CHUNK_SIZE + 1; i++)
+    for(i = pos / CHUNK_SIZE;
+        i < (pos + len + CHUNK_SIZE - 1) / CHUNK_SIZE;
+        i++)
     {
         int todo;
 
         /* Add some random dithering to handle percent < 1.0/CHUNK_SIZE */
-        zzuf_srand(_zzuf_seed ^ (i * 0x23ea84f7));
+        zzuf_srand(_zzuf_seed ^ (i * 0x33ea84f7));
         todo = (int)((_zzuf_percent * CHUNK_SIZE + zzuf_rand(100)) / 100.0);
-        zzuf_srand(_zzuf_seed ^ (i * 0x23ea84f7) ^ (todo * 0x783bc31f));
+        zzuf_srand(_zzuf_seed ^ (i * 0x7f48ae33) ^ (todo * 0x783bc31f));
 
         memset(bits, 0, CHUNK_SIZE);
         while(todo--)
         {
-            int idx = zzuf_rand(CHUNK_SIZE);
+            uint64_t idx = i * CHUNK_SIZE + zzuf_rand(CHUNK_SIZE);
             uint8_t byte = (1 << zzuf_rand(8));
 
-            if(i * CHUNK_SIZE + idx < pos)
+            if(idx < pos || idx >= pos + len)
                 continue;
 
-            if(i * CHUNK_SIZE + idx >= pos + len)
-                continue;
-
-            buf[idx - offset] ^= byte;
+            buf[idx - pos] ^= byte;
         }
     }
 }
