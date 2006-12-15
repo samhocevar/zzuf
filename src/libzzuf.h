@@ -27,9 +27,10 @@ struct zzuf
 extern struct zzuf files[];
 
 /* Internal stuff */
-extern int   _zzuf_debug;
-extern int   _zzuf_seed;
-extern float _zzuf_percent;
+extern int       _zzuf_ready;
+extern int       _zzuf_debug;
+extern int       _zzuf_seed;
+extern float     _zzuf_percent;
 extern regex_t * _zzuf_include;
 extern regex_t * _zzuf_exclude;
 

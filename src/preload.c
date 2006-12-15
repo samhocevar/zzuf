@@ -55,7 +55,7 @@ static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
     do { \
         ORIG(x) = dlsym(RTLD_NEXT, STR(x)); \
         if(!ORIG(x)) \
-            return -1; \
+            abort(); \
     } while(0)
 
 int zzuf_preload(void)
@@ -76,7 +76,11 @@ int zzuf_preload(void)
 #define FOPEN(ret, fn, path, mode) \
     do \
     { \
+        if(!_zzuf_ready) \
+            LOADSYM(fn); \
         ret = ORIG(fn)(path, mode); \
+        if(!_zzuf_ready) \
+            return ret; \
         debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
         if(ret \
             && (!_zzuf_include || !regexec(_zzuf_include, path, 0, NULL, 0)) \
@@ -100,7 +104,14 @@ FILE *fopen64(const char *path, const char *mode)
 
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-    size_t ret = fread_orig(ptr, size, nmemb, stream);
+    size_t ret;
+
+    if(!_zzuf_ready)
+        LOADSYM(fread);
+    ret = fread_orig(ptr, size, nmemb, stream);
+    if(!_zzuf_ready)
+        return ret;
+
     debug("fread(%p, %li, %li, \"%s\") = %li",
           ptr, (long int)size, (long int)nmemb, stream, (long int)ret);
     if(ret > 0)
@@ -114,6 +125,8 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 #define OPEN(ret, fn, file, oflag) \
     do \
     { \
+        if(!_zzuf_ready) \
+            LOADSYM(fn); \
         if(oflag & O_CREAT) \
         { \
             int mode; \
@@ -122,11 +135,15 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
             mode = va_arg(va, int); \
             va_end(va); \
             ret = ORIG(fn)(file, oflag, mode); \
+            if(!_zzuf_ready) \
+                return ret; \
             debug(STR(fn) "(\"%s\", %i, %i) = %i", file, oflag, mode, ret); \
         } \
         else \
         { \
             ret = ORIG(fn)(file, oflag); \
+            if(!_zzuf_ready) \
+                return ret; \
             debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
         } \
         \
@@ -152,7 +169,14 @@ int open64(const char *file, int oflag, ...)
 
 ssize_t read(int fd, void *buf, size_t count)
 {
-    int ret = read_orig(fd, buf, count);
+    int ret;
+
+    if(!_zzuf_ready)
+        LOADSYM(fread);
+    ret = read_orig(fd, buf, count);
+    if(!_zzuf_ready)
+        return ret;
+
     debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
     if(ret > 0)
     {

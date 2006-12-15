@@ -39,6 +39,7 @@
 #include "preload.h"
 
 /* Global variables */
+int   _zzuf_ready   = 0;
 int   _zzuf_debug   = 0;
 int   _zzuf_seed    = 0;
 float _zzuf_percent = 0.04f;
@@ -91,6 +92,8 @@ debug("zzuf_exclude = \"%s\"", tmp);
 
     for(i = 0; i < MAXFD; i++)
         files[i].managed = 0;
+
+    _zzuf_ready = 1;
 }
 
 /* Deinitialisation */
