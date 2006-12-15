@@ -37,33 +37,34 @@
 void zzuf_fuzz(int fd, uint8_t *buf, uint64_t len)
 {
     uint8_t bits[CHUNK_SIZE];
-    uint64_t pos;
+    uint64_t pos, offset;
     unsigned int i;
 
     pos = files[fd].pos;
+    offset = pos % CHUNK_SIZE;
 
     for(i = pos / CHUNK_SIZE; i < (pos + len) / CHUNK_SIZE + 1; i++)
     {
-        uint64_t offset;
         int todo;
 
-        offset = i * CHUNK_SIZE;
-        todo = _zzuf_percent * CHUNK_SIZE;
-
+        /* Add some random dithering to handle percent < 1.0/CHUNK_SIZE */
+        zzuf_srand(_zzuf_seed ^ (i * 0x23ea84f7));
+        todo = (int)((_zzuf_percent * CHUNK_SIZE + zzuf_rand(100)) / 100.0);
         zzuf_srand(_zzuf_seed ^ (i * 0x23ea84f7) ^ (todo * 0x783bc31f));
+
         memset(bits, 0, CHUNK_SIZE);
         while(todo--)
         {
             int idx = zzuf_rand(CHUNK_SIZE);
             uint8_t byte = (1 << zzuf_rand(8));
 
-            if(offset + idx < pos)
+            if(i * CHUNK_SIZE + idx < pos)
                 continue;
 
-            if(offset + idx >= pos + len)
+            if(i * CHUNK_SIZE + idx >= pos + len)
                 continue;
 
-            buf[idx] ^= byte;
+            buf[idx - offset] ^= byte;
         }
     }
 }
