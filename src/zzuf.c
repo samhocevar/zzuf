@@ -144,8 +144,7 @@ static void set_ld_preload(char const *progpath)
     }
     free(libpath);
 
-    /* FIXME: use real path */
-    setenv("LD_PRELOAD", "/usr/lib/zzuf/libzzuf.so", 1);
+    setenv("LD_PRELOAD", LIBDIR "/libzzuf.so", 1);
 }
 
 static void version(void)
