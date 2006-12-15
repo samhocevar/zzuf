@@ -54,9 +54,6 @@ void zzuf_init(void)
     char *tmp;
     int i;
 
-    if(zzuf_preload())
-        abort();
-
     tmp = getenv("ZZUF_DEBUG");
     if(tmp && *tmp)
         _zzuf_debug = 1;
@@ -90,7 +87,11 @@ void zzuf_init(void)
     for(i = 0; i < MAXFD; i++)
         files[i].managed = 0;
 
+    zzuf_preload_libc();
+
     _zzuf_ready = 1;
+
+    debug("libzzuf initialised");
 }
 
 /* Deinitialisation */

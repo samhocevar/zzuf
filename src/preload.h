@@ -16,5 +16,5 @@
  *  preload.h: preloaded library functions
  */
 
-extern int zzuf_preload(void);
+extern void zzuf_preload_libc(void);
 

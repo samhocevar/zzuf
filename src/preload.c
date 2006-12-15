@@ -68,7 +68,7 @@ static int     (*close_orig)   (int fd);
             abort(); \
     } while(0)
 
-int zzuf_preload(void)
+void zzuf_preload_libc(void)
 {
     LOADSYM(fopen);
     LOADSYM(fopen64);
@@ -82,10 +82,6 @@ int zzuf_preload(void)
     LOADSYM(lseek);
     LOADSYM(lseek64);
     LOADSYM(close);
-
-    debug("libzzuf initialised");
-
-    return 0;
 }
 
 /* Our function wrappers */
