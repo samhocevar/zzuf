@@ -33,7 +33,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <regex.h>
 
 #include <stdarg.h>
@@ -55,6 +54,7 @@ static int     (*fclose_orig)  (FILE *fp);
 static int     (*open_orig)    (const char *file, int oflag, ...);
 static int     (*open64_orig)  (const char *file, int oflag, ...);
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
+static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
 static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
 static int     (*close_orig)   (int fd);
 
@@ -79,6 +79,7 @@ int zzuf_preload(void)
     LOADSYM(open);
     LOADSYM(open64);
     LOADSYM(read);
+    LOADSYM(lseek);
     LOADSYM(lseek64);
     LOADSYM(close);
 
@@ -88,7 +89,7 @@ int zzuf_preload(void)
 }
 
 /* Our function wrappers */
-#define FOPEN(fn, path, mode) \
+#define FOPEN(fn) \
     do \
     { \
         if(!_zzuf_ready) \
@@ -116,12 +117,12 @@ int zzuf_preload(void)
 
 FILE *fopen(const char *path, const char *mode)
 {
-    FILE *ret; FOPEN(fopen, path, mode); return ret;
+    FILE *ret; FOPEN(fopen); return ret;
 }
 
 FILE *fopen64(const char *path, const char *mode)
 {
-    FILE *ret; FOPEN(fopen64, path, mode); return ret;
+    FILE *ret; FOPEN(fopen64); return ret;
 }
 
 int fseek(FILE *stream, long offset, int whence)
@@ -196,7 +197,7 @@ int fclose(FILE *fp)
     return ret;
 }
 
-#define OPEN(fn, file, oflag) \
+#define OPEN(fn) \
     do \
     { \
         int mode = 0; \
@@ -240,12 +241,12 @@ int fclose(FILE *fp)
 
 int open(const char *file, int oflag, ...)
 {
-    int ret; OPEN(open, file, oflag); return ret;
+    int ret; OPEN(open); return ret;
 }
 
 int open64(const char *file, int oflag, ...)
 {
-    int ret; OPEN(open64, file, oflag); return ret;
+    int ret; OPEN(open64); return ret;
 }
 
 ssize_t read(int fd, void *buf, size_t count)
@@ -267,26 +268,40 @@ ssize_t read(int fd, void *buf, size_t count)
         zzuf_fuzz(fd, buf, ret);
         files[fd].pos += ret;
     }
+
+    /* Sanity check */
+    if((uint64_t)lseek64_orig(fd, 0, SEEK_CUR) != files[fd].pos)
+        fprintf(stderr, "ZZUF ERROR: OFFSET INCONSISTENCY\n");
+
+    return ret;
+}
+
+#define LSEEK(fn, off_t) \
+    do { \
+        if(!_zzuf_ready) \
+            LOADSYM(fn); \
+        ret = ORIG(fn)(fd, offset, whence); \
+        if(!_zzuf_ready) \
+            return ret; \
+        if(!files[fd].managed) \
+            return ret; \
+        debug(STR(fn)"(%i, %lli, %i) = %lli", \
+              fd, (long long int)offset, whence, (long long int)ret); \
+        if(ret != (off_t)-1) \
+            files[fd].pos = (int64_t)ret; \
+    } while(0)
+
+off_t lseek(int fd, off_t offset, int whence)
+{
+    off_t ret;
+    LSEEK(lseek, off_t);
     return ret;
 }
 
 off64_t lseek64(int fd, off64_t offset, int whence)
 {
-    int ret;
-
-    if(!_zzuf_ready)
-        LOADSYM(lseek64);
-    ret = lseek64_orig(fd, offset, whence);
-    if(!_zzuf_ready)
-        return ret;
-
-    if(!files[fd].managed)
-        return ret;
-
-    debug("lseek64(%i, %lli, %i) = %i", fd, (long long int)offset, whence, ret);
-    if(ret != (off64_t)-1)
-        files[fd].pos = (int64_t)ret;
-
+    off64_t ret;
+    LSEEK(lseek64, off64_t);
     return ret;
 }
 
