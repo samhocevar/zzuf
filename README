@@ -16,30 +16,31 @@ Fuzz 1% of the input bits of the "cat" program using seed 94324:
 
   # zzuf -s 94324 -r 0.01 cat /etc/motd
 
-Fuzz the input of the "convert" program, using file foo.jpeg as the
-original input and restricting fuzzing to filenames matching the regular
-expression "foo" (because convert will also open its own configuration
-files and we do not want zzuf to fuzz them):
+Fuzz the input of the "convert" program, using file foo.jpeg as the original
+input and restricting fuzzing to filenames matching the regular expression
+"foo[.]jpeg" (because convert will also open its own configuration files and
+we do not want zzuf to fuzz them):
 
-  # zzuf -i 'foo' convert -- foo.jpeg -format tga /dev/null
+  # zzuf -i 'foo[.]jpeg' convert -- foo.jpeg -format tga /dev/null
 
 Fuzz the input of VLC, using file movie.avi as the original input, and
-generate fuzzy-movie.avi which is the file that can be fed to VLC to
-reproduce the behaviour without using zzuf:
+generate fuzzy-movie.avi which is a file that can be fed to VLC to reproduce
+the behaviour without using zzuf:
 
   # zzuf -s 87423 -r 0.01 vlc -- movie.avi
+
   # zzuf -s 87423 -r 0.01 cp movie.avi fuzzy-movie.avi
   # vlc fuzzy-movie.avi
 
 Fuzz the input of MPlayer and backup movies that caused it to crash:
 
   # for seed in $(seq -w 0 9999); do
-        zzuf -s ${seed} -r 0.01 -i 'movie[.]avi' \
-                  mplayer -- -benchmark -vo null movie.avi >/dev/null 2>&1
+        zzuf -s ${seed} -r 0.01 -i 'movie[.]avi' mplayer -- \
+                   -benchmark -vo null -fps 1000 movie.avi >/dev/null 2>&1
         RET=$?
         if [ $RET != 0 ]; then
             echo "seed ${seed}: exit $RET"
-            zzuf -s ${seed} -r 0.05 cp movie.avi movie-${seed}.avi
+            zzuf -s ${seed} -r 0.05 cp movie.avi movie-crashed-${seed}.avi
         fi
     done
 
