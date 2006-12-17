@@ -97,6 +97,8 @@ void zzuf_load_fd(void)
                 else \
                     debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
                 files[ret].managed = 1; \
+                files[ret].cur = -1; \
+                files[ret].data = malloc(CHUNKBYTES); \
                 files[ret].pos = 0; \
             } \
         } \
@@ -182,6 +184,7 @@ int close(int fd)
         return ret;
 
     debug("close(%i) = %i", fd, ret);
+    free(files[fd].data);
     files[fd].managed = 0;
 
     return ret;

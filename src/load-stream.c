@@ -95,6 +95,8 @@ void zzuf_load_stream(void)
                 int fd = fileno(ret); \
                 files[fd].managed = 1; \
                 files[fd].pos = 0; \
+                files[fd].cur = -1; \
+                files[fd].data = malloc(CHUNKBYTES); \
                 debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
             } \
         } \
@@ -265,6 +267,7 @@ int fclose(FILE *fp)
     ret = fclose_orig(fp);
     debug("fclose(%p) = %i", fp, ret);
     files[fd].managed = 0;
+    free(files[fd].data);
 
     return ret;
 }

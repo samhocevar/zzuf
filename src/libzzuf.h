@@ -16,11 +16,18 @@
  *  libzzuf.h: preloaded wrapper library
  */
 
+/* We arbitrarily split files into 1024-byte chunks. Each chunk has an
+ * associated seed that can be computed from the zzuf seed, the chunk
+ * index and the fuzziness density. This allows us to predictably fuzz
+ * any part of the file without reading the whole file. */
+#define CHUNKBYTES 1024
+
 struct zzuf
 {
     int managed;
     uint64_t seed;
     uint64_t pos;
+    int cur;
     char *data;
 };
 

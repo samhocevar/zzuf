@@ -105,7 +105,8 @@ void zzuf_fini(void)
         if(!files[i].managed)
             continue;
 
-        /* TODO */
+        /* XXX: What are we supposed to do? If filedescriptors weren't
+         * closed properly, there's a leak, but it's not our problem. */
     }
 }
 
