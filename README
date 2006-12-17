@@ -27,7 +27,7 @@ Fuzz the input of VLC, using file movie.avi as the original input, and
 generate fuzzy-movie.avi which is a file that can be fed to VLC to reproduce
 the behaviour without using zzuf:
 
-  # zzuf -s 87423 -r 0.01 vlc -- movie.avi
+  # zzuf -s 87423 -r 0.01 vlc movie.avi
 
   # zzuf -s 87423 -r 0.01 cp movie.avi fuzzy-movie.avi
   # vlc fuzzy-movie.avi

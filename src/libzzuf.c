@@ -35,7 +35,7 @@
 
 #include "libzzuf.h"
 #include "debug.h"
-#include "preload.h"
+#include "load.h"
 
 /* Global variables */
 int   _zzuf_ready   = 0;
@@ -87,7 +87,8 @@ void zzuf_init(void)
     for(i = 0; i < MAXFD; i++)
         files[i].managed = 0;
 
-    zzuf_preload_libc();
+    zzuf_load_fd();
+    zzuf_load_stream();
 
     _zzuf_ready = 1;
 

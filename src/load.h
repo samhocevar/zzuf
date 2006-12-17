@@ -16,5 +16,16 @@
  *  preload.h: preloaded library functions
  */
 
-extern void zzuf_preload_libc(void);
+#define STR(x) #x
+#define ORIG(x) x##_orig
+
+#define LOADSYM(x) \
+    do { \
+        ORIG(x) = dlsym(RTLD_NEXT, STR(x)); \
+        if(!ORIG(x)) \
+            abort(); \
+    } while(0)
+
+extern void zzuf_load_fd(void);
+extern void zzuf_load_stream(void);
 
