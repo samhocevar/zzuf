@@ -1,16 +1,20 @@
 
-  * detect crashes in the program's stdout/stderr (eg. mplayer)
+  * Missing functions:
+    + stdio:
+      - fscanf
+      - fgetws, fgetwc, ungetwc
+    + zlib functions (eg. libpng)
+    + divert crc checks or recompute checksums (yeah)
 
-  * Parallelise operations.
-  * improve our basic support for [f]open/[f]read, etc. (fscanf, fgets, also
-    see what sed is using)
+  * Detect crashes in the program's stdout/stderr (eg. mplayer) instead of
+    just checking the return value
 
-  * socket support
-  * marker support (eg. \r\n\r\n in HTTP responses)
+  * Parallelise operations (for clock-constrained programs unable to work
+    at fullest speed)
+
+  * Socket support (networking)
+
+  * Marker support (eg. \r\n\r\n in HTTP responses)
 
   * ASCII support, UTF-8 support
-
-  * Huge todo: be format-aware
-    - recompute checksums
-    - divert zlib functions, too
 
