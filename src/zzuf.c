@@ -106,7 +106,8 @@ int main(int argc, char *argv[])
 
     if(optind >= argc)
     {
-        usage();
+        printf("%s: missing argument\n", argv[0]);
+        printf(MOREINFO, argv[0]);
         return -1;
     }
 
@@ -149,21 +150,43 @@ static void set_ld_preload(char const *progpath)
 
 static void version(void)
 {
-    printf("zzuf %s by Sam Hocevar <sam@zoy.org>\n", VERSION);
+    printf("zzuf %s\n", VERSION);
+    printf("Copyright (C) 2006 Sam Hocevar <sam@zoy.org>\n");
+    printf("This is free software.  You may redistribute copies of it under the\n");
+    printf("terms of the Do What The Fuck You Want To Public License, Version 2\n");
+    printf("<http://sam.zoy.org/wtfpl/>.\n");
+    printf("There is NO WARRANTY, to the extent permitted by law.\n");
+    printf("\n");
+    printf("Written by Sam Hocevar. Report bugs to <sam@zoy.org>.\n");
 }
 
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
     printf("Usage: zzuf [ -vdh ] [ -i include ] [ -e exclude ]\n");
-    printf("                     [ -r ratio ] [ -s seed ] PROGRAM ARGS...\n");
+    printf("                     [ -r ratio ] [ -s seed ] COMMAND [ARGS]...\n");
+    printf("Run COMMAND and randomly fuzz its input files.\n");
+    printf("\n");
+    printf("Mandatory arguments to long options are mandatory for short options too.\n");
 #   ifdef HAVE_GETOPT_LONG
-    printf("  -h, --help          display this help and exit\n");
-    printf("  -v, --version       output version information and exit\n");
+    printf("  -i, --include <regex>  only fuzz files matching <regex>\n");
+    printf("  -e, --exclude <regex>  do not fuzz files matching <regex>\n");
+    printf("  -r, --ratio <ratio>    bit fuzzing ratio (default 0.004)\n");
+    printf("  -s, --seed <seed>      random seed (default 0)\n");
+    printf("  -d, --debug            print debug messages\n");
+    printf("  -h, --help             display this help and exit\n");
+    printf("  -v, --version          output version information and exit\n");
 #   else
-    printf("  -h        display this help and exit\n");
-    printf("  -v        output version information and exit\n");
+    printf("  -i <regex>  only fuzz files matching <regex>\n");
+    printf("  -e <regex>  do not fuzz files matching <regex>\n");
+    printf("  -r <ratio>  bit fuzzing ratio (default 0.004)\n");
+    printf("  -s <seed>   random seed (default 0)\n");
+    printf("  -d          print debug messages\n");
+    printf("  -h          display this help and exit\n");
+    printf("  -v          output version information and exit\n");
 #   endif
+    printf("\n");
+    printf("Written by Sam Hocevar. Report bugs to <sam@zoy.org>.\n");
 }
 #endif
 
