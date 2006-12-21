@@ -30,14 +30,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #include "random.h"
 
+static void sigchld_handler(int);
 static void set_ld_preload(char const *);
 static void version(void);
 #if defined(HAVE_GETOPT_H)
 static void usage(void);
 #endif
+
+int exited = 0;
 
 int main(int argc, char *argv[])
 {
@@ -50,17 +55,16 @@ int main(int argc, char *argv[])
 #       define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct option long_options[] =
-            {
-                /* Long option, needs arg, flag, short option */
-                { "include", 1, NULL, 'i' },
-                { "exclude", 1, NULL, 'e' },
-                { "seed",    1, NULL, 's' },
-                { "ratio",   1, NULL, 'r' },
-                { "debug",   1, NULL, 'd' },
-                { "help",    0, NULL, 'h' },
-                { "version", 0, NULL, 'v' },
-            };
-
+        {
+            /* Long option, needs arg, flag, short option */
+            { "include", 1, NULL, 'i' },
+            { "exclude", 1, NULL, 'e' },
+            { "seed",    1, NULL, 's' },
+            { "ratio",   1, NULL, 'r' },
+            { "debug",   1, NULL, 'd' },
+            { "help",    0, NULL, 'h' },
+            { "version", 0, NULL, 'v' },
+        };
         int c = getopt_long(argc, argv, "i:e:s:r:dhv",
                             long_options, &option_index);
 #   else
@@ -108,25 +112,94 @@ int main(int argc, char *argv[])
     {
         printf("%s: missing argument\n", argv[0]);
         printf(MOREINFO, argv[0]);
-        return -1;
+        return EXIT_FAILURE;
     }
+
+    /* Preload libzzuf.so */
+    set_ld_preload(argv[0]);
 
     /* Create new argv */
     newargv = malloc((argc - optind + 1) * sizeof(char *));
     memcpy(newargv, argv + optind, (argc - optind) * sizeof(char *));
     newargv[argc - optind] = (char *)NULL;
 
-    /* Preload libzzuf.so */
-    set_ld_preload(argv[0]);
+    /* Install signal handler */
+    signal(SIGCHLD, sigchld_handler);
 
-    /* Call our process */
-    if(execvp(newargv[0], newargv))
+    /* Prepare communication pipe */
+    int pfd[2];
+    pid_t pid;
+    if(pipe(pfd) == -1)
     {
-        perror(newargv[0]);
-        return -1;
+        perror("pipe");
+        return EXIT_FAILURE;
     }
 
-    return 0;    
+    /* Fork and launch child */
+    pid = fork();
+    switch(pid)
+    {
+        case -1:
+            perror("fork");
+            return EXIT_FAILURE;
+        case 0:
+            /* We’re the child */
+            close(pfd[0]);
+            dup2(pfd[1], STDOUT_FILENO);
+            dup2(pfd[1], STDERR_FILENO);
+            close(pfd[1]);
+
+            /* Call our process */
+            if(execvp(newargv[0], newargv))
+            {
+                perror(newargv[0]);
+                return EXIT_FAILURE;
+            }
+            break;
+        default:
+            /* We’re the parent */
+            close(pfd[1]);
+    }
+
+    for(;;)
+    {
+        char buf[BUFSIZ];
+        struct timeval tv;
+        fd_set fdset;
+        int ret;
+
+        FD_ZERO(&fdset);
+        FD_SET(pfd[0], &fdset);
+        tv.tv_sec = 0;
+        tv.tv_usec = 10000;
+        ret = select(pfd[0] + 1, &fdset, NULL, NULL, &tv);
+        if(ret < 0)
+            break;
+        if(ret == 0)
+            continue;
+        if(!FD_ISSET(pfd[0], &fdset))
+            continue;
+        ret = read(pfd[0], buf, BUFSIZ - 1);
+        if(ret < 0)
+            break;
+        if(ret == 0)
+        {
+            if(exited)
+                break;
+            continue;
+        }
+        buf[ret + 1] = '\0';
+        fprintf(stdout, "%s", buf);
+    }
+
+    return EXIT_SUCCESS;    
+}
+
+static void sigchld_handler(int sig)
+{
+    pid_t pid;
+    pid = wait(NULL);
+    exited = 1;
 }
 
 static void set_ld_preload(char const *progpath)
