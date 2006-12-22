@@ -28,8 +28,9 @@
 #include <stdarg.h>
 #include <regex.h>
 
-#include "libzzuf.h"
 #include "debug.h"
+
+extern int _zzuf_debug;
 
 void zzuf_debug(const char *format, ...)
 {
