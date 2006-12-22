@@ -31,22 +31,34 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <errno.h>
 #include <sys/wait.h>
 
 #include "random.h"
 
-static void sigchld_handler(int);
+static void spawn_child(char **);
 static void set_ld_preload(char const *);
 static void version(void);
 #if defined(HAVE_GETOPT_H)
 static void usage(void);
 #endif
 
-int exited = 0;
+struct child_list
+{
+    pid_t pid;
+    int outfd, errfd, seed;
+}
+*child_list;
+int parallel = 1, child_count = 0;
+
+int seed = 0;
+int endseed = 1;
 
 int main(int argc, char *argv[])
 {
     char **newargv;
+    char *parser;
+    int i, j, quiet = 0;
 
 #if defined(HAVE_GETOPT_H)
     for(;;)
@@ -61,15 +73,17 @@ int main(int argc, char *argv[])
             { "exclude", 1, NULL, 'e' },
             { "seed",    1, NULL, 's' },
             { "ratio",   1, NULL, 'r' },
-            { "debug",   1, NULL, 'd' },
+            { "fork",    1, NULL, 'F' },
+            { "quiet",   0, NULL, 'q' },
+            { "debug",   0, NULL, 'd' },
             { "help",    0, NULL, 'h' },
             { "version", 0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "i:e:s:r:dhv",
+        int c = getopt_long(argc, argv, "i:e:s:r:F:qdhv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "i:e:s:r:dhv");
+        int c = getopt(argc, argv, "i:e:s:r:F:qdhv");
 #   endif
         if(c == -1)
             break;
@@ -83,10 +97,18 @@ int main(int argc, char *argv[])
             setenv("ZZUF_EXCLUDE", optarg, 1);
             break;
         case 's': /* --seed */
-            setenv("ZZUF_SEED", optarg, 1);
+            parser = strchr(optarg, ':');
+            seed = atoi(optarg);
+            endseed = parser ? atoi(parser + 1) : seed + 1;
             break;
         case 'r': /* --ratio */
             setenv("ZZUF_RATIO", optarg, 1);
+            break;
+        case 'F': /* --fork */
+            parallel = atoi(optarg) > 1 ? atoi(optarg) : 1;
+            break;
+        case 'q': /* --quiet */
+            quiet = 1;
             break;
         case 'd': /* --debug */
             setenv("ZZUF_DEBUG", "1", 1);
@@ -115,6 +137,16 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    /* Allocate memory for children handling */
+    child_list = malloc(parallel * sizeof(struct child_list));
+    for(i = 0; i < parallel; i++)
+    {
+        child_list[i].pid = 0;
+        child_list[i].outfd = -1;
+        child_list[i].errfd = -1;
+    }
+    child_count = 0;
+
     /* Preload libzzuf.so */
     set_ld_preload(argv[0]);
 
@@ -123,16 +155,132 @@ int main(int argc, char *argv[])
     memcpy(newargv, argv + optind, (argc - optind) * sizeof(char *));
     newargv[argc - optind] = (char *)NULL;
 
-    /* Install signal handler */
-    signal(SIGCHLD, sigchld_handler);
+    /* Handle children in our way */
+    signal(SIGCHLD, SIG_DFL);
+
+    /* Main loop */
+    while(child_count || seed < endseed)
+    {
+        struct timeval tv;
+        fd_set fdset;
+        int ret, maxfd = 0;
+
+        /* Spawn a new child, if necessary */
+        if(child_count < parallel && seed < endseed)
+            spawn_child(newargv);
+
+        /* Kill dead children */
+        for(i = 0; i < parallel; i++)
+        {
+            int status;
+            pid_t pid;
+
+            if(!child_list[i].pid)
+                continue;
+
+            if(child_list[i].outfd >= 0 || child_list[i].errfd >= 0)
+                continue;
+
+            pid = waitpid(child_list[i].pid, &status, WNOHANG);
+            if(pid <= 0)
+                continue;
+
+            if(WIFEXITED(status) && WEXITSTATUS(status))
+                fprintf(stderr, "%i: exit %i\n",
+                        child_list[i].seed, WEXITSTATUS(status));
+            else if(WIFSIGNALED(status))
+                fprintf(stderr, "%i: signal %i\n",
+                        child_list[i].seed, WTERMSIG(status));
+
+            child_list[i].pid = 0;
+            child_list[i].outfd = -1;
+            child_list[i].errfd = -1;
+            child_count--;
+        }
+        /* Read data from all sockets */
+        FD_ZERO(&fdset);
+        for(i = 0; i < parallel; i++)
+        {
+            if(!child_list[i].pid)
+                continue;
+
+            if(child_list[i].outfd >= 0)
+            {
+                FD_SET(child_list[i].outfd, &fdset);
+                if(child_list[i].outfd > maxfd)
+                    maxfd = child_list[i].outfd;
+            }
+
+            if(child_list[i].errfd >= 0)
+            {
+                FD_SET(child_list[i].errfd, &fdset);
+                if(child_list[i].errfd > maxfd)
+                    maxfd = child_list[i].errfd;
+            }
+        }
+        tv.tv_sec = 0;
+        tv.tv_usec = 1000;
+
+        ret = select(maxfd + 1, &fdset, NULL, NULL, &tv);
+        if(ret < 0)
+            perror("select");
+        if(ret <= 0)
+            continue;
+
+        for(i = 0, j = 0; i < parallel; i += j, j = (j + 1) & 1)
+        {
+            char buf[BUFSIZ];
+            int fd;
+
+            if(!child_list[i].pid)
+                continue;
+
+            fd = j ? child_list[i].outfd : child_list[i].errfd;
+
+            if(fd < 0 || !FD_ISSET(fd, &fdset))
+                continue;
+
+            ret = read(fd, buf, BUFSIZ - 1);
+            if(ret > 0)
+            {
+                if(!quiet)
+                {
+                    buf[ret] = '\0';
+                    fprintf(j ? stdout : stderr, "%s", buf);
+                }
+                continue;
+            }
+            else if(ret == 0)
+            {
+                close(fd);
+                if(j)
+                    child_list[i].outfd = -1;
+                else
+                    child_list[i].errfd = -1;
+            }
+        }
+    }
+
+    return EXIT_SUCCESS;    
+}
+
+static void spawn_child(char **argv)
+{
+    char buf[BUFSIZ];
+    int outfd[2], errfd[2];
+    pid_t pid;
+    int i;
+
+    /* Find an empty slot */
+    for(i = 0; i < parallel; i++)
+        if(child_list[i].pid == 0)
+            break;
 
     /* Prepare communication pipe */
-    int pfd[2];
-    pid_t pid;
-    if(pipe(pfd) == -1)
+    if(pipe(outfd) == -1 || pipe(errfd) == -1)
     {
         perror("pipe");
-        return EXIT_FAILURE;
+        return;
     }
 
     /* Fork and launch child */
@@ -141,65 +289,39 @@ int main(int argc, char *argv[])
     {
         case -1:
             perror("fork");
-            return EXIT_FAILURE;
+            return;
         case 0:
             /* We’re the child */
-            close(pfd[0]);
-            dup2(pfd[1], STDOUT_FILENO);
-            dup2(pfd[1], STDERR_FILENO);
-            close(pfd[1]);
+            close(outfd[0]);
+            close(errfd[0]);
+            dup2(outfd[1], STDOUT_FILENO);
+            dup2(errfd[1], STDERR_FILENO);
+            close(outfd[1]);
+            close(errfd[1]);
 
-            /* Call our process */
-            if(execvp(newargv[0], newargv))
+            /* Set environment variables */
+            sprintf(buf, "%i", seed);
+            setenv("ZZUF_SEED", buf, 1);
+
+            /* Run our process */
+            if(execvp(argv[0], argv))
             {
-                perror(newargv[0]);
-                return EXIT_FAILURE;
+                perror(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
         default:
-            /* We’re the parent */
-            close(pfd[1]);
-    }
-
-    for(;;)
-    {
-        char buf[BUFSIZ];
-        struct timeval tv;
-        fd_set fdset;
-        int ret;
-
-        FD_ZERO(&fdset);
-        FD_SET(pfd[0], &fdset);
-        tv.tv_sec = 0;
-        tv.tv_usec = 10000;
-        ret = select(pfd[0] + 1, &fdset, NULL, NULL, &tv);
-        if(ret < 0)
+            /* We’re the parent, acknowledge spawn */
+            close(outfd[1]);
+            close(errfd[1]);
+            child_list[i].pid = pid;
+            child_list[i].outfd = outfd[0];
+            child_list[i].errfd = errfd[0];
+            child_list[i].seed = seed;
+            child_count++;
+            seed++;
             break;
-        if(ret == 0)
-            continue;
-        if(!FD_ISSET(pfd[0], &fdset))
-            continue;
-        ret = read(pfd[0], buf, BUFSIZ - 1);
-        if(ret < 0)
-            break;
-        if(ret == 0)
-        {
-            if(exited)
-                break;
-            continue;
-        }
-        buf[ret + 1] = '\0';
-        fprintf(stdout, "%s", buf);
     }
-
-    return EXIT_SUCCESS;    
-}
-
-static void sigchld_handler(int sig)
-{
-    pid_t pid;
-    pid = wait(NULL);
-    exited = 1;
 }
 
 static void set_ld_preload(char const *progpath)
@@ -236,27 +358,33 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -vdh ] [ -i include ] [ -e exclude ]\n");
-    printf("                     [ -r ratio ] [ -s seed ] COMMAND [ARGS]...\n");
+    printf("Usage: zzuf [ -vqdh ] [ -r ratio ] [ -s seed[:stop] ] [ -F forks ]\n");
+    printf("                      [ -i include ] [ -e exclude ] COMMAND [ARGS]...\n");
     printf("Run COMMAND and randomly fuzz its input files.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
 #   ifdef HAVE_GETOPT_LONG
-    printf("  -i, --include <regex>  only fuzz files matching <regex>\n");
-    printf("  -e, --exclude <regex>  do not fuzz files matching <regex>\n");
-    printf("  -r, --ratio <ratio>    bit fuzzing ratio (default 0.004)\n");
-    printf("  -s, --seed <seed>      random seed (default 0)\n");
-    printf("  -d, --debug            print debug messages\n");
-    printf("  -h, --help             display this help and exit\n");
-    printf("  -v, --version          output version information and exit\n");
+    printf("  -i, --include <regex>    only fuzz files matching <regex>\n");
+    printf("  -e, --exclude <regex>    do not fuzz files matching <regex>\n");
+    printf("  -r, --ratio <ratio>      bit fuzzing ratio (default 0.004)\n");
+    printf("  -s, --seed <seed>        random seed (default 0)\n");
+    printf("      --seed <start:stop>  specify a seed range\n");
+    printf("  -F, --fork <count>       number of concurrent forks (default 1)\n");
+    printf("  -q, --quiet              do not print the fuzzed application's messages\n");
+    printf("  -d, --debug              print debug messages\n");
+    printf("  -h, --help               display this help and exit\n");
+    printf("  -v, --version            output version information and exit\n");
 #   else
-    printf("  -i <regex>  only fuzz files matching <regex>\n");
-    printf("  -e <regex>  do not fuzz files matching <regex>\n");
-    printf("  -r <ratio>  bit fuzzing ratio (default 0.004)\n");
-    printf("  -s <seed>   random seed (default 0)\n");
-    printf("  -d          print debug messages\n");
-    printf("  -h          display this help and exit\n");
-    printf("  -v          output version information and exit\n");
+    printf("  -i <regex>       only fuzz files matching <regex>\n");
+    printf("  -e <regex>       do not fuzz files matching <regex>\n");
+    printf("  -r <ratio>       bit fuzzing ratio (default 0.004)\n");
+    printf("  -s <seed>        random seed (default 0)\n");
+    printf("     <start:stop>  specify a seed range\n");
+    printf("  -F <count>       number of concurrent forks (default 1)\n");
+    printf("  -q               do not print the fuzzed application's messages\n");
+    printf("  -d               print debug messages\n");
+    printf("  -h               display this help and exit\n");
+    printf("  -v               output version information and exit\n");
 #   endif
     printf("\n");
     printf("Written by Sam Hocevar. Report bugs to <sam@zoy.org>.\n");
