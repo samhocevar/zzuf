@@ -429,27 +429,26 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -vqdh ] [ -r ratio ] [ -s seed[:stop] ] [ -F forks ]\n");
+    printf("Usage: zzuf [ -vqdh ] [ -r ratio ] [ -s seed[:stop] ] [ -F children ]\n");
+    printf("                      [ -B bytes ] [ -T seconds ]\n");
     printf("                      [ -i include ] [ -e exclude ] COMMAND [ARGS]...\n");
     printf("Run COMMAND and randomly fuzz its input files.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
 #   ifdef HAVE_GETOPT_LONG
-    printf("  -i, --include <regex>    only fuzz files matching <regex>\n");
-    printf("  -e, --exclude <regex>    do not fuzz files matching <regex>\n");
     printf("  -r, --ratio <ratio>      bit fuzzing ratio (default 0.004)\n");
     printf("  -s, --seed <seed>        random seed (default 0)\n");
     printf("      --seed <start:stop>  specify a seed range\n");
-    printf("  -F, --fork <count>       number of concurrent forks (default 1)\n");
+    printf("  -F, --fork <count>       number of concurrent children (default 1)\n");
     printf("  -B, --max-bytes <n>      kill children that output more than <n> bytes\n");
     printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
-    printf("  -q, --quiet              do not print the fuzzed application's messages\n");
+    printf("  -q, --quiet              do not print children's messages\n");
+    printf("  -i, --include <regex>    only fuzz files matching <regex>\n");
+    printf("  -e, --exclude <regex>    do not fuzz files matching <regex>\n");
     printf("  -d, --debug              print debug messages\n");
     printf("  -h, --help               display this help and exit\n");
     printf("  -v, --version            output version information and exit\n");
 #   else
-    printf("  -i <regex>       only fuzz files matching <regex>\n");
-    printf("  -e <regex>       do not fuzz files matching <regex>\n");
     printf("  -r <ratio>       bit fuzzing ratio (default 0.004)\n");
     printf("  -s <seed>        random seed (default 0)\n");
     printf("     <start:stop>  specify a seed range\n");
@@ -457,6 +456,8 @@ static void usage(void)
     printf("  -B <n>           kill children that output more than <n> bytes\n");
     printf("  -T <n>           kill children that run for more than <n> seconds\n");
     printf("  -q               do not print the fuzzed application's messages\n");
+    printf("  -i <regex>       only fuzz files matching <regex>\n");
+    printf("  -e <regex>       do not fuzz files matching <regex>\n");
     printf("  -d               print debug messages\n");
     printf("  -h               display this help and exit\n");
     printf("  -v               output version information and exit\n");
