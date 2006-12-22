@@ -10,15 +10,18 @@ zzuf \- multiple purpose fuzzer
 .I ratio
 ] [
 .B \-s
-.I seed[:stop]
-] [
-.B \-F
-.I children
+.I seed
+|
+.B \-s
+.I start:stop
 ]
 .PD 0
 .IP
 .PD
 [
+.B \-F
+.I children
+] [
 .B \-B
 .I bytes
 ] [
@@ -186,6 +189,17 @@ to reproduce the same behaviour without using
 .B % vlc fuzzy-movie.avi
 
 .fi
+Fuzz
+.BR mplayer 's
+input with seeds 0 to 9999, launching up to 3 simultaneous child processes
+and killing
+.BR mplayer
+if it takes more than one minute to read the file:
+.fn
+
+.B % zzuf -q -s 0:10000 -F 3 -T 60 -r 0.02 -i movie.avi mplayer movie.avi -- -benchmark -vo null -fps 1000
+
+.fi
 .RI
 .SH BUGS
 Only the most common file operations are implemented as of now:
@@ -194,7 +208,7 @@ Only the most common file operations are implemented as of now:
 .BR fopen (),
 .BR fseek (),
 etc. One important unimplemented function is
-.BR fopen ().
+.BR fscanf ().
 
 Network fuzzing is not implemented. It is not yet possible to insert or
 drop bytes from the input, to fuzz according to the file format, or to do

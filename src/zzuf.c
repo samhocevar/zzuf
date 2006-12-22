@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
             if(child_list[i].status == STATUS_RUNNING
                 && maxbytes >= 0 && child_list[i].bytes > maxbytes)
             {
-                fprintf(stderr, "%i: exceeded byte count, sending SIGTERM\n",
+                fprintf(stderr, "seed %i: data exceeded, sending SIGTERM\n",
                         child_list[i].seed);
                 kill(child_list[i].pid, SIGTERM);
                 child_list[i].date = now;
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
                 && maxtime >= 0.0
                 && difftime(now, child_list[i].date) > maxtime)
             {
-                fprintf(stderr, "%i: time exceeded, sending SIGTERM\n",
+                fprintf(stderr, "seed %i: time exceeded, sending SIGTERM\n",
                         child_list[i].seed);
                 kill(child_list[i].pid, SIGTERM);
                 child_list[i].date = now;
@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
             if(child_list[i].status == STATUS_SIGTERM
                 && difftime(now, child_list[i].date) > 2.0)
             {
-                fprintf(stderr, "%i: not responding, sending SIGKILL\n",
+                fprintf(stderr, "seed %i: not responding, sending SIGKILL\n",
                         child_list[i].seed);
                 kill(child_list[i].pid, SIGKILL);
                 child_list[i].status = STATUS_SIGKILL;
@@ -254,10 +254,10 @@ int main(int argc, char *argv[])
                 continue;
 
             if(WIFEXITED(status) && WEXITSTATUS(status))
-                fprintf(stderr, "%i: exit %i\n",
+                fprintf(stderr, "seed %i: exit %i\n",
                         child_list[i].seed, WEXITSTATUS(status));
             else if(WIFSIGNALED(status))
-                fprintf(stderr, "%i: signal %i\n",
+                fprintf(stderr, "seed %i: signal %i\n",
                         child_list[i].seed, WTERMSIG(status));
 
             if(child_list[i].outfd >= 0)
@@ -425,8 +425,8 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -vqdh ] [ -r ratio ] [ -s seed[:stop] ] [ -F children ]\n");
-    printf("                      [ -B bytes ] [ -T seconds ]\n");
+    printf("Usage: zzuf [ -vqdh ] [ -r ratio ] [ -s seed | -s start:stop]\n");
+    printf("                      [ -F children ] [ -B bytes ] [ -T seconds ]\n");
     printf("                      [ -i include ] [ -e exclude ] COMMAND [ARGS]...\n");
     printf("Run COMMAND and randomly fuzz its input files.\n");
     printf("\n");
