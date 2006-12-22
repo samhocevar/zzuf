@@ -308,11 +308,7 @@ int main(int argc, char *argv[])
                 /* We got data */
                 child_list[i].bytes += ret;
                 if(!quiet)
-                {
-                    buf[ret] = '\0';
-                    fprintf(j ? stdout : stderr, "%s", buf);
-                }
-                continue;
+                    fwrite(buf, ret, 1, j ? stdout : stderr);
             }
             else if(ret == 0)
             {
