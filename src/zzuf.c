@@ -32,6 +32,8 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/time.h>
+#include <time.h>
 #include <sys/wait.h>
 
 #include "random.h"
@@ -43,10 +45,22 @@ static void version(void);
 static void usage(void);
 #endif
 
+enum status
+{
+    STATUS_FREE,
+    STATUS_RUNNING,
+    STATUS_SIGTERM,
+    STATUS_SIGKILL,
+    STATUS_EOF,
+};
+
 struct child_list
 {
+    enum status status;
     pid_t pid;
-    int outfd, errfd, seed;
+    int outfd, errfd;
+    int bytes, seed;
+    time_t date;
 }
 *child_list;
 int parallel = 1, child_count = 0;
@@ -54,11 +68,23 @@ int parallel = 1, child_count = 0;
 int seed = 0;
 int endseed = 1;
 
+#define ZZUF_FD_SET(fd, p_fdset, maxfd) \
+    if(fd >= 0) \
+    { \
+        FD_SET(fd, p_fdset); \
+        if(fd > maxfd) \
+            maxfd = fd; \
+    }
+
+#define ZZUF_FD_ISSET(fd, p_fdset) \
+    ((fd >= 0) && (FD_ISSET(fd, p_fdset)))
+
 int main(int argc, char *argv[])
 {
     char **newargv;
     char *parser;
-    int i, j, quiet = 0;
+    int i, j, quiet = 0, maxbytes = -1;
+    double maxtime = -1.0;
 
 #if defined(HAVE_GETOPT_H)
     for(;;)
@@ -69,21 +95,23 @@ int main(int argc, char *argv[])
         static struct option long_options[] =
         {
             /* Long option, needs arg, flag, short option */
-            { "include", 1, NULL, 'i' },
-            { "exclude", 1, NULL, 'e' },
-            { "seed",    1, NULL, 's' },
-            { "ratio",   1, NULL, 'r' },
-            { "fork",    1, NULL, 'F' },
-            { "quiet",   0, NULL, 'q' },
-            { "debug",   0, NULL, 'd' },
-            { "help",    0, NULL, 'h' },
-            { "version", 0, NULL, 'v' },
+            { "include",   1, NULL, 'i' },
+            { "exclude",   1, NULL, 'e' },
+            { "seed",      1, NULL, 's' },
+            { "ratio",     1, NULL, 'r' },
+            { "fork",      1, NULL, 'F' },
+            { "max-bytes", 1, NULL, 'B' },
+            { "max-time",  1, NULL, 'T' },
+            { "quiet",     0, NULL, 'q' },
+            { "debug",     0, NULL, 'd' },
+            { "help",      0, NULL, 'h' },
+            { "version",   0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "i:e:s:r:F:qdhv",
+        int c = getopt_long(argc, argv, "i:e:s:r:F:B:T:qdhv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "i:e:s:r:F:qdhv");
+        int c = getopt(argc, argv, "i:e:s:r:F:B:T:qdhv");
 #   endif
         if(c == -1)
             break;
@@ -106,6 +134,12 @@ int main(int argc, char *argv[])
             break;
         case 'F': /* --fork */
             parallel = atoi(optarg) > 1 ? atoi(optarg) : 1;
+            break;
+        case 'B': /* --max-bytes */
+            maxbytes = atoi(optarg);
+            break;
+        case 'T': /* --max-time */
+            maxtime = atof(optarg);
             break;
         case 'q': /* --quiet */
             quiet = 1;
@@ -140,11 +174,7 @@ int main(int argc, char *argv[])
     /* Allocate memory for children handling */
     child_list = malloc(parallel * sizeof(struct child_list));
     for(i = 0; i < parallel; i++)
-    {
-        child_list[i].pid = 0;
-        child_list[i].outfd = -1;
-        child_list[i].errfd = -1;
-    }
+        child_list[i].status = STATUS_FREE;
     child_count = 0;
 
     /* Preload libzzuf.so */
@@ -162,6 +192,7 @@ int main(int argc, char *argv[])
     while(child_count || seed < endseed)
     {
         struct timeval tv;
+        time_t now = time(NULL);
         fd_set fdset;
         int ret, maxfd = 0;
 
@@ -169,16 +200,53 @@ int main(int argc, char *argv[])
         if(child_count < parallel && seed < endseed)
             spawn_child(newargv);
 
-        /* Kill dead children */
+        /* Terminate children if necessary */
+        for(i = 0; i < parallel; i++)
+        {
+            if(child_list[i].status == STATUS_RUNNING
+                && maxbytes >= 0 && child_list[i].bytes > maxbytes)
+            {
+                fprintf(stderr, "%i: exceeded byte count, sending SIGTERM\n",
+                        child_list[i].seed);
+                kill(child_list[i].pid, SIGTERM);
+                child_list[i].date = now;
+                child_list[i].status = STATUS_SIGTERM;
+            }
+
+            if(child_list[i].status == STATUS_RUNNING
+                && maxtime >= 0.0
+                && difftime(now, child_list[i].date) > maxtime)
+            {
+                fprintf(stderr, "%i: time exceeded, sending SIGTERM\n",
+                        child_list[i].seed);
+                kill(child_list[i].pid, SIGTERM);
+                child_list[i].date = now;
+                child_list[i].status = STATUS_SIGTERM;
+            }
+        }
+
+        /* Kill children if necessary */
+        for(i = 0; i < parallel; i++)
+        {
+            if(child_list[i].status == STATUS_SIGTERM
+                && difftime(now, child_list[i].date) > 2.0)
+            {
+                fprintf(stderr, "%i: not responding, sending SIGKILL\n",
+                        child_list[i].seed);
+                kill(child_list[i].pid, SIGKILL);
+                child_list[i].status = STATUS_SIGKILL;
+            }
+        }
+
+        /* Collect dead children */
         for(i = 0; i < parallel; i++)
         {
             int status;
             pid_t pid;
 
-            if(!child_list[i].pid)
-                continue;
-
-            if(child_list[i].outfd >= 0 || child_list[i].errfd >= 0)
+            if(child_list[i].status != STATUS_SIGKILL
+                && child_list[i].status != STATUS_SIGTERM
+                && child_list[i].status != STATUS_EOF)
                 continue;
 
             pid = waitpid(child_list[i].pid, &status, WNOHANG);
@@ -192,31 +260,25 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "%i: signal %i\n",
                         child_list[i].seed, WTERMSIG(status));
 
-            child_list[i].pid = 0;
-            child_list[i].outfd = -1;
-            child_list[i].errfd = -1;
+            if(child_list[i].outfd >= 0)
+                close(child_list[i].outfd);
+
+            if(child_list[i].errfd >= 0)
+                close(child_list[i].errfd);
+
+            child_list[i].status = STATUS_FREE;
             child_count--;
         }
+
         /* Read data from all sockets */
         FD_ZERO(&fdset);
         for(i = 0; i < parallel; i++)
         {
-            if(!child_list[i].pid)
+            if(child_list[i].status != STATUS_RUNNING)
                 continue;
 
-            if(child_list[i].outfd >= 0)
-            {
-                FD_SET(child_list[i].outfd, &fdset);
-                if(child_list[i].outfd > maxfd)
-                    maxfd = child_list[i].outfd;
-            }
-
-            if(child_list[i].errfd >= 0)
-            {
-                FD_SET(child_list[i].errfd, &fdset);
-                if(child_list[i].errfd > maxfd)
-                    maxfd = child_list[i].errfd;
-            }
+            ZZUF_FD_SET(child_list[i].outfd, &fdset, maxfd);
+            ZZUF_FD_SET(child_list[i].errfd, &fdset, maxfd);
         }
         tv.tv_sec = 0;
         tv.tv_usec = 1000;
@@ -232,17 +294,19 @@ int main(int argc, char *argv[])
             char buf[BUFSIZ];
             int fd;
 
-            if(!child_list[i].pid)
+            if(child_list[i].status != STATUS_RUNNING)
                 continue;
 
             fd = j ? child_list[i].outfd : child_list[i].errfd;
 
-            if(fd < 0 || !FD_ISSET(fd, &fdset))
+            if(!ZZUF_FD_ISSET(fd, &fdset))
                 continue;
 
             ret = read(fd, buf, BUFSIZ - 1);
             if(ret > 0)
             {
+                /* We got data */
+                child_list[i].bytes += ret;
                 if(!quiet)
                 {
                     buf[ret] = '\0';
@@ -252,11 +316,15 @@ int main(int argc, char *argv[])
             }
             else if(ret == 0)
             {
+                /* End of file reached */
                 close(fd);
                 if(j)
                     child_list[i].outfd = -1;
                 else
                     child_list[i].errfd = -1;
+
+                if(child_list[i].outfd == -1 && child_list[i].errfd == -1)
+                    child_list[i].status = STATUS_EOF;
             }
         }
     }
@@ -273,7 +341,7 @@ static void spawn_child(char **argv)
 
     /* Find an empty slot */
     for(i = 0; i < parallel; i++)
-        if(child_list[i].pid == 0)
+        if(child_list[i].status == STATUS_FREE)
             break;
 
     /* Prepare communication pipe */
@@ -314,10 +382,13 @@ static void spawn_child(char **argv)
             /* We’re the parent, acknowledge spawn */
             close(outfd[1]);
             close(errfd[1]);
+            child_list[i].date = time(NULL);
             child_list[i].pid = pid;
             child_list[i].outfd = outfd[0];
             child_list[i].errfd = errfd[0];
+            child_list[i].bytes = 0;
             child_list[i].seed = seed;
+            child_list[i].status = STATUS_RUNNING;
             child_count++;
             seed++;
             break;
@@ -370,6 +441,8 @@ static void usage(void)
     printf("  -s, --seed <seed>        random seed (default 0)\n");
     printf("      --seed <start:stop>  specify a seed range\n");
     printf("  -F, --fork <count>       number of concurrent forks (default 1)\n");
+    printf("  -B, --max-bytes <n>      kill children that output more than <n> bytes\n");
+    printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
     printf("  -q, --quiet              do not print the fuzzed application's messages\n");
     printf("  -d, --debug              print debug messages\n");
     printf("  -h, --help               display this help and exit\n");
@@ -381,6 +454,8 @@ static void usage(void)
     printf("  -s <seed>        random seed (default 0)\n");
     printf("     <start:stop>  specify a seed range\n");
     printf("  -F <count>       number of concurrent forks (default 1)\n");
+    printf("  -B <n>           kill children that output more than <n> bytes\n");
+    printf("  -T <n>           kill children that run for more than <n> seconds\n");
     printf("  -q               do not print the fuzzed application's messages\n");
     printf("  -d               print debug messages\n");
     printf("  -h               display this help and exit\n");
