@@ -30,10 +30,11 @@ check()
 }
 
 cleanup() {
-    rm -f /tmp/zzuf-zero-$$
-    rm -f /tmp/zzuf-random-$$
-    rm -f /tmp/zzuf-one-$$
-    exit 0
+    if [ "$FAILED" = 0 ]; then
+        rm -f /tmp/zzuf-zero-$$
+        rm -f /tmp/zzuf-random-$$
+        rm -f /tmp/zzuf-text-$$
+    fi
 }
 
 trap "echo ''; echo 'Aborted.'; cleanup; exit 0" 1 2 15
@@ -69,12 +70,15 @@ for file in /tmp/zzuf-text-$$ /tmp/zzuf-zero-$$ /tmp/zzuf-random-$$; do
         echo ""
     done
 done
+cleanup
 
 if [ "$FAILED" != 0 ]; then
-    echo "$FAILED tests failed out of $TESTED"
+    echo "$FAILED tests failed out of $TESTED. Files preserved:"
+    echo "  /tmp/zzuf-zero-$$"
+    echo "  /tmp/zzuf-random-$$"
+    echo "  /tmp/zzuf-text-$$"
     exit 1
 fi
 echo "All $TESTED tests OK."
-cleanup
 exit 0
 
