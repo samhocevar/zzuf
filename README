@@ -32,15 +32,10 @@ the behaviour without using zzuf:
   # zzuf -s 87423 -r 0.01 cp movie.avi fuzzy-movie.avi
   # vlc fuzzy-movie.avi
 
-Fuzz the input of MPlayer and backup movies that caused it to crash:
+Fuzz mplayer's input with seeds 0 to 9999, launching up to 3 simultaneous
+child processes and killing mplayer if it takes more than one minute to read
+the file:
 
-  # for seed in $(seq -w 0 9999); do
-        zzuf -s ${seed} -r 0.01 -i 'movie[.]avi' mplayer -- \
-                   -benchmark -vo null -fps 1000 movie.avi >/dev/null 2>&1
-        RET=$?
-        if [ $RET != 0 ]; then
-            echo "seed ${seed}: exit $RET"
-            zzuf -s ${seed} -r 0.05 cp movie.avi movie-crashed-${seed}.avi
-        fi
-    done
+  # zzuf -q -s 0:10000 -F 3 -T 60 -r 0.02 -i movie.avi \
+         mplayer movie.avi -- -benchmark -vo null -fps 1000
 
