@@ -1,0 +1,206 @@
+.TH zzuf 1 "2006-12-22" "zzuf"
+.SH NAME
+zzuf \- multiple purpose fuzzer
+.SH SYNOPSIS
+.B zzuf
+[
+.B \-vqdh
+] [
+.B \-r
+.I ratio
+] [
+.B \-s
+.I seed[:stop]
+] [
+.B \-F
+.I children
+]
+.PD 0
+.IP
+.PD
+[
+.B \-B
+.I bytes
+] [
+.B \-T
+.I seconds
+]
+.PD 0
+.IP
+.PD
+[
+.B \-i
+.I include
+] [
+.B \-e
+.I exclude
+]
+.I COMMAND [ARGS]...
+.RI
+.SH DESCRIPTION
+.B Zzuf
+is a transparent application input fuzzer. It works by intercepting
+file operations and changing random bits in the program's input.
+.B Zzuf's
+behaviour is deterministic, making it easy to reproduce bugs.
+.RI
+.SH USAGE
+.B Zzuf
+will run an application specified on its command line, one or several times,
+with optional arguments, and will report the application's behaviour on
+the standard output.
+
+If you want to specify arguments for your application, put a
+.B \-\-
+marker before them on the command line, or
+.B zzuf
+will try to interpret them as arguments for itself.
+.RI
+.SH OPTIONS
+.TP
+.B \-r, \-\-ratio <ratio>
+Specify the amount of bits that will be randomly fuzzed. A value of 0
+will not fuzz anything. A value of 0.05 will fuzz 5% of the open files'
+bits. A value of 1.0 or more will fuzz all the bytes, theoretically making
+the input files undiscernible from random data. The default fuzzing ratio
+is 0.004 (fuzz 0.4% of the files' bits).
+.TP
+.B \-s, \-\-seed <seed>
+.PD 0
+.TP
+.B \-s, \-\-seed <start:stop>
+.PD
+Specify the random seed to use for fuzzing, or an interval of random seeds.
+Running
+.B zzuf
+twice with the same random seed will fuzz the files exactly the same way,
+even with a different target application. The purpose of this is to use
+simple utilities such as
+.B cat
+or
+.B cp
+to generate a file that causes the target application to crash.
+
+If an interval is specified,
+.B zzuf
+will run the application several times, each time with a different seed, and
+report the behaviour of each run.
+.TP
+.B \-F, \-\-fork <children>
+Specify the number of simultaneous children that can be run. This option is
+only useful if the
+.B \-s
+flag is used with an interval argument.
+.TP
+.B \-B, \-\-max\-bytes <n>
+Automatically terminate child processes that output more than
+.B <n>
+bytes on the standard output and standard error channels. This is useful to
+detect infinite loops.
+.TP
+.B \-T, \-\-max\-time <n>
+Automatically terminate child processes that run for more than
+.B <n>
+seconds. This is useful to detect infinite loops or processes stuck in other
+situations.
+.TP
+.B \-q, \-\-quiet
+Hide the output of the fuzzed application. This is useful if the application
+is very verbose but only its exit code is really useful to you.
+.TP
+.B \-i, \-\-include <regex>
+Only fuzz files whose name matches the
+.B <regex>
+regular expression. Use this for instance if your application reads
+configuration files in many places and you do not want them to be fuzzed.
+.TP
+.B \-e, \-\-exclude <regex>
+Do not fuzz files whose name matches the
+.B <regex>
+regular expression. This option supersedes anything that is specified by the
+.B \-\-exclude
+flag. Use this for instance if you do not know for sure what files your
+application is going to read, but do not want it to fuzz files in the
+.B /etc
+directory.
+.TP
+.B \-d, \-\-debug
+Activate the display of debug messages.
+.TP
+.B \-h, \-\-help
+Display a short help message and exit.
+.TP
+.B \-v, \-\-version
+Output version information and exit.
+.RI
+.SH EXAMPLES
+Fuzz the input of the
+.B cat
+program using default settings:
+.nf
+
+.B % zzuf cat /etc/motd
+
+.fi
+Fuzz 1% of the input bits of the
+.B cat
+program using seed 94324:
+.nf
+
+.B % zzuf -s 94324 -r 0.01 cat /etc/motd
+
+.fi
+Fuzz the input of the
+.B convert
+program, using file
+.B foo.jpeg
+as the original input and restricting fuzzing to filenames matching the
+regular expression
+.B "foo[.]jpeg"
+(because
+.B convert
+will also open its own configuration files and we do not want
+.B zzuf
+to fuzz them):
+.nf
+
+.B % zzuf -i "foo[.]jpeg" convert -- foo.jpeg -format tga /dev/null
+
+.fi
+Fuzz the input of
+.BR vlc ,
+using file
+.B movie.avi
+as the original input, and generate
+.B fuzzy-movie.avi
+which is a file that can be fed to
+.B vlc
+to reproduce the same behaviour without using
+.BR zzuf :
+.fn
+
+.B % zzuf -s 87423 -r 0.01 vlc movie.avi
+
+.B % zzuf -s 87423 -r 0.01 cp movie.avi fuzzy-movie.avi
+
+.B % vlc fuzzy-movie.avi
+
+.fi
+.RI
+.SH BUGS
+Only the most common file operations are implemented as of now:
+.BR open (),
+.BR read (),
+.BR fopen (),
+.BR fseek (),
+etc. One important unimplemented function is
+.BR fopen ().
+
+Network fuzzing is not implemented. It is not yet possible to insert or
+drop bytes from the input, to fuzz according to the file format, or to do
+all these complicated operations. They are planned, though.
+.RI
+.SH AUTHOR
+.B Zzuf
+and this manual page were written by Sam Hocevar <sam@zoy.org>. There is a
+webpage available at http://sam.zoy.org/zzuf/
