@@ -1,0 +1,10 @@
+$Id$
+
+Changes to 0.1
+
+ * initial release
+ * only works on Linux
+ * stdio support: fopen, fopen64, fseek, fread, getc, fgetc, fgets, ungetc,
+   fclose, getline, getdelim, __getdelim
+ * fd support: open, open64, read, lseek, lseek64, close
+ * fuzzing modes: toggle random bits
