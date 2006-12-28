@@ -1,0 +1,49 @@
+------------------------------------------------------------------------
+r4 | sam | 2006-12-14 16:55:18 +0100 (Thu, 14 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk
+   M /trunk/configure.ac
+   M /trunk/src
+   M /trunk/src/Makefile.am
+   A /trunk/src/libzzuf.c
+
+  * First try at libzzuf.
+
+------------------------------------------------------------------------
+r3 | sam | 2006-12-14 15:25:10 +0100 (Thu, 14 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Oops, typo.
+
+------------------------------------------------------------------------
+r2 | sam | 2006-12-14 15:23:07 +0100 (Thu, 14 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/Makefile.am
+   A /trunk/src/random.c
+   A /trunk/src/random.h
+   M /trunk/src/zzuf.c
+
+  * Easy POC code. We need some LD_PRELOAD shit instead.
+
+------------------------------------------------------------------------
+r1 | sam | 2006-12-13 21:17:27 +0100 (Wed, 13 Dec 2006) | 2 lines
+Changed paths:
+   A /branches
+   A /tags
+   A /trunk
+   A /trunk/COPYING
+   A /trunk/Makefile.am
+   A /trunk/NEWS
+   A /trunk/README
+   A /trunk/TODO
+   A /trunk/bootstrap
+   A /trunk/configure.ac
+   A /trunk/src
+   A /trunk/src/Makefile.am
+   A /trunk/src/zzuf.c
+
+  * Initial tree.
+
+------------------------------------------------------------------------
