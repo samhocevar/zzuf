@@ -30,14 +30,14 @@
 
 #include "debug.h"
 
-extern int _zzuf_debug;
+extern int _zz_hasdebug;
 
-void zzuf_debug(const char *format, ...)
+void _zz_debug(const char *format, ...)
 {
     va_list args;
     int saved_errno;
 
-    if(!_zzuf_debug)
+    if(!_zz_hasdebug)
         return;
 
     saved_errno = errno;

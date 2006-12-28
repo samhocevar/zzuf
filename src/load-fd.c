@@ -50,7 +50,7 @@ static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
 static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
 static int     (*close_orig)   (int fd);
 
-void zzuf_load_fd(void)
+void _zz_load_fd(void)
 {
     LOADSYM(open);
     LOADSYM(open64);
@@ -64,7 +64,7 @@ void zzuf_load_fd(void)
     do \
     { \
         int mode = 0; \
-        if(!_zzuf_ready) \
+        if(!_zz_ready) \
             LOADSYM(fn); \
         if(oflag & O_CREAT) \
         { \
@@ -78,16 +78,16 @@ void zzuf_load_fd(void)
         { \
             ret = ORIG(fn)(file, oflag); \
         } \
-        if(!_zzuf_ready) \
+        if(!_zz_ready) \
             return ret; \
         if(ret >= 0 \
             && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY)) \
         { \
-            if(_zzuf_include && \
-                regexec(_zzuf_include, file, 0, NULL, 0) == REG_NOMATCH) \
+            if(_zz_include && \
+                regexec(_zz_include, file, 0, NULL, 0) == REG_NOMATCH) \
                 /* not included: ignore */ ; \
-            else if(_zzuf_exclude && \
-                    regexec(_zzuf_exclude, file, 0, NULL, 0) != REG_NOMATCH) \
+            else if(_zz_exclude && \
+                    regexec(_zz_exclude, file, 0, NULL, 0) != REG_NOMATCH) \
                 /* excluded: ignore */ ; \
             else \
             { \
@@ -96,7 +96,7 @@ void zzuf_load_fd(void)
                           file, oflag, mode, ret); \
                 else \
                     debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
-                zfd_manage(ret); \
+                zfd_register(ret); \
             } \
         } \
     } while(0)
@@ -115,16 +115,16 @@ ssize_t read(int fd, void *buf, size_t count)
 {
     int ret;
 
-    if(!_zzuf_ready)
+    if(!_zz_ready)
         LOADSYM(read);
     ret = read_orig(fd, buf, count);
-    if(!_zzuf_ready || !zfd_ismanaged(fd))
+    if(!_zz_ready || !zfd_ismanaged(fd))
         return ret;
 
     debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
     if(ret > 0)
     {
-        zzuf_fuzz(fd, buf, ret);
+        _zz_fuzz(fd, buf, ret);
         zfd_addpos(fd, ret);
     }
 
@@ -137,10 +137,10 @@ ssize_t read(int fd, void *buf, size_t count)
 
 #define LSEEK(fn, off_t) \
     do { \
-        if(!_zzuf_ready) \
+        if(!_zz_ready) \
             LOADSYM(fn); \
         ret = ORIG(fn)(fd, offset, whence); \
-        if(!_zzuf_ready || !zfd_ismanaged(fd)) \
+        if(!_zz_ready || !zfd_ismanaged(fd)) \
             return ret; \
         debug(STR(fn)"(%i, %lli, %i) = %lli", \
               fd, (long long int)offset, whence, (long long int)ret); \
@@ -166,14 +166,14 @@ int close(int fd)
 {
     int ret;
 
-    if(!_zzuf_ready)
+    if(!_zz_ready)
         LOADSYM(close);
     ret = close_orig(fd);
-    if(!_zzuf_ready || !zfd_ismanaged(fd))
+    if(!_zz_ready || !zfd_ismanaged(fd))
         return ret;
 
     debug("close(%i) = %i", fd, ret);
-    zfd_unmanage(fd);
+    zfd_unregister(fd);
 
     return ret;
 }

@@ -16,8 +16,8 @@
  *  debug.h: debugging support
  */
 
-extern void zzuf_debug(const char *format, ...)
+extern void _zz_debug(const char *format, ...)
        __attribute__((__format__(__printf__, 1, 2)));
 
-#define debug zzuf_debug
+#define debug _zz_debug
 

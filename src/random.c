@@ -27,12 +27,12 @@
 
 #include "random.h"
 
-void zzuf_srand(uint32_t seed)
+void _zz_srand(uint32_t seed)
 {
     srand(seed ^ 0x12345678);
 }
 
-uint32_t zzuf_rand(uint32_t max)
+uint32_t _zz_rand(uint32_t max)
 {
     if(max <= RAND_MAX)
         return rand() % max;

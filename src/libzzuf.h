@@ -29,21 +29,23 @@ struct fuzz
 };
 
 /* Internal variables */
-extern int       _zzuf_ready;
-extern int       _zzuf_debug;
-extern int       _zzuf_seed;
-extern float     _zzuf_ratio;
-extern regex_t * _zzuf_include;
-extern regex_t * _zzuf_exclude;
+extern int       _zz_ready;
+extern int       _zz_hasdebug;
+extern int       _zz_seed;
+extern float     _zz_ratio;
+extern regex_t * _zz_include;
+extern regex_t * _zz_exclude;
 
 /* Library initialisation shit */
-extern void zzuf_init(void) __attribute__((constructor));
-extern void zzuf_fini(void) __attribute__((destructor));
+extern void _zz_init(void) __attribute__((constructor));
+extern void _zz_fini(void) __attribute__((destructor));
 
 /* File descriptor handling */
+extern void zfd_init(void);
+extern void zfd_fini(void);
 extern int zfd_ismanaged(int);
-extern void zfd_manage(int);
-extern void zfd_unmanage(int);
+extern void zfd_register(int);
+extern void zfd_unregister(int);
 extern long int zfd_getpos(int);
 extern void zfd_setpos(int, long int);
 extern void zfd_addpos(int, long int);

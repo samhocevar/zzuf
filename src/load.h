@@ -26,6 +26,6 @@
             abort(); \
     } while(0)
 
-extern void zzuf_load_fd(void);
-extern void zzuf_load_stream(void);
+extern void _zz_load_fd(void);
+extern void _zz_load_stream(void);
 

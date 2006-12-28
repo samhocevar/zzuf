@@ -16,5 +16,5 @@
  *  fuzz.h: fuzz functions
  */
 
-extern void zzuf_fuzz(int, uint8_t *, uint64_t);
+extern void _zz_fuzz(int, uint8_t *, uint64_t);
 
