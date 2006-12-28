@@ -80,7 +80,7 @@ void _zz_init(void)
         regcomp(_zz_exclude, tmp, 0);
     }
 
-    zfd_init();
+    _zz_fd_init();
 
     _zz_load_fd();
     _zz_load_stream();
@@ -93,11 +93,11 @@ void _zz_init(void)
 /* Deinitialisation */
 void _zz_fini(void)
 {
-    zfd_fini();
+    _zz_fd_fini();
 }
 
 /* File descriptor stuff */
-struct files
+static struct files
 {
     int managed;
     uint64_t seed;
@@ -106,12 +106,10 @@ struct files
     struct fuzz fuzz;
 }
 *files;
+static int *fds;
+static int maxfd, nfiles;
 
-int *fds;
-
-int maxfd, nfiles;
-
-void zfd_init(void)
+void _zz_fd_init(void)
 {
     files = NULL;
     nfiles = 0;
@@ -122,7 +120,7 @@ void zfd_init(void)
         fds[maxfd] = -1;
 }
 
-void zfd_fini(void)
+void _zz_fd_fini(void)
 {
     int i;
 
@@ -139,7 +137,7 @@ void zfd_fini(void)
     free(fds);
 }
 
-int zfd_ismanaged(int fd)
+int _zz_ismanaged(int fd)
 {
     if(fd < 0 || fd >= maxfd || fds[fd] == -1)
         return 0;
@@ -147,7 +145,7 @@ int zfd_ismanaged(int fd)
     return 1;
 }
 
-void zfd_register(int fd)
+void _zz_register(int fd)
 {
     int i;
 
@@ -182,7 +180,7 @@ void zfd_register(int fd)
     fds[fd] = i;
 }
 
-void zfd_unregister(int fd)
+void _zz_unregister(int fd)
 {
     if(fd < 0 || fd >= maxfd || fds[fd] == -1)
         return;
@@ -193,7 +191,7 @@ void zfd_unregister(int fd)
     fds[fd] = -1;
 }
 
-long int zfd_getpos(int fd)
+long int _zz_getpos(int fd)
 {
     if(fd < 0 || fd >= maxfd || fds[fd] == -1)
         return 0;
@@ -201,7 +199,7 @@ long int zfd_getpos(int fd)
     return files[fds[fd]].pos;
 }
 
-void zfd_setpos(int fd, long int pos)
+void _zz_setpos(int fd, long int pos)
 {
     if(fd < 0 || fd >= maxfd || fds[fd] == -1)
         return;
@@ -209,7 +207,7 @@ void zfd_setpos(int fd, long int pos)
     files[fds[fd]].pos = pos;
 }
 
-void zfd_addpos(int fd, long int off)
+void _zz_addpos(int fd, long int off)
 {
     if(fd < 0 || fd >= maxfd || fds[fd] == -1)
         return;
@@ -217,7 +215,7 @@ void zfd_addpos(int fd, long int off)
     files[fds[fd]].pos += off;
 }
 
-struct fuzz *zfd_getfuzz(int fd)
+struct fuzz *_zz_getfuzz(int fd)
 {
     if(fd < 0 || fd >= maxfd || fds[fd] == -1)
         return NULL;

@@ -96,7 +96,7 @@ void _zz_load_fd(void)
                           file, oflag, mode, ret); \
                 else \
                     debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
-                zfd_register(ret); \
+                _zz_register(ret); \
             } \
         } \
     } while(0)
@@ -118,18 +118,18 @@ ssize_t read(int fd, void *buf, size_t count)
     if(!_zz_ready)
         LOADSYM(read);
     ret = read_orig(fd, buf, count);
-    if(!_zz_ready || !zfd_ismanaged(fd))
+    if(!_zz_ready || !_zz_ismanaged(fd))
         return ret;
 
     debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
     if(ret > 0)
     {
         _zz_fuzz(fd, buf, ret);
-        zfd_addpos(fd, ret);
+        _zz_addpos(fd, ret);
     }
 
     /* Sanity check, can be OK though (for instance with a character device) */
-    if(lseek64_orig(fd, 0, SEEK_CUR) != zfd_getpos(fd))
+    if(lseek64_orig(fd, 0, SEEK_CUR) != _zz_getpos(fd))
         debug("warning: offset inconsistency");
 
     return ret;
@@ -140,12 +140,12 @@ ssize_t read(int fd, void *buf, size_t count)
         if(!_zz_ready) \
             LOADSYM(fn); \
         ret = ORIG(fn)(fd, offset, whence); \
-        if(!_zz_ready || !zfd_ismanaged(fd)) \
+        if(!_zz_ready || !_zz_ismanaged(fd)) \
             return ret; \
         debug(STR(fn)"(%i, %lli, %i) = %lli", \
               fd, (long long int)offset, whence, (long long int)ret); \
         if(ret != (off_t)-1) \
-            zfd_setpos(fd, ret); \
+            _zz_setpos(fd, ret); \
     } while(0)
 
 off_t lseek(int fd, off_t offset, int whence)
@@ -169,11 +169,11 @@ int close(int fd)
     if(!_zz_ready)
         LOADSYM(close);
     ret = close_orig(fd);
-    if(!_zz_ready || !zfd_ismanaged(fd))
+    if(!_zz_ready || !_zz_ismanaged(fd))
         return ret;
 
     debug("close(%i) = %i", fd, ret);
-    zfd_unregister(fd);
+    _zz_unregister(fd);
 
     return ret;
 }

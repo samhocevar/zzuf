@@ -93,7 +93,7 @@ void _zz_load_stream(void)
             else \
             { \
                 int fd = fileno(ret); \
-                zfd_register(fd); \
+                _zz_register(fd); \
                 debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
             } \
         } \
@@ -116,7 +116,7 @@ int fseek(FILE *stream, long offset, int whence)
     if(!_zz_ready)
         LOADSYM(fseek);
     fd = fileno(stream);
-    if(!_zz_ready || !zfd_ismanaged(fd))
+    if(!_zz_ready || !_zz_ismanaged(fd))
         return fseek_orig(stream, offset, whence);
 
     ret = fseek_orig(stream, offset, whence);
@@ -130,10 +130,10 @@ int fseek(FILE *stream, long offset, int whence)
             offset = ftell(stream);
             /* fall through */
         case SEEK_SET:
-            zfd_setpos(fd, offset);
+            _zz_setpos(fd, offset);
             break;
         case SEEK_CUR:
-            zfd_addpos(fd, offset);
+            _zz_addpos(fd, offset);
             break;
     }
     return 0;
@@ -148,7 +148,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     if(!_zz_ready)
         LOADSYM(fread);
     fd = fileno(stream);
-    if(!_zz_ready || !zfd_ismanaged(fd))
+    if(!_zz_ready || !_zz_ismanaged(fd))
         return fread_orig(ptr, size, nmemb, stream);
 
     pos = ftell(stream);
@@ -161,7 +161,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
          * a partial read may have advanced the stream pointer */
         long int newpos = ftell(stream);
         _zz_fuzz(fd, ptr, newpos - pos);
-        zfd_setpos(fd, newpos);
+        _zz_setpos(fd, newpos);
     }
     return ret;
 }
@@ -172,14 +172,14 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         if(!_zz_ready) \
             LOADSYM(fn); \
         fd = fileno(stream); \
-        if(!_zz_ready || !zfd_ismanaged(fd)) \
+        if(!_zz_ready || !_zz_ismanaged(fd)) \
             return ORIG(fn)(stream); \
         ret = ORIG(fn)(stream); \
         if(ret != EOF) \
         { \
             uint8_t ch = ret; \
             _zz_fuzz(fd, &ch, 1); \
-            zfd_addpos(fd, 1); \
+            _zz_addpos(fd, 1); \
             ret = ch; \
         } \
         debug(STR(fn)"(%p) = 0x%02x", stream, ret); \
@@ -203,7 +203,7 @@ char *fgets(char *s, int size, FILE *stream)
     if(!_zz_ready)
         LOADSYM(fgets);
     fd = fileno(stream);
-    if(!_zz_ready || !zfd_ismanaged(fd))
+    if(!_zz_ready || !_zz_ismanaged(fd))
         return fgets_orig(s, size, stream);
 
     if(size <= 0)
@@ -225,7 +225,7 @@ char *fgets(char *s, int size, FILE *stream)
             }
             s[i] = (char)(unsigned char)ch;
             _zz_fuzz(fd, (uint8_t *)s + i, 1); /* rather inefficient */
-            zfd_addpos(fd, 1);
+            _zz_addpos(fd, 1);
             if(s[i] == '\n')
             {
                 s[i + 1] = '\0';
@@ -246,16 +246,16 @@ int ungetc(int c, FILE *stream)
     if(!_zz_ready)
         LOADSYM(ungetc);
     fd = fileno(stream);
-    if(!_zz_ready || !zfd_ismanaged(fd))
+    if(!_zz_ready || !_zz_ismanaged(fd))
         return ungetc_orig(c, stream);
 
-    zfd_addpos(fd, -1);
+    _zz_addpos(fd, -1);
     _zz_fuzz(fd, &ch, 1);
     ret = ungetc_orig((int)ch, stream);
     if(ret >= 0)
         ret = c;
     else
-        zfd_addpos(fd, 1); /* revert what we did */
+        _zz_addpos(fd, 1); /* revert what we did */
     debug("ungetc(0x%02x, %p) = 0x%02x", c, stream, ret);
     return ret;
 }
@@ -267,12 +267,12 @@ int fclose(FILE *fp)
     if(!_zz_ready)
         LOADSYM(fclose);
     fd = fileno(fp);
-    if(!_zz_ready || !zfd_ismanaged(fd))
+    if(!_zz_ready || !_zz_ismanaged(fd))
         return fclose_orig(fp);
 
     ret = fclose_orig(fp);
     debug("fclose(%p) = %i", fp, ret);
-    zfd_unregister(fd);
+    _zz_unregister(fd);
 
     return ret;
 }
@@ -285,7 +285,7 @@ int fclose(FILE *fp)
         if(!_zz_ready) \
             LOADSYM(fn); \
         fd = fileno(stream); \
-        if(!_zz_ready || !zfd_ismanaged(fd)) \
+        if(!_zz_ready || !_zz_ismanaged(fd)) \
             return getdelim_orig(lineptr, n, delim, stream); \
         line = *lineptr; \
         size = line ? *n : 0; \
@@ -313,7 +313,7 @@ int fclose(FILE *fp)
                 unsigned char c = ch; \
                 _zz_fuzz(fd, &c, 1); /* even more inefficient */ \
                 line[done++] = c; \
-                zfd_addpos(fd, 1); \
+                _zz_addpos(fd, 1); \
                 if(c == delim) \
                 { \
                     finished = 1; \
