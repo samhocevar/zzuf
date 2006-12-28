@@ -41,6 +41,8 @@ trap "echo ''; echo 'Aborted.'; cleanup; exit 0" 1 2 15
 
 seed=$(($RANDOM * $$))
 ZZUF="$(dirname "$0")/../src/zzuf"
+FDCAT="$(dirname "$0")/fdcat"
+STRAMCAT="$(dirname "$0")/streamcat"
 FAILED=0
 TESTED=0
 
@@ -62,6 +64,8 @@ for file in /tmp/zzuf-text-$$ /tmp/zzuf-zero-$$ /tmp/zzuf-random-$$; do
         check $seed $r "dd bs=1111 if=$file" "dd(bs=1111)"
         check $seed $r "dd bs=1024 if=$file" "dd(bs=1024)"
         check $seed $r "dd bs=1 if=$file" "dd(bs=1)"
+        check $seed $r "$FDCAT $file" "fdcat"
+        check $seed $r "$STRAMCAT $file" "streamcat"
         if [ "$OK" != 1 ]; then
             echo "*** FAILED ***"
             FAILED=$(($FAILED + 1))
