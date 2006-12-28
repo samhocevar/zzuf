@@ -38,21 +38,25 @@
 void zzuf_fuzz(int fd, uint8_t *buf, uint64_t len)
 {
     uint64_t start, stop;
+    struct fuzz *fuzz;
     uint8_t *aligned_buf;
+    unsigned long int pos = zzuf_fd_getpos(fd);
     unsigned int i, j, todo;
 
-    aligned_buf = buf - files[fd].pos;
+    fuzz = zzuf_fd_getfuzz(fd);
 
-    for(i = files[fd].pos / CHUNKBYTES;
-        i < (files[fd].pos + len + CHUNKBYTES - 1) / CHUNKBYTES;
+    aligned_buf = buf - pos;
+
+    for(i = pos / CHUNKBYTES;
+        i < (pos + len + CHUNKBYTES - 1) / CHUNKBYTES;
         i++)
     {
         /* Cache bitmask array */
-        if(files[fd].cur != (int)i)
+        if(fuzz->cur != (int)i)
         {
             uint32_t chunkseed = i * MAGIC1;
 
-            memset(files[fd].data, 0, CHUNKBYTES);
+            memset(fuzz->data, 0, CHUNKBYTES);
 
             /* Add some random dithering to handle ratio < 1.0/CHUNKBYTES */
             zzuf_srand(_zzuf_seed ^ chunkseed);
@@ -65,21 +69,20 @@ void zzuf_fuzz(int fd, uint8_t *buf, uint64_t len)
                 unsigned int idx = zzuf_rand(CHUNKBYTES);
                 uint8_t byte = (1 << zzuf_rand(8));
 
-                files[fd].data[idx] ^= byte;
+                fuzz->data[idx] ^= byte;
             }
 
-            files[fd].cur = i;
+            fuzz->cur = i;
         }
 
         /* Apply our bitmask array to the buffer */
-        start = (i * CHUNKBYTES > files[fd].pos)
-               ? i * CHUNKBYTES : files[fd].pos;
+        start = (i * CHUNKBYTES > pos) ? i * CHUNKBYTES : pos;
 
-        stop = ((i + 1) * CHUNKBYTES < files[fd].pos + len)
-              ? (i + 1) * CHUNKBYTES : files[fd].pos + len;
+        stop = ((i + 1) * CHUNKBYTES < pos + len)
+              ? (i + 1) * CHUNKBYTES : pos + len;
 
         for(j = start; j < stop; j++)
-            aligned_buf[j] ^= files[fd].data[j % CHUNKBYTES];
+            aligned_buf[j] ^= fuzz->data[j % CHUNKBYTES];
     }
 }
 

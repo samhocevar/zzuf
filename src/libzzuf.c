@@ -46,7 +46,13 @@ regex_t * _zzuf_include = NULL;
 regex_t * _zzuf_exclude = NULL;
 
 #define MAXFD 1024
-struct zzuf files[MAXFD];
+struct zzuf
+{
+    int managed;
+    uint64_t seed;
+    uint64_t pos;
+    struct fuzz fuzz;
+} files[MAXFD];
 
 /* Library initialisation shit */
 void zzuf_init(void)
@@ -108,5 +114,45 @@ void zzuf_fini(void)
         /* XXX: What are we supposed to do? If filedescriptors weren't
          * closed properly, there's a leak, but it's not our problem. */
     }
+}
+
+/* fd stuff */
+int zzuf_fd_ismanaged(int fd)
+{
+    return files[fd].managed;
+}
+
+void zzuf_fd_manage(int fd)
+{
+    files[fd].managed = 1;
+    files[fd].pos = 0;
+    files[fd].fuzz.cur = -1;
+    files[fd].fuzz.data = malloc(CHUNKBYTES);
+}
+
+void zzuf_fd_unmanage(int fd)
+{
+    files[fd].managed = 0;
+    free(files[fd].fuzz.data);
+}
+
+long int zzuf_fd_getpos(int fd)
+{
+    return files[fd].pos;
+}
+
+void zzuf_fd_setpos(int fd, long int pos)
+{
+    files[fd].pos = pos;
+}
+
+void zzuf_fd_addpos(int fd, long int off)
+{
+    files[fd].pos += off;
+}
+
+struct fuzz *zzuf_fd_getfuzz(int fd)
+{
+    return &files[fd].fuzz;
 }
 

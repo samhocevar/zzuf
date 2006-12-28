@@ -96,10 +96,7 @@ void zzuf_load_fd(void)
                           file, oflag, mode, ret); \
                 else \
                     debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
-                files[ret].managed = 1; \
-                files[ret].cur = -1; \
-                files[ret].data = malloc(CHUNKBYTES); \
-                files[ret].pos = 0; \
+                zzuf_fd_manage(ret); \
             } \
         } \
     } while(0)
@@ -124,18 +121,18 @@ ssize_t read(int fd, void *buf, size_t count)
     if(!_zzuf_ready)
         return ret;
 
-    if(!files[fd].managed)
+    if(!zzuf_fd_ismanaged(fd))
         return ret;
 
     debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
     if(ret > 0)
     {
         zzuf_fuzz(fd, buf, ret);
-        files[fd].pos += ret;
+        zzuf_fd_addpos(fd, ret);
     }
 
     /* Sanity check, can be OK though (for instance with a character device) */
-    if((uint64_t)lseek64_orig(fd, 0, SEEK_CUR) != files[fd].pos)
+    if(lseek64_orig(fd, 0, SEEK_CUR) != zzuf_fd_getpos(fd))
         debug("warning: offset inconsistency");
 
     return ret;
@@ -148,12 +145,12 @@ ssize_t read(int fd, void *buf, size_t count)
         ret = ORIG(fn)(fd, offset, whence); \
         if(!_zzuf_ready) \
             return ret; \
-        if(!files[fd].managed) \
+        if(!zzuf_fd_ismanaged(fd)) \
             return ret; \
         debug(STR(fn)"(%i, %lli, %i) = %lli", \
               fd, (long long int)offset, whence, (long long int)ret); \
         if(ret != (off_t)-1) \
-            files[fd].pos = (int64_t)ret; \
+            zzuf_fd_setpos(fd, ret); \
     } while(0)
 
 off_t lseek(int fd, off_t offset, int whence)
@@ -180,12 +177,11 @@ int close(int fd)
     if(!_zzuf_ready)
         return ret;
 
-    if(!files[fd].managed)
+    if(!zzuf_fd_ismanaged(fd))
         return ret;
 
     debug("close(%i) = %i", fd, ret);
-    free(files[fd].data);
-    files[fd].managed = 0;
+    zzuf_fd_unmanage(fd);
 
     return ret;
 }
