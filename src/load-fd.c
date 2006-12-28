@@ -118,10 +118,7 @@ ssize_t read(int fd, void *buf, size_t count)
     if(!_zzuf_ready)
         LOADSYM(read);
     ret = read_orig(fd, buf, count);
-    if(!_zzuf_ready)
-        return ret;
-
-    if(!zfd_ismanaged(fd))
+    if(!_zzuf_ready || !zfd_ismanaged(fd))
         return ret;
 
     debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
@@ -143,9 +140,7 @@ ssize_t read(int fd, void *buf, size_t count)
         if(!_zzuf_ready) \
             LOADSYM(fn); \
         ret = ORIG(fn)(fd, offset, whence); \
-        if(!_zzuf_ready) \
-            return ret; \
-        if(!zfd_ismanaged(fd)) \
+        if(!_zzuf_ready || !zfd_ismanaged(fd)) \
             return ret; \
         debug(STR(fn)"(%i, %lli, %i) = %lli", \
               fd, (long long int)offset, whence, (long long int)ret); \
@@ -174,10 +169,7 @@ int close(int fd)
     if(!_zzuf_ready)
         LOADSYM(close);
     ret = close_orig(fd);
-    if(!_zzuf_ready)
-        return ret;
-
-    if(!zfd_ismanaged(fd))
+    if(!_zzuf_ready || !zfd_ismanaged(fd))
         return ret;
 
     debug("close(%i) = %i", fd, ret);

@@ -121,20 +121,27 @@ int fseek(FILE *stream, long offset, int whence)
 
     ret = fseek_orig(stream, offset, whence);
     debug("fseek(%p, %li, %i) = %i", stream, offset, whence, ret);
-    if(ret == 0)
+    if(ret != 0)
+        return ret;
+
+    switch(whence)
     {
-        switch(whence)
-        {
-            case SEEK_SET: zfd_setpos(fd, offset); break;
-            case SEEK_CUR: zfd_addpos(fd, offset); break;
-            case SEEK_END: zfd_setpos(fd, ftell(stream)); break;
-        }
+        case SEEK_END:
+            offset = ftell(stream);
+            /* fall through */
+        case SEEK_SET:
+            zfd_setpos(fd, offset);
+            break;
+        case SEEK_CUR:
+            zfd_addpos(fd, offset);
+            break;
     }
-    return ret;
+    return 0;
 }
 
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
+    long int pos;
     size_t ret;
     int fd;
 
@@ -144,13 +151,17 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     if(!_zzuf_ready || !zfd_ismanaged(fd))
         return fread_orig(ptr, size, nmemb, stream);
 
+    pos = ftell(stream);
     ret = fread_orig(ptr, size, nmemb, stream);
     debug("fread(%p, %li, %li, %p) = %li",
           ptr, (long int)size, (long int)nmemb, stream, (long int)ret);
-    if(ret > 0)
+    if(ret >= 0)
     {
-        zzuf_fuzz(fd, ptr, ret * size);
-        zfd_addpos(fd, ret * size);
+        /* XXX: the number of bytes read is not ret * size, because
+         * a partial read may have advanced the stream pointer */
+        long int newpos = ftell(stream);
+        zzuf_fuzz(fd, ptr, newpos - pos);
+        zfd_setpos(fd, newpos);
     }
     return ret;
 }
