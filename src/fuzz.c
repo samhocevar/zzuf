@@ -40,10 +40,10 @@ void zzuf_fuzz(int fd, uint8_t *buf, uint64_t len)
     uint64_t start, stop;
     struct fuzz *fuzz;
     uint8_t *aligned_buf;
-    unsigned long int pos = zzuf_fd_getpos(fd);
+    unsigned long int pos = zfd_getpos(fd);
     unsigned int i, j, todo;
 
-    fuzz = zzuf_fd_getfuzz(fd);
+    fuzz = zfd_getfuzz(fd);
 
     aligned_buf = buf - pos;
 

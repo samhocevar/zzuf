@@ -41,11 +41,11 @@ extern void zzuf_init(void) __attribute__((constructor));
 extern void zzuf_fini(void) __attribute__((destructor));
 
 /* File descriptor handling */
-extern int zzuf_fd_ismanaged(int);
-extern void zzuf_fd_manage(int);
-extern void zzuf_fd_unmanage(int);
-extern long int zzuf_fd_getpos(int);
-extern void zzuf_fd_setpos(int, long int);
-extern void zzuf_fd_addpos(int, long int);
-extern struct fuzz *zzuf_fd_getfuzz(int);
+extern int zfd_ismanaged(int);
+extern void zfd_manage(int);
+extern void zfd_unmanage(int);
+extern long int zfd_getpos(int);
+extern void zfd_setpos(int, long int);
+extern void zfd_addpos(int, long int);
+extern struct fuzz *zfd_getfuzz(int);
 

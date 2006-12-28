@@ -51,8 +51,10 @@ struct zzuf
     int managed;
     uint64_t seed;
     uint64_t pos;
+    /* Public stuff */
     struct fuzz fuzz;
-} files[MAXFD];
+}
+files[MAXFD];
 
 /* Library initialisation shit */
 void zzuf_init(void)
@@ -117,12 +119,12 @@ void zzuf_fini(void)
 }
 
 /* fd stuff */
-int zzuf_fd_ismanaged(int fd)
+int zfd_ismanaged(int fd)
 {
     return files[fd].managed;
 }
 
-void zzuf_fd_manage(int fd)
+void zfd_manage(int fd)
 {
     files[fd].managed = 1;
     files[fd].pos = 0;
@@ -130,28 +132,28 @@ void zzuf_fd_manage(int fd)
     files[fd].fuzz.data = malloc(CHUNKBYTES);
 }
 
-void zzuf_fd_unmanage(int fd)
+void zfd_unmanage(int fd)
 {
     files[fd].managed = 0;
     free(files[fd].fuzz.data);
 }
 
-long int zzuf_fd_getpos(int fd)
+long int zfd_getpos(int fd)
 {
     return files[fd].pos;
 }
 
-void zzuf_fd_setpos(int fd, long int pos)
+void zfd_setpos(int fd, long int pos)
 {
     files[fd].pos = pos;
 }
 
-void zzuf_fd_addpos(int fd, long int off)
+void zfd_addpos(int fd, long int off)
 {
     files[fd].pos += off;
 }
 
-struct fuzz *zzuf_fd_getfuzz(int fd)
+struct fuzz *zfd_getfuzz(int fd)
 {
     return &files[fd].fuzz;
 }
