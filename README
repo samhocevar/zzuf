@@ -33,10 +33,15 @@ the behaviour without using zzuf:
   # zzuf -s 87423 -r 0.01 cp movie.avi fuzzy-movie.avi
   # vlc fuzzy-movie.avi
 
-Fuzz mplayer's input with seeds 0 to 9999, launching up to 3 simultaneous
-child processes and killing mplayer if it takes more than one minute to read
-the file:
+Fuzz mplayer's input with seeds 0 to 9999 and kill processes that take more
+than one minute to read the movie file:
 
-  # zzuf -q -s 0:10000 -F 3 -T 60 -r 0.02 -i movie.avi \
+  # zzuf -q -s 0:10000 -T 60 -r 0.02 -i movie.avi \
          mplayer movie.avi -- -benchmark -vo null -fps 1000
+
+Same as above with up to 15 simultaneous child processes because we are
+playing a sound file:
+
+  # zzuf -F 15 -q -s 0:10000 -T 60 -r 0.02 -i song.mp3 \
+         mplayer song.mp3 -- -benchmark -ao null
 
