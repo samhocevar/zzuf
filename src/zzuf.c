@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <regex.h>
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
@@ -45,24 +46,22 @@ static void version(void);
 static void usage(void);
 #endif
 
-enum status
-{
-    STATUS_FREE,
-    STATUS_RUNNING,
-    STATUS_SIGTERM,
-    STATUS_SIGKILL,
-    STATUS_EOF,
-};
-
 struct child_list
 {
-    enum status status;
+    enum status
+    {
+        STATUS_FREE,
+        STATUS_RUNNING,
+        STATUS_SIGTERM,
+        STATUS_SIGKILL,
+        STATUS_EOF,
+    } status;
+
     pid_t pid;
     int outfd, errfd;
     int bytes, seed;
     time_t date;
-}
-*child_list;
+} *child_list;
 int parallel = 1, child_count = 0;
 
 int seed = 0;
@@ -81,6 +80,7 @@ int endseed = 1;
 
 int main(int argc, char *argv[])
 {
+    regex_t optre;
     char **newargv;
     char *parser;
     int i, j, quiet = 0, maxbytes = -1;
@@ -120,9 +120,21 @@ int main(int argc, char *argv[])
         switch(c)
         {
         case 'I': /* --include */
+            if(regcomp(&optre, optarg, 0) != 0)
+            {
+                printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
+                return EXIT_FAILURE;
+            }
+            regfree(&optre);
             setenv("ZZUF_INCLUDE", optarg, 1);
             break;
         case 'E': /* --exclude */
+            if(regcomp(&optre, optarg, 0) != 0)
+            {
+                printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
+                return EXIT_FAILURE;
+            }
+            regfree(&optre);
             setenv("ZZUF_EXCLUDE", optarg, 1);
             break;
         case 'i': /* --stdin */
@@ -160,7 +172,7 @@ int main(int argc, char *argv[])
         default:
             printf("%s: invalid option -- %c\n", argv[0], c);
             printf(MOREINFO, argv[0]);
-            return 1;
+            return EXIT_FAILURE;
         }
     }
 #else
@@ -329,6 +341,10 @@ int main(int argc, char *argv[])
         }
     }
 
+    /* Clean up */
+    free(newargv);
+    free(child_list);
+
     return EXIT_SUCCESS;    
 }
 
@@ -405,13 +421,10 @@ static void set_ld_preload(char const *progpath)
     tmp = strrchr(libpath, '/');
     strcpy(tmp ? tmp + 1 : libpath, ".libs/libzzuf.so");
     if(access(libpath, R_OK) == 0)
-    {
         setenv("LD_PRELOAD", libpath, 1);
-        return;
-    }
+    else
+        setenv("LD_PRELOAD", LIBDIR "/libzzuf.so", 1);
     free(libpath);
-
-    setenv("LD_PRELOAD", LIBDIR "/libzzuf.so", 1);
 }
 
 static void version(void)
