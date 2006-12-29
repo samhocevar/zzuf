@@ -22,7 +22,7 @@ input and restricting fuzzing to filenames matching the regular expression
 "foo[.]jpeg" (because convert will also open its own configuration files and
 we do not want zzuf to fuzz them):
 
-  # zzuf -i 'foo[.]jpeg' convert -- foo.jpeg -format tga /dev/null
+  # zzuf -I 'foo[.]jpeg' convert -- foo.jpeg -format tga /dev/null
 
 Fuzz the input of VLC, using file movie.avi as the original input, and
 generate fuzzy-movie.avi which is a file that can be fed to VLC to reproduce
@@ -36,12 +36,12 @@ the behaviour without using zzuf:
 Fuzz mplayer's input with seeds 0 to 9999 and kill processes that take more
 than one minute to read the movie file:
 
-  # zzuf -q -s 0:10000 -T 60 -r 0.02 -i movie.avi \
+  # zzuf -q -s 0:10000 -T 60 -r 0.02 -I movie.avi \
          mplayer movie.avi -- -benchmark -vo null -fps 1000
 
 Same as above with up to 15 simultaneous child processes because we are
 playing a sound file:
 
-  # zzuf -F 15 -q -s 0:10000 -T 60 -r 0.02 -i song.mp3 \
+  # zzuf -F 15 -q -s 0:10000 -T 60 -r 0.02 -I song.mp3 \
          mplayer song.mp3 -- -benchmark -ao null
 

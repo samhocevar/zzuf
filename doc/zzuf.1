@@ -32,10 +32,10 @@ zzuf \- multiple purpose fuzzer
 .IP
 .PD
 [
-.B \-i
+.B \-I
 .I include
 ] [
-.B \-e
+.B \-E
 .I exclude
 ]
 .I COMMAND [ARGS]...
@@ -111,13 +111,13 @@ situations.
 Hide the output of the fuzzed application. This is useful if the application
 is very verbose but only its exit code is really useful to you.
 .TP
-.B \-i, \-\-include <regex>
+.B \-I, \-\-include <regex>
 Only fuzz files whose name matches the
 .B <regex>
 regular expression. Use this for instance if your application reads
 configuration files in many places and you do not want them to be fuzzed.
 .TP
-.B \-e, \-\-exclude <regex>
+.B \-E, \-\-exclude <regex>
 Do not fuzz files whose name matches the
 .B <regex>
 regular expression. This option supersedes anything that is specified by the
@@ -167,7 +167,7 @@ will also open its own configuration files and we do not want
 to fuzz them):
 .nf
 
-.B % zzuf -i "foo[.]jpeg" convert -- foo.jpeg -format tga /dev/null
+.B % zzuf -I "foo[.]jpeg" convert -- foo.jpeg -format tga /dev/null
 
 .fi
 Fuzz the input of
@@ -197,7 +197,7 @@ and killing
 if it takes more than one minute to read the file:
 .fn
 
-.B % zzuf -q -s 0:10000 -F 3 -T 60 -r 0.02 -i movie.avi mplayer movie.avi -- -benchmark -vo null -fps 1000
+.B % zzuf -q -s 0:10000 -F 3 -T 60 -r 0.02 -I movie.avi mplayer movie.avi -- -benchmark -vo null -fps 1000
 
 .fi
 .RI

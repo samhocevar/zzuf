@@ -95,8 +95,8 @@ int main(int argc, char *argv[])
         static struct option long_options[] =
         {
             /* Long option, needs arg, flag, short option */
-            { "include",   1, NULL, 'i' },
-            { "exclude",   1, NULL, 'e' },
+            { "include",   1, NULL, 'I' },
+            { "exclude",   1, NULL, 'E' },
             { "seed",      1, NULL, 's' },
             { "ratio",     1, NULL, 'r' },
             { "fork",      1, NULL, 'F' },
@@ -107,21 +107,21 @@ int main(int argc, char *argv[])
             { "help",      0, NULL, 'h' },
             { "version",   0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "i:e:s:r:F:B:T:qdhv",
+        int c = getopt_long(argc, argv, "I:E:s:r:F:B:T:qdhv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "i:e:s:r:F:B:T:qdhv");
+        int c = getopt(argc, argv, "I:E:s:r:F:B:T:qdhv");
 #   endif
         if(c == -1)
             break;
 
         switch(c)
         {
-        case 'i': /* --include */
+        case 'I': /* --include */
             setenv("ZZUF_INCLUDE", optarg, 1);
             break;
-        case 'e': /* --exclude */
+        case 'E': /* --exclude */
             setenv("ZZUF_EXCLUDE", optarg, 1);
             break;
         case 's': /* --seed */
@@ -427,7 +427,7 @@ static void usage(void)
 {
     printf("Usage: zzuf [ -vqdh ] [ -r ratio ] [ -s seed | -s start:stop]\n");
     printf("                      [ -F children ] [ -B bytes ] [ -T seconds ]\n");
-    printf("                      [ -i include ] [ -e exclude ] COMMAND [ARGS]...\n");
+    printf("                      [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
     printf("Run COMMAND and randomly fuzz its input files.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
@@ -439,8 +439,8 @@ static void usage(void)
     printf("  -B, --max-bytes <n>      kill children that output more than <n> bytes\n");
     printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
     printf("  -q, --quiet              do not print children's messages\n");
-    printf("  -i, --include <regex>    only fuzz files matching <regex>\n");
-    printf("  -e, --exclude <regex>    do not fuzz files matching <regex>\n");
+    printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
+    printf("  -E, --exclude <regex>    do not fuzz files matching <regex>\n");
     printf("  -d, --debug              print debug messages\n");
     printf("  -h, --help               display this help and exit\n");
     printf("  -v, --version            output version information and exit\n");
@@ -452,8 +452,8 @@ static void usage(void)
     printf("  -B <n>           kill children that output more than <n> bytes\n");
     printf("  -T <n>           kill children that run for more than <n> seconds\n");
     printf("  -q               do not print the fuzzed application's messages\n");
-    printf("  -i <regex>       only fuzz files matching <regex>\n");
-    printf("  -e <regex>       do not fuzz files matching <regex>\n");
+    printf("  -I <regex>       only fuzz files matching <regex>\n");
+    printf("  -E <regex>       do not fuzz files matching <regex>\n");
     printf("  -d               print debug messages\n");
     printf("  -h               display this help and exit\n");
     printf("  -v               output version information and exit\n");
