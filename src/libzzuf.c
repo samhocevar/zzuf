@@ -82,6 +82,10 @@ void _zz_init(void)
 
     _zz_fd_init();
 
+    tmp = getenv("ZZUF_STDIN");
+    if(tmp && *tmp == '1')
+        _zz_register(0);
+
     _zz_load_fd();
     _zz_load_stream();
 

@@ -34,10 +34,16 @@ cleanup() {
         rm -f /tmp/zzuf-zero-$$
         rm -f /tmp/zzuf-random-$$
         rm -f /tmp/zzuf-text-$$
+        echo "Temporary files removed."
+    else
+        echo "Files preserved:"
+        echo "  /tmp/zzuf-zero-$$"
+        echo "  /tmp/zzuf-random-$$"
+        echo "  /tmp/zzuf-text-$$"
     fi
 }
 
-trap "echo ''; echo 'Aborted.'; cleanup; exit 0" 1 2 15
+trap "echo ''; echo ''; echo 'Aborted.'; cleanup; exit 0" 1 2 15
 
 seed=$(($RANDOM * $$))
 ZZUF="$(dirname "$0")/../src/zzuf"
@@ -52,13 +58,15 @@ echo "Using seed $seed"
 echo ""
 
 for file in /tmp/zzuf-text-$$ /tmp/zzuf-zero-$$ /tmp/zzuf-random-$$; do
-    for r in 0.0 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
+    for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
         echo "Testing zzuf on $file, ratio $r:"
         OK=1
         MD5=""
         check $seed $r "cat $file" "cat"
-# don't do grep, it adds a newline at EOF!
-#        check $seed $r "grep -- -a \\'\\' $file" "grep -a"
+        check $seed $r "cat < $file" "cat stdin"
+        # We don't include grep in the testsuite because it puts a newline
+        # at the end of its input if it was not there initially.
+        #check $seed $r "grep -- -a \\'\\' $file" "grep -a"
         check $seed $r "sed n $file" "sed n"
         check $seed $r "dd bs=65536 if=$file" "dd(bs=65536)"
         check $seed $r "dd bs=1111 if=$file" "dd(bs=1111)"
@@ -74,15 +82,14 @@ for file in /tmp/zzuf-text-$$ /tmp/zzuf-zero-$$ /tmp/zzuf-random-$$; do
         echo ""
     done
 done
-cleanup
 
 if [ "$FAILED" != 0 ]; then
-    echo "$FAILED tests failed out of $TESTED. Files preserved:"
-    echo "  /tmp/zzuf-zero-$$"
-    echo "  /tmp/zzuf-random-$$"
-    echo "  /tmp/zzuf-text-$$"
+    echo "$FAILED tests failed out of $TESTED."
+    cleanup
     exit 1
 fi
 echo "All $TESTED tests OK."
+
+cleanup
 exit 0
 

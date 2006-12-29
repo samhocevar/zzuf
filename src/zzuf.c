@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
             /* Long option, needs arg, flag, short option */
             { "include",   1, NULL, 'I' },
             { "exclude",   1, NULL, 'E' },
+            { "stdin",     0, NULL, 'i' },
             { "seed",      1, NULL, 's' },
             { "ratio",     1, NULL, 'r' },
             { "fork",      1, NULL, 'F' },
@@ -107,11 +108,11 @@ int main(int argc, char *argv[])
             { "help",      0, NULL, 'h' },
             { "version",   0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "I:E:s:r:F:B:T:qdhv",
+        int c = getopt_long(argc, argv, "I:E:is:r:F:B:T:qdhv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "I:E:s:r:F:B:T:qdhv");
+        int c = getopt(argc, argv, "I:E:is:r:F:B:T:qdhv");
 #   endif
         if(c == -1)
             break;
@@ -123,6 +124,9 @@ int main(int argc, char *argv[])
             break;
         case 'E': /* --exclude */
             setenv("ZZUF_EXCLUDE", optarg, 1);
+            break;
+        case 'i': /* --stdin */
+            setenv("ZZUF_STDIN", "1", 1);
             break;
         case 's': /* --seed */
             parser = strchr(optarg, ':');
@@ -425,10 +429,10 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -vqdh ] [ -r ratio ] [ -s seed | -s start:stop]\n");
-    printf("                      [ -F children ] [ -B bytes ] [ -T seconds ]\n");
-    printf("                      [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
-    printf("Run COMMAND and randomly fuzz its input files.\n");
+    printf("Usage: zzuf [ -vqdhi ] [ -r ratio ] [ -s seed | -s start:stop]\n");
+    printf("                       [ -F children ] [ -B bytes ] [ -T seconds ]\n");
+    printf("                       [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
+    printf("Run COMMAND and randomly fuzz its input.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
 #   ifdef HAVE_GETOPT_LONG
@@ -439,6 +443,7 @@ static void usage(void)
     printf("  -B, --max-bytes <n>      kill children that output more than <n> bytes\n");
     printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
     printf("  -q, --quiet              do not print children's messages\n");
+    printf("  -i, --stdin              fuzz standard input\n");
     printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
     printf("  -E, --exclude <regex>    do not fuzz files matching <regex>\n");
     printf("  -d, --debug              print debug messages\n");
@@ -452,6 +457,7 @@ static void usage(void)
     printf("  -B <n>           kill children that output more than <n> bytes\n");
     printf("  -T <n>           kill children that run for more than <n> seconds\n");
     printf("  -q               do not print the fuzzed application's messages\n");
+    printf("  -i               fuzz standard input\n");
     printf("  -I <regex>       only fuzz files matching <regex>\n");
     printf("  -E <regex>       do not fuzz files matching <regex>\n");
     printf("  -d               print debug messages\n");

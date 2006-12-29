@@ -4,7 +4,7 @@ zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
 .B zzuf
 [
-.B \-vqdh
+.B \-vqdhi
 ] [
 .B \-r
 .I ratio
@@ -110,6 +110,11 @@ situations.
 .B \-q, \-\-quiet
 Hide the output of the fuzzed application. This is useful if the application
 is very verbose but only its exit code is really useful to you.
+.TP
+.B \-i, \-\-stdin
+Fuzz the application's standard input. By default
+.B zzuf
+only fuzzes files.
 .TP
 .B \-I, \-\-include <regex>
 Only fuzz files whose name matches the
