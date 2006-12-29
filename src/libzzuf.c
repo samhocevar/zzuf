@@ -42,8 +42,14 @@ int   _zz_ready    = 0;
 int   _zz_hasdebug = 0;
 int   _zz_seed     = 0;
 float _zz_ratio    = 0.004f;
-regex_t * _zz_include = NULL;
-regex_t * _zz_exclude = NULL;
+
+/* Local variables */
+static regex_t * re_include = NULL;
+static regex_t * re_exclude = NULL;
+
+/* Local prototypes */
+static void _zz_fd_init(void);
+static void _zz_fd_fini(void);
 
 /* Library initialisation shit */
 void _zz_init(void)
@@ -69,15 +75,15 @@ void _zz_init(void)
     tmp = getenv("ZZUF_INCLUDE");
     if(tmp && *tmp)
     {
-        _zz_include = malloc(sizeof(*_zz_include));
-        regcomp(_zz_include, tmp, 0);
+        re_include = malloc(sizeof(*re_include));
+        regcomp(re_include, tmp, 0);
     }
 
     tmp = getenv("ZZUF_EXCLUDE");
     if(tmp && *tmp)
     {
-        _zz_exclude = malloc(sizeof(*_zz_exclude));
-        regcomp(_zz_exclude, tmp, 0);
+        re_exclude = malloc(sizeof(*re_exclude));
+        regcomp(re_exclude, tmp, 0);
     }
 
     _zz_fd_init();
@@ -113,7 +119,7 @@ static struct files
 static int *fds;
 static int maxfd, nfiles;
 
-void _zz_fd_init(void)
+static void _zz_fd_init(void)
 {
     files = NULL;
     nfiles = 0;
@@ -124,7 +130,7 @@ void _zz_fd_init(void)
         fds[maxfd] = -1;
 }
 
-void _zz_fd_fini(void)
+static void _zz_fd_fini(void)
 {
     int i;
 
@@ -141,7 +147,18 @@ void _zz_fd_fini(void)
     free(fds);
 }
 
-int _zz_ismanaged(int fd)
+int _zz_mustwatch(char const *file)
+{
+    if(re_include && regexec(re_include, file, 0, NULL, 0) == REG_NOMATCH)
+        return 0; /* not included: ignore */
+
+    if(re_exclude && regexec(re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
+        return 0; /* excluded: ignore */
+
+    return 1; /* default */
+}
+
+int _zz_iswatched(int fd)
 {
     if(fd < 0 || fd >= maxfd || fds[fd] == -1)
         return 0;

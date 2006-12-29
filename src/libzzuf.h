@@ -33,17 +33,14 @@ extern int       _zz_ready;
 extern int       _zz_hasdebug;
 extern int       _zz_seed;
 extern float     _zz_ratio;
-extern regex_t * _zz_include;
-extern regex_t * _zz_exclude;
 
 /* Library initialisation shit */
 extern void _zz_init(void) __attribute__((constructor));
 extern void _zz_fini(void) __attribute__((destructor));
 
 /* File descriptor handling */
-extern void _zz_fd_init(void);
-extern void _zz_fd_fini(void);
-extern int _zz_ismanaged(int);
+extern int _zz_mustwatch(char const *);
+extern int _zz_iswatched(int);
 extern void _zz_register(int);
 extern void _zz_unregister(int);
 extern long int _zz_getpos(int);

@@ -26,7 +26,6 @@
 #   include <inttypes.h>
 #endif
 #include <stdlib.h>
-#include <regex.h>
 #include <dlfcn.h>
 
 #include <stdio.h>
@@ -82,20 +81,11 @@ void _zz_load_stream(void)
             return ORIG(fn)(path, mode); \
         } \
         ret = ORIG(fn)(path, mode); \
-        if(ret) \
+        if(ret && _zz_mustwatch(path)) \
         { \
-            if(_zz_include && \
-                regexec(_zz_include, path, 0, NULL, 0) == REG_NOMATCH) \
-                /* not included: ignore */ ; \
-            else if(_zz_exclude && \
-                    regexec(_zz_exclude, path, 0, NULL, 0) != REG_NOMATCH) \
-                /* excluded: ignore */ ; \
-            else \
-            { \
-                int fd = fileno(ret); \
-                _zz_register(fd); \
-                debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
-            } \
+            int fd = fileno(ret); \
+            _zz_register(fd); \
+            debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
         } \
     } while(0)
 
@@ -116,7 +106,7 @@ int fseek(FILE *stream, long offset, int whence)
     if(!_zz_ready)
         LOADSYM(fseek);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_ismanaged(fd))
+    if(!_zz_ready || !_zz_iswatched(fd))
         return fseek_orig(stream, offset, whence);
 
     ret = fseek_orig(stream, offset, whence);
@@ -148,7 +138,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     if(!_zz_ready)
         LOADSYM(fread);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_ismanaged(fd))
+    if(!_zz_ready || !_zz_iswatched(fd))
         return fread_orig(ptr, size, nmemb, stream);
 
     pos = ftell(stream);
@@ -172,7 +162,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         if(!_zz_ready) \
             LOADSYM(fn); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_ismanaged(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd)) \
             return ORIG(fn)(stream); \
         ret = ORIG(fn)(stream); \
         if(ret != EOF) \
@@ -203,7 +193,7 @@ char *fgets(char *s, int size, FILE *stream)
     if(!_zz_ready)
         LOADSYM(fgets);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_ismanaged(fd))
+    if(!_zz_ready || !_zz_iswatched(fd))
         return fgets_orig(s, size, stream);
 
     if(size <= 0)
@@ -246,7 +236,7 @@ int ungetc(int c, FILE *stream)
     if(!_zz_ready)
         LOADSYM(ungetc);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_ismanaged(fd))
+    if(!_zz_ready || !_zz_iswatched(fd))
         return ungetc_orig(c, stream);
 
     _zz_addpos(fd, -1);
@@ -267,7 +257,7 @@ int fclose(FILE *fp)
     if(!_zz_ready)
         LOADSYM(fclose);
     fd = fileno(fp);
-    if(!_zz_ready || !_zz_ismanaged(fd))
+    if(!_zz_ready || !_zz_iswatched(fd))
         return fclose_orig(fp);
 
     ret = fclose_orig(fp);
@@ -285,7 +275,7 @@ int fclose(FILE *fp)
         if(!_zz_ready) \
             LOADSYM(fn); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_ismanaged(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd)) \
             return getdelim_orig(lineptr, n, delim, stream); \
         line = *lineptr; \
         size = line ? *n : 0; \

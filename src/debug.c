@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdarg.h>
-#include <regex.h>
 
 #include "debug.h"
 

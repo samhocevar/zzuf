@@ -29,7 +29,6 @@
 #   include <inttypes.h>
 #endif
 #include <stdlib.h>
-#include <regex.h>
 #include <dlfcn.h>
 
 #include <sys/types.h>
@@ -81,23 +80,15 @@ void _zz_load_fd(void)
         if(!_zz_ready) \
             return ret; \
         if(ret >= 0 \
-            && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY)) \
+            && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY) \
+            && _zz_mustwatch(file)) \
         { \
-            if(_zz_include && \
-                regexec(_zz_include, file, 0, NULL, 0) == REG_NOMATCH) \
-                /* not included: ignore */ ; \
-            else if(_zz_exclude && \
-                    regexec(_zz_exclude, file, 0, NULL, 0) != REG_NOMATCH) \
-                /* excluded: ignore */ ; \
+            if(oflag & O_CREAT) \
+                debug(STR(fn) "(\"%s\", %i, %i) = %i", \
+                      file, oflag, mode, ret); \
             else \
-            { \
-                if(oflag & O_CREAT) \
-                    debug(STR(fn) "(\"%s\", %i, %i) = %i", \
-                          file, oflag, mode, ret); \
-                else \
-                    debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
-                _zz_register(ret); \
-            } \
+                debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
+            _zz_register(ret); \
         } \
     } while(0)
 
@@ -118,7 +109,7 @@ ssize_t read(int fd, void *buf, size_t count)
     if(!_zz_ready)
         LOADSYM(read);
     ret = read_orig(fd, buf, count);
-    if(!_zz_ready || !_zz_ismanaged(fd))
+    if(!_zz_ready || !_zz_iswatched(fd))
         return ret;
 
     debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
@@ -140,7 +131,7 @@ ssize_t read(int fd, void *buf, size_t count)
         if(!_zz_ready) \
             LOADSYM(fn); \
         ret = ORIG(fn)(fd, offset, whence); \
-        if(!_zz_ready || !_zz_ismanaged(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd)) \
             return ret; \
         debug(STR(fn)"(%i, %lli, %i) = %lli", \
               fd, (long long int)offset, whence, (long long int)ret); \
@@ -169,7 +160,7 @@ int close(int fd)
     if(!_zz_ready)
         LOADSYM(close);
     ret = close_orig(fd);
-    if(!_zz_ready || !_zz_ismanaged(fd))
+    if(!_zz_ready || !_zz_iswatched(fd))
         return ret;
 
     debug("close(%i) = %i", fd, ret);
