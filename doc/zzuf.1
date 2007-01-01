@@ -4,7 +4,7 @@ zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
 .B zzuf
 [
-.B \-vqdhic
+.B \-cdhiqSv
 ] [
 .B \-r
 .I ratio
@@ -86,8 +86,8 @@ Do not fuzz files whose name matches the
 .B <regex>
 regular expression. This option supersedes anything that is specified by the
 .B \-\-exclude
-flag. Use this for instance if you do not know for sure what files your
-application is going to read, but do not want it to fuzz files in the
+flag. Use this for instance if you are unsure of what files your
+application is going to read and do not want it to fuzz files in the
 .B /etc
 directory.
 
@@ -119,11 +119,14 @@ configuration files at startup and you only want specific files to be fuzzed.
 Multiple
 .B \-I
 flags can be specified, in which case files matching any one of the regular
-expressions will be fuzzed.
+expressions will be fuzzed. See also the
+.B \-c
+flag.
 .TP
 .B \-q, \-\-quiet
 Hide the output of the fuzzed application. This is useful if the application
-is very verbose but only its exit code is really useful to you.
+is very verbose but only its exit code or signaled status is really useful to
+you.
 .TP
 .B \-r, \-\-ratio <ratio>
 Specify the amount of bits that will be randomly fuzzed. A value of 0
@@ -152,6 +155,27 @@ If an interval is specified,
 .B zzuf
 will run the application several times, each time with a different seed, and
 report the behaviour of each run.
+.TP
+.B \-S, \-\-signal
+Prevent children from installing signal handlers for signals that usually
+cause coredumps. These signals are
+.BR SIGABRT ,
+.BR SIGFPE ,
+.BR SIGILL ,
+.BR SIGQUIT ,
+.BR SIGSEGV ,
+.B SIGTRAP
+and, if available on the running platform,
+.BR SIGSYS ,
+.BR SIGEMT ,
+.BR SIGBUS ,
+.B SIGXCPU
+and
+.BR SIGXFSZ .
+Instead of calling the signal handler, the application will simply crash. If
+you do not want core dumps, you should set appropriate limits with the
+.B limit coredumpsize
+command. See your shell's documentation on how to set such limits.
 .TP
 .B \-T, \-\-max\-time <n>
 Automatically terminate child processes that run for more than
@@ -187,7 +211,7 @@ as the original input and excluding
 .B .xml
 files from fuzzing (because
 .B convert
-will also open its own configuration files and we do not want
+will also open its own XML configuration files and we do not want
 .B zzuf
 to fuzz them):
 .nf
@@ -215,12 +239,28 @@ to reproduce the same behaviour without using
 .B % vlc fuzzy-movie.avi
 
 .fi
-Fuzz
+Fuzz 2% of
 .BR mplayer 's
-input with seeds 0 to 9999, launching up to 3 simultaneous child processes
-and killing
-.BR mplayer
-if it takes more than one minute to read the file:
+input bits
+.RB  ( \-r
+.BR 0.02 )
+with seeds 0 to 9999
+.RB ( \-s
+.BR 0:10000 ),
+disabling its standard output messages
+.RB ( \-q ),
+launching up to three simultaneous child processes
+.RB ( \-F
+.BR 3 ),
+killing
+.B mplayer
+if it takes more than one minute to read the file
+.RB ( \-T
+.BR 60 )
+and disabling its
+.B SIGSEGV
+signal handler
+.RB ( \-S ):
 .fn
 
 .B % zzuf -c -q -s 0:10000 -F 3 -T 60 -r 0.02 mplayer movie.avi -- -benchmark -vo null -fps 1000
@@ -239,6 +279,14 @@ etc. One important unimplemented function is
 Network fuzzing is not implemented. It is not yet possible to insert or
 drop bytes from the input, to fuzz according to the file format, or to do
 all these complicated operations. They are planned, though.
+
+Due to
+.B zzuf
+using
+.B LD_PRELOAD
+to run its child processes, it will fail in the presence of any mechanism
+that disables preloading. For instance setuid root binaries will not be
+fuzzed.
 .RI
 .SH AUTHOR
 .B Zzuf

@@ -27,5 +27,6 @@
     } while(0)
 
 extern void _zz_load_fd(void);
+extern void _zz_load_signal(void);
 extern void _zz_load_stream(void);
 

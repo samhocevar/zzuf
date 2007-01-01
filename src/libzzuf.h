@@ -31,8 +31,9 @@ struct fuzz
 /* Internal variables */
 extern int       _zz_ready;
 extern int       _zz_hasdebug;
-extern int       _zz_seed;
 extern float     _zz_ratio;
+extern int       _zz_seed;
+extern int       _zz_signal;
 
 /* Library initialisation shit */
 extern void _zz_init(void) __attribute__((constructor));

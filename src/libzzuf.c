@@ -40,8 +40,9 @@
 /* Global variables */
 int   _zz_ready    = 0;
 int   _zz_hasdebug = 0;
-int   _zz_seed     = 0;
 float _zz_ratio    = 0.004f;
+int   _zz_seed     = 0;
+int   _zz_signal   = 0;
 
 /* Local variables */
 static regex_t * re_include = NULL;
@@ -57,7 +58,7 @@ void _zz_init(void)
     char *tmp;
 
     tmp = getenv("ZZUF_DEBUG");
-    if(tmp && *tmp)
+    if(tmp && *tmp == '1')
         _zz_hasdebug = 1;
 
     tmp = getenv("ZZUF_SEED");
@@ -86,6 +87,10 @@ void _zz_init(void)
         regcomp(re_exclude, tmp, REG_EXTENDED);
     }
 
+    tmp = getenv("ZZUF_SIGNAL");
+    if(tmp && *tmp == '1')
+        _zz_signal = 1;
+
     _zz_fd_init();
 
     tmp = getenv("ZZUF_STDIN");
@@ -93,6 +98,7 @@ void _zz_init(void)
         _zz_register(0);
 
     _zz_load_fd();
+    _zz_load_signal();
     _zz_load_stream();
 
     _zz_ready = 1;

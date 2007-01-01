@@ -96,25 +96,26 @@ int main(int argc, char *argv[])
         static struct option long_options[] =
         {
             /* Long option, needs arg, flag, short option */
-            { "include",   1, NULL, 'I' },
-            { "exclude",   1, NULL, 'E' },
-            { "cmdline",   0, NULL, 'c' },
-            { "stdin",     0, NULL, 'i' },
-            { "seed",      1, NULL, 's' },
-            { "ratio",     1, NULL, 'r' },
-            { "fork",      1, NULL, 'F' },
             { "max-bytes", 1, NULL, 'B' },
-            { "max-time",  1, NULL, 'T' },
-            { "quiet",     0, NULL, 'q' },
+            { "cmdline",   0, NULL, 'c' },
             { "debug",     0, NULL, 'd' },
+            { "exclude",   1, NULL, 'E' },
+            { "fork",      1, NULL, 'F' },
             { "help",      0, NULL, 'h' },
+            { "stdin",     0, NULL, 'i' },
+            { "include",   1, NULL, 'I' },
+            { "quiet",     0, NULL, 'q' },
+            { "ratio",     1, NULL, 'r' },
+            { "seed",      1, NULL, 's' },
+            { "signal",    0, NULL, 'S' },
+            { "max-time",  1, NULL, 'T' },
             { "version",   0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cdE:F:hiI:qr:s:T:v",
+        int c = getopt_long(argc, argv, "B:cdE:F:hiI:qr:s:ST:v",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cdE:F:hiI:qr:s:T:v");
+        int c = getopt(argc, argv, "B:cdE:F:hiI:qr:s:ST:v");
 #   endif
         if(c == -1)
             break;
@@ -162,6 +163,9 @@ int main(int argc, char *argv[])
             break;
         case 'q': /* --quiet */
             quiet = 1;
+            break;
+        case 'S': /* --signal */
+            setenv("ZZUF_SIGNAL", "1", 1);
             break;
         case 'd': /* --debug */
             setenv("ZZUF_DEBUG", "1", 1);
@@ -528,6 +532,7 @@ static void usage(void)
     printf("  -r, --ratio <ratio>      bit fuzzing ratio (default 0.004)\n");
     printf("  -s, --seed <seed>        random seed (default 0)\n");
     printf("      --seed <start:stop>  specify a seed range\n");
+    printf("  -S, --signal             prevent children from diverting crashing signals\n");
     printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
     printf("  -v, --version            output version information and exit\n");
 #   else
@@ -543,6 +548,7 @@ static void usage(void)
     printf("  -r <ratio>       bit fuzzing ratio (default 0.004)\n");
     printf("  -s <seed>        random seed (default 0)\n");
     printf("     <start:stop>  specify a seed range\n");
+    printf("  -S               prevent children from diverting crashing signals\n");
     printf("  -T <n>           kill children that run for more than <n> seconds\n");
     printf("  -v               output version information and exit\n");
 #   endif
