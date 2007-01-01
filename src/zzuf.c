@@ -110,11 +110,11 @@ int main(int argc, char *argv[])
             { "help",      0, NULL, 'h' },
             { "version",   0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "I:E:cis:r:F:B:T:qdhv",
+        int c = getopt_long(argc, argv, "B:cdE:F:hiI:qr:s:T:v",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "I:E:cis:r:F:B:T:qdhv");
+        int c = getopt(argc, argv, "B:cdE:F:hiI:qr:s:T:v");
 #   endif
         if(c == -1)
             break;
@@ -516,34 +516,34 @@ static void usage(void)
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
 #   ifdef HAVE_GETOPT_LONG
+    printf("  -B, --max-bytes <n>      kill children that output more than <n> bytes\n");
+    printf("  -c, --cmdline            only fuzz files specified in the command line\n");
+    printf("  -d, --debug              print debug messages\n");
+    printf("  -E, --exclude <regex>    do not fuzz files matching <regex>\n");
+    printf("  -F, --fork <count>       number of concurrent children (default 1)\n");
+    printf("  -h, --help               display this help and exit\n");
+    printf("  -i, --stdin              fuzz standard input\n");
+    printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
+    printf("  -q, --quiet              do not print children's messages\n");
     printf("  -r, --ratio <ratio>      bit fuzzing ratio (default 0.004)\n");
     printf("  -s, --seed <seed>        random seed (default 0)\n");
     printf("      --seed <start:stop>  specify a seed range\n");
-    printf("  -F, --fork <count>       number of concurrent children (default 1)\n");
-    printf("  -B, --max-bytes <n>      kill children that output more than <n> bytes\n");
     printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
-    printf("  -q, --quiet              do not print children's messages\n");
-    printf("  -i, --stdin              fuzz standard input\n");
-    printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
-    printf("  -c, --cmdline            only fuzz files specified in the command line\n");
-    printf("  -E, --exclude <regex>    do not fuzz files matching <regex>\n");
-    printf("  -d, --debug              print debug messages\n");
-    printf("  -h, --help               display this help and exit\n");
     printf("  -v, --version            output version information and exit\n");
 #   else
+    printf("  -B <n>           kill children that output more than <n> bytes\n");
+    printf("  -c               only fuzz files specified in the command line\n");
+    printf("  -d               print debug messages\n");
+    printf("  -E <regex>       do not fuzz files matching <regex>\n");
+    printf("  -F <count>       number of concurrent forks (default 1)\n");
+    printf("  -h               display this help and exit\n");
+    printf("  -i               fuzz standard input\n");
+    printf("  -I <regex>       only fuzz files matching <regex>\n");
+    printf("  -q               do not print the fuzzed application's messages\n");
     printf("  -r <ratio>       bit fuzzing ratio (default 0.004)\n");
     printf("  -s <seed>        random seed (default 0)\n");
     printf("     <start:stop>  specify a seed range\n");
-    printf("  -F <count>       number of concurrent forks (default 1)\n");
-    printf("  -B <n>           kill children that output more than <n> bytes\n");
     printf("  -T <n>           kill children that run for more than <n> seconds\n");
-    printf("  -q               do not print the fuzzed application's messages\n");
-    printf("  -i               fuzz standard input\n");
-    printf("  -I <regex>       only fuzz files matching <regex>\n");
-    printf("  -c               only fuzz files specified in the command line\n");
-    printf("  -E <regex>       do not fuzz files matching <regex>\n");
-    printf("  -d               print debug messages\n");
-    printf("  -h               display this help and exit\n");
     printf("  -v               output version information and exit\n");
 #   endif
     printf("\n");

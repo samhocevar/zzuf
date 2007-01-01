@@ -61,6 +61,70 @@ will try to interpret them as arguments for itself.
 .RI
 .SH OPTIONS
 .TP
+.B \-B, \-\-max\-bytes <n>
+Automatically terminate child processes that output more than
+.B <n>
+bytes on the standard output and standard error channels. This is useful to
+detect infinite loops.
+.TP
+.B \-c, \-\-cmdline
+Only fuzz files whose name is specified in the target application's command
+line. This is mostly a shortcut to avoid specifiying twice the argument:
+.B zzuf \-c cat file.txt
+has the same effect as
+.B zzuf \-I "^file\\.txt$" cat
+.BR file.txt .
+See the
+.B \-I
+flag for more information.
+.TP
+.B \-d, \-\-debug
+Activate the display of debug messages.
+.TP
+.B \-E, \-\-exclude <regex>
+Do not fuzz files whose name matches the
+.B <regex>
+regular expression. This option supersedes anything that is specified by the
+.B \-\-exclude
+flag. Use this for instance if you do not know for sure what files your
+application is going to read, but do not want it to fuzz files in the
+.B /etc
+directory.
+
+Multiple
+.B \-E
+flags can be specified, in which case files matching any one of the regular
+expressions will be ignored.
+.TP
+.B \-F, \-\-fork <children>
+Specify the number of simultaneous children that can be run. This option is
+only useful if the
+.B \-s
+flag is used with an interval argument.
+.TP
+.B \-h, \-\-help
+Display a short help message and exit.
+.TP
+.B \-i, \-\-stdin
+Fuzz the application's standard input. By default
+.B zzuf
+only fuzzes files.
+.TP
+.B \-I, \-\-include <regex>
+Only fuzz files whose name matches the
+.B <regex>
+regular expression. Use this for instance if your application reads
+configuration files at startup and you only want specific files to be fuzzed.
+
+Multiple
+.B \-I
+flags can be specified, in which case files matching any one of the regular
+expressions will be fuzzed.
+.TP
+.B \-q, \-\-quiet
+Hide the output of the fuzzed application. This is useful if the application
+is very verbose but only its exit code is really useful to you.
+.TP
 .B \-r, \-\-ratio <ratio>
 Specify the amount of bits that will be randomly fuzzed. A value of 0
 will not fuzz anything. A value of 0.05 will fuzz 5% of the open files'
@@ -89,75 +153,11 @@ If an interval is specified,
 will run the application several times, each time with a different seed, and
 report the behaviour of each run.
 .TP
-.B \-F, \-\-fork <children>
-Specify the number of simultaneous children that can be run. This option is
-only useful if the
-.B \-s
-flag is used with an interval argument.
-.TP
-.B \-B, \-\-max\-bytes <n>
-Automatically terminate child processes that output more than
-.B <n>
-bytes on the standard output and standard error channels. This is useful to
-detect infinite loops.
-.TP
 .B \-T, \-\-max\-time <n>
 Automatically terminate child processes that run for more than
 .B <n>
 seconds. This is useful to detect infinite loops or processes stuck in other
 situations.
-.TP
-.B \-q, \-\-quiet
-Hide the output of the fuzzed application. This is useful if the application
-is very verbose but only its exit code is really useful to you.
-.TP
-.B \-i, \-\-stdin
-Fuzz the application's standard input. By default
-.B zzuf
-only fuzzes files.
-.TP
-.B \-I, \-\-include <regex>
-Only fuzz files whose name matches the
-.B <regex>
-regular expression. Use this for instance if your application reads
-configuration files at startup and you only want specific files to be fuzzed.
-
-Multiple
-.B \-I
-flags can be specified, in which case files matching any one of the regular
-expressions will be fuzzed.
-.TP
-.B \-c, \-\-cmdline
-Only fuzz files whose name is specified in the target application's command
-line. This is mostly a shortcut to avoid specifiying twice the argument:
-.B zzuf \-c cat file.txt
-has the same effect as
-.B zzuf \-I "^file\\.txt$" cat
-.BR file.txt .
-See the
-.B \-I
-flag for more information.
-.TP
-.B \-E, \-\-exclude <regex>
-Do not fuzz files whose name matches the
-.B <regex>
-regular expression. This option supersedes anything that is specified by the
-.B \-\-exclude
-flag. Use this for instance if you do not know for sure what files your
-application is going to read, but do not want it to fuzz files in the
-.B /etc
-directory.
-
-Multiple
-.B \-E
-flags can be specified, in which case files matching any one of the regular
-expressions will be ignored.
-.TP
-.B \-d, \-\-debug
-Activate the display of debug messages.
-.TP
-.B \-h, \-\-help
-Display a short help message and exit.
 .TP
 .B \-v, \-\-version
 Output version information and exit.
