@@ -1,47 +1,10 @@
 $Id$
 
-1. About Zzuf
+ About Zzuf:
 
 Zzuf is a transparent application input fuzzer. It works by intercepting
 file operations and changing random bits in the program's input. Zzuf's
 behaviour is deterministic, making it easy to reproduce bugs.
 
-
-2. Example
-
-Fuzz the input of the "cat" program using default settings:
-
-  # zzuf cat /etc/motd
-
-Fuzz 1% of the input bits of the "cat" program using seed 94324:
-
-  # zzuf -s 94324 -r 0.01 cat /etc/motd
-
-Fuzz the input of the "convert" program, using file foo.jpeg as the original
-input and excluding .xml files from fuzzing (because convert will also open
-its own configuration files and we do not want zzuf to fuzz them):
-
-  # zzuf -E '\.xml$' convert -- foo.jpeg -format tga /dev/null
-
-Fuzz the input of VLC, using file movie.avi as the original input and
-restricting fuzzing to filenames that appear on the command line, then
-generate fuzzy-movie.avi which is a file that can be fed to VLC to reproduce
-the behaviour without using zzuf:
-
-  # zzuf -c -s 87423 -r 0.01 vlc movie.avi
-
-  # zzuf -c -s 87423 -r 0.01 cp movie.avi fuzzy-movie.avi
-  # vlc fuzzy-movie.avi
-
-Fuzz mplayer's input with seeds 0 to 9999 and kill processes that take more
-than one minute to read the movie file:
-
-  # zzuf -c -q -s 0:10000 -T 60 -r 0.02 \
-         mplayer movie.avi -- -benchmark -vo null -fps 1000
-
-Same as above with up to 15 simultaneous child processes because we are
-playing a sound file:
-
-  # zzuf -c -F 15 -q -s 0:10000 -T 60 -r 0.02 \
-         mplayer song.mp3 -- -benchmark -ao null
+For instructions and examples on how to use zzuf, see the manual page.
 
