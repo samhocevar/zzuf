@@ -40,6 +40,8 @@
 #include "random.h"
 
 static void spawn_child(char **);
+static char *merge_regex(char *, char *);
+static char *merge_file(char *, char *);
 static void set_ld_preload(char const *);
 static void version(void);
 #if defined(HAVE_GETOPT_H)
@@ -80,10 +82,9 @@ int endseed = 1;
 
 int main(int argc, char *argv[])
 {
-    regex_t optre;
     char **newargv;
-    char *parser;
-    int i, j, quiet = 0, maxbytes = -1;
+    char *parser, *include = NULL, *exclude = NULL;
+    int i, j, quiet = 0, maxbytes = -1, cmdline = 0;
     double maxtime = -1.0;
 
 #if defined(HAVE_GETOPT_H)
@@ -97,6 +98,7 @@ int main(int argc, char *argv[])
             /* Long option, needs arg, flag, short option */
             { "include",   1, NULL, 'I' },
             { "exclude",   1, NULL, 'E' },
+            { "cmdline",   0, NULL, 'c' },
             { "stdin",     0, NULL, 'i' },
             { "seed",      1, NULL, 's' },
             { "ratio",     1, NULL, 'r' },
@@ -108,11 +110,11 @@ int main(int argc, char *argv[])
             { "help",      0, NULL, 'h' },
             { "version",   0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "I:E:is:r:F:B:T:qdhv",
+        int c = getopt_long(argc, argv, "I:E:cis:r:F:B:T:qdhv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "I:E:is:r:F:B:T:qdhv");
+        int c = getopt(argc, argv, "I:E:cis:r:F:B:T:qdhv");
 #   endif
         if(c == -1)
             break;
@@ -120,22 +122,23 @@ int main(int argc, char *argv[])
         switch(c)
         {
         case 'I': /* --include */
-            if(regcomp(&optre, optarg, 0) != 0)
+            include = merge_regex(include, optarg);
+            if(!include)
             {
                 printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
                 return EXIT_FAILURE;
             }
-            regfree(&optre);
-            setenv("ZZUF_INCLUDE", optarg, 1);
             break;
         case 'E': /* --exclude */
-            if(regcomp(&optre, optarg, 0) != 0)
+            exclude = merge_regex(exclude, optarg);
+            if(!exclude)
             {
                 printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
                 return EXIT_FAILURE;
             }
-            regfree(&optre);
-            setenv("ZZUF_EXCLUDE", optarg, 1);
+            break;
+        case 'c': /* --cmdline */
+            cmdline = 1;
             break;
         case 'i': /* --stdin */
             setenv("ZZUF_STDIN", "1", 1);
@@ -186,6 +189,26 @@ int main(int argc, char *argv[])
         printf(MOREINFO, argv[0]);
         return EXIT_FAILURE;
     }
+
+    if(cmdline)
+    {
+        int dashdash = 0;
+
+        for(i = optind + 1; i < argc; i++)
+        {
+            if(dashdash)
+                include = merge_file(include, argv[i]);
+            else if(!strcmp("--", argv[i]))
+                dashdash = 1;
+            else if(argv[i][0] != '-')
+                include = merge_file(include, argv[i]);
+        }
+    }
+
+    if(include)
+        setenv("ZZUF_INCLUDE", include, 1);
+    if(exclude)
+        setenv("ZZUF_EXCLUDE", exclude, 1);
 
     /* Allocate memory for children handling */
     child_list = malloc(parallel * sizeof(struct child_list));
@@ -348,6 +371,50 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;    
 }
 
+static char *merge_file(char *regex, char *file)
+{
+    char *newfile = malloc(1 + 2 * strlen(file) + 1 + 1), *tmp = newfile;
+
+    *tmp++ = '^';
+    while(*file)
+    {
+        if(strchr("^.[$()|*+?{\\", *file))
+            *tmp++ = '\\';
+        *tmp++ = *file++;
+    }
+    *tmp++ = '$';
+    *tmp++ = '\0';
+
+    tmp = merge_regex(regex, newfile);
+    free(newfile);
+    return tmp;
+}
+
+static char *merge_regex(char *regex, char *string)
+{
+    regex_t optre;
+
+    if(regex)
+    {
+        regex = realloc(regex, strlen(regex) + strlen(string) + 1 + 1);
+        sprintf(regex + strlen(regex) - 1, "|%s)", string);
+    }
+    else
+    {
+        regex = malloc(1 + strlen(string) + 1 + 1);
+        sprintf(regex, "(%s)", string);
+    }
+
+    if(regcomp(&optre, regex, REG_EXTENDED) != 0)
+    {
+        free(regex);
+        return NULL;
+    }
+    regfree(&optre);
+
+    return regex;
+}
+
 static void spawn_child(char **argv)
 {
     char buf[BUFSIZ];
@@ -442,9 +509,9 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -vqdhi ] [ -r ratio ] [ -s seed | -s start:stop]\n");
-    printf("                       [ -F children ] [ -B bytes ] [ -T seconds ]\n");
-    printf("                       [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
+    printf("Usage: zzuf [ -vqdhic ] [ -r ratio ] [ -s seed | -s start:stop ]\n");
+    printf("                        [ -F children ] [ -B bytes ] [ -T seconds ]\n");
+    printf("                        [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
     printf("Run COMMAND and randomly fuzz its input.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
@@ -458,6 +525,7 @@ static void usage(void)
     printf("  -q, --quiet              do not print children's messages\n");
     printf("  -i, --stdin              fuzz standard input\n");
     printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
+    printf("  -c, --cmdline            only fuzz files specified in the command line\n");
     printf("  -E, --exclude <regex>    do not fuzz files matching <regex>\n");
     printf("  -d, --debug              print debug messages\n");
     printf("  -h, --help               display this help and exit\n");
@@ -472,6 +540,7 @@ static void usage(void)
     printf("  -q               do not print the fuzzed application's messages\n");
     printf("  -i               fuzz standard input\n");
     printf("  -I <regex>       only fuzz files matching <regex>\n");
+    printf("  -c               only fuzz files specified in the command line\n");
     printf("  -E <regex>       do not fuzz files matching <regex>\n");
     printf("  -d               print debug messages\n");
     printf("  -h               display this help and exit\n");

@@ -76,14 +76,14 @@ void _zz_init(void)
     if(tmp && *tmp)
     {
         re_include = malloc(sizeof(*re_include));
-        regcomp(re_include, tmp, 0);
+        regcomp(re_include, tmp, REG_EXTENDED);
     }
 
     tmp = getenv("ZZUF_EXCLUDE");
     if(tmp && *tmp)
     {
         re_exclude = malloc(sizeof(*re_exclude));
-        regcomp(re_exclude, tmp, 0);
+        regcomp(re_exclude, tmp, REG_EXTENDED);
     }
 
     _zz_fd_init();

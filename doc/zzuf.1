@@ -4,7 +4,7 @@ zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
 .B zzuf
 [
-.B \-vqdhi
+.B \-vqdhic
 ] [
 .B \-r
 .I ratio
@@ -120,7 +120,23 @@ only fuzzes files.
 Only fuzz files whose name matches the
 .B <regex>
 regular expression. Use this for instance if your application reads
-configuration files in many places and you do not want them to be fuzzed.
+configuration files at startup and you only want specific files to be fuzzed.
+
+Multiple
+.B \-I
+flags can be specified, in which case files matching any one of the regular
+expressions will be fuzzed.
+.TP
+.B \-c, \-\-cmdline
+Only fuzz files whose name is specified in the target application's command
+line. This is mostly a shortcut to avoid specifiying twice the argument:
+.B zzuf \-c cat file.txt
+has the same effect as
+.B zzuf \-I "^file\\.txt$" cat
+.BR file.txt .
+See the
+.B \-I
+flag for more information.
 .TP
 .B \-E, \-\-exclude <regex>
 Do not fuzz files whose name matches the
@@ -131,6 +147,11 @@ flag. Use this for instance if you do not know for sure what files your
 application is going to read, but do not want it to fuzz files in the
 .B /etc
 directory.
+
+Multiple
+.B \-E
+flags can be specified, in which case files matching any one of the regular
+expressions will be ignored.
 .TP
 .B \-d, \-\-debug
 Activate the display of debug messages.
