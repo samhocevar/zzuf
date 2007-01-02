@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
             if(child_list[i].status == STATUS_RUNNING
                 && maxbytes >= 0 && child_list[i].bytes > maxbytes)
             {
-                fprintf(stderr, "seed %i: data exceeded, sending SIGTERM\n",
+                fprintf(stdout, "seed %i: data exceeded, sending SIGTERM\n",
                         child_list[i].seed);
                 kill(child_list[i].pid, SIGTERM);
                 child_list[i].date = now;
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
                 && maxtime >= 0.0
                 && difftime(now, child_list[i].date) > maxtime)
             {
-                fprintf(stderr, "seed %i: time exceeded, sending SIGTERM\n",
+                fprintf(stdout, "seed %i: time exceeded, sending SIGTERM\n",
                         child_list[i].seed);
                 kill(child_list[i].pid, SIGTERM);
                 child_list[i].date = now;
@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
             if(child_list[i].status == STATUS_SIGTERM
                 && difftime(now, child_list[i].date) > 2.0)
             {
-                fprintf(stderr, "seed %i: not responding, sending SIGKILL\n",
+                fprintf(stdout, "seed %i: not responding, sending SIGKILL\n",
                         child_list[i].seed);
                 kill(child_list[i].pid, SIGKILL);
                 child_list[i].status = STATUS_SIGKILL;
@@ -298,10 +298,10 @@ int main(int argc, char *argv[])
                 continue;
 
             if(WIFEXITED(status) && WEXITSTATUS(status))
-                fprintf(stderr, "seed %i: exit %i\n",
+                fprintf(stdout, "seed %i: exit %i\n",
                         child_list[i].seed, WEXITSTATUS(status));
             else if(WIFSIGNALED(status))
-                fprintf(stderr, "seed %i: signal %i\n",
+                fprintf(stdout, "seed %i: signal %i\n",
                         child_list[i].seed, WTERMSIG(status));
 
             for(j = 0; j < 3; j++)
@@ -311,6 +311,8 @@ int main(int argc, char *argv[])
             child_list[i].status = STATUS_FREE;
             child_count--;
         }
+
+        fflush(stdout);
 
         /* Read data from all sockets */
         FD_ZERO(&fdset);
