@@ -346,7 +346,8 @@ int main(int argc, char *argv[])
             if(ret > 0)
             {
                 /* We got data */
-                child_list[i].bytes += ret;
+                if(j != 0)
+                    child_list[i].bytes += ret;
                 if(!quiet || j == 0)
                     write((j < 2) ? STDERR_FILENO : STDIN_FILENO, buf, ret);
             }
