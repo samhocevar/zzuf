@@ -159,6 +159,11 @@ int close(int fd)
 
     if(!_zz_ready)
         LOADSYM(close);
+
+    /* Hey, it’s our debug channel! Silently pretend we closed it. */
+    if(fd == DEBUG_FILENO)
+        return 0;
+
     ret = close_orig(fd);
     if(!_zz_ready || !_zz_iswatched(fd))
         return ret;

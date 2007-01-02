@@ -32,6 +32,7 @@
 #include <stdarg.h>
 
 #include "debug.h"
+#include "libzzuf.h"
 
 extern int _zz_hasdebug;
 
@@ -53,7 +54,7 @@ void _zz_debug(char const *format, ...)
     char const *f;
 #endif
     va_list args;
-    int saved_errno, fd = 2;
+    int saved_errno, fd = DEBUG_FILENO;
 
     if(!_zz_hasdebug)
         return;

@@ -38,6 +38,7 @@
 #include <sys/wait.h>
 
 #include "random.h"
+#include "libzzuf.h"
 
 static void spawn_child(char **);
 static char *merge_regex(char *, char *);
@@ -60,7 +61,7 @@ struct child_list
     } status;
 
     pid_t pid;
-    int outfd, errfd;
+    int fd[3]; /* 0 is debug, 1 is stderr, 2 is stdout */
     int bytes, seed;
     time_t date;
 } *child_list;
@@ -303,11 +304,9 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "seed %i: signal %i\n",
                         child_list[i].seed, WTERMSIG(status));
 
-            if(child_list[i].outfd >= 0)
-                close(child_list[i].outfd);
-
-            if(child_list[i].errfd >= 0)
-                close(child_list[i].errfd);
+            for(j = 0; j < 3; j++)
+                if(child_list[i].fd[j] >= 0)
+                    close(child_list[i].fd[j]);
 
             child_list[i].status = STATUS_FREE;
             child_count--;
@@ -320,8 +319,8 @@ int main(int argc, char *argv[])
             if(child_list[i].status != STATUS_RUNNING)
                 continue;
 
-            ZZUF_FD_SET(child_list[i].outfd, &fdset, maxfd);
-            ZZUF_FD_SET(child_list[i].errfd, &fdset, maxfd);
+            for(j = 0; j < 3; j++)
+                ZZUF_FD_SET(child_list[i].fd[j], &fdset, maxfd);
         }
         tv.tv_sec = 0;
         tv.tv_usec = 1000;
@@ -332,37 +331,33 @@ int main(int argc, char *argv[])
         if(ret <= 0)
             continue;
 
-        for(i = 0, j = 0; i < parallel; i += j, j = (j + 1) & 1)
+        /* XXX: cute (i, j) iterating hack */
+        for(i = 0, j = 0; i < parallel; i += (j == 2), j = (j + 1) % 3)
         {
             char buf[BUFSIZ];
-            int fd;
 
             if(child_list[i].status != STATUS_RUNNING)
                 continue;
 
-            fd = j ? child_list[i].outfd : child_list[i].errfd;
-
-            if(!ZZUF_FD_ISSET(fd, &fdset))
+            if(!ZZUF_FD_ISSET(child_list[i].fd[j], &fdset))
                 continue;
 
-            ret = read(fd, buf, BUFSIZ - 1);
+            ret = read(child_list[i].fd[j], buf, BUFSIZ - 1);
             if(ret > 0)
             {
                 /* We got data */
                 child_list[i].bytes += ret;
-                if(!quiet)
-                    fwrite(buf, ret, 1, j ? stdout : stderr);
+                if(!quiet || j == 0)
+                    write((j < 2) ? STDERR_FILENO : STDIN_FILENO, buf, ret);
             }
             else if(ret == 0)
             {
                 /* End of file reached */
-                close(fd);
-                if(j)
-                    child_list[i].outfd = -1;
-                else
-                    child_list[i].errfd = -1;
+                close(child_list[i].fd[j]);
+                child_list[i].fd[j] = -1;
 
-                if(child_list[i].outfd == -1 && child_list[i].errfd == -1)
+                if(child_list[i].fd[0] == -1 && child_list[i].fd[1] == -1
+                   && child_list[i].fd[2] == -1)
                     child_list[i].status = STATUS_EOF;
             }
         }
@@ -421,10 +416,11 @@ static char *merge_regex(char *regex, char *string)
 
 static void spawn_child(char **argv)
 {
+    static int const files[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
     char buf[BUFSIZ];
-    int outfd[2], errfd[2];
+    int fd[3][2];
     pid_t pid;
-    int i;
+    int i, j;
 
     /* Find an empty slot */
     for(i = 0; i < parallel; i++)
@@ -432,11 +428,12 @@ static void spawn_child(char **argv)
             break;
 
     /* Prepare communication pipe */
-    if(pipe(outfd) == -1 || pipe(errfd) == -1)
-    {
-        perror("pipe");
-        return;
-    }
+    for(j = 0; j < 3; j++)
+        if(pipe(fd[j]) == -1)
+        {
+            perror("pipe");
+            return;
+        }
 
     /* Fork and launch child */
     pid = fork();
@@ -447,12 +444,12 @@ static void spawn_child(char **argv)
             return;
         case 0:
             /* We’re the child */
-            close(outfd[0]);
-            close(errfd[0]);
-            dup2(outfd[1], STDOUT_FILENO);
-            dup2(errfd[1], STDERR_FILENO);
-            close(outfd[1]);
-            close(errfd[1]);
+            for(j = 0; j < 3; j++)
+            {
+                close(fd[j][0]);
+                dup2(fd[j][1], files[j]);
+                close(fd[j][1]);
+            }
 
             /* Set environment variables */
             sprintf(buf, "%i", seed);
@@ -467,12 +464,13 @@ static void spawn_child(char **argv)
             break;
         default:
             /* We’re the parent, acknowledge spawn */
-            close(outfd[1]);
-            close(errfd[1]);
             child_list[i].date = time(NULL);
             child_list[i].pid = pid;
-            child_list[i].outfd = outfd[0];
-            child_list[i].errfd = errfd[0];
+            for(j = 0; j < 3; j++)
+            {
+                close(fd[j][1]);
+                child_list[i].fd[j] = fd[j][0];
+            }
             child_list[i].bytes = 0;
             child_list[i].seed = seed;
             child_list[i].status = STATUS_RUNNING;
