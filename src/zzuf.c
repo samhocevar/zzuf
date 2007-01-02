@@ -351,7 +351,7 @@ int main(int argc, char *argv[])
                 if(j != 0)
                     child_list[i].bytes += ret;
                 if(!quiet || j == 0)
-                    write((j < 2) ? STDERR_FILENO : STDIN_FILENO, buf, ret);
+                    write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);
             }
             else if(ret == 0)
             {
