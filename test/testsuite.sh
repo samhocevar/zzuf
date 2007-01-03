@@ -9,7 +9,7 @@ create()
     rm -f /tmp/zzuf-random-$$
     dd if=/dev/urandom of=/tmp/zzuf-random-$$ bs=1024 count=32 2>/dev/null
     rm -f /tmp/zzuf-text-$$
-    strings /dev/urandom | dd bs=1024 count=32 of=/tmp/zzuf-text-$$ 2>/dev/null
+    strings </dev/urandom | dd bs=1024 count=32 of=/tmp/zzuf-text-$$ 2>/dev/null
 }
 
 check()
