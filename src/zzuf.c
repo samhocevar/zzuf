@@ -41,6 +41,9 @@
 #include "libzzuf.h"
 
 static void spawn_child(char **);
+static void clean_children(void);
+static void read_children(void);
+
 static char *merge_regex(char *, char *);
 static char *merge_file(char *, char *);
 static void set_environment(char const *);
@@ -49,7 +52,7 @@ static void version(void);
 static void usage(void);
 #endif
 
-struct child_list
+static struct child_list
 {
     enum status
     {
@@ -65,10 +68,13 @@ struct child_list
     int bytes, seed;
     time_t date;
 } *child_list;
-int parallel = 1, child_count = 0;
+static int parallel = 1, child_count = 0;
 
-int seed = 0;
-int endseed = 1;
+static int seed = 0;
+static int endseed = 1;
+static int quiet = 0;
+static int maxbytes = -1;
+static double maxtime = -1.0;
 
 #define ZZUF_FD_SET(fd, p_fdset, maxfd) \
     if(fd >= 0) \
@@ -85,8 +91,7 @@ int main(int argc, char *argv[])
 {
     char **newargv;
     char *parser, *include = NULL, *exclude = NULL;
-    int i, j, quiet = 0, maxbytes = -1, cmdline = 0;
-    double maxtime = -1.0;
+    int i, cmdline = 0;
 
 #if defined(HAVE_GETOPT_H)
     for(;;)
@@ -235,135 +240,15 @@ int main(int argc, char *argv[])
     /* Main loop */
     while(child_count || seed < endseed)
     {
-        struct timeval tv;
-        time_t now = time(NULL);
-        fd_set fdset;
-        int ret, maxfd = 0;
-
-        /* Spawn a new child, if necessary */
+        /* Spawn one new child, if necessary */
         if(child_count < parallel && seed < endseed)
             spawn_child(newargv);
 
-        /* Terminate children if necessary */
-        for(i = 0; i < parallel; i++)
-        {
-            if(child_list[i].status == STATUS_RUNNING
-                && maxbytes >= 0 && child_list[i].bytes > maxbytes)
-            {
-                fprintf(stdout, "seed %i: data exceeded, sending SIGTERM\n",
-                        child_list[i].seed);
-                kill(child_list[i].pid, SIGTERM);
-                child_list[i].date = now;
-                child_list[i].status = STATUS_SIGTERM;
-            }
+        /* Cleanup dead or dying children */
+        clean_children();
 
-            if(child_list[i].status == STATUS_RUNNING
-                && maxtime >= 0.0
-                && difftime(now, child_list[i].date) > maxtime)
-            {
-                fprintf(stdout, "seed %i: time exceeded, sending SIGTERM\n",
-                        child_list[i].seed);
-                kill(child_list[i].pid, SIGTERM);
-                child_list[i].date = now;
-                child_list[i].status = STATUS_SIGTERM;
-            }
-        }
-
-        /* Kill children if necessary */
-        for(i = 0; i < parallel; i++)
-        {
-            if(child_list[i].status == STATUS_SIGTERM
-                && difftime(now, child_list[i].date) > 2.0)
-            {
-                fprintf(stdout, "seed %i: not responding, sending SIGKILL\n",
-                        child_list[i].seed);
-                kill(child_list[i].pid, SIGKILL);
-                child_list[i].status = STATUS_SIGKILL;
-            }
-        }
-
-        /* Collect dead children */
-        for(i = 0; i < parallel; i++)
-        {
-            int status;
-            pid_t pid;
-
-            if(child_list[i].status != STATUS_SIGKILL
-                && child_list[i].status != STATUS_SIGTERM
-                && child_list[i].status != STATUS_EOF)
-                continue;
-
-            pid = waitpid(child_list[i].pid, &status, WNOHANG);
-            if(pid <= 0)
-                continue;
-
-            if(WIFEXITED(status) && WEXITSTATUS(status))
-                fprintf(stdout, "seed %i: exit %i\n",
-                        child_list[i].seed, WEXITSTATUS(status));
-            else if(WIFSIGNALED(status))
-                fprintf(stdout, "seed %i: signal %i\n",
-                        child_list[i].seed, WTERMSIG(status));
-
-            for(j = 0; j < 3; j++)
-                if(child_list[i].fd[j] >= 0)
-                    close(child_list[i].fd[j]);
-
-            child_list[i].status = STATUS_FREE;
-            child_count--;
-        }
-
-        fflush(stdout);
-
-        /* Read data from all sockets */
-        FD_ZERO(&fdset);
-        for(i = 0; i < parallel; i++)
-        {
-            if(child_list[i].status != STATUS_RUNNING)
-                continue;
-
-            for(j = 0; j < 3; j++)
-                ZZUF_FD_SET(child_list[i].fd[j], &fdset, maxfd);
-        }
-        tv.tv_sec = 0;
-        tv.tv_usec = 1000;
-
-        ret = select(maxfd + 1, &fdset, NULL, NULL, &tv);
-        if(ret < 0)
-            perror("select");
-        if(ret <= 0)
-            continue;
-
-        /* XXX: cute (i, j) iterating hack */
-        for(i = 0, j = 0; i < parallel; i += (j == 2), j = (j + 1) % 3)
-        {
-            char buf[BUFSIZ];
-
-            if(child_list[i].status != STATUS_RUNNING)
-                continue;
-
-            if(!ZZUF_FD_ISSET(child_list[i].fd[j], &fdset))
-                continue;
-
-            ret = read(child_list[i].fd[j], buf, BUFSIZ - 1);
-            if(ret > 0)
-            {
-                /* We got data */
-                if(j != 0)
-                    child_list[i].bytes += ret;
-                if(!quiet || j == 0)
-                    write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);
-            }
-            else if(ret == 0)
-            {
-                /* End of file reached */
-                close(child_list[i].fd[j]);
-                child_list[i].fd[j] = -1;
-
-                if(child_list[i].fd[0] == -1 && child_list[i].fd[1] == -1
-                   && child_list[i].fd[2] == -1)
-                    child_list[i].status = STATUS_EOF;
-            }
-        }
+        /* Read data from children */
+        read_children();
     }
 
     /* Clean up */
@@ -480,6 +365,140 @@ static void spawn_child(char **argv)
             child_count++;
             seed++;
             break;
+    }
+}
+
+static void clean_children(void)
+{
+    time_t now = time(NULL);
+    int i, j;
+
+    /* Terminate children if necessary */
+    for(i = 0; i < parallel; i++)
+    {
+        if(child_list[i].status == STATUS_RUNNING
+            && maxbytes >= 0 && child_list[i].bytes > maxbytes)
+        {
+            fprintf(stdout, "seed %i: data exceeded, sending SIGTERM\n",
+                    child_list[i].seed);
+            kill(child_list[i].pid, SIGTERM);
+            child_list[i].date = now;
+            child_list[i].status = STATUS_SIGTERM;
+        }
+
+        if(child_list[i].status == STATUS_RUNNING
+            && maxtime >= 0.0
+            && difftime(now, child_list[i].date) > maxtime)
+        {
+            fprintf(stdout, "seed %i: time exceeded, sending SIGTERM\n",
+                    child_list[i].seed);
+            kill(child_list[i].pid, SIGTERM);
+            child_list[i].date = now;
+            child_list[i].status = STATUS_SIGTERM;
+        }
+    }
+
+    /* Kill children if necessary */
+    for(i = 0; i < parallel; i++)
+    {
+        if(child_list[i].status == STATUS_SIGTERM
+            && difftime(now, child_list[i].date) > 2.0)
+        {
+            fprintf(stdout, "seed %i: not responding, sending SIGKILL\n",
+                    child_list[i].seed);
+            kill(child_list[i].pid, SIGKILL);
+            child_list[i].status = STATUS_SIGKILL;
+        }
+    }
+
+    /* Collect dead children */
+    for(i = 0; i < parallel; i++)
+    {
+        int status;
+        pid_t pid;
+
+        if(child_list[i].status != STATUS_SIGKILL
+            && child_list[i].status != STATUS_SIGTERM
+            && child_list[i].status != STATUS_EOF)
+            continue;
+
+        pid = waitpid(child_list[i].pid, &status, WNOHANG);
+        if(pid <= 0)
+            continue;
+
+        if(WIFEXITED(status) && WEXITSTATUS(status))
+            fprintf(stdout, "seed %i: exit %i\n",
+                    child_list[i].seed, WEXITSTATUS(status));
+        else if(WIFSIGNALED(status))
+            fprintf(stdout, "seed %i: signal %i\n",
+                    child_list[i].seed, WTERMSIG(status));
+
+        for(j = 0; j < 3; j++)
+            if(child_list[i].fd[j] >= 0)
+                close(child_list[i].fd[j]);
+
+        child_list[i].status = STATUS_FREE;
+        child_count--;
+    }
+
+    fflush(stdout);
+}
+
+static void read_children(void)
+{
+    struct timeval tv;
+    fd_set fdset;
+    int i, j, ret, maxfd = 0;
+
+    /* Read data from all sockets */
+    FD_ZERO(&fdset);
+    for(i = 0; i < parallel; i++)
+    {
+        if(child_list[i].status != STATUS_RUNNING)
+            continue;
+
+        for(j = 0; j < 3; j++)
+            ZZUF_FD_SET(child_list[i].fd[j], &fdset, maxfd);
+    }
+    tv.tv_sec = 0;
+    tv.tv_usec = 1000;
+
+    ret = select(maxfd + 1, &fdset, NULL, NULL, &tv);
+    if(ret < 0)
+        perror("select");
+    if(ret <= 0)
+        return;
+
+    /* XXX: cute (i, j) iterating hack */
+    for(i = 0, j = 0; i < parallel; i += (j == 2), j = (j + 1) % 3)
+    {
+        char buf[BUFSIZ];
+
+        if(child_list[i].status != STATUS_RUNNING)
+            continue;
+
+        if(!ZZUF_FD_ISSET(child_list[i].fd[j], &fdset))
+            continue;
+
+        ret = read(child_list[i].fd[j], buf, BUFSIZ - 1);
+        if(ret > 0)
+        {
+            /* We got data */
+            if(j != 0)
+                child_list[i].bytes += ret;
+            if(!quiet || j == 0)
+                write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);
+        }
+        else if(ret == 0)
+        {
+            /* End of file reached */
+            close(child_list[i].fd[j]);
+            child_list[i].fd[j] = -1;
+
+            if(child_list[i].fd[0] == -1 && child_list[i].fd[1] == -1
+               && child_list[i].fd[2] == -1)
+                child_list[i].status = STATUS_EOF;
+        }
     }
 }
 
