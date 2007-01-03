@@ -75,7 +75,12 @@ void _zz_debug(char const *format, ...)
         if(!*f)
             break;
 
-        if(*f == 'i')
+        if(*f == 'c')
+        {
+            char i = (char)(unsigned char)va_arg(args, int);
+            write(fd, &i, 1);
+        }
+        else if(*f == 'i')
         {
             int i = va_arg(args, int);
             WRITE_INT(fd, i, 10);
@@ -125,7 +130,7 @@ void _zz_debug(char const *format, ...)
         }
         else
         {
-            write(fd, f, 1);
+            write(fd, f - 1, 2);
         }
     }
     write(fd, "\n", 1);
