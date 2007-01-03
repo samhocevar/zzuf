@@ -47,7 +47,7 @@ cleanup() {
 
 trap "echo ''; echo ''; echo 'Aborted.'; cleanup; exit 0" 1 2 15
 
-seed=$(($RANDOM * $$))
+seed=$((0$1))
 ZZUF="$(dirname "$0")/../src/zzuf"
 FDCAT="$(dirname "$0")/fdcat"
 STRAMCAT="$(dirname "$0")/streamcat"
@@ -59,7 +59,7 @@ create
 echo "Using seed $seed"
 echo ""
 
-for file in /tmp/zzuf-text-$$ /tmp/zzuf-zero-$$ /tmp/zzuf-random-$$; do
+for file in /tmp/zzuf-zero-$$ /tmp/zzuf-text-$$ /tmp/zzuf-random-$$; do
     for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
         echo "Testing zzuf on $file, ratio $r:"
         OK=1
