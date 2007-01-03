@@ -42,8 +42,10 @@ void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
     unsigned long int pos = _zz_getpos(fd);
     unsigned int i, j, todo;
 
-    fuzz = _zz_getfuzz(fd);
+    debug("fuzz(%i, %lli@%li)", fd, (unsigned long long int)len,
+          (unsigned long int)pos);
 
+    fuzz = _zz_getfuzz(fd);
     aligned_buf = buf - pos;
 
     for(i = pos / CHUNKBYTES;

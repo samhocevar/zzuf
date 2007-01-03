@@ -167,8 +167,11 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         /* XXX: the number of bytes read is not ret * size, because
          * a partial read may have advanced the stream pointer */
         long int newpos = ftell(stream);
-        _zz_fuzz(fd, ptr, newpos - pos);
-        _zz_setpos(fd, newpos);
+        if(newpos != pos)
+        {
+            _zz_fuzz(fd, ptr, newpos - pos);
+            _zz_setpos(fd, newpos);
+        }
     }
     return ret;
 }
