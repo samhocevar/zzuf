@@ -37,10 +37,16 @@
 #include "fuzz.h"
 #include "load.h"
 
+#if defined HAVE_SIGHANDLER_T
+#   define SIG_T sighandler_t
+#elif defined HAVE_SIG_T
+#   define SIG_T sig_t
+#endif
+
 /* Library functions that we divert */
-static sighandler_t (*signal_orig)    (int signum, sighandler_t handler);
-static int          (*sigaction_orig) (int signum, const struct sigaction *act,
-                                       struct sigaction *oldact);
+static SIG_T (*signal_orig)    (int signum, SIG_T handler);
+static int   (*sigaction_orig) (int signum, const struct sigaction *act,
+                                struct sigaction *oldact);
 /* Local functions */
 static int isfatal(int signum);
 
@@ -81,9 +87,9 @@ static int isfatal(int signum)
     }
 }
 
-sighandler_t signal(int signum, sighandler_t handler)
+SIG_T signal(int signum, SIG_T handler)
 {
-    sighandler_t ret;
+    SIG_T ret;
 
     if(!_zz_ready)
         LOADSYM(signal);

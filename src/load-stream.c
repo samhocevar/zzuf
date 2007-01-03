@@ -37,7 +37,9 @@
 
 /* Library functions that we divert */
 static FILE *  (*fopen_orig)   (const char *path, const char *mode);
+#ifdef HAVE_FOPEN64
 static FILE *  (*fopen64_orig) (const char *path, const char *mode);
+#endif
 static int     (*fseek_orig)   (FILE *stream, long offset, int whence);
 static size_t  (*fread_orig)   (void *ptr, size_t size, size_t nmemb,
                                 FILE *stream);
@@ -48,16 +50,24 @@ static int     (*ungetc_orig)  (int c, FILE *stream);
 static int     (*fclose_orig)  (FILE *fp);
 
 /* Additional GNUisms */
+#ifdef HAVE_GETLINE
 static ssize_t (*getline_orig)    (char **lineptr, size_t *n, FILE *stream);
+#endif
+#ifdef HAVE_GETDELIM
 static ssize_t (*getdelim_orig)   (char **lineptr, size_t *n, int delim,
                                    FILE *stream);
+#endif
+#ifdef HAVE___GETDELIM
 static ssize_t (*__getdelim_orig) (char **lineptr, size_t *n, int delim,
                                    FILE *stream);
+#endif
 
 void _zz_load_stream(void)
 {
     LOADSYM(fopen);
+#ifdef HAVE_FOPEN64
     LOADSYM(fopen64);
+#endif
     LOADSYM(fseek);
     LOADSYM(fread);
     LOADSYM(getc);
@@ -65,10 +75,15 @@ void _zz_load_stream(void)
     LOADSYM(fgets);
     LOADSYM(ungetc);
     LOADSYM(fclose);
-
+#ifdef HAVE_GETLINE
     LOADSYM(getline);
+#endif
+#ifdef HAVE_GETDELIM
     LOADSYM(getdelim);
+#endif
+#ifdef HAVE___GETDELIM
     LOADSYM(__getdelim);
+#endif
 }
 
 /* Our function wrappers */
@@ -94,10 +109,12 @@ FILE *fopen(const char *path, const char *mode)
     FILE *ret; FOPEN(fopen); return ret;
 }
 
+#ifdef HAVE_FOPEN64
 FILE *fopen64(const char *path, const char *mode)
 {
     FILE *ret; FOPEN(fopen64); return ret;
 }
+#endif
 
 int fseek(FILE *stream, long offset, int whence)
 {
@@ -320,18 +337,24 @@ int fclose(FILE *fp)
         return ret; \
     } while(0)
 
+#ifdef HAVE_GETLINE
 ssize_t getline(char **lineptr, size_t *n, FILE *stream)
 {
     ssize_t ret; GETDELIM(getline, '\n', 0); return ret;
 }
+#endif
 
+#ifdef HAVE_GETDELIM
 ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
 {
     ssize_t ret; GETDELIM(getdelim, delim, 1); return ret;
 }
+#endif
 
+#ifdef HAVE___GETDELIM
 ssize_t __getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
 {
     ssize_t ret; GETDELIM(__getdelim, delim, 1); return ret;
 }
+#endif
 

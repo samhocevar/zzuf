@@ -20,7 +20,7 @@
 
 /* Can't remember what that's for */
 #define _GNU_SOURCE
-/* Use this to get lseek64() */
+/* Use this to get lseek64() on glibc systems */
 #define _LARGEFILE64_SOURCE
 
 #if defined HAVE_STDINT_H
@@ -43,19 +43,27 @@
 
 /* Library functions that we divert */
 static int     (*open_orig)    (const char *file, int oflag, ...);
+#ifdef HAVE_OPEN64
 static int     (*open64_orig)  (const char *file, int oflag, ...);
+#endif
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
 static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
+#ifdef HAVE_LSEEK64
 static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
+#endif
 static int     (*close_orig)   (int fd);
 
 void _zz_load_fd(void)
 {
     LOADSYM(open);
+#ifdef HAVE_OPEN64
     LOADSYM(open64);
+#endif
     LOADSYM(read);
     LOADSYM(lseek);
+#ifdef HAVE_LSEEK64
     LOADSYM(lseek64);
+#endif
     LOADSYM(close);
 }
 
@@ -97,10 +105,12 @@ int open(const char *file, int oflag, ...)
     int ret; OPEN(open); return ret;
 }
 
+#ifdef HAVE_OPEN64
 int open64(const char *file, int oflag, ...)
 {
     int ret; OPEN(open64); return ret;
 }
+#endif
 
 ssize_t read(int fd, void *buf, size_t count)
 {
@@ -120,7 +130,11 @@ ssize_t read(int fd, void *buf, size_t count)
     }
 
     /* Sanity check, can be OK though (for instance with a character device) */
+#ifdef HAVE_LSEEK64
     if(lseek64_orig(fd, 0, SEEK_CUR) != _zz_getpos(fd))
+#else
+    if(lseek_orig(fd, 0, SEEK_CUR) != _zz_getpos(fd))
+#endif
         debug("warning: offset inconsistency");
 
     return ret;
@@ -146,12 +160,14 @@ off_t lseek(int fd, off_t offset, int whence)
     return ret;
 }
 
+#ifdef HAVE_LSEEK64
 off64_t lseek64(int fd, off64_t offset, int whence)
 {
     off64_t ret;
     LSEEK(lseek64, off64_t);
     return ret;
 }
+#endif
 
 int close(int fd)
 {

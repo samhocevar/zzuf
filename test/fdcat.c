@@ -54,9 +54,11 @@ int main(int argc, char *argv[])
         lseek(fd, rand() % pos, SEEK_SET);
         for(j = 0; j < 16; j++)
             read(fd, data + lseek(fd, 0, SEEK_CUR), rand() % 4096);
+#ifdef HAVE_LSEEK64
         lseek64(fd, rand() % pos, SEEK_SET);
         for(j = 0; j < 16; j++)
             read(fd, data + lseek(fd, 0, SEEK_CUR), rand() % 4096);
+#endif
     }
 
     fwrite(data, pos, 1, stdout);

@@ -43,7 +43,7 @@
 static void spawn_child(char **);
 static char *merge_regex(char *, char *);
 static char *merge_file(char *, char *);
-static void set_ld_preload(char const *);
+static void set_environment(char const *);
 static void version(void);
 #if defined(HAVE_GETOPT_H)
 static void usage(void);
@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
     child_count = 0;
 
     /* Preload libzzuf.so */
-    set_ld_preload(argv[0]);
+    set_environment(argv[0]);
 
     /* Create new argv */
     newargv = malloc((argc - optind + 1) * sizeof(char *));
@@ -483,19 +483,25 @@ static void spawn_child(char **argv)
     }
 }
 
-static void set_ld_preload(char const *progpath)
+static void set_environment(char const *progpath)
 {
     char *libpath, *tmp;
     int len = strlen(progpath);
+#ifdef __APPLE__
+    char const *preload = "DYLD_INSERT_LIBRARIES";
+    setenv("DYLD_FORCE_FLAT_NAMESPACE", "1", 1);
+#else
+    char const *preload = "LD_PRELOAD";
+#endif
 
     libpath = malloc(len + strlen("/.libs/libzzuf.so") + 1);
     strcpy(libpath, progpath);
     tmp = strrchr(libpath, '/');
     strcpy(tmp ? tmp + 1 : libpath, ".libs/libzzuf.so");
     if(access(libpath, R_OK) == 0)
-        setenv("LD_PRELOAD", libpath, 1);
+        setenv(preload, libpath, 1);
     else
-        setenv("LD_PRELOAD", LIBDIR "/libzzuf.so", 1);
+        setenv(preload, LIBDIR "/libzzuf.so", 1);
     free(libpath);
 }
 
