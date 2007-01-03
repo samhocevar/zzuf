@@ -19,7 +19,7 @@ check()
     CMD="$3"
     ALIAS="$4"
     echo -n " $(echo "$ALIAS:              " | cut -b1-15)"
-    NEWMD5="$(eval "$ZZUF -i -s $SEED -r $RATIO $CMD" 2>/dev/null | md5sum | cut -b1-32)"
+    NEWMD5="$(eval "$ZZUF -s $SEED -r $RATIO $CMD" 2>/dev/null | md5sum | cut -b1-32)"
     if [ -z "$MD5" ]; then
         MD5="$NEWMD5"
         echo "$NEWMD5"
@@ -65,11 +65,11 @@ for file in /tmp/zzuf-text-$$ /tmp/zzuf-zero-$$ /tmp/zzuf-random-$$; do
         OK=1
         MD5=""
         check $seed $r "cat $file" "cat"
-        check $seed $r "cat < $file" "cat stdin"
+        check $seed $r "-i cat < $file" "cat stdin"
         # We don't include grep in the testsuite because it puts a newline
         # at the end of its input if it was not there initially.
         #check $seed $r "grep -- -a \\'\\' $file" "grep -a"
-        check $seed $r "sed n $file" "sed n"
+        check $seed $r "-- sed -e n $file" "sed n"
         check $seed $r "dd bs=65536 if=$file" "dd(bs=65536)"
         check $seed $r "dd bs=1111 if=$file" "dd(bs=1111)"
         check $seed $r "dd bs=1024 if=$file" "dd(bs=1024)"
