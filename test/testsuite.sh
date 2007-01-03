@@ -69,7 +69,9 @@ for file in /tmp/zzuf-zero-$$ /tmp/zzuf-text-$$ /tmp/zzuf-random-$$; do
         # We don't include grep in the testsuite because it puts a newline
         # at the end of its input if it was not there initially.
         #check $seed $r "grep -- -a \\'\\' $file" "grep -a"
-        check $seed $r "-- sed -e n $file" "sed n"
+        # We don't include sed in the testsuite because on OS X in also
+        # puts a newline. Crap.
+        #check $seed $r "-- sed -e n $file" "sed n"
         check $seed $r "dd bs=65536 if=$file" "dd(bs=65536)"
         check $seed $r "dd bs=1111 if=$file" "dd(bs=1111)"
         check $seed $r "dd bs=1024 if=$file" "dd(bs=1024)"

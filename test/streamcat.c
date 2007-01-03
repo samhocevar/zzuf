@@ -18,14 +18,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+static inline int myrand(void)
+{
+    static int seed = 1;
+    int x, y;
+    x = (seed + 0x12345678) << 11;
+    y = (seed + 0xfedcba98) >> 21;
+    seed = x * 1010101 + y * 343434;
+    return seed;
+}
+
 int main(int argc, char *argv[])
 {
     long int pos;
     unsigned char *data;
     int i, j;
     FILE *stream;
-
-    srand(0);
 
     if(argc != 2)
         return EXIT_FAILURE;
@@ -48,10 +56,10 @@ int main(int argc, char *argv[])
     for(i = 0; i < 128; i++)
     {
         long int now;
-        fseek(stream, rand() % pos, SEEK_SET);
+        fseek(stream, myrand() % pos, SEEK_SET);
         for(j = 0; j < 16; j++)
-            fread(data + ftell(stream), rand() % 4096, 1, stream);
-        fseek(stream, rand() % pos, SEEK_SET);
+            fread(data + ftell(stream), myrand() % 4096, 1, stream);
+        fseek(stream, myrand() % pos, SEEK_SET);
         now = ftell(stream);
         for(j = 0; j < 16; j++)
             data[now + j] = getc(stream);

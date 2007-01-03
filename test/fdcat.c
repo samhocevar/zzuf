@@ -24,13 +24,21 @@
 #include <stdio.h>
 #include <string.h>
 
+static inline int myrand(void)
+{
+    static int seed = 1;
+    int x, y;
+    x = (seed + 0x12345678) << 11;
+    y = (seed + 0xfedcba98) >> 21;
+    seed = x * 1010101 + y * 343434;
+    return seed;
+}
+
 int main(int argc, char *argv[])
 {
     long int pos;
     unsigned char *data;
     int i, j, fd;
-
-    srand(0);
 
     if(argc != 2)
         return EXIT_FAILURE;
@@ -51,13 +59,13 @@ int main(int argc, char *argv[])
     /* Read shit here and there */
     for(i = 0; i < 128; i++)
     {
-        lseek(fd, rand() % pos, SEEK_SET);
+        lseek(fd, myrand() % pos, SEEK_SET);
         for(j = 0; j < 16; j++)
-            read(fd, data + lseek(fd, 0, SEEK_CUR), rand() % 4096);
+            read(fd, data + lseek(fd, 0, SEEK_CUR), myrand() % 4096);
 #ifdef HAVE_LSEEK64
-        lseek64(fd, rand() % pos, SEEK_SET);
+        lseek64(fd, myrand() % pos, SEEK_SET);
         for(j = 0; j < 16; j++)
-            read(fd, data + lseek(fd, 0, SEEK_CUR), rand() % 4096);
+            read(fd, data + lseek(fd, 0, SEEK_CUR), myrand() % 4096);
 #endif
     }
 
