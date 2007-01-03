@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 create()
 {
     rm -f /tmp/zzuf-zero-$$
@@ -17,7 +19,7 @@ check()
     CMD="$3"
     ALIAS="$4"
     echo -n " $(echo "$ALIAS:              " | cut -b1-15)"
-    NEWMD5="$($ZZUF -s $SEED -r $RATIO $CMD 2>/dev/null | md5sum | cut -b1-32)"
+    NEWMD5="$(eval "$ZZUF -i -s $SEED -r $RATIO $CMD" 2>/dev/null | md5sum | cut -b1-32)"
     if [ -z "$MD5" ]; then
         MD5="$NEWMD5"
         echo "$NEWMD5"
