@@ -95,7 +95,9 @@ void _zz_load_stream(void)
             LOADSYM(fn); \
             return ORIG(fn)(path, mode); \
         } \
+        _zz_disabled = 1; \
         ret = ORIG(fn)(path, mode); \
+        _zz_disabled = 0; \
         if(ret && _zz_mustwatch(path)) \
         { \
             int fd = fileno(ret); \
@@ -126,7 +128,9 @@ int fseek(FILE *stream, long offset, int whence)
     if(!_zz_ready || !_zz_iswatched(fd))
         return fseek_orig(stream, offset, whence);
 
+    _zz_disabled = 1;
     ret = fseek_orig(stream, offset, whence);
+    _zz_disabled = 0;
     debug("fseek([%i], %li, %i) = %i", fd, offset, whence, ret);
     if(ret != 0)
         return ret;
@@ -159,7 +163,9 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         return fread_orig(ptr, size, nmemb, stream);
 
     pos = ftell(stream);
+    _zz_disabled = 1;
     ret = fread_orig(ptr, size, nmemb, stream);
+    _zz_disabled = 0;
     debug("fread(%p, %li, %li, [%i]) = %li",
           ptr, (long int)size, (long int)nmemb, fd, (long int)ret);
     if(ret >= 0)
@@ -184,7 +190,9 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd)) \
             return ORIG(fn)(stream); \
+        _zz_disabled = 1; \
         ret = ORIG(fn)(stream); \
+        _zz_disabled = 0; \
         if(ret != EOF) \
         { \
             uint8_t ch = ret; \
@@ -227,7 +235,11 @@ char *fgets(char *s, int size, FILE *stream)
     {
         for(i = 0; i < size - 1; i++)
         {
-            int ch = fgetc_orig(stream);
+            int ch;
+
+            _zz_disabled = 1;
+            ch = fgetc_orig(stream);
+            _zz_disabled = 0;
 
             if(ch == EOF)
             {
@@ -286,7 +298,9 @@ int fclose(FILE *fp)
     if(!_zz_ready || !_zz_iswatched(fd))
         return fclose_orig(fp);
 
+    _zz_disabled = 1;
     ret = fclose_orig(fp);
+    _zz_disabled = 0;
     debug("fclose([%i]) = %i", fd, ret);
     _zz_unregister(fd);
 
@@ -318,7 +332,9 @@ int fclose(FILE *fp)
                 *lineptr = line; \
                 break; \
             } \
+            _zz_disabled = 1; \
             ch = fgetc_orig(stream); \
+            _zz_disabled = 0; \
             if(ch == EOF) \
             { \
                 finished = 1; \

@@ -33,6 +33,7 @@ struct fuzz
 
 /* Internal variables */
 extern int   _zz_ready;
+extern int   _zz_disabled;
 extern int   _zz_hasdebug;
 extern float _zz_ratio;
 extern int   _zz_seed;

@@ -85,7 +85,7 @@ void _zz_load_fd(void)
         { \
             ret = ORIG(fn)(file, oflag); \
         } \
-        if(!_zz_ready) \
+        if(!_zz_ready || _zz_disabled) \
             return ret; \
         if(ret >= 0 \
             && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY) \
@@ -119,7 +119,7 @@ ssize_t read(int fd, void *buf, size_t count)
     if(!_zz_ready)
         LOADSYM(read);
     ret = read_orig(fd, buf, count);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;
 
     debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
@@ -145,7 +145,7 @@ ssize_t read(int fd, void *buf, size_t count)
         if(!_zz_ready) \
             LOADSYM(fn); \
         ret = ORIG(fn)(fd, offset, whence); \
-        if(!_zz_ready || !_zz_iswatched(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled) \
             return ret; \
         debug(STR(fn)"(%i, %lli, %i) = %lli", \
               fd, (long long int)offset, whence, (long long int)ret); \
@@ -181,7 +181,7 @@ int close(int fd)
         return 0;
 
     ret = close_orig(fd);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;
 
     debug("close(%i) = %i", fd, ret);

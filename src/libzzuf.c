@@ -39,6 +39,7 @@
 
 /* Global variables */
 int   _zz_ready    = 0;
+int   _zz_disabled = 0;
 int   _zz_hasdebug = 0;
 float _zz_ratio    = 0.004f;
 int   _zz_seed     = 0;
