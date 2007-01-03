@@ -100,7 +100,7 @@ void _zz_load_stream(void)
         { \
             int fd = fileno(ret); \
             _zz_register(fd); \
-            debug(STR(fn) "(\"%s\", \"%s\") = %p", path, mode, ret); \
+            debug(STR(fn) "(\"%s\", \"%s\") = [%i]", path, mode, fd); \
         } \
     } while(0)
 
@@ -127,7 +127,7 @@ int fseek(FILE *stream, long offset, int whence)
         return fseek_orig(stream, offset, whence);
 
     ret = fseek_orig(stream, offset, whence);
-    debug("fseek(%p, %li, %i) = %i", stream, offset, whence, ret);
+    debug("fseek([%i], %li, %i) = %i", fd, offset, whence, ret);
     if(ret != 0)
         return ret;
 
@@ -160,8 +160,8 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
     pos = ftell(stream);
     ret = fread_orig(ptr, size, nmemb, stream);
-    debug("fread(%p, %li, %li, %p) = %li",
-          ptr, (long int)size, (long int)nmemb, stream, (long int)ret);
+    debug("fread(%p, %li, %li, [%i]) = %li",
+          ptr, (long int)size, (long int)nmemb, fd, (long int)ret);
     if(ret >= 0)
     {
         /* XXX: the number of bytes read is not ret * size, because
@@ -189,7 +189,10 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
             _zz_addpos(fd, 1); \
             ret = ch; \
         } \
-        debug(STR(fn)"(%p) = 0x%02x", stream, ret); \
+        if(ret >= 0x20 && ret <= 0x7f) \
+            debug(STR(fn)"([%i]) = 0x%02x '%c'", fd, ret, (char)ret); \
+        else \
+            debug(STR(fn)"([%i]) = 0x%02x", fd, ret); \
     } while(0)
 
 int getc(FILE *stream)
@@ -241,7 +244,7 @@ char *fgets(char *s, int size, FILE *stream)
         }
     }
 
-    debug("fgets(%p, %i, %p) = %p", s, size, stream, ret);
+    debug("fgets(%p, %i, [%i]) = %p", s, size, fd, ret);
     return ret;
 }
 
@@ -263,7 +266,10 @@ int ungetc(int c, FILE *stream)
         ret = c;
     else
         _zz_addpos(fd, 1); /* revert what we did */
-    debug("ungetc(0x%02x, %p) = 0x%02x", c, stream, ret);
+    if(ret >= 0x20 && ret <= 0x7f)
+        debug("ungetc(0x%02x, [%i]) = 0x%02x '%c'", c, fd, ret, ret);
+    else
+        debug("ungetc(0x%02x, [%i]) = 0x%02x", c, fd, ret);
     return ret;
 }
 
@@ -278,7 +284,7 @@ int fclose(FILE *fp)
         return fclose_orig(fp);
 
     ret = fclose_orig(fp);
-    debug("fclose(%p) = %i", fp, ret);
+    debug("fclose([%i]) = %i", fd, ret);
     _zz_unregister(fd);
 
     return ret;
@@ -329,11 +335,11 @@ int fclose(FILE *fp)
             } \
         } \
         if(need_delim) \
-            debug(STR(fn) "(%p, %p, 0x%02x, %p) = %li", \
-                  lineptr, n, delim, stream, (long int)ret); \
+            debug(STR(fn) "(%p, %p, 0x%02x, [%i]) = %li", \
+                  lineptr, n, delim, fd, (long int)ret); \
         else \
-            debug(STR(fn) "(%p, %p, %p) = %li", \
-                  lineptr, n, stream, (long int)ret); \
+            debug(STR(fn) "(%p, %p, [%i]) = %li", \
+                  lineptr, n, fd, (long int)ret); \
         return ret; \
     } while(0)
 
