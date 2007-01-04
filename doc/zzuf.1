@@ -8,7 +8,7 @@ zzuf \- multiple purpose fuzzer
 .br
               [\fB\-P\fR \fIlist\fR] [\fB\-R\fR \fIlist\fR]
 .br
-              [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] \fICOMMAND\fR [\fIARGS\fR]...
+              [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] \fIPROGRAM\fR [\fIARGS\fR]...
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
 .br
@@ -22,11 +22,23 @@ behaviour is deterministic, making it easy to reproduce bugs.
 .PP
 \fBZzuf\fR will run an application specified on its command line, one or
 several times, with optional arguments, and will report the application's
-behaviour on the standard output.
+relevant behaviour on the standard output, eg:
 .PP
-If you want to specify arguments for your application, put a \fB\-\-\fR
-marker before them on the command line, or \fBzzuf\fR will try to interpret
-them as arguments for itself.
+.RS
+.nf
+\fBzzuf cat /dev/zero\fR
+.fi
+.RE
+.PP
+If you want to specify flags for your application, put a '\fB\-\-\fR'
+marker before them on the command line (otherwise \fBzzuf\fR will try to
+interpret them as arguments for itself), eg:
+.PP
+.RS
+.nf
+\fBzzuf \-B 1000 cat \-\- \-v /dev/zero\fR
+.fi
+.RE
 .SH OPTIONS
 .TP
 \fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
@@ -76,6 +88,9 @@ Characters in \fIlist\fR can be expressed verbatim or through escape sequences.
 The sequences interpreted by \fBzzuf\fR are:
 .RS
 .TP
+\fB\\0\fR
+null byte
+.TP
 \fB\\n\fR
 new line
 .TP
@@ -85,9 +100,6 @@ return
 \fB\\t\fR
 tabulation
 .TP
-\fB\\0\fR
-the null character
-.TP
 \fB\\x\fR\fINN\fR
 the byte whose hexadecimal value is \fINN\fR
 .TP
@@ -96,7 +108,16 @@ backslash ('\\')
 .RE
 .IP
 You can use '\fB-\fR' to specify ranges. For instance, to protect all bytes
-from '\fB\\x01\fR' to ' ', use \fB\-P \(dq\\x01- \(dq\fR.
+from '\fB\\x01\fR' to ' ', use '\fB\-P \(dq\\x01- \(dq\fR'.
+
+The statistical outcome of this option should not be overlooked. Because
+\fBzzuf\fR cannot know the nature of the input data beforehands and must
+fuzz it even if only one byte of data was received, protecting characters
+may change the meaning of the \fB\-r\fR flag depending on the data being
+fuzzed. For instance, asking to fuzz 1% of input bits and to protect
+lowercase characters (using '\fB\-r 0.01 \-P a-z\fR') will result in an
+actual average fuzzing ratio of 0.9% with truly random data, 0.3% with
+random ASCII data and 0.2% with a normal English text.
 
 See also the \fB\-R\fR flag.
 .TP
@@ -106,7 +127,7 @@ is very verbose but only its exit code or signaled status is really useful to
 you.
 .TP
 \fB\-r\fR, \fB\-\-ratio\fR=\fIratio\fR
-Specify the amount of bits that will be randomly fuzzed. A value of 0
+Specify the proportion of bits that will be randomly fuzzed. A value of 0
 will not fuzz anything. A value of 0.05 will fuzz 5% of the open files'
 bits. A value of 1.0 or more will fuzz all the bytes, theoretically making
 the input files undiscernible from random data. The default fuzzing ratio
@@ -159,7 +180,7 @@ Fuzz the input of the \fBcat\fR program using default settings:
 .PP
 .RS
 .nf
-\fB# zzuf cat /etc/motd\fR
+\fBzzuf cat /etc/motd\fR
 .fi
 .RE
 .PP
@@ -167,7 +188,7 @@ Fuzz 1% of the input bits of the \fBcat\fR program using seed 94324:
 .PP
 .RS
 .nf
-\fB# zzuf -s 94324 -r 0.01 cat /etc/motd\fR
+\fBzzuf -s 94324 -r 0.01 cat /etc/motd\fR
 .fi
 .RE
 .PP
@@ -176,7 +197,7 @@ and prevent non-ASCII characters from appearing in the output:
 .PP
 .RS
 .nf
-\fB# zzuf -P \(dq\\n\(dq -R \(dq\\0-\\x1f\\x7f-\\xff\(dq cat /etc/motd\fR
+\fBzzuf -P \(dq\\n\(dq -R \(dq\\0-\\x1f\\x7f-\\xff\(dq cat /etc/motd\fR
 .fi
 .RE
 .PP
@@ -187,7 +208,7 @@ want \fBzzuf\fR to fuzz them):
 .PP
 .RS
 .nf
-\fB# zzuf -E \(dq\\.xml$\(dq convert -- foo.jpeg -format tga /dev/null\fR
+\fBzzuf -E \(dq\\.xml$\(dq convert -- foo.jpeg -format tga /dev/null\fR
 .fi
 .RE
 .PP
@@ -198,9 +219,9 @@ be read by \fBvlc\fR to reproduce the same behaviour without using \fBzzuf\fR:
 .PP
 .RS
 .nf
-\fB# zzuf -c -s 87423 -r 0.01 vlc movie.avi\fR
-\fB# zzuf -c -s 87423 -r 0.01 cp movie.avi fuzzy-movie.avi\fR
-\fB# vlc fuzzy-movie.avi\fR
+\fBzzuf -c -s 87423 -r 0.01 vlc movie.avi\fR
+\fBzzuf -c -s 87423 -r 0.01 cp movie.avi fuzzy-movie.avi\fR
+\fBvlc fuzzy-movie.avi\fR
 .fi
 .RE
 .PP
@@ -212,27 +233,36 @@ and disabling its \fBSIGSEGV\fR signal handler (\fB\-S\fR):
 .PP
 .RS
 .nf
-\fB# zzuf -c -q -s 0:10000 -F 3 -T 60 -r 0.02 \\\fR
-\fB    mplayer movie.avi -- -benchmark -vo null -fps 1000\fR
+\fBzzuf -c -q -s 0:10000 -F 3 -T 60 -r 0.02 \\\fR
+\fB  mplayer -- -benchmark -vo null -fps 1000 movie.avi\fR
 .fi
 .RE
 .SH BUGS
 .PP
-Only the most common file operations are implemented as of now: \fBopen\fR(),
+Due to \fBzzuf\fR using shared object preloading (\fBLD_PRELOAD\fR on most
+Unix systems, \fBDYLD_INSERT_LIBRARIES\fR on Mac OS X) to run its child
+processes, it will fail in the presence of any mechanism that disables
+preloading. For instance setuid root binaries will not be fuzzed when run
+as an unprivileged user. This limitation will probably not be addressed.
+.PP
+Network fuzzing is not implemented. This feature will be added.
+.PP
+It is not yet possible to insert or drop bytes from the input, to fuzz
+according to the file format, or to do all these complicated operations. These
+features are planned.
+.PP
+Only the most common file operations are implemented: \fBopen\fR(),
 \fBread\fR(), \fBfopen\fR(), \fBfseek\fR(), etc. One important unimplemented
-function is \fBfscanf\fR().
-.PP
-Network fuzzing is not implemented. It is not yet possible to insert or
-drop bytes from the input, to fuzz according to the file format, or to do
-all these complicated operations. They are planned, though.
-.PP
-Due to \fBzzuf\fR using \fBLD_PRELOAD\fR to run its child processes, it will
-fail in the presence of any mechanism that disables preloading. For instance
-setuid root binaries will not be fuzzed when run as an unprivileged user.
+function is \fBfscanf\fR(). These features will be implemented based on user
+request.
 .PP
 As of now, \fBzzuf\fR does not really support multithreaded applications. The
-behaviour with multithreaded applications where more than one thread do file
-descriptor operations is undefined.
+behaviour with multithreaded applications where more than one thread does file
+descriptor operations is undefined. This bug will be fixed.
+.PP
+Though best efforts are made, the reproducibility of \fBzzuf\fR's behaviour
+is guaranteed for subsequent calls with the same arguments but not for calls
+with different \fBzzuf\fR versions.
 .SH AUTHOR
 .PP
 Copyright \(co 2006, 2007 Sam Hocevar <sam@zoy.org>.
