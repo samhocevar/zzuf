@@ -42,8 +42,10 @@ void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
     unsigned long int pos = _zz_getpos(fd);
     unsigned int i, j, todo;
 
+/*
     debug("fuzz(%i, %lli@%li)", fd, (unsigned long long int)len,
           (unsigned long int)pos);
+*/
 
     fuzz = _zz_getfuzz(fd);
     aligned_buf = buf - pos;
@@ -68,9 +70,9 @@ void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
             while(todo--)
             {
                 unsigned int idx = _zz_rand(CHUNKBYTES);
-                uint8_t byte = (1 << _zz_rand(8));
+                uint8_t bit = (1 << _zz_rand(8));
 
-                fuzz->data[idx] ^= byte;
+                fuzz->data[idx] ^= bit;
             }
 
             fuzz->cur = i;
@@ -83,7 +85,12 @@ void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
               ? (i + 1) * CHUNKBYTES : pos + len;
 
         for(j = start; j < stop; j++)
+        {
+            if(_zz_protect[aligned_buf[j]])
+                continue;
+
             aligned_buf[j] ^= fuzz->data[j % CHUNKBYTES];
+        }
     }
 }
 

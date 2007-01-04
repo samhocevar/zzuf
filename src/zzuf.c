@@ -110,6 +110,7 @@ int main(int argc, char *argv[])
             { "help",      0, NULL, 'h' },
             { "stdin",     0, NULL, 'i' },
             { "include",   1, NULL, 'I' },
+            { "protect",   1, NULL, 'P' },
             { "quiet",     0, NULL, 'q' },
             { "ratio",     1, NULL, 'r' },
             { "seed",      1, NULL, 's' },
@@ -117,11 +118,11 @@ int main(int argc, char *argv[])
             { "max-time",  1, NULL, 'T' },
             { "version",   0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cdE:F:hiI:qr:s:ST:v",
+        int c = getopt_long(argc, argv, "B:cdE:F:hiI:P:qr:s:ST:v",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cdE:F:hiI:qr:s:ST:v");
+        int c = getopt(argc, argv, "B:cdE:F:hiI:P:qr:s:ST:v");
 #   endif
         if(c == -1)
             break;
@@ -166,6 +167,9 @@ int main(int argc, char *argv[])
             break;
         case 'T': /* --max-time */
             maxtime = atof(optarg);
+            break;
+        case 'P': /* --protect */
+            setenv("ZZUF_PROTECT", optarg, 1);
             break;
         case 'q': /* --quiet */
             quiet = 1;
@@ -541,9 +545,11 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -vqdhic ] [ -r ratio ] [ -s seed | -s start:stop ]\n");
-    printf("                        [ -F children ] [ -B bytes ] [ -T seconds ]\n");
-    printf("                        [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
+    printf("Usage: zzuf [ -qdic ] [ -r ratio ] [ -s seed | -s start:stop ]\n");
+    printf("                      [ -F children ] [ -B bytes ] [ -T seconds ] [ -P protect ]\n");
+    printf("                      [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
+    printf("       zzuf -h\n");
+    printf("       zzuf -v\n");
     printf("Run COMMAND and randomly fuzz its input.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
@@ -553,15 +559,16 @@ static void usage(void)
     printf("  -d, --debug              print debug messages\n");
     printf("  -E, --exclude <regex>    do not fuzz files matching <regex>\n");
     printf("  -F, --fork <count>       number of concurrent children (default 1)\n");
-    printf("  -h, --help               display this help and exit\n");
     printf("  -i, --stdin              fuzz standard input\n");
     printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
+    printf("  -P, --protect <list>     protect bytes and characters in <list>\n");
     printf("  -q, --quiet              do not print children's messages\n");
     printf("  -r, --ratio <ratio>      bit fuzzing ratio (default 0.004)\n");
     printf("  -s, --seed <seed>        random seed (default 0)\n");
     printf("      --seed <start:stop>  specify a seed range\n");
     printf("  -S, --signal             prevent children from diverting crashing signals\n");
     printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
+    printf("  -h, --help               display this help and exit\n");
     printf("  -v, --version            output version information and exit\n");
 #   else
     printf("  -B <n>           kill children that output more than <n> bytes\n");
@@ -569,15 +576,16 @@ static void usage(void)
     printf("  -d               print debug messages\n");
     printf("  -E <regex>       do not fuzz files matching <regex>\n");
     printf("  -F <count>       number of concurrent forks (default 1)\n");
-    printf("  -h               display this help and exit\n");
     printf("  -i               fuzz standard input\n");
     printf("  -I <regex>       only fuzz files matching <regex>\n");
+    printf("  -P <list>        protect bytes and characters in <list>\n");
     printf("  -q               do not print the fuzzed application's messages\n");
     printf("  -r <ratio>       bit fuzzing ratio (default 0.004)\n");
     printf("  -s <seed>        random seed (default 0)\n");
     printf("     <start:stop>  specify a seed range\n");
     printf("  -S               prevent children from diverting crashing signals\n");
     printf("  -T <n>           kill children that run for more than <n> seconds\n");
+    printf("  -h               display this help and exit\n");
     printf("  -v               output version information and exit\n");
 #   endif
     printf("\n");

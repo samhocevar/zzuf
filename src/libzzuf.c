@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
 #include <regex.h>
 
@@ -45,11 +46,15 @@ float _zz_ratio    = 0.004f;
 int   _zz_seed     = 0;
 int   _zz_signal   = 0;
 
+/* Global tables */
+int   _zz_protect[256];
+
 /* Local variables */
 static regex_t * re_include = NULL;
 static regex_t * re_exclude = NULL;
 
 /* Local prototypes */
+static void _zz_protect_init(char const *);
 static void _zz_fd_init(void);
 static void _zz_fd_fini(void);
 
@@ -73,6 +78,10 @@ void _zz_init(void)
         _zz_ratio = 0.0f;
     else if(_zz_ratio > 5.0f)
         _zz_ratio = 5.0f;
+
+    tmp = getenv("ZZUF_PROTECT");
+    if(tmp && *tmp)
+        _zz_protect_init(tmp);
 
     tmp = getenv("ZZUF_INCLUDE");
     if(tmp && *tmp)
@@ -111,6 +120,67 @@ void _zz_init(void)
 void _zz_fini(void)
 {
     _zz_fd_fini();
+}
+
+/* Byte list stuff */
+static void _zz_protect_init(char const *list)
+{
+    static char const hex[] = "0123456789abcdef0123456789ABCDEF";
+    char const *tmp;
+    int a, b;
+
+    memset(_zz_protect, 0, 256 * sizeof(int));
+
+    for(tmp = list, a = b = -1; *tmp; tmp++)
+    {
+        int new;
+
+        if(*tmp == '\\' && tmp[1] == '\0')
+            new = '\\';
+        else if(*tmp == '\\')
+        {
+            tmp++;
+            if(*tmp == 'n')
+                new = '\n';
+            else if(*tmp == 'r')
+                new = '\r';
+            else if(*tmp == 't')
+                new = '\t';
+            else if(*tmp == '0')
+                new = '\0';
+            else if((*tmp == 'x' || *tmp == 'X')
+                     && tmp[1] && strchr(hex, tmp[1])
+                     && tmp[2] && strchr(hex, tmp[2]))
+            {
+                new = ((strchr(hex, tmp[1]) - hex) & 0xf) << 4;
+                new |= (strchr(hex, tmp[2]) - hex) & 0xf;
+                tmp += 2;
+            }
+            else
+                new = (unsigned char)*tmp; /* XXX: OK for \\, but what else? */
+        }
+        else
+            new = (unsigned char)*tmp;
+
+        if(a != -1 && b == '-' && a <= new)
+        {
+            while(a <= new)
+                _zz_protect[a++] = 1;
+            a = b = -1;
+        }
+        else
+        {
+            if(a != -1)
+                _zz_protect[a] = 1;
+            a = b;
+            b = new;
+        }
+    }
+
+    if(a != -1)
+        _zz_protect[a] = 1;
+    if(b != -1)
+        _zz_protect[b] = 1;
 }
 
 /* File descriptor stuff */

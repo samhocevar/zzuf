@@ -55,9 +55,6 @@ of the regular expressions will be ignored.
 Specify the number of simultaneous children that can be run. This option is
 only useful if the \fB\-s\fR flag is used with an interval argument.
 .TP
-\fB\-h\fR, \fB\-\-help\fR
-Display a short help message and exit.
-.TP
 \fB\-i\fR, \fB\-\-stdin\fR
 Fuzz the application's standard input. By default \fBzzuf\fR only fuzzes files.
 .TP
@@ -68,6 +65,36 @@ and you only want specific files to be fuzzed.
 
 Multiple \fB\-I\fR flags can be specified, in which case files matching any one
 of the regular expressions will be fuzzed. See also the \fB\-c\fR flag.
+.TP
+\fB\-P\fR, \fB\-\-protect\fR=\fIlist\fR
+Protect a list of characters so that if they appear in input data that would
+normally be fuzzed, they are left unmodified instead.
+
+Characters in \fIlist\fR can be expressed verbatim or through escape sequences.
+The sequences interpreted by \fBzzuf\fR are:
+.RS
+.TP
+\fB\\n\fR
+new line
+.TP
+\fB\\r\fR
+return
+.TP
+\fB\\t\fR
+tabulation
+.TP
+\fB\\0\fR
+the null character
+.TP
+\fB\\x\fR\fINN\fR
+the byte whose hexadecimal value is \fINN\fR
+.TP
+\fB\\\\\fR
+backslash ('\\')
+.RE
+.IP
+You can use '\fB-\fR' to specify ranges. For instance, to protect all bytes
+from '\fB\\x01\fR' to ' ', use \fB\-P \(dq\\x01- \(dq\fR.
 .TP
 \fB\-q\fR, \fB\-\-quiet\fR
 Hide the output of the fuzzed application. This is useful if the application
@@ -109,6 +136,9 @@ how to set such limits.
 Automatically terminate child processes that run for more than \fIn\fR
 seconds. This is useful to detect infinite loops or processes stuck in other
 situations. See also the \fB\-B\fR flag.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display a short help message and exit.
 .TP
 \fB\-v\fR, \fB\-\-version\fR
 Output version information and exit.
@@ -179,6 +209,10 @@ all these complicated operations. They are planned, though.
 Due to \fBzzuf\fR using \fBLD_PRELOAD\fR to run its child processes, it will
 fail in the presence of any mechanism that disables preloading. For instance
 setuid root binaries will not be fuzzed when run as an unprivileged user.
+.PP
+As of now, \fBzzuf\fR does not really support multithreaded applications. The
+behaviour with multithreaded applications where more than one thread do file
+descriptor operations is undefined.
 .SH AUTHOR
 .PP
 Copyright \(co 2006, 2007 Sam Hocevar <sam@zoy.org>.
