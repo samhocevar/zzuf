@@ -86,10 +86,17 @@ void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
 
         for(j = start; j < stop; j++)
         {
-            if(_zz_protect[aligned_buf[j]])
+            uint8_t byte = aligned_buf[j];
+
+            if(_zz_protect[byte])
                 continue;
 
-            aligned_buf[j] ^= fuzz->data[j % CHUNKBYTES];
+            byte ^= fuzz->data[j % CHUNKBYTES];
+
+            if(_zz_refuse[byte])
+                continue;
+
+            aligned_buf[j] = byte;
         }
     }
 }

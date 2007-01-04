@@ -48,13 +48,14 @@ int   _zz_signal   = 0;
 
 /* Global tables */
 int   _zz_protect[256];
+int   _zz_refuse[256];
 
 /* Local variables */
 static regex_t * re_include = NULL;
 static regex_t * re_exclude = NULL;
 
 /* Local prototypes */
-static void _zz_protect_init(char const *);
+static void _zz_list_init(int *, char const *);
 static void _zz_fd_init(void);
 static void _zz_fd_fini(void);
 
@@ -81,7 +82,11 @@ void _zz_init(void)
 
     tmp = getenv("ZZUF_PROTECT");
     if(tmp && *tmp)
-        _zz_protect_init(tmp);
+        _zz_list_init(_zz_protect, tmp);
+
+    tmp = getenv("ZZUF_REFUSE");
+    if(tmp && *tmp)
+        _zz_list_init(_zz_refuse, tmp);
 
     tmp = getenv("ZZUF_INCLUDE");
     if(tmp && *tmp)
@@ -123,13 +128,13 @@ void _zz_fini(void)
 }
 
 /* Byte list stuff */
-static void _zz_protect_init(char const *list)
+static void _zz_list_init(int *table, char const *list)
 {
     static char const hex[] = "0123456789abcdef0123456789ABCDEF";
     char const *tmp;
     int a, b;
 
-    memset(_zz_protect, 0, 256 * sizeof(int));
+    memset(table, 0, 256 * sizeof(int));
 
     for(tmp = list, a = b = -1; *tmp; tmp++)
     {
@@ -165,22 +170,22 @@ static void _zz_protect_init(char const *list)
         if(a != -1 && b == '-' && a <= new)
         {
             while(a <= new)
-                _zz_protect[a++] = 1;
+                table[a++] = 1;
             a = b = -1;
         }
         else
         {
             if(a != -1)
-                _zz_protect[a] = 1;
+                table[a] = 1;
             a = b;
             b = new;
         }
     }
 
     if(a != -1)
-        _zz_protect[a] = 1;
+        table[a] = 1;
     if(b != -1)
-        _zz_protect[b] = 1;
+        table[b] = 1;
 }
 
 /* File descriptor stuff */

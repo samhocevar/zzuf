@@ -113,16 +113,17 @@ int main(int argc, char *argv[])
             { "protect",   1, NULL, 'P' },
             { "quiet",     0, NULL, 'q' },
             { "ratio",     1, NULL, 'r' },
+            { "refuse",    1, NULL, 'R' },
             { "seed",      1, NULL, 's' },
             { "signal",    0, NULL, 'S' },
             { "max-time",  1, NULL, 'T' },
             { "version",   0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cdE:F:hiI:P:qr:s:ST:v",
+        int c = getopt_long(argc, argv, "B:cdE:F:hiI:P:qr:R:s:ST:v",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cdE:F:hiI:P:qr:s:ST:v");
+        int c = getopt(argc, argv, "B:cdE:F:hiI:P:qr:R:s:ST:v");
 #   endif
         if(c == -1)
             break;
@@ -170,6 +171,9 @@ int main(int argc, char *argv[])
             break;
         case 'P': /* --protect */
             setenv("ZZUF_PROTECT", optarg, 1);
+            break;
+        case 'R': /* --refuse */
+            setenv("ZZUF_REFUSE", optarg, 1);
             break;
         case 'q': /* --quiet */
             quiet = 1;
@@ -545,9 +549,10 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -qdic ] [ -r ratio ] [ -s seed | -s start:stop ]\n");
-    printf("                      [ -F children ] [ -B bytes ] [ -T seconds ] [ -P protect ]\n");
-    printf("                      [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
+    printf("Usage: zzuf [ -cdiqS ] [ -r ratio ] [ -s seed | -s start:stop ]\n");
+    printf("                       [ -F children ] [ -B bytes ] [ -T seconds ]\n");
+    printf("                       [ -P protect ] [ -R refuse ]\n");
+    printf("                       [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
     printf("       zzuf -h\n");
     printf("       zzuf -v\n");
     printf("Run COMMAND and randomly fuzz its input.\n");
@@ -564,6 +569,7 @@ static void usage(void)
     printf("  -P, --protect <list>     protect bytes and characters in <list>\n");
     printf("  -q, --quiet              do not print children's messages\n");
     printf("  -r, --ratio <ratio>      bit fuzzing ratio (default 0.004)\n");
+    printf("  -R, --refuse <list>      refuse bytes and characters in <list>\n");
     printf("  -s, --seed <seed>        random seed (default 0)\n");
     printf("      --seed <start:stop>  specify a seed range\n");
     printf("  -S, --signal             prevent children from diverting crashing signals\n");
@@ -581,6 +587,7 @@ static void usage(void)
     printf("  -P <list>        protect bytes and characters in <list>\n");
     printf("  -q               do not print the fuzzed application's messages\n");
     printf("  -r <ratio>       bit fuzzing ratio (default 0.004)\n");
+    printf("  -R <list>        refuse bytes and characters in <list>\n");
     printf("  -s <seed>        random seed (default 0)\n");
     printf("     <start:stop>  specify a seed range\n");
     printf("  -S               prevent children from diverting crashing signals\n");

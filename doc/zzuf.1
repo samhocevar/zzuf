@@ -6,6 +6,8 @@ zzuf \- multiple purpose fuzzer
 .br
               [\fB\-F\fR \fIchildren\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
 .br
+              [\fB\-P\fR \fIlist\fR] [\fB\-R\fR \fIlist\fR]
+.br
               [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] \fICOMMAND\fR [\fIARGS\fR]...
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
@@ -95,6 +97,8 @@ backslash ('\\')
 .IP
 You can use '\fB-\fR' to specify ranges. For instance, to protect all bytes
 from '\fB\\x01\fR' to ' ', use \fB\-P \(dq\\x01- \(dq\fR.
+
+See also the \fB\-R\fR flag.
 .TP
 \fB\-q\fR, \fB\-\-quiet\fR
 Hide the output of the fuzzed application. This is useful if the application
@@ -107,6 +111,13 @@ will not fuzz anything. A value of 0.05 will fuzz 5% of the open files'
 bits. A value of 1.0 or more will fuzz all the bytes, theoretically making
 the input files undiscernible from random data. The default fuzzing ratio
 is 0.004 (fuzz 0.4% of the files' bits).
+.TP
+\fB\-R\fR, \fB\-\-refuse\fR=\fIlist\fR
+Refuse a list of characters by not fuzzing bytes that would otherwise be
+changed to a character that is in \fIlist\fR. If the original byte is already
+in \fIlist\fR, it is left unchanged.
+
+See the \fB\-P\fR option for a description of \fIlist\fR.
 .TP
 \fB\-s\fR, \fB\-\-seed\fR=\fIseed\fR
 .PD 0
@@ -157,6 +168,15 @@ Fuzz 1% of the input bits of the \fBcat\fR program using seed 94324:
 .RS
 .nf
 \fB# zzuf -s 94324 -r 0.01 cat /etc/motd\fR
+.fi
+.RE
+.PP
+Fuzz the input of the \fBcat\fR program but do not fuzz the newline character
+and prevent non-ASCII characters from appearing in the output:
+.PP
+.RS
+.nf
+\fB# zzuf -P \(dq\\n\(dq -R \(dq\\0-\\x1f\\x7f-\\xff\(dq cat /etc/motd\fR
 .fi
 .RE
 .PP

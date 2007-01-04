@@ -39,8 +39,9 @@ extern float _zz_ratio;
 extern int   _zz_seed;
 extern int   _zz_signal;
 
-/* Internal tables */
+/* Internal tables TODO: merge them and use bitmasks */
 extern int   _zz_protect[256];
+extern int   _zz_refuse[256];
 
 /* Library initialisation shit */
 extern void _zz_init(void) __attribute__((constructor));
