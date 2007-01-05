@@ -10,16 +10,16 @@ create()
     dd if=/dev/urandom of=/tmp/zzuf-random-$$ bs=1024 count=32 2>/dev/null
     rm -f /tmp/zzuf-text-$$
     strings </dev/urandom | dd bs=1024 count=32 of=/tmp/zzuf-text-$$ 2>/dev/null
+    echo "" >> /tmp/zzuf-text-$$ # Make sure we have a newline at EOF
 }
 
 check()
 {
-    SEED="$1"
-    RATIO="$2"
-    CMD="$3"
-    ALIAS="$4"
+    ZZOPTS="$1"
+    CMD="$2"
+    ALIAS="$3"
     echo -n " $(echo "$ALIAS:              " | cut -b1-15)"
-    NEWMD5="$(eval "$ZZUF -s $SEED -r $RATIO $CMD" 2>/dev/null | md5sum | cut -b1-32)"
+    NEWMD5="$(eval "$ZZUF $ZZOPTS $CMD" 2>/dev/null | md5sum | cut -b1-32)"
     if [ -z "$MD5" ]; then
         MD5="$NEWMD5"
         echo "$NEWMD5"
@@ -50,7 +50,7 @@ trap "echo ''; echo ''; echo 'Aborted.'; cleanup; exit 0" 1 2 15
 seed=$((0$1))
 ZZUF="$(dirname "$0")/../src/zzuf"
 FDCAT="$(dirname "$0")/fdcat"
-STRAMCAT="$(dirname "$0")/streamcat"
+STREAMCAT="$(dirname "$0")/streamcat"
 FAILED=0
 TESTED=0
 
@@ -59,25 +59,33 @@ create
 echo "Using seed $seed"
 echo ""
 
-for file in /tmp/zzuf-zero-$$ /tmp/zzuf-text-$$ /tmp/zzuf-random-$$; do
-    for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
+for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
+    for file in /tmp/zzuf-zero-$$ /tmp/zzuf-text-$$ /tmp/zzuf-random-$$; do
+        ZZOPTS="-s $seed -r $r"
+        case $file in
+          *text*) ZZOPTS="$ZZOPTS -P '\n'" ;;
+        esac
         echo "Testing zzuf on $file, ratio $r:"
         OK=1
         MD5=""
-        check $seed $r "cat $file" "cat"
-        check $seed $r "-i cat < $file" "cat stdin"
-        # We don't include grep in the testsuite because it puts a newline
-        # at the end of its input if it was not there initially.
-        #check $seed $r "grep -- -a \\'\\' $file" "grep -a"
-        # We don't include sed in the testsuite because on OS X in also
-        # puts a newline. Crap.
-        #check $seed $r "-- sed -e n $file" "sed n"
-        check $seed $r "dd bs=65536 if=$file" "dd(bs=65536)"
-        check $seed $r "dd bs=1111 if=$file" "dd(bs=1111)"
-        check $seed $r "dd bs=1024 if=$file" "dd(bs=1024)"
-        check $seed $r "dd bs=1 if=$file" "dd(bs=1)"
-        check $seed $r "$FDCAT $file" "fdcat"
-        check $seed $r "$STRAMCAT $file" "streamcat"
+        check "$ZZOPTS" "cat $file" "cat"
+        check "$ZZOPTS" "-i cat < $file" "cat stdin"
+        case $file in
+          *text*)
+            # We don't include grep or sed when the input is not text, because
+            # they put a newline at the end of their input if it was not there
+            # initially. (Linux sed doesn't, but OS X sed does.)
+            check "$ZZOPTS" "grep -- -a '' $file" "grep -a ''"
+            check "$ZZOPTS" "-- sed -e n $file" "sed -e n"
+            #check "$ZZOPTS" "-- cut -b1- $file" "cut -b1-"
+            ;;
+        esac
+        check "$ZZOPTS" "dd bs=65536 if=$file" "dd(bs=65536)"
+        check "$ZZOPTS" "dd bs=1111 if=$file" "dd(bs=1111)"
+        check "$ZZOPTS" "dd bs=1024 if=$file" "dd(bs=1024)"
+        check "$ZZOPTS" "dd bs=1 if=$file" "dd(bs=1)"
+        check "$ZZOPTS" "$FDCAT $file" "fdcat"
+        check "$ZZOPTS" "$STREAMCAT $file" "streamcat"
         if [ "$OK" != 1 ]; then
             echo "*** FAILED ***"
             FAILED=$(($FAILED + 1))
