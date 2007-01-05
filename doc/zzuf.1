@@ -16,8 +16,8 @@ zzuf \- multiple purpose fuzzer
 .SH DESCRIPTION
 .PP
 \fBZzuf\fR is a transparent application input fuzzer. It works by intercepting
-file operations and changing random bits in the program's input. \fBZzuf\fR's
-behaviour is deterministic, making it easy to reproduce bugs.
+file and network operations and changing random bits in the program's input.
+\fBZzuf\fR's behaviour is deterministic, making it easy to reproduce bugs.
 .SH USAGE
 .PP
 \fBZzuf\fR will run an application specified on its command line, one or
@@ -48,7 +48,8 @@ has the same effect as
 
 \fB    zzuf \-I \(aq^file\\.txt$\(aq cat file.txt\fR
 
-See the \fB\-I\fR flag for more information.
+See the \fB\-I\fR flag for more information on restricting fuzzing to
+specific files.
 .TP
 \fB\-d\fR, \fB\-\-debug\fR
 Activate the display of debug messages.
@@ -182,7 +183,7 @@ Fuzz 1% of the input bits of the \fBcat\fR program using seed 94324:
 .PP
 \fB    zzuf -s 94324 -r 0.01 cat /etc/motd\fR
 .PP
-Fuzz the input of the \fBcat\fR program but do not fuzz the newline character
+Fuzz the input of the \fBcat\fR program but do not fuzz newline characters
 and prevent non-ASCII characters from appearing in the output:
 .PP
 \fB    zzuf -P \(aq\\n\(aq -R \(aq\\x00-\\x1f\\x7f-\\xff\(aq cat /etc/motd\fR
@@ -212,36 +213,53 @@ and disabling its \fBSIGSEGV\fR signal handler (\fB\-S\fR):
 .PP
 \fB    zzuf -c -q -s 0:10000 -F 3 -T 60 -r 0.02 \\\fR
 \fB      mplayer -- -benchmark -vo null -fps 1000 movie.avi\fR
-.SH BUGS
+.SH RESTRICTIONS
 .PP
 Due to \fBzzuf\fR using shared object preloading (\fBLD_PRELOAD\fR on most
 Unix systems, \fBDYLD_INSERT_LIBRARIES\fR on Mac OS X) to run its child
 processes, it will fail in the presence of any mechanism that disables
 preloading. For instance setuid root binaries will not be fuzzed when run
-as an unprivileged user. This limitation will probably not be addressed.
-.PP
-It is not yet possible to insert or drop bytes from the input, to fuzz
-according to the file format, or to do all these complicated operations. These
-features are planned.
-.PP
-Only the most common file operations are implemented: \fBopen\fR(),
-\fBread\fR(), \fBfopen\fR(), \fBfseek\fR(), etc. One important unimplemented
-function is \fBfscanf\fR(). These features will be implemented based on user
-request.
-.PP
-As of now, \fBzzuf\fR does not really support multithreaded applications. The
-behaviour with multithreaded applications where more than one thread does file
-descriptor operations is undefined. This bug will be fixed.
+as an unprivileged user.
 .PP
 Though best efforts are made, identical behaviour for different versions of
 \fBzzuf\fR is not guaranteed. The reproducibility for subsequent calls on
 different operating systems and with different target programs is only
-guaranteed when the same version of \fBzzuf\fR is used.
+guaranteed when the same version of \fBzzuf\fR is being used.
+.SH BUGS
+.PP
+It is not yet possible to insert or drop bytes from the input, to fuzz
+according to the file format, to swap bytes, etc. More advanced fuzzing
+methods are planned.
+.PP
+As of now, \fBzzuf\fR does not really support multithreaded applications. The
+behaviour with multithreaded applications where more than one thread does file
+descriptor operations is undefined.
+.SH NOTES
+In order to intercept file and network operations, \fBzzuf\fR diverts and
+reimplements the following functions:
+.TP
+Unix low-level file and socket handling:
+\fBopen\fR(), \fBlseek\fR(), \fBread\fR(), \fBaccept\fR(), \fBsocket\fR(),
+\fBclose\fR()
+.TP
+Standard IO streams:
+\fBfopen\fR(), \fBfseek\fR(), \fBfread\fR(), \fBgetc\fR(), \fBfgetc\fR(),
+\fBfgets\fR(), \fBungetc\fR(), \fBfclose\fR()
+.TP
+GNU libc specific:
+\fBopen64\fR(), \fBlseek64\fR(), \fBgetline\fR(), \fBgetdelim\fR(),
+\fB__getdelim\fR()
+.TP
+BSD specific:
+\fBfgetln\fR()
+.PP
+One important unimplemented function is \fBfscanf\fR() because of its
+important complexity. Missing functions will be implemented based upon user
+request.
 .SH HISTORY
 .PP
 \fBZzuf\fR started its life in 2002 as the \fBstreamfucker\fR tool, a small
 multimedia stream corrupter used to find bugs in the \fBVLC\fR media player.
-\fBZzuf\fR is a complete rewrite of that tool.
 .SH AUTHOR
 .PP
 Copyright \(co 2006, 2007 Sam Hocevar <sam@zoy.org>.
