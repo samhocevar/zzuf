@@ -2,7 +2,7 @@
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-cdiNqS\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR | \fB\-s\fR \fIstart:stop\fR]
+\fBzzuf\fR [\fB\-cdinqS\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR | \fB\-s\fR \fIstart:stop\fR]
 .br
                [\fB\-F\fR \fIchildren\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
 .br
@@ -77,7 +77,7 @@ and you only want specific files to be fuzzed.
 Multiple \fB\-I\fR flags can be specified, in which case files matching any one
 of the regular expressions will be fuzzed. See also the \fB\-c\fR flag.
 .TP
-\fB\-N\fR, \fB\-\-network\fR
+\fB\-n\fR, \fB\-\-network\fR
 Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
 .TP
 \fB\-P\fR, \fB\-\-protect\fR=\fIlist\fR

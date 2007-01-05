@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
             { "help",      0, NULL, 'h' },
             { "stdin",     0, NULL, 'i' },
             { "include",   1, NULL, 'I' },
-            { "network",   1, NULL, 'N' },
+            { "network",   0, NULL, 'n' },
             { "protect",   1, NULL, 'P' },
             { "quiet",     0, NULL, 'q' },
             { "ratio",     1, NULL, 'r' },
@@ -120,11 +120,11 @@ int main(int argc, char *argv[])
             { "max-time",  1, NULL, 'T' },
             { "version",   0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cdE:F:hiI:NP:qr:R:s:ST:v",
+        int c = getopt_long(argc, argv, "B:cdE:F:hiI:nP:qr:R:s:ST:v",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cdE:F:hiI:NP:qr:R:s:ST:v");
+        int c = getopt(argc, argv, "B:cdE:F:hiI:nP:qr:R:s:ST:v");
 #   endif
         if(c == -1)
             break;
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
         case 'i': /* --stdin */
             setenv("ZZUF_STDIN", "1", 1);
             break;
-        case 'N': /* --network */
+        case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
             break;
         case 's': /* --seed */
@@ -553,7 +553,7 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -cdiNqS ] [ -r ratio ] [ -s seed | -s start:stop ]\n");
+    printf("Usage: zzuf [ -cdinqS ] [ -r ratio ] [ -s seed | -s start:stop ]\n");
     printf("                        [ -F children ] [ -B bytes ] [ -T seconds ]\n");
     printf("                        [ -P protect ] [ -R refuse ]\n");
     printf("                        [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
@@ -570,7 +570,7 @@ static void usage(void)
     printf("  -F, --fork <count>       number of concurrent children (default 1)\n");
     printf("  -i, --stdin              fuzz standard input\n");
     printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
-    printf("  -N, --network            fuzz network input\n");
+    printf("  -n, --network            fuzz network input\n");
     printf("  -P, --protect <list>     protect bytes and characters in <list>\n");
     printf("  -q, --quiet              do not print children's messages\n");
     printf("  -r, --ratio <ratio>      bit fuzzing ratio (default 0.004)\n");
@@ -589,7 +589,7 @@ static void usage(void)
     printf("  -F <count>       number of concurrent forks (default 1)\n");
     printf("  -i               fuzz standard input\n");
     printf("  -I <regex>       only fuzz files matching <regex>\n");
-    printf("  -N               fuzz network input\n");
+    printf("  -n               fuzz network input\n");
     printf("  -P <list>        protect bytes and characters in <list>\n");
     printf("  -q               do not print the fuzzed application's messages\n");
     printf("  -r <ratio>       bit fuzzing ratio (default 0.004)\n");
