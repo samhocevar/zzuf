@@ -27,7 +27,7 @@ if test "$build" != "$host" -a "${PKG_CONFIG_LIBDIR}" = ""; then
 fi
 
 AC_CHECK_HEADERS(inttypes.h stdint.h getopt.h)
-AC_CHECK_FUNCS(open64 lseek64 fopen64 getline getdelim __getdelim)
+AC_CHECK_FUNCS(open64 lseek64 fopen64 getline getdelim __getdelim fgetln)
 AC_CHECK_TYPES(sighandler_t, [], [],
   [#define _GNU_SOURCE
    #include <signal.h>])

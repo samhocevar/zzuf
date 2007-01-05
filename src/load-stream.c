@@ -62,6 +62,11 @@ static ssize_t (*__getdelim_orig) (char **lineptr, size_t *n, int delim,
                                    FILE *stream);
 #endif
 
+/* Additional BSDisms */
+#ifdef HAVE_FGETLN
+static char *  (*fgetln_orig) (FILE *stream, size_t *len);
+#endif
+
 void _zz_load_stream(void)
 {
     LOADSYM(fopen);
@@ -83,6 +88,9 @@ void _zz_load_stream(void)
 #endif
 #ifdef HAVE___GETDELIM
     LOADSYM(__getdelim);
+#endif
+#ifdef HAVE_FGETLN
+    LOADSYM(fgetln);
 #endif
 }
 
@@ -380,6 +388,48 @@ ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
 ssize_t __getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
 {
     ssize_t ret; GETDELIM(__getdelim, delim, 1); return ret;
+}
+#endif
+
+#ifdef HAVE_FGETLN
+char *fgetln(FILE *stream, size_t *len)
+{
+    struct fuzz *fuzz;
+    char *ret;
+    size_t i, size;
+    int fd;
+
+    if(!_zz_ready)
+        LOADSYM(fgetln);
+    fd = fileno(stream);
+    if(!_zz_ready || !_zz_iswatched(fd))
+        return fgetln_orig(stream, len);
+
+    fuzz = _zz_getfuzz(fd);
+
+    for(i = size = 0; fuzz.tmp[i] != '\n'; i++)
+    {
+        int ch;
+
+        if(i >= size)
+            fuzz.tmp = realloc(fuzz.tmp, (size += 80));
+
+        _zz_disabled = 1;
+        ch = fgetc_orig(stream);
+        _zz_disabled = 0;
+
+        if(ch == EOF)
+            break;
+
+        fuzz.tmp[i] = (char)(unsigned char)ch;
+        _zz_fuzz(fd, (uint8_t *)fuzz.tmp + i, 1); /* rather inefficient */
+        _zz_addpos(fd, 1);
+    }
+
+    *len = size;
+
+    debug("fgetln([%i], &%li) = %p", fd, (long int)*len, ret);
+    return ret;
 }
 #endif
 

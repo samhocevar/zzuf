@@ -290,6 +290,9 @@ void _zz_register(int fd)
     files[i].pos = 0;
     files[i].fuzz.cur = -1;
     files[i].fuzz.data = malloc(CHUNKBYTES);
+#ifdef HAVE_FGETLN
+    files[i].fuzz.tmp = NULL;
+#endif
 
     fds[fd] = i;
 }
@@ -301,6 +304,10 @@ void _zz_unregister(int fd)
 
     files[fds[fd]].managed = 0;
     free(files[fds[fd]].fuzz.data);
+#ifdef HAVE_FGETLN
+    if(files[fds[fd]].fuzz.tmp)
+        free(files[fds[fd]].fuzz.tmp);
+#endif
 
     fds[fd] = -1;
 }

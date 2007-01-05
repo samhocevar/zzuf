@@ -29,6 +29,9 @@ struct fuzz
 {
     int cur;
     uint8_t *data;
+#ifdef HAVE_FGETLN
+    char *tmp;
+#endif
 };
 
 /* Internal variables */
