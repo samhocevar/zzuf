@@ -395,7 +395,6 @@ ssize_t __getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
 char *fgetln(FILE *stream, size_t *len)
 {
     struct fuzz *fuzz;
-    char *ret;
     size_t i, size;
     int fd;
 
@@ -407,12 +406,9 @@ char *fgetln(FILE *stream, size_t *len)
 
     fuzz = _zz_getfuzz(fd);
 
-    for(i = size = 0; fuzz.tmp[i] != '\n'; i++)
+    for(i = size = 0; ; i++)
     {
         int ch;
-
-        if(i >= size)
-            fuzz.tmp = realloc(fuzz.tmp, (size += 80));
 
         _zz_disabled = 1;
         ch = fgetc_orig(stream);
@@ -421,15 +417,21 @@ char *fgetln(FILE *stream, size_t *len)
         if(ch == EOF)
             break;
 
-        fuzz.tmp[i] = (char)(unsigned char)ch;
-        _zz_fuzz(fd, (uint8_t *)fuzz.tmp + i, 1); /* rather inefficient */
+        if(i >= size)
+            fuzz->tmp = realloc(fuzz->tmp, (size += 80));
+
+        fuzz->tmp[i] = (char)(unsigned char)ch;
+        _zz_fuzz(fd, (uint8_t *)fuzz->tmp + i, 1); /* rather inefficient */
         _zz_addpos(fd, 1);
+
+        if(ch == '\n')
+            break;
     }
 
-    *len = size;
+    *len = i;
 
-    debug("fgetln([%i], &%li) = %p", fd, (long int)*len, ret);
-    return ret;
+    debug("fgetln([%i], &%li) = %p", fd, (long int)*len, fuzz->tmp);
+    return fuzz->tmp;
 }
 #endif
 
