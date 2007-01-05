@@ -45,6 +45,7 @@ int   _zz_hasdebug = 0;
 float _zz_ratio    = 0.004f;
 int   _zz_seed     = 0;
 int   _zz_signal   = 0;
+int   _zz_network  = 0;
 
 /* Global tables */
 int   _zz_protect[256];
@@ -105,6 +106,10 @@ void _zz_init(void)
     tmp = getenv("ZZUF_SIGNAL");
     if(tmp && *tmp == '1')
         _zz_signal = 1;
+
+    tmp = getenv("ZZUF_NETWORK");
+    if(tmp && *tmp == '1')
+        _zz_network = 1;
 
     _zz_fd_init();
 

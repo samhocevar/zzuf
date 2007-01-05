@@ -38,6 +38,7 @@ extern int   _zz_hasdebug;
 extern float _zz_ratio;
 extern int   _zz_seed;
 extern int   _zz_signal;
+extern int   _zz_network;
 
 /* Internal tables TODO: merge them and use bitmasks */
 extern int   _zz_protect[256];

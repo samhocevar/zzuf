@@ -32,6 +32,7 @@
 #include <dlfcn.h>
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -46,6 +47,9 @@ static int     (*open_orig)    (const char *file, int oflag, ...);
 #ifdef HAVE_OPEN64
 static int     (*open64_orig)  (const char *file, int oflag, ...);
 #endif
+static int     (*accept_orig)  (int sockfd, struct sockaddr *addr,
+                                socklen_t *addrlen);
+static int     (*socket_orig)  (int domain, int type, int protocol);
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
 static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
 #ifdef HAVE_LSEEK64
@@ -59,6 +63,8 @@ void _zz_load_fd(void)
 #ifdef HAVE_OPEN64
     LOADSYM(open64);
 #endif
+    LOADSYM(accept);
+    LOADSYM(socket);
     LOADSYM(read);
     LOADSYM(lseek);
 #ifdef HAVE_LSEEK64
@@ -111,6 +117,44 @@ int open64(const char *file, int oflag, ...)
     int ret; OPEN(open64); return ret;
 }
 #endif
+
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
+{
+    int ret;
+
+    if(!_zz_ready)
+        LOADSYM(accept);
+    ret = accept_orig(sockfd, addr, addrlen);
+    if(!_zz_ready || _zz_disabled || !_zz_network)
+        return ret;
+
+    if(ret >= 0)
+    {
+        debug("accept(%i, %p, %p) = %i", sockfd, addr, addrlen, ret);
+        _zz_register(ret);
+    }
+
+    return ret;
+}
+
+int socket(int domain, int type, int protocol)
+{
+    int ret;
+
+    if(!_zz_ready)
+        LOADSYM(socket);
+    ret = socket_orig(domain, type, protocol);
+    if(!_zz_ready || _zz_disabled || !_zz_network)
+        return ret;
+
+    if(ret >= 0)
+    {
+        debug("socket(%i, %i, %i) = %i", domain, type, protocol, ret);
+        _zz_register(ret);
+    }
+
+    return ret;
+}
 
 ssize_t read(int fd, void *buf, size_t count)
 {

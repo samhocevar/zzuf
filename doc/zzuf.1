@@ -2,13 +2,13 @@
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-cdiqS\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR | \fB\-s\fR \fIstart:stop\fR]
+\fBzzuf\fR [\fB\-cdiNqS\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR | \fB\-s\fR \fIstart:stop\fR]
 .br
-              [\fB\-F\fR \fIchildren\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
+               [\fB\-F\fR \fIchildren\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
 .br
-              [\fB\-P\fR \fIlist\fR] [\fB\-R\fR \fIlist\fR]
+               [\fB\-P\fR \fIlist\fR] [\fB\-R\fR \fIlist\fR]
 .br
-              [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] \fIPROGRAM\fR [\fIARGS\fR]...
+               [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] \fIPROGRAM\fR [\fIARGS\fR]...
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
 .br
@@ -76,6 +76,9 @@ and you only want specific files to be fuzzed.
 
 Multiple \fB\-I\fR flags can be specified, in which case files matching any one
 of the regular expressions will be fuzzed. See also the \fB\-c\fR flag.
+.TP
+\fB\-N\fR, \fB\-\-network\fR
+Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
 .TP
 \fB\-P\fR, \fB\-\-protect\fR=\fIlist\fR
 Protect a list of characters so that if they appear in input data that would
@@ -219,8 +222,6 @@ Unix systems, \fBDYLD_INSERT_LIBRARIES\fR on Mac OS X) to run its child
 processes, it will fail in the presence of any mechanism that disables
 preloading. For instance setuid root binaries will not be fuzzed when run
 as an unprivileged user. This limitation will probably not be addressed.
-.PP
-Network fuzzing is not implemented. This feature will be added.
 .PP
 It is not yet possible to insert or drop bytes from the input, to fuzz
 according to the file format, or to do all these complicated operations. These
