@@ -235,8 +235,8 @@ As of now, \fBzzuf\fR does not really support multithreaded applications. The
 behaviour with multithreaded applications where more than one thread does file
 descriptor operations is undefined.
 .SH NOTES
-In order to intercept file and network operations, \fBzzuf\fR diverts and
-reimplements the following functions:
+In order to intercept file and network operations and signal handlers,
+\fBzzuf\fR diverts and reimplements the following functions:
 .TP
 Unix low-level file and socket handling:
 \fBopen\fR(), \fBlseek\fR(), \fBread\fR(), \fBaccept\fR(), \fBsocket\fR(),
@@ -252,17 +252,19 @@ GNU libc specific:
 .TP
 BSD specific:
 \fBfgetln\fR()
+.TP
+Signal handling:
+\fBsignal\fR(), \fBsigaction\fR()
 .PP
-One important unimplemented function is \fBfscanf\fR() because of its
-important complexity. Missing functions will be implemented based upon user
-request.
+One important unimplemented function is \fBfscanf\fR(), mostly because of its
+complexity. Missing functions will be implemented based upon user request.
 .SH HISTORY
 .PP
 \fBZzuf\fR started its life in 2002 as the \fBstreamfucker\fR tool, a small
 multimedia stream corrupter used to find bugs in the \fBVLC\fR media player.
 .SH AUTHOR
 .PP
-Copyright \(co 2006, 2007 Sam Hocevar <sam@zoy.org>.
+Copyright \(co 2002, 2007 Sam Hocevar <sam@zoy.org>.
 .PP
 \fBZzuf\fR and this manual page are free software. They come without any
 warranty, to the extent permitted by applicable law. You can redistribute
