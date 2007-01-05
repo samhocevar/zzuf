@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
             { "cmdline",   0, NULL, 'c' },
             { "debug",     0, NULL, 'd' },
             { "exclude",   1, NULL, 'E' },
-            { "fork",      1, NULL, 'F' },
+            { "max-forks", 1, NULL, 'F' },
             { "help",      0, NULL, 'h' },
             { "stdin",     0, NULL, 'i' },
             { "include",   1, NULL, 'I' },
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
         case 'r': /* --ratio */
             setenv("ZZUF_RATIO", optarg, 1);
             break;
-        case 'F': /* --fork */
+        case 'F': /* --max-forks */
             parallel = atoi(optarg) > 1 ? atoi(optarg) : 1;
             break;
         case 'B': /* --max-bytes */
