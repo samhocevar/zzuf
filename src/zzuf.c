@@ -567,7 +567,7 @@ static void usage(void)
     printf("  -c, --cmdline            only fuzz files specified in the command line\n");
     printf("  -d, --debug              print debug messages\n");
     printf("  -E, --exclude <regex>    do not fuzz files matching <regex>\n");
-    printf("  -F, --fork <count>       number of concurrent children (default 1)\n");
+    printf("  -F, --max-forks <count>  number of concurrent children (default 1)\n");
     printf("  -i, --stdin              fuzz standard input\n");
     printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
     printf("  -n, --network            fuzz network input\n");
