@@ -156,8 +156,14 @@ static void _zz_list_init(int *table, char const *list)
                 new = '\r';
             else if(*tmp == 't')
                 new = '\t';
-            else if(*tmp == '0')
-                new = '\0';
+            else if(tmp[0] >= '0' && tmp[0] <= '7' && tmp[1] >= '0'
+                     && tmp[1] <= '7' && tmp[2] >= '0' && tmp[2] <= '7')
+            {
+                new = tmp[2] - '0';
+                new |= (int)(tmp[1] - '0') << 3;
+                new |= (int)(tmp[0] - '0') << 6;
+                tmp += 2;
+            }
             else if((*tmp == 'x' || *tmp == 'X')
                      && tmp[1] && strchr(hex, tmp[1])
                      && tmp[2] && strchr(hex, tmp[2]))

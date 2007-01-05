@@ -88,9 +88,6 @@ Characters in \fIlist\fR can be expressed verbatim or through escape sequences.
 The sequences interpreted by \fBzzuf\fR are:
 .RS
 .TP
-\fB\\0\fR
-null byte
-.TP
 \fB\\n\fR
 new line
 .TP
@@ -100,6 +97,9 @@ return
 \fB\\t\fR
 tabulation
 .TP
+\fB\\\fR\fINNN\fR
+the byte whose octal value is \fINNN\fR
+.TP
 \fB\\x\fR\fINN\fR
 the byte whose hexadecimal value is \fINN\fR
 .TP
@@ -108,17 +108,14 @@ backslash (\(oq\\\(cq)
 .RE
 .IP
 You can use \(oq\fB-\fR\(cq to specify ranges. For instance, to protect all
-bytes from \(oq\fB\\x01\fR\(cq to \(oq \(cq, use
-\(oq\fB\-P\ \(aq\\x01-\ \(aq\fR\(cq.
+bytes from '\\001' to '/', use \(oq\fB\-P\ \(aq\\001-/\(aq\fR\(cq.
 
-The statistical outcome of this option should not be overlooked. Because
-\fBzzuf\fR cannot know the nature of the input data beforehands and must
-fuzz it even if only one byte of data was received, protecting characters
-may change the meaning of the \fB\-r\fR flag depending on the data being
-fuzzed. For instance, asking to fuzz 1% of input bits (\fB\-r\ 0.01\fR)
-and to protect lowercase characters (\fB\-P\ a-z\fR) will result in
-an actual average fuzzing ratio of 0.9% with truly random data, 0.3% with
-random ASCII data and 0.2% with a standard English text.
+The statistical outcome of this option should not be overlooked: if characters
+are protected, the effect of the \(oq\fB\-r\fR\(cq flag will vary depending
+on the data being fuzzed. For instance, asking to fuzz 1% of input bits
+(\fB\-r\ 0.01\fR) and to protect lowercase characters (\fB\-P\ a-z\fR) will
+result in an actual average fuzzing ratio of 0.9% with truly random data,
+0.3% with random ASCII data and 0.2% with standard English text.
 
 See also the \fB\-R\fR flag.
 .TP
@@ -188,7 +185,7 @@ Fuzz 1% of the input bits of the \fBcat\fR program using seed 94324:
 Fuzz the input of the \fBcat\fR program but do not fuzz the newline character
 and prevent non-ASCII characters from appearing in the output:
 .PP
-\fB    zzuf -P \(aq\\n\(aq -R \(aq\\0-\\x1f\\x7f-\\xff\(aq cat /etc/motd\fR
+\fB    zzuf -P \(aq\\n\(aq -R \(aq\\x00-\\x1f\\x7f-\\xff\(aq cat /etc/motd\fR
 .PP
 Fuzz the input of the \fBconvert\fR program, using file \fBfoo.jpeg\fR as the
 original input and excluding \fB.xml\fR files from fuzzing (because
@@ -197,20 +194,20 @@ want \fBzzuf\fR to fuzz them):
 .PP
 \fB    zzuf -E \(aq\\.xml$\(aq convert -- foo.jpeg -format tga /dev/null\fR
 .PP
-Fuzz the input of \fBvlc\fR, using file \fBmovie.avi\fR as the original input
+Fuzz the input of \fBVLC\fR, using file \fBmovie.avi\fR as the original input
 and restricting fuzzing to filenames that appear on the command line
 (\fB\-c\fR), then generate \fBfuzzy-movie.avi\fR which is a file that
-can be read by \fBvlc\fR to reproduce the same behaviour without using
+can be read by \fBVLC\fR to reproduce the same behaviour without using
 \fBzzuf\fR:
 .PP
 \fB    zzuf -c -s 87423 -r 0.01 vlc movie.avi\fR
 \fB    zzuf -c -s 87423 -r 0.01 cp movie.avi fuzzy-movie.avi\fR
 \fB    vlc fuzzy-movie.avi\fR
 .PP
-Fuzz 2% of \fBmplayer\fR's input bits (\fB\-r\ 0.02\fR) with seeds 0 to 9999
+Fuzz 2% of \fBMPlayer\fR's input bits (\fB\-r\ 0.02\fR) with seeds 0 to 9999
 (\fB\-s\ 0:10000\fR), disabling its standard output messages (\fB\-q\fR),
 launching up to three simultaneous child processes (\fB\-F\ 3\fR), killing
-\fBmplayer\fR if it takes more than one minute to read the file (\fB\-T\ 60\fR)
+\fBMPlayer\fR if it takes more than one minute to read the file (\fB\-T\ 60\fR)
 and disabling its \fBSIGSEGV\fR signal handler (\fB\-S\fR):
 .PP
 \fB    zzuf -c -q -s 0:10000 -F 3 -T 60 -r 0.02 \\\fR
@@ -237,9 +234,14 @@ behaviour with multithreaded applications where more than one thread does file
 descriptor operations is undefined. This bug will be fixed.
 .PP
 Though best efforts are made, identical behaviour for different versions of
-\fBzzuf\fR is not guaranteed. Only the reproducibility for subsequent calls
-with the same \fBzzuf\fR version on different operating systems and with
-different target programs is guaranteed.
+\fBzzuf\fR is not guaranteed. The reproducibility for subsequent calls on
+different operating systems and with different target programs is only
+guaranteed when the same version of \fBzzuf\fR is used.
+.SH HISTORY
+.PP
+\fBZzuf\fR started its life in 2002 as the \fBstreamfucker\fR tool, a small
+multimedia stream corrupter used to find bugs in the \fBVLC\fR media player.
+\fBZzuf\fR is a complete rewrite of that tool.
 .SH AUTHOR
 .PP
 Copyright \(co 2006, 2007 Sam Hocevar <sam@zoy.org>.
