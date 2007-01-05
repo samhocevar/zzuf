@@ -424,7 +424,7 @@ char *fgetln(FILE *stream, size_t *len)
         _zz_fuzz(fd, (uint8_t *)fuzz->tmp + i, 1); /* rather inefficient */
         _zz_addpos(fd, 1);
 
-        if(ch == '\n')
+        if(fuzz->tmp[i] == '\n')
             break;
     }
 
