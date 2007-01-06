@@ -18,7 +18,7 @@ check()
     ZZOPTS="$1"
     CMD="$2"
     ALIAS="$3"
-    echo -n " $(echo "$ALIAS .............." | cut -b1-15) "
+    echo -n " $(echo "$ALIAS .............." | cut -b1-18) "
     NEWMD5="$(eval "$ZZUF $ZZOPTS $CMD" 2>/dev/null | md5sum | cut -b1-32)"
     if [ -z "$MD5" ]; then
         MD5="$NEWMD5"
@@ -54,9 +54,10 @@ STREAMCAT="$(dirname "$0")/streamcat"
 FAILED=0
 TESTED=0
 
-echo "Creating test files"
+echo "*** running zzuf test suite ***"
+echo "*** creating test files ***"
 create
-echo "Using seed $seed"
+echo "*** using seed $seed ***"
 echo ""
 
 for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
@@ -65,7 +66,7 @@ for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
         case $file in
           *text*) ZZOPTS="$ZZOPTS -P '\n'" ;;
         esac
-        echo "Testing zzuf on $file, ratio $r:"
+        echo "*** file $file, ratio $r ***"
         OK=1
         MD5=""
         check "$ZZOPTS" "cat $file" "cat"
@@ -75,8 +76,8 @@ for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
             # We don't include grep or sed when the input is not text, because
             # they put a newline at the end of their input if it was not there
             # initially. (Linux sed doesn't, but OS X sed does.)
-            check "$ZZOPTS" "head -- -n -0 $file" "head -n -0"
-            check "$ZZOPTS" "-i head -- -n -0 < $file" "|head -n -0"
+            check "$ZZOPTS" "head -- -n 9999 $file" "head -n 9999"
+            check "$ZZOPTS" "-i head -- -n 9999 < $file" "|head -n 9999"
             check "$ZZOPTS" "tail -- -n +1 $file" "tail -n +1"
             check "$ZZOPTS" "-i tail -- -n +1 < $file" "|tail -n +1"
             check "$ZZOPTS" "grep -- -a '' $file" "grep -a ''"
@@ -103,11 +104,11 @@ for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
 done
 
 if [ "$FAILED" != 0 ]; then
-    echo "$FAILED tests failed out of $TESTED."
+    echo "*** $FAILED tests failed out of $TESTED ***"
     cleanup
     exit 1
 fi
-echo "All $TESTED tests OK."
+echo "*** all $TESTED tests OK ***"
 
 cleanup
 exit 0
