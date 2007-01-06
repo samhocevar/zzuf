@@ -33,6 +33,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -55,7 +56,15 @@ static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
 #ifdef HAVE_LSEEK64
 static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
 #endif
+static void *  (*mmap_orig)    (void *start, size_t length, int prot,
+                                int flags, int fd, off_t offset);
+#ifdef HAVE_LSEEK64
+static void *  (*mmap64_orig)  (void *start, size_t length, int prot,
+                                int flags, int fd, off64_t offset);
+#endif
+static int     (*munmap_orig)  (void *start, size_t length);
 static int     (*close_orig)   (int fd);
+
 
 void _zz_load_fd(void)
 {
@@ -70,6 +79,11 @@ void _zz_load_fd(void)
 #ifdef HAVE_LSEEK64
     LOADSYM(lseek64);
 #endif
+    LOADSYM(mmap);
+#ifdef HAVE_MMAP64
+    LOADSYM(mmap64);
+#endif
+    LOADSYM(munmap);
     LOADSYM(close);
 }
 
@@ -185,7 +199,8 @@ ssize_t read(int fd, void *buf, size_t count)
 }
 
 #define LSEEK(fn, off_t) \
-    do { \
+    do \
+    { \
         if(!_zz_ready) \
             LOADSYM(fn); \
         ret = ORIG(fn)(fd, offset, whence); \
@@ -212,6 +227,75 @@ off64_t lseek64(int fd, off64_t offset, int whence)
     return ret;
 }
 #endif
+
+/* Used for mmap() and munmap() */
+void **maps = NULL;
+int nbmaps = 0;
+
+#define MMAP(fn, off_t) \
+    do { \
+        if(!_zz_ready) \
+            LOADSYM(fn); \
+        ret = ORIG(fn)(start, length, prot, flags, fd, offset); \
+        if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled) \
+            return ret; \
+        if(ret) \
+        { \
+            void *tmp = malloc(length); \
+            int i; \
+            for(i = 0; i < nbmaps; i += 2) \
+                if(maps[i] == NULL) \
+                    break; \
+            if(i == nbmaps) \
+            { \
+                nbmaps += 2; \
+                maps = realloc(maps, nbmaps * sizeof(void *)); \
+            } \
+            maps[i] = tmp; \
+            maps[i + 1] = ret; \
+            memcpy(tmp, ret, length); /* FIXME: get rid of this */ \
+            _zz_fuzz(fd, tmp, length); \
+            ret = tmp; \
+        } \
+        debug(STR(fn)"(%p, %li, %i, %i, %i, %lli) = %p", start, \
+              (long int)length, prot, flags, fd, (long long int)offset, ret); \
+    } while(0)
+
+void *mmap(void *start, size_t length, int prot, int flags,
+           int fd, off_t offset)
+{
+    void *ret; MMAP(mmap, off_t); return ret;
+}
+
+#ifdef HAVE_MMAP64
+void *mmap64(void *start, size_t length, int prot, int flags,
+             int fd, off64_t offset)
+{
+    void *ret; MMAP(mmap64, off64_t); return ret;
+}
+#endif
+
+int munmap(void *start, size_t length)
+{
+    int ret, i;
+
+    if(!_zz_ready)
+        LOADSYM(munmap);
+    for(i = 0; i < nbmaps; i++)
+    {
+        if(maps[i] != start)
+            continue;
+
+        free(start);
+        ret = munmap_orig(maps[i + 1], length);
+        maps[i] = NULL;
+        maps[i + 1] = NULL;
+        debug("munmap(%p, %li) = %i", start, (long int)length, ret);
+        return ret;
+    }
+
+    return munmap_orig(start, length);
+}
 
 int close(int fd)
 {
