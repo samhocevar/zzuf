@@ -51,9 +51,9 @@ seed=$((0$1))
 ZZUF="$(dirname "$0")/../src/zzuf"
 FDCAT="$(dirname "$0")/fdcat"
 STREAMCAT="$(dirname "$0")/streamcat"
-if md5sum --help >/dev/null 2>&1; then
+if md5sum /dev/null >/dev/null 2>&1; then
   MD5PROG=md5sum
-elif md5 --help >/dev/null 2>&1; then
+elif md5 /dev/null >/dev/null 2>&1; then
   MD5PROG=md5
 else
   echo "error: no md5 program found (tried: md5sum, md5)"
