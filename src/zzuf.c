@@ -577,9 +577,10 @@ static void usage(void)
 #   ifdef HAVE_GETOPT_LONG
     printf("  -B, --max-bytes <n>      kill children that output more than <n> bytes\n");
     printf("  -c, --cmdline            only fuzz files specified in the command line\n");
+    printf("  -C, --max-crashes <n>    stop after <n> children have crashed (default 1)\n");
     printf("  -d, --debug              print debug messages\n");
     printf("  -E, --exclude <regex>    do not fuzz files matching <regex>\n");
-    printf("  -F, --max-forks <count>  number of concurrent children (default 1)\n");
+    printf("  -F, --max-forks <n>      number of concurrent children (default 1)\n");
     printf("  -i, --stdin              fuzz standard input\n");
     printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
     printf("  -n, --network            fuzz network input\n");
@@ -596,9 +597,10 @@ static void usage(void)
 #   else
     printf("  -B <n>           kill children that output more than <n> bytes\n");
     printf("  -c               only fuzz files specified in the command line\n");
+    printf("  -C <n>           stop after <n> children have crashed (default 1)\n");
     printf("  -d               print debug messages\n");
     printf("  -E <regex>       do not fuzz files matching <regex>\n");
-    printf("  -F <count>       number of concurrent forks (default 1)\n");
+    printf("  -F <n>           number of concurrent forks (default 1)\n");
     printf("  -i               fuzz standard input\n");
     printf("  -I <regex>       only fuzz files matching <regex>\n");
     printf("  -n               fuzz network input\n");

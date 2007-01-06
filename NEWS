@@ -1,5 +1,12 @@
 $Id$
 
+Changes from 0.1 to 0.2
+
+ * network and standard input support
+ * Mac OS X support
+ * custom random number generator
+ * byte protection and refusal
+
 Changes to 0.1
 
  * initial release

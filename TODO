@@ -9,11 +9,6 @@
   * Detect crashes in the program's stdout/stderr (eg. mplayer) instead of
     just checking the return value
 
-  * Parallelise operations (for clock-constrained programs unable to work
-    at fullest speed)
-
-  * Socket support (networking)
-
   * Marker support (eg. \r\n\r\n in HTTP responses)
 
   * ASCII support, UTF-8 support
