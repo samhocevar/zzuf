@@ -251,15 +251,15 @@ In order to intercept file and network operations and signal handlers,
 .TP
 Unix file descriptor handling:
 \fBopen\fR(), \fBlseek\fR(), \fBread\fR(), \fBaccept\fR(), \fBsocket\fR(),
-\fBclose\fR()
+\fBmmap\fR(), \fBmunmap\fR(), \fBclose\fR()
 .TP
 Standard IO streams:
-\fBfopen\fR(), \fBfseek\fR(), \fBfread\fR(), \fBgetc\fR(), \fBfgetc\fR(),
-\fBfgets\fR(), \fBungetc\fR(), \fBfclose\fR()
+\fBfopen\fR(), \fBfseek\fR(), \fBrewind\fR(), \fBfread\fR(), \fBgetc\fR(),
+\fBfgetc\fR(), \fBfgets\fR(), \fBungetc\fR(), \fBfclose\fR()
 .TP
 GNU libc specific:
-\fBopen64\fR(), \fBlseek64\fR(), \fBgetline\fR(), \fBgetdelim\fR(),
-\fB__getdelim\fR()
+\fBopen64\fR(), \fBlseek64\fR(), \fBmmap64\fR(), \fBgetline\fR(),
+\fBgetdelim\fR(), \fB__getdelim\fR()
 .TP
 BSD specific:
 \fBfgetln\fR()
@@ -272,9 +272,8 @@ using functions that are not in that list, \fBzzuf\fR will not fuzz its
 input consistently and the results should not be trusted. You can use a tool
 such as \fBltrace(1)\fR on Linux to know the missing functions.
 .PP
-One important unimplemented function is \fBfscanf\fR(), mostly because of its
-complexity. Another one is \fBmmap\fR(). Missing functions will be implemented
-based upon user request.
+One important unimplemented function is \fBfscanf\fR(), because of its
+complexity. Missing functions will be implemented based upon user request.
 .SH HISTORY
 .PP
 \fBZzuf\fR started its life in 2002 as the \fBstreamfucker\fR tool, a small
