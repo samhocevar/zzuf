@@ -31,7 +31,6 @@
 #include <unistd.h>
 #include <regex.h>
 #include <string.h>
-#include <signal.h>
 #include <errno.h>
 #include <sys/time.h>
 #include <time.h>
@@ -68,7 +67,7 @@ static struct child_list
     int bytes, seed;
     time_t date;
 } *child_list;
-static int parallel = 1, child_count = 0;
+static int maxforks = 1, child_count = 0, maxcrashes = 1, crashes = 0;
 
 static int seed = 0;
 static int endseed = 1;
@@ -102,29 +101,30 @@ int main(int argc, char *argv[])
         static struct option long_options[] =
         {
             /* Long option, needs arg, flag, short option */
-            { "max-bytes", 1, NULL, 'B' },
-            { "cmdline",   0, NULL, 'c' },
-            { "debug",     0, NULL, 'd' },
-            { "exclude",   1, NULL, 'E' },
-            { "max-forks", 1, NULL, 'F' },
-            { "help",      0, NULL, 'h' },
-            { "stdin",     0, NULL, 'i' },
-            { "include",   1, NULL, 'I' },
-            { "network",   0, NULL, 'n' },
-            { "protect",   1, NULL, 'P' },
-            { "quiet",     0, NULL, 'q' },
-            { "ratio",     1, NULL, 'r' },
-            { "refuse",    1, NULL, 'R' },
-            { "seed",      1, NULL, 's' },
-            { "signal",    0, NULL, 'S' },
-            { "max-time",  1, NULL, 'T' },
-            { "version",   0, NULL, 'v' },
+            { "max-bytes",   1, NULL, 'B' },
+            { "cmdline",     0, NULL, 'c' },
+            { "max-crashes", 1, NULL, 'C' },
+            { "debug",       0, NULL, 'd' },
+            { "exclude",     1, NULL, 'E' },
+            { "max-forks",   1, NULL, 'F' },
+            { "help",        0, NULL, 'h' },
+            { "stdin",       0, NULL, 'i' },
+            { "include",     1, NULL, 'I' },
+            { "network",     0, NULL, 'n' },
+            { "protect",     1, NULL, 'P' },
+            { "quiet",       0, NULL, 'q' },
+            { "ratio",       1, NULL, 'r' },
+            { "refuse",      1, NULL, 'R' },
+            { "seed",        1, NULL, 's' },
+            { "signal",      0, NULL, 'S' },
+            { "max-time",    1, NULL, 'T' },
+            { "version",     0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cdE:F:hiI:nP:qr:R:s:ST:v",
+        int c = getopt_long(argc, argv, "B:cC:dE:F:hiI:nP:qr:R:s:ST:v",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cdE:F:hiI:nP:qr:R:s:ST:v");
+        int c = getopt(argc, argv, "B:cC:dE:F:hiI:nP:qr:R:s:ST:v");
 #   endif
         if(c == -1)
             break;
@@ -165,13 +165,18 @@ int main(int argc, char *argv[])
             setenv("ZZUF_RATIO", optarg, 1);
             break;
         case 'F': /* --max-forks */
-            parallel = atoi(optarg) > 1 ? atoi(optarg) : 1;
+            maxforks = atoi(optarg) > 1 ? atoi(optarg) : 1;
             break;
         case 'B': /* --max-bytes */
             maxbytes = atoi(optarg);
             break;
         case 'T': /* --max-time */
             maxtime = atof(optarg);
+            break;
+        case 'C': /* --max-crashes */
+            maxcrashes = atoi(optarg);
+            if(maxcrashes <= 0)
+                maxcrashes = 0;
             break;
         case 'P': /* --protect */
             setenv("ZZUF_PROTECT", optarg, 1);
@@ -233,8 +238,8 @@ int main(int argc, char *argv[])
         setenv("ZZUF_EXCLUDE", exclude, 1);
 
     /* Allocate memory for children handling */
-    child_list = malloc(parallel * sizeof(struct child_list));
-    for(i = 0; i < parallel; i++)
+    child_list = malloc(maxforks * sizeof(struct child_list));
+    for(i = 0; i < maxforks; i++)
         child_list[i].status = STATUS_FREE;
     child_count = 0;
 
@@ -246,14 +251,12 @@ int main(int argc, char *argv[])
     memcpy(newargv, argv + optind, (argc - optind) * sizeof(char *));
     newargv[argc - optind] = (char *)NULL;
 
-    /* Handle children in our way */
-    signal(SIGCHLD, SIG_DFL);
-
     /* Main loop */
     while(child_count || seed < endseed)
     {
         /* Spawn one new child, if necessary */
-        if(child_count < parallel && seed < endseed)
+        if(child_count < maxforks && seed < endseed &&
+                             (maxcrashes && crashes < maxcrashes))
             spawn_child(newargv);
 
         /* Cleanup dead or dying children */
@@ -261,6 +264,9 @@ int main(int argc, char *argv[])
 
         /* Read data from children */
         read_children();
+
+        if(maxcrashes && crashes >= maxcrashes && child_count == 0)
+            break;
     }
 
     /* Clean up */
@@ -323,7 +329,7 @@ static void spawn_child(char **argv)
     int i, j;
 
     /* Find an empty slot */
-    for(i = 0; i < parallel; i++)
+    for(i = 0; i < maxforks; i++)
         if(child_list[i].status == STATUS_FREE)
             break;
 
@@ -386,12 +392,12 @@ static void clean_children(void)
     int i, j;
 
     /* Terminate children if necessary */
-    for(i = 0; i < parallel; i++)
+    for(i = 0; i < maxforks; i++)
     {
         if(child_list[i].status == STATUS_RUNNING
             && maxbytes >= 0 && child_list[i].bytes > maxbytes)
         {
-            fprintf(stdout, "seed %i: data exceeded, sending SIGTERM\n",
+            fprintf(stdout, "zzuf[seed=%i]: data exceeded, sending SIGTERM\n",
                     child_list[i].seed);
             kill(child_list[i].pid, SIGTERM);
             child_list[i].date = now;
@@ -402,7 +408,7 @@ static void clean_children(void)
             && maxtime >= 0.0
             && difftime(now, child_list[i].date) > maxtime)
         {
-            fprintf(stdout, "seed %i: time exceeded, sending SIGTERM\n",
+            fprintf(stdout, "zzuf[seed=%i]: time exceeded, sending SIGTERM\n",
                     child_list[i].seed);
             kill(child_list[i].pid, SIGTERM);
             child_list[i].date = now;
@@ -411,12 +417,12 @@ static void clean_children(void)
     }
 
     /* Kill children if necessary */
-    for(i = 0; i < parallel; i++)
+    for(i = 0; i < maxforks; i++)
     {
         if(child_list[i].status == STATUS_SIGTERM
             && difftime(now, child_list[i].date) > 2.0)
         {
-            fprintf(stdout, "seed %i: not responding, sending SIGKILL\n",
+            fprintf(stdout, "zzuf[seed=%i]: not responding, sending SIGKILL\n",
                     child_list[i].seed);
             kill(child_list[i].pid, SIGKILL);
             child_list[i].status = STATUS_SIGKILL;
@@ -424,7 +430,7 @@ static void clean_children(void)
     }
 
     /* Collect dead children */
-    for(i = 0; i < parallel; i++)
+    for(i = 0; i < maxforks; i++)
     {
         int status;
         pid_t pid;
@@ -439,11 +445,17 @@ static void clean_children(void)
             continue;
 
         if(WIFEXITED(status) && WEXITSTATUS(status))
-            fprintf(stdout, "seed %i: exit %i\n",
+        {
+            fprintf(stdout, "zzuf[seed=%i]: exit %i\n",
                     child_list[i].seed, WEXITSTATUS(status));
+            crashes++;
+        }
         else if(WIFSIGNALED(status))
-            fprintf(stdout, "seed %i: signal %i\n",
+        {
+            fprintf(stdout, "zzuf[seed=%i]: signal %i\n",
                     child_list[i].seed, WTERMSIG(status));
+            crashes++;
+        }
 
         for(j = 0; j < 3; j++)
             if(child_list[i].fd[j] >= 0)
@@ -464,7 +476,7 @@ static void read_children(void)
 
     /* Read data from all sockets */
     FD_ZERO(&fdset);
-    for(i = 0; i < parallel; i++)
+    for(i = 0; i < maxforks; i++)
     {
         if(child_list[i].status != STATUS_RUNNING)
             continue;
@@ -482,7 +494,7 @@ static void read_children(void)
         return;
 
     /* XXX: cute (i, j) iterating hack */
-    for(i = 0, j = 0; i < parallel; i += (j == 2), j = (j + 1) % 3)
+    for(i = 0, j = 0; i < maxforks; i += (j == 2), j = (j + 1) % 3)
     {
         char buf[BUFSIZ];
 
@@ -554,7 +566,7 @@ static void version(void)
 static void usage(void)
 {
     printf("Usage: zzuf [ -cdinqS ] [ -r ratio ] [ -s seed | -s start:stop ]\n");
-    printf("                        [ -F children ] [ -B bytes ] [ -T seconds ]\n");
+    printf("                        [ -F forks ] [ -C crashes ] [ -B bytes ] [ -T seconds ]\n");
     printf("                        [ -P protect ] [ -R refuse ]\n");
     printf("                        [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
     printf("       zzuf -h\n");

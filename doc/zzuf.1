@@ -4,7 +4,7 @@ zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
 \fBzzuf\fR [\fB\-cdinqS\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR | \fB\-s\fR \fIstart:stop\fR]
 .br
-               [\fB\-F\fR \fIchildren\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
+               [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
 .br
                [\fB\-P\fR \fIlist\fR] [\fB\-R\fR \fIlist\fR]
 .br
@@ -51,6 +51,15 @@ has the same effect as
 See the \fB\-I\fR flag for more information on restricting fuzzing to
 specific files.
 .TP
+\fB\-C\fR, \fB\-\-max\-crashes\fR=\fIn\fR
+Stop forking when at least \fIn\fR children have crashed. The default value
+is 1, meaning \fBzzuf\fR will stop as soon as one child has crashed. A process
+is considered to have crashed if any signal (such as, but not limited to,
+\fBSIGSEGV\fR) caused it to exit.
+
+This option is only relevant if the \fB\-s\fR flag is used with an interval
+argument.
+.TP
 \fB\-d\fR, \fB\-\-debug\fR
 Activate the display of debug messages.
 .TP
@@ -63,9 +72,11 @@ and do not want it to fuzz files in the \fB/etc\fR directory.
 Multiple \fB\-E\fR flags can be specified, in which case files matching any one
 of the regular expressions will be ignored.
 .TP
-\fB\-F\fR, \fB\-\-max-forks\fR=\fIchildren\fR
-Specify the number of simultaneous children that can be run. This option is
-only useful if the \fB\-s\fR flag is used with an interval argument.
+\fB\-F\fR, \fB\-\-max-forks\fR=\fIforks\fR
+Specify the number of simultaneous children that can be run.
+
+This option is only relevant if the \fB\-s\fR flag is used with an interval
+argument.
 .TP
 \fB\-i\fR, \fB\-\-stdin\fR
 Fuzz the application's standard input. By default \fBzzuf\fR only fuzzes files.
@@ -211,7 +222,7 @@ launching up to three simultaneous child processes (\fB\-F\ 3\fR), killing
 \fBMPlayer\fR if it takes more than one minute to read the file (\fB\-T\ 60\fR)
 and disabling its \fBSIGSEGV\fR signal handler (\fB\-S\fR):
 .PP
-\fB    zzuf -c -q -s 0:10000 -F 3 -T 60 -r 0.02 \\\fR
+\fB    zzuf -c -r 0.02 -q -s 0:10000 -F 3 -T 60 -S \\\fR
 \fB      mplayer -- -benchmark -vo null -fps 1000 movie.avi\fR
 .SH RESTRICTIONS
 .PP
