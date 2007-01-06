@@ -37,15 +37,18 @@
 extern int _zz_hasdebug;
 
 #define WRITE_INT(fd, i, base) \
-    char buf[128], *b = buf + 127; \
-    if(i <= 0) \
-        write(fd, (i = -i) ? "-" : "0", 1); /* XXX: hack here */ \
-    while(i) \
+    do \
     { \
-        *b-- = hex2char[i % base]; \
-        i /= base; \
-    } \
-    write(fd, b + 1, buf + 127 - b)
+        char buf[128], *b = buf + 127; \
+        if(i <= 0) \
+            write(fd, (i = -i) ? "-" : "0", 1); /* XXX: hack here */ \
+        while(i) \
+        { \
+            *b-- = hex2char[i % base]; \
+            i /= base; \
+        } \
+        write(fd, b + 1, buf + 127 - b); \
+    } while(0)
 
 void _zz_debug(char const *format, ...)
 {
