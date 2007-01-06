@@ -75,6 +75,10 @@ for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
             # We don't include grep or sed when the input is not text, because
             # they put a newline at the end of their input if it was not there
             # initially. (Linux sed doesn't, but OS X sed does.)
+            check "$ZZOPTS" "head -- -n -0 $file" "head -n -0"
+            check "$ZZOPTS" "-i head -- -n -0 < $file" "|head -n -0"
+            check "$ZZOPTS" "tail -- -n +1 $file" "tail -n +1"
+            check "$ZZOPTS" "-i tail -- -n +1 < $file" "|tail -n +1"
             check "$ZZOPTS" "grep -- -a '' $file" "grep -a ''"
             check "$ZZOPTS" "-i grep -- -a '' < $file" "|grep -a ''"
             check "$ZZOPTS" "sed -- -e n $file" "sed -e n"
