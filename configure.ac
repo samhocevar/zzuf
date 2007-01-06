@@ -14,18 +14,6 @@ AM_PROG_CC_C_O
 AC_PROG_CPP
 AC_PROG_LIBTOOL
 
-dnl AC_PROG_EGREP only exists in autoconf 2.54+, so we use AC_EGREP_CPP right
-dnl now otherwise it might be set in an obscure if statement. Same thing for
-dnl PKG_PROG_PKG_CONFIG which needs to be called first.
-AC_EGREP_CPP(yes, foo)
-PKG_PROG_PKG_CONFIG()
-
-dnl Don't let pkg-config fuck our cross-compilation environment
-m4_pattern_allow([^PKG_CONFIG_LIBDIR$])
-if test "$build" != "$host" -a "${PKG_CONFIG_LIBDIR}" = ""; then
-  export PKG_CONFIG_LIBDIR=/dev/null
-fi
-
 AC_CHECK_HEADERS(inttypes.h stdint.h getopt.h)
 AC_CHECK_FUNCS(open64 lseek64 mmap64 fopen64 getline getdelim __getdelim fgetln)
 AC_CHECK_TYPES(sighandler_t, [], [],
@@ -41,10 +29,13 @@ AC_CHECK_FUNCS(getopt_long,
     GETOPT_LIBS="${GETOPT_LIBS} -lgnugetopt"])])
 AC_SUBST(GETOPT_LIBS)
 
+AC_CHECK_LIB(dl, dlopen, [DL_LIBS="-ldl"])
+AC_SUBST(DL_LIBS)
+
 # Optimizations
 CFLAGS="${CFLAGS} -g -O2 -fno-strength-reduce -fomit-frame-pointer"
 # Code qui fait des warnings == code de porc == deux baffes dans ta gueule
-CFLAGS="${CFLAGS} -Wall -Wpointer-arith -Wcast-align -Wcast-qual -Wstrict-prototypes -Wshadow -Waggregate-return -Wmissing-prototypes -Wnested-externs -Wsign-compare"
+CFLAGS="${CFLAGS} -Wall -W -Wpointer-arith -Wcast-align -Wcast-qual -Wstrict-prototypes -Wshadow -Waggregate-return -Wmissing-prototypes -Wnested-externs -Wsign-compare"
 
 AC_OUTPUT([
   Makefile
