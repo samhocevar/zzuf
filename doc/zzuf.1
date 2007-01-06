@@ -267,6 +267,11 @@ BSD specific:
 Signal handling:
 \fBsignal\fR(), \fBsigaction\fR()
 .PP
+If an application manipulates file descriptors (reading data, seeking around)
+using functions that are not in that list, \fBzzuf\fR will not fuzz its
+input consistently and the results should not be trusted. You can use a tool
+such as \fBltrace(1)\fR on Linux to know the missing functions.
+.PP
 One important unimplemented function is \fBfscanf\fR(), mostly because of its
 complexity. Missing functions will be implemented based upon user request.
 .SH HISTORY
