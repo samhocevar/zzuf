@@ -185,7 +185,7 @@ void rewind(FILE *stream)
 
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-    long int pos;
+    long int pos, newpos;
     size_t ret;
     int fd;
 
@@ -201,21 +201,20 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     _zz_disabled = 0;
     debug("fread(%p, %li, %li, [%i]) = %li",
           ptr, (long int)size, (long int)nmemb, fd, (long int)ret);
-    if(ret >= 0)
+
+    /* XXX: the number of bytes read is not ret * size, because
+     * a partial read may have advanced the stream pointer. However,
+     * when reading from a pipe ftell() will return 0, and ret * size
+     * is then better than nothing. */
+    newpos = ftell(stream);
+    if(newpos <= 0)
+        newpos = ret * size;
+    if(newpos != pos)
     {
-        /* XXX: the number of bytes read is not ret * size, because
-         * a partial read may have advanced the stream pointer. However,
-         * when reading from a pipe ftell() will return 0, and ret * size
-         * is then better than nothing. */
-        long int newpos = ftell(stream);
-        if(newpos <= 0)
-            newpos = ret * size;
-        if(newpos != pos)
-        {
-            _zz_fuzz(fd, ptr, newpos - pos);
-            _zz_setpos(fd, newpos);
-        }
+        _zz_fuzz(fd, ptr, newpos - pos);
+        _zz_setpos(fd, newpos);
     }
+
     return ret;
 }
 
