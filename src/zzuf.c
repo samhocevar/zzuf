@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2002, 2007 Sam Hocevar <sam@zoy.org>
  *                All Rights Reserved
  *
  *  $Id$
@@ -107,7 +107,6 @@ int main(int argc, char *argv[])
             { "debug",       0, NULL, 'd' },
             { "exclude",     1, NULL, 'E' },
             { "max-forks",   1, NULL, 'F' },
-            { "help",        0, NULL, 'h' },
             { "stdin",       0, NULL, 'i' },
             { "include",     1, NULL, 'I' },
             { "network",     0, NULL, 'n' },
@@ -118,26 +117,33 @@ int main(int argc, char *argv[])
             { "seed",        1, NULL, 's' },
             { "signal",      0, NULL, 'S' },
             { "max-time",    1, NULL, 'T' },
+            { "help",        0, NULL, 'h' },
             { "version",     0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cC:dE:F:hiI:nP:qr:R:s:ST:v",
+        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:nP:qr:R:s:ST:hv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cC:dE:F:hiI:nP:qr:R:s:ST:v");
+        int c = getopt(argc, argv, "B:cC:dE:F:iI:nP:qr:R:s:ST:hv");
 #   endif
         if(c == -1)
             break;
 
         switch(c)
         {
-        case 'I': /* --include */
-            include = merge_regex(include, optarg);
-            if(!include)
-            {
-                printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
-                return EXIT_FAILURE;
-            }
+        case 'B': /* --max-bytes */
+            maxbytes = atoi(optarg);
+            break;
+        case 'c': /* --cmdline */
+            cmdline = 1;
+            break;
+        case 'C': /* --max-crashes */
+            maxcrashes = atoi(optarg);
+            if(maxcrashes <= 0)
+                maxcrashes = 0;
+            break;
+        case 'd': /* --debug */
+            setenv("ZZUF_DEBUG", "1", 1);
             break;
         case 'E': /* --exclude */
             exclude = merge_regex(exclude, optarg);
@@ -147,51 +153,45 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
             break;
-        case 'c': /* --cmdline */
-            cmdline = 1;
+        case 'F': /* --max-forks */
+            maxforks = atoi(optarg) > 1 ? atoi(optarg) : 1;
             break;
         case 'i': /* --stdin */
             setenv("ZZUF_STDIN", "1", 1);
             break;
+        case 'I': /* --include */
+            include = merge_regex(include, optarg);
+            if(!include)
+            {
+                printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
+                return EXIT_FAILURE;
+            }
+            break;
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
+            break;
+        case 'P': /* --protect */
+            setenv("ZZUF_PROTECT", optarg, 1);
+            break;
+        case 'q': /* --quiet */
+            quiet = 1;
+            break;
+        case 'r': /* --ratio */
+            setenv("ZZUF_RATIO", optarg, 1);
+            break;
+        case 'R': /* --refuse */
+            setenv("ZZUF_REFUSE", optarg, 1);
             break;
         case 's': /* --seed */
             parser = strchr(optarg, ':');
             seed = atoi(optarg);
             endseed = parser ? atoi(parser + 1) : seed + 1;
             break;
-        case 'r': /* --ratio */
-            setenv("ZZUF_RATIO", optarg, 1);
-            break;
-        case 'F': /* --max-forks */
-            maxforks = atoi(optarg) > 1 ? atoi(optarg) : 1;
-            break;
-        case 'B': /* --max-bytes */
-            maxbytes = atoi(optarg);
-            break;
-        case 'T': /* --max-time */
-            maxtime = atof(optarg);
-            break;
-        case 'C': /* --max-crashes */
-            maxcrashes = atoi(optarg);
-            if(maxcrashes <= 0)
-                maxcrashes = 0;
-            break;
-        case 'P': /* --protect */
-            setenv("ZZUF_PROTECT", optarg, 1);
-            break;
-        case 'R': /* --refuse */
-            setenv("ZZUF_REFUSE", optarg, 1);
-            break;
-        case 'q': /* --quiet */
-            quiet = 1;
-            break;
         case 'S': /* --signal */
             setenv("ZZUF_SIGNAL", "1", 1);
             break;
-        case 'd': /* --debug */
-            setenv("ZZUF_DEBUG", "1", 1);
+        case 'T': /* --max-time */
+            maxtime = atof(optarg);
             break;
         case 'h': /* --help */
             usage();
@@ -553,7 +553,7 @@ static void set_environment(char const *progpath)
 static void version(void)
 {
     printf("zzuf %s\n", VERSION);
-    printf("Copyright (C) 2006 Sam Hocevar <sam@zoy.org>\n");
+    printf("Copyright (C) 2002, 2007 Sam Hocevar <sam@zoy.org>\n");
     printf("This is free software.  You may redistribute copies of it under the\n");
     printf("terms of the Do What The Fuck You Want To Public License, Version 2\n");
     printf("<http://sam.zoy.org/wtfpl/>.\n");
