@@ -565,12 +565,17 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [ -cdinqS ] [ -r ratio ] [ -s seed | -s start:stop ]\n");
-    printf("                        [ -F forks ] [ -C crashes ] [ -B bytes ] [ -T seconds ]\n");
-    printf("                        [ -P protect ] [ -R refuse ]\n");
-    printf("                        [ -I include ] [ -E exclude ] COMMAND [ARGS]...\n");
+    printf("Usage: zzuf [-cdinqS] [-r ratio] [-s seed | -s start:stop]\n");
+    printf("                      [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
+    printf("                      [-P protect] [-R refuse]\n");
+    printf("                      [-I include] [-E exclude] COMMAND [ARGS]...\n");
+#   ifdef HAVE_GETOPT_LONG
+    printf("       zzuf -h | --help\n");
+    printf("       zzuf -v | --version\n");
+#   else
     printf("       zzuf -h\n");
     printf("       zzuf -v\n");
+#   endif
     printf("Run COMMAND and randomly fuzz its input.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
