@@ -243,10 +243,12 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
             debug(STR(fn)"([%i]) = 0x%02x", fd, ret); \
     } while(0)
 
+#if !defined getc
 int getc(FILE *stream)
 {
     int ret; FGETC(getc); return ret;
 }
+#endif
 
 int fgetc(FILE *stream)
 {
