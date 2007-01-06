@@ -436,7 +436,7 @@ char *fgetln(FILE *stream, size_t *len)
 
     fuzz = _zz_getfuzz(fd);
 
-    for(i = size = 0; ; i++)
+    for(i = size = 0; ; /* i is incremented below */)
     {
         int ch;
 
@@ -454,7 +454,7 @@ char *fgetln(FILE *stream, size_t *len)
         _zz_fuzz(fd, (uint8_t *)fuzz->tmp + i, 1); /* rather inefficient */
         _zz_addpos(fd, 1);
 
-        if(fuzz->tmp[i] == '\n')
+        if(fuzz->tmp[i++] == '\n')
             break;
     }
 
