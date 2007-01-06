@@ -29,6 +29,7 @@
 #   include <inttypes.h>
 #endif
 #include <stdlib.h>
+#include <string.h>
 #include <dlfcn.h>
 
 #include <sys/types.h>
