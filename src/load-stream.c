@@ -41,6 +41,7 @@ static FILE *  (*fopen_orig)   (const char *path, const char *mode);
 static FILE *  (*fopen64_orig) (const char *path, const char *mode);
 #endif
 static int     (*fseek_orig)   (FILE *stream, long offset, int whence);
+static void    (*rewind_orig)  (FILE *stream);
 static size_t  (*fread_orig)   (void *ptr, size_t size, size_t nmemb,
                                 FILE *stream);
 static int     (*getc_orig)    (FILE *stream);
@@ -74,6 +75,7 @@ void _zz_load_stream(void)
     LOADSYM(fopen64);
 #endif
     LOADSYM(fseek);
+    LOADSYM(rewind);
     LOADSYM(fread);
     LOADSYM(getc);
     LOADSYM(fgetc);
@@ -143,6 +145,7 @@ int fseek(FILE *stream, long offset, int whence)
     if(ret != 0)
         return ret;
 
+    /* FIXME: check what happens when fseek()ing a pipe */
     switch(whence)
     {
         case SEEK_END:
@@ -156,6 +159,28 @@ int fseek(FILE *stream, long offset, int whence)
             break;
     }
     return 0;
+}
+
+void rewind(FILE *stream)
+{
+    int fd;
+
+    if(!_zz_ready)
+        LOADSYM(rewind);
+    fd = fileno(stream);
+    if(!_zz_ready || !_zz_iswatched(fd))
+    {
+        rewind_orig(stream);
+        return;
+    }
+
+    _zz_disabled = 1;
+    rewind_orig(stream);
+    _zz_disabled = 0;
+    debug("rewind([%i])", fd);
+
+    /* FIXME: check what happens when rewind()ing a pipe */
+    _zz_setpos(fd, 0);
 }
 
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
