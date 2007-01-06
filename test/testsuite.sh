@@ -19,15 +19,15 @@ check()
     CMD="$2"
     ALIAS="$3"
     echo -n " $(echo "$ALIAS .............." | cut -b1-18) "
-    NEWMD5="$(eval "$ZZUF $ZZOPTS $CMD" 2>/dev/null | md5sum | cut -b1-32)"
+    NEWMD5="$(eval "$ZZUF $ZZOPTS $CMD" 2>/dev/null | $MD5PROG | cut -b1-32)"
     if [ -z "$MD5" ]; then
         MD5="$NEWMD5"
         echo "$NEWMD5"
     elif [ "$NEWMD5" != "$MD5" ]; then
         OK=0
-        echo "$NEWMD5"
+        echo "$NEWMD5 FAILED"
     else
-        echo ' ...'
+        echo 'ok'
     fi
 }
 
@@ -36,21 +36,32 @@ cleanup() {
         rm -f /tmp/zzuf-zero-$$
         rm -f /tmp/zzuf-random-$$
         rm -f /tmp/zzuf-text-$$
-        echo "Temporary files removed."
+        echo "*** temporary files removed ***"
     else
-        echo "Files preserved:"
-        echo "  /tmp/zzuf-zero-$$"
-        echo "  /tmp/zzuf-random-$$"
-        echo "  /tmp/zzuf-text-$$"
+        echo "*** files preserved ***"
+        echo " /tmp/zzuf-zero-$$"
+        echo " /tmp/zzuf-random-$$"
+        echo " /tmp/zzuf-text-$$"
     fi
 }
 
-trap "echo ''; echo ''; echo 'Aborted.'; cleanup; exit 0" 1 2 15
+trap "echo ''; echo '*** ABORTED ***'; cleanup; exit 0" 1 2 15
 
 seed=$((0$1))
 ZZUF="$(dirname "$0")/../src/zzuf"
 FDCAT="$(dirname "$0")/fdcat"
 STREAMCAT="$(dirname "$0")/streamcat"
+if md5sum --help >/dev/null 2>&1; then
+  MD5PROG=md5sum
+elif md5 --help >/dev/null 2>&1; then
+  MD5PROG=md5
+else
+  echo "error: no md5 program found (tried: md5sum, md5)"
+  exit 1
+fi
+if [ ! -f "$FDCAT" -o ! -f "$STREAMCAT" ]; then
+  echo "error: test/fdcat or test/streamcat are missing"
+fi
 FAILED=0
 TESTED=0
 
@@ -58,7 +69,6 @@ echo "*** running zzuf test suite ***"
 echo "*** creating test files ***"
 create
 echo "*** using seed $seed ***"
-echo ""
 
 for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
     for file in /tmp/zzuf-zero-$$ /tmp/zzuf-text-$$ /tmp/zzuf-random-$$; do
@@ -99,7 +109,6 @@ for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
             FAILED=$(($FAILED + 1))
         fi
         TESTED=$(($TESTED + 1))
-        echo ""
     done
 done
 
