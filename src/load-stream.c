@@ -552,13 +552,15 @@ int __srefill(FILE *fp)
         LOADSYM(__srefill);
     fd = fileno(fp);
     ret = __srefill_orig(fp);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+    if(!_zz_ready || !_zz_iswatched(fd))
         return ret;
 
     if(ret != EOF)
         _zz_fuzz(fd, fp->_p, fp->_r);
 
-    debug("__srefill([%i]) = %i", fd, ret);
+    if(!_zz_disabled)
+        debug("__srefill([%i]) = %i", fd, ret);
+
     return ret;
 }
 #endif
