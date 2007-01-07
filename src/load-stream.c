@@ -310,7 +310,7 @@ int _IO_getc(FILE *stream)
 char *fgets(char *s, int size, FILE *stream)
 {
     char *ret = s;
-    int i, fd;
+    int fd;
 
     if(!_zz_ready)
         LOADSYM(fgets);
@@ -330,6 +330,8 @@ char *fgets(char *s, int size, FILE *stream)
         s[0] = '\0';
     else
     {
+        int i;
+
         for(i = 0; i < size - 1; i++)
         {
             int ch;
@@ -491,7 +493,9 @@ char *fgetln(FILE *stream, size_t *len)
 {
     char *ret;
     struct fuzz *fuzz;
+#if defined HAVE___SREFILL /* Don't fuzz if we have __srefill() */
     size_t i, size;
+#endif
     int fd;
 
     if(!_zz_ready)
@@ -533,7 +537,7 @@ char *fgetln(FILE *stream, size_t *len)
     ret = fuzz->tmp;
 #endif
 
-    debug("fgetln([%i], &%li) = %p", fd, (long int)*len, fuzz->tmp);
+    debug("fgetln([%i], &%li) = %p", fd, (long int)*len, ret);
     return ret;
 }
 #endif
