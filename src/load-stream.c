@@ -54,6 +54,8 @@ static FILE *  (*fopen_orig)    (const char *path, const char *mode);
 #ifdef HAVE_FOPEN64
 static FILE *  (*fopen64_orig)  (const char *path, const char *mode);
 #endif
+static FILE *  (*freopen_orig)  (const char *path, const char *mode,
+                                 FILE *stream);
 static int     (*fseek_orig)    (FILE *stream, long offset, int whence);
 #ifdef HAVE_FSEEKO
 static int     (*fseeko_orig)   (FILE *stream, off_t offset, int whence);
@@ -98,6 +100,7 @@ void _zz_load_stream(void)
 #ifdef HAVE_FOPEN64
     LOADSYM(fopen64);
 #endif
+    LOADSYM(freopen);
     LOADSYM(fseek);
 #ifdef HAVE_FSEEKO
     LOADSYM(fseeko);
@@ -160,6 +163,36 @@ FILE *fopen64(const char *path, const char *mode)
     FILE *ret; FOPEN(fopen64); return ret;
 }
 #endif
+
+FILE *freopen(const char *path, const char *mode, FILE *stream)
+{
+    FILE *ret;
+    int fd0 = -1, fd1 = -1, disp = 0;
+
+    if(!_zz_ready)
+        LOADSYM(freopen);
+    if(_zz_ready && (fd0 = fileno(stream)) >= 0 && _zz_iswatched(fd0))
+    {
+        _zz_unregister(fd0);
+        disp = 1;
+    }
+
+    _zz_disabled = 1;
+    ret = freopen_orig(path, mode, stream);
+    _zz_disabled = 0;
+
+    if(ret && _zz_mustwatch(path))
+    {
+        fd1 = fileno(ret);
+        _zz_register(fd1);
+        disp = 1;
+    }
+
+    if(disp)
+        debug("freopen(\"%s\", \"%s\", [%i]) = [%i]", path, mode, fd0, fd1);
+
+    return ret;
+}
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
 #   define FSEEK_FUZZ(fn2)
