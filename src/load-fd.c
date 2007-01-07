@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
-#include <regex.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>

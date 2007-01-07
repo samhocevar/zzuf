@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include <regex.h>
 
 #include <stdarg.h>
 #include <dlfcn.h>
@@ -74,17 +73,11 @@ void _zz_init(void)
 
     tmp = getenv("ZZUF_INCLUDE");
     if(tmp && *tmp)
-    {
-        re_include = malloc(sizeof(*re_include));
-        regcomp(re_include, tmp, REG_EXTENDED);
-    }
+        _zz_include(tmp);
 
     tmp = getenv("ZZUF_EXCLUDE");
     if(tmp && *tmp)
-    {
-        re_exclude = malloc(sizeof(*re_exclude));
-        regcomp(re_exclude, tmp, REG_EXTENDED);
-    }
+        _zz_exclude(tmp);
 
     tmp = getenv("ZZUF_SIGNAL");
     if(tmp && *tmp == '1')

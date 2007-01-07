@@ -27,7 +27,6 @@
 #endif
 #include <stdlib.h>
 #include <dlfcn.h>
-#include <regex.h>
 
 #include <stdio.h>
 #include <sys/types.h>

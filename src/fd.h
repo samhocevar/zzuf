@@ -16,11 +16,10 @@
  *  fd.h: file descriptor functions
  */
 
+extern void _zz_include(char const *);
+extern void _zz_exclude(char const *);
 extern void _zz_fd_init(void);
 extern void _zz_fd_fini(void);
-
-extern regex_t * re_include;
-extern regex_t * re_exclude;
 
 extern int _zz_mustwatch(char const *);
 extern int _zz_iswatched(int);

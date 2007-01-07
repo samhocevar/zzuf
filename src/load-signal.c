@@ -28,7 +28,6 @@
 #endif
 #include <stdlib.h>
 #include <dlfcn.h>
-#include <regex.h>
 
 #include <string.h>
 #include <signal.h>

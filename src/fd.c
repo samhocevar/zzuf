@@ -30,8 +30,9 @@
 #include "libzzuf.h"
 #include "fd.h"
 
-regex_t * re_include = NULL;
-regex_t * re_exclude = NULL;
+/* Regex stuff */
+static regex_t * re_include = NULL;
+static regex_t * re_exclude = NULL;
 
 /* File descriptor stuff */
 static struct files
@@ -45,6 +46,28 @@ static struct files
 *files;
 static int *fds;
 static int maxfd, nfiles;
+
+void _zz_include(char const *regex)
+{
+    re_include = malloc(sizeof(*re_include));
+
+    if(regcomp(re_include, regex, REG_EXTENDED) != 0)
+    {
+        free(re_include);
+        re_include = NULL;
+    }
+}
+
+void _zz_exclude(char const *regex)
+{
+    re_exclude = malloc(sizeof(*re_exclude));
+
+    if(regcomp(re_exclude, regex, REG_EXTENDED) != 0)
+    {
+        free(re_exclude);
+        re_exclude = NULL;
+    }
+}
 
 void _zz_fd_init(void)
 {
