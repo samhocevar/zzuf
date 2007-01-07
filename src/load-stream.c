@@ -507,8 +507,8 @@ int __srefill(FILE *fp)
 
     if(!_zz_ready)
         LOADSYM(__srefill);
-    fd = fileno(stream);
-    ret = __srefill_orig(stream);
+    fd = fileno(fp);
+    ret = __srefill_orig(fp);
     if(!_zz_ready || !_zz_iswatched(fd))
         return ret;
 
