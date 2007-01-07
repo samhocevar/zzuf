@@ -39,7 +39,6 @@
 
 #include "libzzuf.h"
 #include "random.h"
-#include "chars.h"
 #include "fd.h"
 #include "fuzz.h"
 
@@ -54,10 +53,6 @@ static void version(void);
 #if defined(HAVE_GETOPT_H)
 static void usage(void);
 #endif
-
-/* Global tables */
-int   _zz_protect[256];
-int   _zz_refuse[256];
 
 static struct child_list
 {
@@ -233,9 +228,9 @@ int main(int argc, char *argv[])
         }
 
         if(protect)
-            _zz_readchars(_zz_protect, protect);
+            _zz_protect(protect);
         if(refuse)
-            _zz_readchars(_zz_refuse, protect);
+            _zz_refuse(refuse);
 
         _zz_fd_init();
         _zz_register(0);

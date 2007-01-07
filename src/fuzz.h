@@ -16,7 +16,10 @@
  *  fuzz.h: fuzz functions
  */
 
+extern void _zz_protect(char const *);
+extern void _zz_refuse(char const *);
 extern void _zz_setseed(int);
 extern void _zz_setratio(float);
+
 extern void _zz_fuzz(int, uint8_t *, uint64_t);
 

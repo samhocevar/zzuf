@@ -36,21 +36,36 @@
 #define MAGIC1 0x33ea84f7
 #define MAGIC2 0x783bc31f
 
-static float _zz_ratio = 0.004f;
-static int   _zz_seed  = 0;
+/* Fuzzing variables */
+static int   protect[256];
+static int   refuse[256];
+static float ratio = 0.004f;
+static int   seed  = 0;
 
-void _zz_setseed(int seed)
+static void readchars(int *, char const *);
+
+void _zz_protect(char const *list)
 {
-    _zz_seed = seed;
+    readchars(protect, list);
 }
 
-void _zz_setratio(float ratio)
+void _zz_refuse(char const *list)
 {
-    _zz_ratio = ratio;
-    if(_zz_ratio < 0.0f)
-        _zz_ratio = 0.0f;
-    else if(_zz_ratio > 5.0f)
-        _zz_ratio = 5.0f;
+    readchars(refuse, list);
+}
+
+void _zz_setseed(int s)
+{
+    seed = s;
+}
+
+void _zz_setratio(float r)
+{
+    if(r < 0.0f)
+        r = 0.0f;
+    else if(r > 5.0f)
+        r = 5.0f;
+    ratio = r;
 }
 
 void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
@@ -81,10 +96,10 @@ void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
             memset(fuzz->data, 0, CHUNKBYTES);
 
             /* Add some random dithering to handle ratio < 1.0/CHUNKBYTES */
-            _zz_srand(_zz_seed ^ chunkseed);
-            todo = (int)((_zz_ratio * (8 * CHUNKBYTES * 1000)
-                                                + _zz_rand(1000)) / 1000.0);
-            _zz_srand(_zz_seed ^ chunkseed ^ (todo * MAGIC2));
+            _zz_srand(seed ^ chunkseed);
+            todo = (int)((ratio * (8 * CHUNKBYTES * 1000)
+                                             + _zz_rand(1000)) / 1000.0);
+            _zz_srand(seed ^ chunkseed ^ (todo * MAGIC2));
 
             while(todo--)
             {
@@ -107,16 +122,82 @@ void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
         {
             uint8_t byte = aligned_buf[j];
 
-            if(_zz_protect[byte])
+            if(protect[byte])
                 continue;
 
             byte ^= fuzz->data[j % CHUNKBYTES];
 
-            if(_zz_refuse[byte])
+            if(refuse[byte])
                 continue;
 
             aligned_buf[j] = byte;
         }
     }
+}
+
+static void readchars(int *table, char const *list)
+{
+    static char const hex[] = "0123456789abcdef0123456789ABCDEF";
+    char const *tmp;
+    int a, b;
+
+    memset(table, 0, 256 * sizeof(int));
+
+    for(tmp = list, a = b = -1; *tmp; tmp++)
+    {
+        int new;
+
+        if(*tmp == '\\' && tmp[1] == '\0')
+            new = '\\';
+        else if(*tmp == '\\')
+        {
+            tmp++;
+            if(*tmp == 'n')
+                new = '\n';
+            else if(*tmp == 'r')
+                new = '\r';
+            else if(*tmp == 't')
+                new = '\t';
+            else if(tmp[0] >= '0' && tmp[0] <= '7' && tmp[1] >= '0'
+                     && tmp[1] <= '7' && tmp[2] >= '0' && tmp[2] <= '7')
+            {
+                new = tmp[2] - '0';
+                new |= (int)(tmp[1] - '0') << 3;
+                new |= (int)(tmp[0] - '0') << 6;
+                tmp += 2;
+            }
+            else if((*tmp == 'x' || *tmp == 'X')
+                     && tmp[1] && strchr(hex, tmp[1])
+                     && tmp[2] && strchr(hex, tmp[2]))
+            {
+                new = ((strchr(hex, tmp[1]) - hex) & 0xf) << 4;
+                new |= (strchr(hex, tmp[2]) - hex) & 0xf;
+                tmp += 2;
+            }
+            else
+                new = (unsigned char)*tmp; /* XXX: OK for \\, but what else? */
+        }
+        else
+            new = (unsigned char)*tmp;
+
+        if(a != -1 && b == '-' && a <= new)
+        {
+            while(a <= new)
+                table[a++] = 1;
+            a = b = -1;
+        }
+        else
+        {
+            if(a != -1)
+                table[a] = 1;
+            a = b;
+            b = new;
+        }
+    }
+
+    if(a != -1)
+        table[a] = 1;
+    if(b != -1)
+        table[b] = 1;
 }
 

@@ -37,7 +37,6 @@
 #include "libzzuf.h"
 #include "debug.h"
 #include "load.h"
-#include "chars.h"
 #include "fd.h"
 #include "fuzz.h"
 
@@ -47,10 +46,6 @@ int   _zz_disabled = 0;
 int   _zz_hasdebug = 0;
 int   _zz_signal   = 0;
 int   _zz_network  = 0;
-
-/* Global tables */
-int   _zz_protect[256];
-int   _zz_refuse[256];
 
 /* Library initialisation shit */
 void _zz_init(void)
@@ -71,11 +66,11 @@ void _zz_init(void)
 
     tmp = getenv("ZZUF_PROTECT");
     if(tmp && *tmp)
-        _zz_readchars(_zz_protect, tmp);
+        _zz_protect(tmp);
 
     tmp = getenv("ZZUF_REFUSE");
     if(tmp && *tmp)
-        _zz_readchars(_zz_refuse, tmp);
+        _zz_refuse(tmp);
 
     tmp = getenv("ZZUF_INCLUDE");
     if(tmp && *tmp)
