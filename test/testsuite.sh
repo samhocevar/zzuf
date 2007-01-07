@@ -61,6 +61,11 @@ else
 fi
 if [ ! -f "$FDCAT" -o ! -f "$STREAMCAT" ]; then
   echo "error: test/fdcat or test/streamcat are missing"
+  exit 1
+fi
+if file /bin/cat | grep -q 'statically linked'; then
+  echo "error: /bin/cat is statically linked"
+  exit 1
 fi
 FAILED=0
 TESTED=0
