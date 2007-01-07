@@ -70,8 +70,12 @@ static ssize_t (*__getdelim_orig) (char **lineptr, size_t *n, int delim,
 
 /* Additional BSDisms */
 #ifdef HAVE_FGETLN
-static char *  (*fgetln_orig) (FILE *stream, size_t *len);
+static char *  (*fgetln_orig)    (FILE *stream, size_t *len);
 #endif
+#ifdef HAVE___SREFILL
+int         *  (*__srefill_orig) (FILE *fp);
+#endif
+
 
 void _zz_load_stream(void)
 {
@@ -104,6 +108,9 @@ void _zz_load_stream(void)
 #endif
 #ifdef HAVE_FGETLN
     LOADSYM(fgetln);
+#endif
+#ifdef HAVE___SREFILL
+    LOADSYM(__srefill);
 #endif
 }
 
@@ -490,6 +497,23 @@ char *fgetln(FILE *stream, size_t *len)
 
     debug("fgetln([%i], &%li) = %p", fd, (long int)*len, fuzz->tmp);
     return fuzz->tmp;
+}
+#endif
+
+#ifdef HAVE___SREFILL
+int __srefill(FILE *fp)
+{
+    int ret, fd;
+
+    if(!_zz_ready)
+        LOADSYM(__srefill);
+    fd = fileno(stream);
+    ret = __srefill_orig(stream);
+    if(!_zz_ready || !_zz_iswatched(fd))
+        return ret;
+
+    debug("__srefill([%i]) = %i", fd, ret);
+    return ret;
 }
 #endif
 
