@@ -37,22 +37,23 @@
 #include "load.h"
 
 /* Library functions that we divert */
-static FILE *  (*fopen_orig)   (const char *path, const char *mode);
+static FILE *  (*fopen_orig)    (const char *path, const char *mode);
 #ifdef HAVE_FOPEN64
-static FILE *  (*fopen64_orig) (const char *path, const char *mode);
+static FILE *  (*fopen64_orig)  (const char *path, const char *mode);
 #endif
-static int     (*fseek_orig)   (FILE *stream, long offset, int whence);
+static int     (*fseek_orig)    (FILE *stream, long offset, int whence);
 #ifdef HAVE_FSEEKO
-static int     (*fseeko_orig)  (FILE *stream, off_t offset, int whence);
+static int     (*fseeko_orig)   (FILE *stream, off_t offset, int whence);
 #endif
-static void    (*rewind_orig)  (FILE *stream);
-static size_t  (*fread_orig)   (void *ptr, size_t size, size_t nmemb,
-                                FILE *stream);
-static int     (*getc_orig)    (FILE *stream);
-static int     (*fgetc_orig)   (FILE *stream);
-static char *  (*fgets_orig)   (char *s, int size, FILE *stream);
-static int     (*ungetc_orig)  (int c, FILE *stream);
-static int     (*fclose_orig)  (FILE *fp);
+static void    (*rewind_orig)   (FILE *stream);
+static size_t  (*fread_orig)    (void *ptr, size_t size, size_t nmemb,
+                                 FILE *stream);
+static int     (*getc_orig)     (FILE *stream);
+static int     (*fgetc_orig)    (FILE *stream);
+static int     (*_IO_getc_orig) (FILE *stream);
+static char *  (*fgets_orig)    (char *s, int size, FILE *stream);
+static int     (*ungetc_orig)   (int c, FILE *stream);
+static int     (*fclose_orig)   (FILE *fp);
 
 /* Additional GNUisms */
 #ifdef HAVE_GETLINE
@@ -86,6 +87,9 @@ void _zz_load_stream(void)
     LOADSYM(fread);
     LOADSYM(getc);
     LOADSYM(fgetc);
+#ifdef HAVE__IO_GETC
+    LOADSYM(_IO_getc);
+#endif
     LOADSYM(fgets);
     LOADSYM(ungetc);
     LOADSYM(fclose);
@@ -260,17 +264,23 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
             debug(STR(fn)"([%i]) = 0x%02x", fd, ret); \
     } while(0)
 
-#if !defined getc
+#undef getc /* can be a macro; we don’t want that */
 int getc(FILE *stream)
 {
     int ret; FGETC(getc); return ret;
 }
-#endif
 
 int fgetc(FILE *stream)
 {
     int ret; FGETC(fgetc); return ret;
 }
+
+#ifdef HAVE__IO_GETC
+int _IO_getc(FILE *stream)
+{
+    int ret; FGETC(_IO_getc); return ret;
+}
+#endif
 
 char *fgets(char *s, int size, FILE *stream)
 {

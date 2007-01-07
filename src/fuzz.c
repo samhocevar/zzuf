@@ -42,10 +42,10 @@ void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
     unsigned long int pos = _zz_getpos(fd);
     unsigned int i, j, todo;
 
-/*
+#if 0
     debug("fuzz(%i, %lli@%li)", fd, (unsigned long long int)len,
           (unsigned long int)pos);
-*/
+#endif
 
     fuzz = _zz_getfuzz(fd);
     aligned_buf = buf - pos;
