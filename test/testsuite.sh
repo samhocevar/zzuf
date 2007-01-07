@@ -64,8 +64,10 @@ if [ ! -f "$FDCAT" -o ! -f "$STREAMCAT" ]; then
   exit 1
 fi
 if file /bin/cat | grep -q 'statically linked'; then
-  echo "error: /bin/cat is statically linked"
-  exit 1
+  STATIC_CAT=1
+fi
+if file /bin/dd | grep -q 'statically linked'; then
+  STATIC_DD=1
 fi
 FAILED=0
 TESTED=0
@@ -84,8 +86,18 @@ for r in 0.0 0.00001 0.001 0.1 10.0; do
         echo "*** file $file, ratio $r ***"
         OK=1
         MD5=""
-        check "$ZZOPTS" "cat $file" "cat"
-        check "$ZZOPTS" "-i cat < $file" "|cat"
+        check "$ZZOPTS" "$FDCAT $file" "fdcat"
+        check "$ZZOPTS" "$STREAMCAT $file" "streamcat"
+        if [ "$STATIC_CAT" = "" ]; then
+            check "$ZZOPTS" "cat $file" "cat"
+            check "$ZZOPTS" "-i cat < $file" "|cat"
+        fi
+        if [ "$STATIC_CAT" = "" ]; then
+            check "$ZZOPTS" "dd bs=65536 if=$file" "dd(bs=65536)"
+            check "$ZZOPTS" "dd bs=1111 if=$file" "dd(bs=1111)"
+            check "$ZZOPTS" "dd bs=1024 if=$file" "dd(bs=1024)"
+            check "$ZZOPTS" "dd bs=1 if=$file" "dd(bs=1)"
+        fi
         case $file in
           *text*)
             # We don't include grep or sed when the input is not text, because
@@ -105,12 +117,6 @@ for r in 0.0 0.00001 0.001 0.1 10.0; do
             #check "$ZZOPTS" "-i cut -- -b1- < $file" "|cut -b1-"
             ;;
         esac
-        check "$ZZOPTS" "dd bs=65536 if=$file" "dd(bs=65536)"
-        check "$ZZOPTS" "dd bs=1111 if=$file" "dd(bs=1111)"
-        check "$ZZOPTS" "dd bs=1024 if=$file" "dd(bs=1024)"
-        check "$ZZOPTS" "dd bs=1 if=$file" "dd(bs=1)"
-        check "$ZZOPTS" "$FDCAT $file" "fdcat"
-        check "$ZZOPTS" "$STREAMCAT $file" "streamcat"
         if [ "$OK" != 1 ]; then
             echo "*** FAILED ***"
             FAILED=$(($FAILED + 1))
