@@ -580,9 +580,9 @@ int __srefill(FILE *fp)
     if(!_zz_ready || !_zz_iswatched(fd))
         return __srefill_orig(fp);
 
-    ret = __srefill_orig(fp);
     tmp = _zz_disabled;
     _zz_disabled = 1;
+    ret = __srefill_orig(fp);
     newpos = lseek(fd, 0, SEEK_CUR);
     _zz_disabled = tmp;
     if(ret != EOF)
