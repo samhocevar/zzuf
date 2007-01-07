@@ -36,6 +36,10 @@
 #include "fuzz.h"
 #include "load.h"
 
+#ifdef HAVE___SREFILL
+int __srefill(FILE *fp);
+#endif
+
 /* Library functions that we divert */
 static FILE *  (*fopen_orig)    (const char *path, const char *mode);
 #ifdef HAVE_FOPEN64
@@ -75,7 +79,7 @@ static ssize_t (*__getdelim_orig) (char **lineptr, size_t *n, int delim,
 static char *  (*fgetln_orig)    (FILE *stream, size_t *len);
 #endif
 #ifdef HAVE___SREFILL
-int         *  (*__srefill_orig) (FILE *fp);
+int            (*__srefill_orig) (FILE *fp);
 #endif
 
 
@@ -233,11 +237,15 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     debug("fread(%p, %li, %li, [%i]) = %li",
           ptr, (long int)size, (long int)nmemb, fd, (long int)ret);
 
+    newpos = ftell(stream);
+#if defined HAVE___SREFILL /* Don't fuzz if we have __srefill() */
+    if(newpos != pos)
+        _zz_setpos(fd, ftell(stream));
+#else
     /* XXX: the number of bytes read is not ret * size, because
      * a partial read may have advanced the stream pointer. However,
      * when reading from a pipe ftell() will return 0, and ret * size
      * is then better than nothing. */
-    newpos = ftell(stream);
     if(newpos <= 0)
         newpos = ret * size;
     if(newpos != pos)
@@ -245,9 +253,23 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         _zz_fuzz(fd, ptr, newpos - pos);
         _zz_setpos(fd, newpos);
     }
+#endif
 
     return ret;
 }
+
+#if defined HAVE___SREFILL /* Don't fuzz if we have __srefill() */
+#   define FGETC_FUZZ
+#else
+#   define FGETC_FUZZ \
+        if(ret != EOF) \
+        { \
+            uint8_t ch = ret; \
+            _zz_fuzz(fd, &ch, 1); \
+            _zz_addpos(fd, 1); \
+            ret = ch; \
+        }
+#endif
 
 #define FGETC(fn) \
     do { \
@@ -260,13 +282,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         _zz_disabled = 1; \
         ret = ORIG(fn)(stream); \
         _zz_disabled = 0; \
-        if(ret != EOF) \
-        { \
-            uint8_t ch = ret; \
-            _zz_fuzz(fd, &ch, 1); \
-            _zz_addpos(fd, 1); \
-            ret = ch; \
-        } \
+        FGETC_FUZZ \
         if(ret >= 0x20 && ret <= 0x7f) \
             debug(STR(fn)"([%i]) = 0x%02x '%c'", fd, ret, (char)ret); \
         else \
@@ -302,6 +318,12 @@ char *fgets(char *s, int size, FILE *stream)
     if(!_zz_ready || !_zz_iswatched(fd))
         return fgets_orig(s, size, stream);
 
+#if defined HAVE___SREFILL /* Don't fuzz if we have __srefill() */
+    _zz_disabled = 1;
+    ret = fgets_orig(s, size, stream);
+    _zz_disabled = 0;
+    _zz_setpos(fd, ftell(stream));
+#else
     if(size <= 0)
         ret = NULL;
     else if(size == 1)
@@ -333,6 +355,7 @@ char *fgets(char *s, int size, FILE *stream)
             }
         }
     }
+#endif
 
     debug("fgets(%p, %i, [%i]) = %p", s, size, fd, ret);
     return ret;
@@ -350,8 +373,13 @@ int ungetc(int c, FILE *stream)
         return ungetc_orig(c, stream);
 
     _zz_addpos(fd, -1);
+#if defined HAVE___SREFILL /* Don't fuzz if we have __srefill() */
+#else
     _zz_fuzz(fd, &ch, 1);
+#endif
+    _zz_disabled = 1;
     ret = ungetc_orig((int)ch, stream);
+    _zz_disabled = 0;
     if(ret >= 0)
         ret = c;
     else
@@ -461,6 +489,7 @@ ssize_t __getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
 #ifdef HAVE_FGETLN
 char *fgetln(FILE *stream, size_t *len)
 {
+    char *ret;
     struct fuzz *fuzz;
     size_t i, size;
     int fd;
@@ -471,6 +500,11 @@ char *fgetln(FILE *stream, size_t *len)
     if(!_zz_ready || !_zz_iswatched(fd))
         return fgetln_orig(stream, len);
 
+#if defined HAVE___SREFILL /* Don't fuzz if we have __srefill() */
+    _zz_disabled = 1;
+    ret = fgetln_orig(stream, len);
+    _zz_disabled = 0;
+#else
     fuzz = _zz_getfuzz(fd);
 
     for(i = size = 0; ; /* i is incremented below */)
@@ -496,9 +530,11 @@ char *fgetln(FILE *stream, size_t *len)
     }
 
     *len = i;
+    ret = fuzz->tmp;
+#endif
 
     debug("fgetln([%i], &%li) = %p", fd, (long int)*len, fuzz->tmp);
-    return fuzz->tmp;
+    return ret;
 }
 #endif
 
@@ -511,8 +547,11 @@ int __srefill(FILE *fp)
         LOADSYM(__srefill);
     fd = fileno(fp);
     ret = __srefill_orig(fp);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;
+
+    if(ret != EOF)
+        _zz_fuzz(fd, fp->_p, fp->_r);
 
     debug("__srefill([%i]) = %i", fd, ret);
     return ret;
