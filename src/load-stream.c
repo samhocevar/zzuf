@@ -41,10 +41,6 @@
 #include "load.h"
 #include "fd.h"
 
-#if !defined __FreeBSD__ && !defined __OpenBSD__
-#   undef HAVE___SREFILL
-#endif
-
 #ifdef HAVE___SREFILL
 int __srefill(FILE *fp);
 #endif
