@@ -232,6 +232,10 @@ processes, it will fail in the presence of any mechanism that disables
 preloading. For instance setuid root binaries will not be fuzzed when run
 as an unprivileged user.
 .PP
+For the same reasons, \fBzzuf\fR will also not work with statically linked
+binaries. Bear this in mind when using \fBzzuf\fR on the OpenBSD platform,
+where \fBcat\fR, \fBcp\fR and \fBdd\fR are static binaries.
+.PP
 Though best efforts are made, identical behaviour for different versions of
 \fBzzuf\fR is not guaranteed. The reproducibility for subsequent calls on
 different operating systems and with different target programs is only
@@ -241,6 +245,10 @@ guaranteed when the same version of \fBzzuf\fR is being used.
 It is not yet possible to insert or drop bytes from the input, to fuzz
 according to the file format, to swap bytes, etc. More advanced fuzzing
 methods are planned.
+.PP
+\fBZzuf\fR will not work properly with applications using \fBgetc\fR() on
+platforms where it is defined as a macro, such as OpenBSD and FreeBSD,
+because it is unable to intercept calls to \fBgetc\fR().
 .PP
 As of now, \fBzzuf\fR does not really support multithreaded applications. The
 behaviour with multithreaded applications where more than one thread does file
