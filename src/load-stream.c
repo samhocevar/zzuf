@@ -50,7 +50,9 @@ static size_t  (*fread_orig)    (void *ptr, size_t size, size_t nmemb,
                                  FILE *stream);
 static int     (*getc_orig)     (FILE *stream);
 static int     (*fgetc_orig)    (FILE *stream);
+#ifdef HAVE__IO_GETC
 static int     (*_IO_getc_orig) (FILE *stream);
+#endif
 static char *  (*fgets_orig)    (char *s, int size, FILE *stream);
 static int     (*ungetc_orig)   (int c, FILE *stream);
 static int     (*fclose_orig)   (FILE *fp);
