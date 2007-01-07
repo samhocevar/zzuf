@@ -492,8 +492,9 @@ ssize_t __getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
 char *fgetln(FILE *stream, size_t *len)
 {
     char *ret;
-    struct fuzz *fuzz;
 #if defined HAVE___SREFILL /* Don't fuzz if we have __srefill() */
+#else
+    struct fuzz *fuzz;
     size_t i, size;
 #endif
     int fd;
