@@ -609,7 +609,7 @@ static void usage(void)
     printf("Usage: zzuf [-cdinqS] [-r ratio] [-s seed | -s start:stop]\n");
     printf("                      [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
     printf("                      [-P protect] [-R refuse]\n");
-    printf("                      [-I include] [-E exclude] COMMAND [ARGS]...\n");
+    printf("                      [-I include] [-E exclude] [PROGRAM [ARGS]...]\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
     printf("       zzuf -v | --version\n");

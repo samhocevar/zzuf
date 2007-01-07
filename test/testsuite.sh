@@ -86,13 +86,14 @@ for r in 0.0 0.00001 0.001 0.1 10.0; do
         echo "*** file $file, ratio $r ***"
         OK=1
         MD5=""
+        check "$ZZOPTS" "< $file" "zzuf"
         check "$ZZOPTS" "$FDCAT $file" "fdcat"
         check "$ZZOPTS" "$STREAMCAT $file" "streamcat"
         if [ "$STATIC_CAT" = "" ]; then
             check "$ZZOPTS" "cat $file" "cat"
             check "$ZZOPTS" "-i cat < $file" "|cat"
         fi
-        if [ "$STATIC_CAT" = "" ]; then
+        if [ "$STATIC_DD" = "" ]; then
             check "$ZZOPTS" "dd bs=65536 if=$file" "dd(bs=65536)"
             check "$ZZOPTS" "dd bs=1111 if=$file" "dd(bs=1111)"
             check "$ZZOPTS" "dd bs=1024 if=$file" "dd(bs=1024)"

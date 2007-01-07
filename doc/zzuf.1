@@ -8,7 +8,7 @@ zzuf \- multiple purpose fuzzer
 .br
                [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
 .br
-               [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] \fIPROGRAM\fR [\fIARGS\fR]...
+               [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fIARGS\fR]...]
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
 .br
@@ -31,6 +31,11 @@ marker before them on the command line (otherwise \fBzzuf\fR will try to
 interpret them as arguments for itself), eg:
 .PP
 \fB    zzuf \-B 1000 cat \-\- \-v /dev/zero\fR
+.PP
+When no program is specified, \fBzzuf\fR simply fuzzes the standard input, as
+if the \fBcat\fR utility had been called:
+.PP
+\fB    zzuf < /dev/zero\fR
 .SH OPTIONS
 .TP
 \fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
@@ -269,7 +274,7 @@ Linux-specific:
 \fBgetline\fR(), \fBgetdelim\fR(), \fB__getdelim\fR()
 .TP
 BSD-specific:
-\fBfgetln\fR(), \fB__srefill()\fR()
+\fBfgetln\fR(), \fB__srefill\fR()
 .TP
 Signal handling:
 \fBsignal\fR(), \fBsigaction\fR()
