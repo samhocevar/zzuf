@@ -38,8 +38,6 @@ struct fuzz
 extern int   _zz_ready;
 extern int   _zz_disabled;
 extern int   _zz_hasdebug;
-extern float _zz_ratio;
-extern int   _zz_seed;
 extern int   _zz_signal;
 extern int   _zz_network;
 
@@ -50,14 +48,4 @@ extern int   _zz_refuse[256];
 /* Library initialisation shit */
 extern void _zz_init(void) __attribute__((constructor));
 extern void _zz_fini(void) __attribute__((destructor));
-
-/* File descriptor handling */
-extern int _zz_mustwatch(char const *);
-extern int _zz_iswatched(int);
-extern void _zz_register(int);
-extern void _zz_unregister(int);
-extern long int _zz_getpos(int);
-extern void _zz_setpos(int, long int);
-extern void _zz_addpos(int, long int);
-extern struct fuzz *_zz_getfuzz(int);
 

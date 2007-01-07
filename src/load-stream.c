@@ -27,6 +27,7 @@
 #endif
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <regex.h>
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -38,6 +39,7 @@
 #include "debug.h"
 #include "fuzz.h"
 #include "load.h"
+#include "fd.h"
 
 #if !defined __FreeBSD__ && !defined __OpenBSD__
 #   undef HAVE___SREFILL

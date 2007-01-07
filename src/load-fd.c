@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <regex.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -43,6 +44,7 @@
 #include "debug.h"
 #include "fuzz.h"
 #include "load.h"
+#include "fd.h"
 
 /* Library functions that we divert */
 static int     (*open_orig)    (const char *file, int oflag, ...);

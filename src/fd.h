@@ -13,10 +13,21 @@
  */
 
 /*
- *  fuzz.h: fuzz functions
+ *  fd.h: file descriptor functions
  */
 
-extern void _zz_setseed(int);
-extern void _zz_setratio(float);
-extern void _zz_fuzz(int, uint8_t *, uint64_t);
+extern void _zz_fd_init(void);
+extern void _zz_fd_fini(void);
+
+extern regex_t * re_include;
+extern regex_t * re_exclude;
+
+extern int _zz_mustwatch(char const *);
+extern int _zz_iswatched(int);
+extern void _zz_register(int);
+extern void _zz_unregister(int);
+extern long int _zz_getpos(int);
+extern void _zz_setpos(int, long int);
+extern void _zz_addpos(int, long int);
+extern struct fuzz *_zz_getfuzz(int);
 

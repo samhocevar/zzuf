@@ -37,28 +37,20 @@
 #include "libzzuf.h"
 #include "debug.h"
 #include "load.h"
+#include "chars.h"
+#include "fd.h"
+#include "fuzz.h"
 
 /* Global variables */
 int   _zz_ready    = 0;
 int   _zz_disabled = 0;
 int   _zz_hasdebug = 0;
-float _zz_ratio    = 0.004f;
-int   _zz_seed     = 0;
 int   _zz_signal   = 0;
 int   _zz_network  = 0;
 
 /* Global tables */
 int   _zz_protect[256];
 int   _zz_refuse[256];
-
-/* Local variables */
-static regex_t * re_include = NULL;
-static regex_t * re_exclude = NULL;
-
-/* Local prototypes */
-static void _zz_list_init(int *, char const *);
-static void _zz_fd_init(void);
-static void _zz_fd_fini(void);
 
 /* Library initialisation shit */
 void _zz_init(void)
@@ -71,23 +63,19 @@ void _zz_init(void)
 
     tmp = getenv("ZZUF_SEED");
     if(tmp && *tmp)
-        _zz_seed = atol(tmp);
+        _zz_setseed(atol(tmp));
 
     tmp = getenv("ZZUF_RATIO");
     if(tmp && *tmp)
-        _zz_ratio = atof(tmp);
-    if(_zz_ratio < 0.0f)
-        _zz_ratio = 0.0f;
-    else if(_zz_ratio > 5.0f)
-        _zz_ratio = 5.0f;
+        _zz_setratio(atof(tmp));
 
     tmp = getenv("ZZUF_PROTECT");
     if(tmp && *tmp)
-        _zz_list_init(_zz_protect, tmp);
+        _zz_readchars(_zz_protect, tmp);
 
     tmp = getenv("ZZUF_REFUSE");
     if(tmp && *tmp)
-        _zz_list_init(_zz_refuse, tmp);
+        _zz_readchars(_zz_refuse, tmp);
 
     tmp = getenv("ZZUF_INCLUDE");
     if(tmp && *tmp)
@@ -130,217 +118,5 @@ void _zz_init(void)
 void _zz_fini(void)
 {
     _zz_fd_fini();
-}
-
-/* Byte list stuff */
-static void _zz_list_init(int *table, char const *list)
-{
-    static char const hex[] = "0123456789abcdef0123456789ABCDEF";
-    char const *tmp;
-    int a, b;
-
-    memset(table, 0, 256 * sizeof(int));
-
-    for(tmp = list, a = b = -1; *tmp; tmp++)
-    {
-        int new;
-
-        if(*tmp == '\\' && tmp[1] == '\0')
-            new = '\\';
-        else if(*tmp == '\\')
-        {
-            tmp++;
-            if(*tmp == 'n')
-                new = '\n';
-            else if(*tmp == 'r')
-                new = '\r';
-            else if(*tmp == 't')
-                new = '\t';
-            else if(tmp[0] >= '0' && tmp[0] <= '7' && tmp[1] >= '0'
-                     && tmp[1] <= '7' && tmp[2] >= '0' && tmp[2] <= '7')
-            {
-                new = tmp[2] - '0';
-                new |= (int)(tmp[1] - '0') << 3;
-                new |= (int)(tmp[0] - '0') << 6;
-                tmp += 2;
-            }
-            else if((*tmp == 'x' || *tmp == 'X')
-                     && tmp[1] && strchr(hex, tmp[1])
-                     && tmp[2] && strchr(hex, tmp[2]))
-            {
-                new = ((strchr(hex, tmp[1]) - hex) & 0xf) << 4;
-                new |= (strchr(hex, tmp[2]) - hex) & 0xf;
-                tmp += 2;
-            }
-            else
-                new = (unsigned char)*tmp; /* XXX: OK for \\, but what else? */
-        }
-        else
-            new = (unsigned char)*tmp;
-
-        if(a != -1 && b == '-' && a <= new)
-        {
-            while(a <= new)
-                table[a++] = 1;
-            a = b = -1;
-        }
-        else
-        {
-            if(a != -1)
-                table[a] = 1;
-            a = b;
-            b = new;
-        }
-    }
-
-    if(a != -1)
-        table[a] = 1;
-    if(b != -1)
-        table[b] = 1;
-}
-
-/* File descriptor stuff */
-static struct files
-{
-    int managed;
-    uint64_t seed;
-    uint64_t pos;
-    /* Public stuff */
-    struct fuzz fuzz;
-}
-*files;
-static int *fds;
-static int maxfd, nfiles;
-
-static void _zz_fd_init(void)
-{
-    files = NULL;
-    nfiles = 0;
-
-    /* Start with one fd in the lookup table */
-    fds = malloc(1 * sizeof(int));
-    for(maxfd = 0; maxfd < 1; maxfd++)
-        fds[maxfd] = -1;
-}
-
-static void _zz_fd_fini(void)
-{
-    int i;
-
-    for(i = 0; i < maxfd; i++)
-    {
-        if(!files[fds[i]].managed)
-            continue;
-
-        /* XXX: What are we supposed to do? If filedescriptors weren't
-         * closed properly, there's a leak, but it's not our problem. */
-    }
-
-    free(files);
-    free(fds);
-}
-
-int _zz_mustwatch(char const *file)
-{
-    if(re_include && regexec(re_include, file, 0, NULL, 0) == REG_NOMATCH)
-        return 0; /* not included: ignore */
-
-    if(re_exclude && regexec(re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
-        return 0; /* excluded: ignore */
-
-    return 1; /* default */
-}
-
-int _zz_iswatched(int fd)
-{
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return 0;
-
-    return 1;
-}
-
-void _zz_register(int fd)
-{
-    int i;
-
-    if(fd < 0 || fd > 65535 || (fd < maxfd && fds[fd] != -1))
-        return;
-
-    while(fd >= maxfd)
-    {
-        fds = realloc(fds, 2 * maxfd * sizeof(int));
-        for(i = maxfd; i < maxfd * 2; i++)
-            fds[i] = -1;
-        maxfd *= 2;
-    }
-            
-    /* Find an empty slot */
-    for(i = 0; i < nfiles; i++)
-        if(files[i].managed == 0)
-            break;
-
-    /* No slot found, allocate memory */
-    if(i == nfiles)
-    {
-        nfiles++;
-        files = realloc(files, nfiles * sizeof(struct files));
-    }
-
-    files[i].managed = 1;
-    files[i].pos = 0;
-    files[i].fuzz.cur = -1;
-    files[i].fuzz.data = malloc(CHUNKBYTES);
-#ifdef HAVE_FGETLN
-    files[i].fuzz.tmp = NULL;
-#endif
-
-    fds[fd] = i;
-}
-
-void _zz_unregister(int fd)
-{
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return;
-
-    files[fds[fd]].managed = 0;
-    free(files[fds[fd]].fuzz.data);
-#ifdef HAVE_FGETLN
-    if(files[fds[fd]].fuzz.tmp)
-        free(files[fds[fd]].fuzz.tmp);
-#endif
-
-    fds[fd] = -1;
-}
-
-long int _zz_getpos(int fd)
-{
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return 0;
-
-    return files[fds[fd]].pos;
-}
-
-void _zz_setpos(int fd, long int pos)
-{
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return;
-
-    files[fds[fd]].pos = pos;
-}
-
-void _zz_addpos(int fd, long int off)
-{
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return;
-
-    files[fds[fd]].pos += off;
-}
-
-struct fuzz *_zz_getfuzz(int fd)
-{
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return NULL;
-
-    return &files[fds[fd]].fuzz;
 }
 

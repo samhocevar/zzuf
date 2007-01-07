@@ -37,8 +37,11 @@
 #include <time.h>
 #include <sys/wait.h>
 
-#include "random.h"
 #include "libzzuf.h"
+#include "random.h"
+#include "chars.h"
+#include "fd.h"
+#include "fuzz.h"
 
 static void spawn_child(char **);
 static void clean_children(void);
@@ -51,6 +54,10 @@ static void version(void);
 #if defined(HAVE_GETOPT_H)
 static void usage(void);
 #endif
+
+/* Global tables */
+int   _zz_protect[256];
+int   _zz_refuse[256];
 
 static struct child_list
 {
@@ -90,8 +97,10 @@ static double maxtime = -1.0;
 int main(int argc, char *argv[])
 {
     char **newargv;
-    char *parser, *include = NULL, *exclude = NULL;
+    char *parser, *include, *exclude, *protect, *refuse;
     int i, cmdline = 0;
+
+    include = exclude = protect = refuse = NULL;
 
 #if defined(HAVE_GETOPT_H)
     for(;;)
@@ -172,20 +181,21 @@ int main(int argc, char *argv[])
             setenv("ZZUF_NETWORK", "1", 1);
             break;
         case 'P': /* --protect */
-            setenv("ZZUF_PROTECT", optarg, 1);
+            protect = optarg;
             break;
         case 'q': /* --quiet */
             quiet = 1;
             break;
         case 'r': /* --ratio */
             setenv("ZZUF_RATIO", optarg, 1);
+            _zz_setratio(atof(optarg));
             break;
         case 'R': /* --refuse */
-            setenv("ZZUF_REFUSE", optarg, 1);
+            refuse = optarg;
             break;
         case 's': /* --seed */
             parser = strchr(optarg, ':');
-            seed = atoi(optarg);
+            _zz_setseed(seed = atol(optarg));
             endseed = parser ? atoi(parser + 1) : seed + 1;
             break;
         case 'S': /* --signal */
@@ -211,11 +221,42 @@ int main(int argc, char *argv[])
     int optind = 1;
 #endif
 
+    /* If asked to read from the standard input */
     if(optind >= argc)
     {
-        printf("%s: missing argument\n", argv[0]);
-        printf(MOREINFO, argv[0]);
-        return EXIT_FAILURE;
+        if(endseed != seed + 1)
+        {
+            printf("%s: seed ranges are incompatible with stdin fuzzing\n",
+                   argv[0]);
+            printf(MOREINFO, argv[0]);
+            return EXIT_FAILURE;
+        }
+
+        if(protect)
+            _zz_readchars(_zz_protect, protect);
+        if(refuse)
+            _zz_readchars(_zz_refuse, protect);
+
+        _zz_fd_init();
+        _zz_register(0);
+
+        for(;;)
+        {
+            uint8_t buf[12];
+            int ret = fread(buf, 1, 12, stdin);
+            if(ret <= 0)
+                break;
+
+            _zz_fuzz(0, buf, ret);
+            _zz_addpos(0, ret);
+
+            fwrite(buf, 1, ret, stdout);
+        }
+
+        _zz_unregister(0);
+        _zz_fd_fini();
+
+        return EXIT_SUCCESS;
     }
 
     if(cmdline)
@@ -237,6 +278,10 @@ int main(int argc, char *argv[])
         setenv("ZZUF_INCLUDE", include, 1);
     if(exclude)
         setenv("ZZUF_EXCLUDE", exclude, 1);
+    if(protect)
+        setenv("ZZUF_PROTECT", protect, 1);
+    if(refuse)
+        setenv("ZZUF_REFUSE", refuse, 1);
 
     /* Allocate memory for children handling */
     child_list = malloc(maxforks * sizeof(struct child_list));

@@ -25,14 +25,33 @@
 #endif
 #include <stdio.h>
 #include <string.h>
+#include <regex.h>
 
 #include "libzzuf.h"
 #include "debug.h"
 #include "random.h"
 #include "fuzz.h"
+#include "fd.h"
 
 #define MAGIC1 0x33ea84f7
 #define MAGIC2 0x783bc31f
+
+static float _zz_ratio = 0.004f;
+static int   _zz_seed  = 0;
+
+void _zz_setseed(int seed)
+{
+    _zz_seed = seed;
+}
+
+void _zz_setratio(float ratio)
+{
+    _zz_ratio = ratio;
+    if(_zz_ratio < 0.0f)
+        _zz_ratio = 0.0f;
+    else if(_zz_ratio > 5.0f)
+        _zz_ratio = 5.0f;
+}
 
 void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
 {

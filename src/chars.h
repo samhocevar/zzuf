@@ -13,10 +13,8 @@
  */
 
 /*
- *  fuzz.h: fuzz functions
+ *  chars.h: character functions
  */
 
-extern void _zz_setseed(int);
-extern void _zz_setratio(float);
-extern void _zz_fuzz(int, uint8_t *, uint64_t);
+extern void _zz_readchars(int *, char const *);
 
