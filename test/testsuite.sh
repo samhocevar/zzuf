@@ -75,7 +75,7 @@ echo "*** creating test files ***"
 create
 echo "*** using seed $seed ***"
 
-for r in 0.000000 0.00001 0.0001 0.001 0.01 0.1 1.0 10.0; do
+for r in 0.0 0.00001 0.001 0.1 10.0; do
     for file in /tmp/zzuf-zero-$$ /tmp/zzuf-text-$$ /tmp/zzuf-random-$$; do
         ZZOPTS="-s $seed -r $r"
         case $file in
