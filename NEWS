@@ -1,5 +1,12 @@
 $Id$
 
+Changes from 0.2 to 0.3
+
+ * FreeBSD, NetBSD and OpenBSD support
+ * direct standard input fuzzing
+ * stdio support: full (FreeBSD), freopen, fseeko, rewind
+ * fd support: mmap, munmap
+
 Changes from 0.1 to 0.2
 
  * network and standard input support

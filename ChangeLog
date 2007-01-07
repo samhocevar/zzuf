@@ -1,4 +1,374 @@
 ------------------------------------------------------------------------
+r156 | sam | 2007-01-07 22:14:26 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/src/fd.h
+   M /trunk/src/fuzz.c
+   M /trunk/src/libzzuf.c
+   M /trunk/src/load-fd.c
+   M /trunk/src/load-signal.c
+   M /trunk/src/load-stream.c
+
+  * Factor regex stuff into fd.c, so that <regex.h> isn’t needed otherwhere.
+
+------------------------------------------------------------------------
+r155 | sam | 2007-01-07 22:13:31 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/load-stream.c
+
+  * Use __srefill() on OS X, too. It now works properly.
+
+------------------------------------------------------------------------
+r154 | sam | 2007-01-07 21:50:49 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/load-stream.c
+
+  * Implemented freopen().
+
+------------------------------------------------------------------------
+r153 | sam | 2007-01-07 21:24:03 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Protect __srefill_orig() calls.
+
+------------------------------------------------------------------------
+r152 | sam | 2007-01-07 20:12:35 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/bootstrap
+
+  * Updated bootstrap script.
+
+------------------------------------------------------------------------
+r151 | sam | 2007-01-07 19:45:00 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+   M /trunk/test/testsuite.sh
+
+  * Documented stdin behaviour.
+
+------------------------------------------------------------------------
+r150 | sam | 2007-01-07 19:36:19 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+  * Factored sources in the makefile.
+
+------------------------------------------------------------------------
+r149 | sam | 2007-01-07 19:34:50 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   D /trunk/src/chars.c
+   D /trunk/src/chars.h
+   M /trunk/src/fuzz.c
+   M /trunk/src/fuzz.h
+   M /trunk/src/libzzuf.c
+   M /trunk/src/libzzuf.h
+   M /trunk/src/zzuf.c
+
+  * Merged chars.c and fuzz.c.
+
+------------------------------------------------------------------------
+r148 | sam | 2007-01-07 19:18:50 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   A /trunk/src/chars.c (from /trunk/src/libzzuf.c:126)
+   A /trunk/src/chars.h
+   A /trunk/src/fd.c (from /trunk/src/libzzuf.c:126)
+   A /trunk/src/fd.h
+   M /trunk/src/fuzz.c
+   M /trunk/src/fuzz.h
+   M /trunk/src/libzzuf.c
+   M /trunk/src/libzzuf.h
+   M /trunk/src/load-fd.c
+   M /trunk/src/load-signal.c
+   M /trunk/src/load-stream.c
+   M /trunk/src/zzuf.c
+
+  * If no argument is given, just fuzz standard input.
+
+------------------------------------------------------------------------
+r147 | sam | 2007-01-07 18:12:53 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/test/testsuite.sh
+
+  * Don't call cat or dd in the testsuite if they're statically linked.
+
+------------------------------------------------------------------------
+r146 | sam | 2007-01-07 17:31:33 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Fix a compilation warning.
+
+------------------------------------------------------------------------
+r145 | sam | 2007-01-07 17:29:25 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Added note about 64-bit offsets in manpage.
+
+------------------------------------------------------------------------
+r144 | sam | 2007-01-07 17:27:59 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Fixed __srefill()/lseek() conflict issue.
+
+------------------------------------------------------------------------
+r143 | sam | 2007-01-07 17:09:13 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Only use __srefill on OpenBSD and FreeBSD.
+
+------------------------------------------------------------------------
+r142 | sam | 2007-01-07 16:55:24 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Updated manpage, fixed - to \- here and there.
+
+------------------------------------------------------------------------
+r141 | sam | 2007-01-07 16:55:00 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Implemented BSD stdio by overriding __srefill().
+
+------------------------------------------------------------------------
+r140 | sam | 2007-01-07 15:22:34 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Fuzz in __srefill even if _zz_disabled is on.
+
+------------------------------------------------------------------------
+r139 | sam | 2007-01-07 15:16:46 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Oops, got it wrong.
+
+------------------------------------------------------------------------
+r138 | sam | 2007-01-07 15:16:06 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Fix compilation warnings on BSD libc’s and a bug on FreeBSD.
+
+------------------------------------------------------------------------
+r137 | sam | 2007-01-07 15:14:19 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Implemented __refill(). Untested yet.
+
+------------------------------------------------------------------------
+r136 | sam | 2007-01-07 15:13:29 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/test/testsuite.sh
+
+  * Made the testsuite shorter.
+
+------------------------------------------------------------------------
+r135 | sam | 2007-01-07 14:20:04 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Protected the _IO_getc_orig declaration.
+
+------------------------------------------------------------------------
+r134 | sam | 2007-01-07 14:18:36 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Oops, compilation fix.
+
+------------------------------------------------------------------------
+r133 | sam | 2007-01-07 14:16:43 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/load-stream.c
+
+  * Added __srefill() skeleton, for BSD libc.
+
+------------------------------------------------------------------------
+r132 | sam | 2007-01-07 13:39:30 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Added a note about statically linked binaries and one about getc().
+
+------------------------------------------------------------------------
+r131 | sam | 2007-01-07 13:06:07 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/test/testsuite.sh
+
+  * Don’t run the testsuite if /bin/cat is statically linked.
+
+------------------------------------------------------------------------
+r130 | sam | 2007-01-07 11:34:45 +0100 (Sun, 07 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/doc/zzuf.1
+   M /trunk/src/fuzz.c
+   M /trunk/src/load-stream.c
+   M /trunk/test/testsuite.sh
+
+  * Always define getc(), but undefine the getc macro beforehands just in case.
+  * Implemented _IO_getc().
+
+------------------------------------------------------------------------
+r129 | sam | 2007-01-07 10:34:42 +0100 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/doc/zzuf.1
+   M /trunk/src/load-stream.c
+
+  * Implemented fseeko().
+
+------------------------------------------------------------------------
+r128 | sam | 2007-01-06 23:17:09 +0100 (Sat, 06 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Fix a bug in the fgetln() implementation. The newline was not properly
+    accounted for in the returned length.
+
+------------------------------------------------------------------------
+r127 | sam | 2007-01-06 22:54:02 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/test/testsuite.sh
+
+  * BSD's md5 does not have a --help option. Trying /dev/null instead.
+
+------------------------------------------------------------------------
+r126 | sam | 2007-01-06 22:38:33 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Cleaned up code.
+
+------------------------------------------------------------------------
+r125 | sam | 2007-01-06 22:37:42 +0100 (Sat, 06 Jan 2007) | 4 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/Makefile.am
+
+  * Only link with -ldl when available.
+  * Removed PKG_* stuff from configure.ac.
+  * Add more compilation warnings.
+
+------------------------------------------------------------------------
+r124 | sam | 2007-01-06 22:25:56 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/test/testsuite.sh
+
+  * Got testsuite to work on FreeBSD.
+
+------------------------------------------------------------------------
+r123 | sam | 2007-01-06 21:59:28 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Fix for BSD machines: getc() may be defined as a macro.
+
+------------------------------------------------------------------------
+r122 | sam | 2007-01-06 21:24:54 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/test/testsuite.sh
+
+  * Fixed the head call in the testsuite so that it works on OS X.
+
+------------------------------------------------------------------------
+r121 | sam | 2007-01-06 21:20:15 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/test/testsuite.sh
+
+  * Added head and tail to the testsuite.
+
+------------------------------------------------------------------------
+r120 | sam | 2007-01-06 21:08:31 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-fd.c
+
+  * Fixed implicit declaration.
+
+------------------------------------------------------------------------
+r119 | sam | 2007-01-06 21:02:01 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Updated documentation wrt. mmap().
+
+------------------------------------------------------------------------
+r118 | sam | 2007-01-06 21:01:51 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+  * Missing autoconf check for mmap64().
+
+------------------------------------------------------------------------
+r117 | sam | 2007-01-06 21:01:25 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-fd.c
+
+  * Implemented the mmap() family.
+
+------------------------------------------------------------------------
+r116 | sam | 2007-01-06 21:01:15 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+
+  * Implemented rewind().
+
+------------------------------------------------------------------------
+r115 | sam | 2007-01-06 16:54:14 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-stream.c
+   M /trunk/test/testsuite.sh
+
+  * Fix fread() issue with standard input reading.
+
+------------------------------------------------------------------------
+r114 | sam | 2007-01-06 15:03:07 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Added a note about mmap() not being available.
+
+------------------------------------------------------------------------
+r113 | sam | 2007-01-06 15:02:51 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/debug.c
+   M /trunk/src/zzuf.c
+
+  * Fix build with older versions of gcc.
+
+------------------------------------------------------------------------
+r112 | sam | 2007-01-06 11:51:44 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Documentation tuning.
+
+------------------------------------------------------------------------
+r111 | sam | 2007-01-06 01:40:51 +0100 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+   M /trunk/TODO
+   M /trunk/configure.ac
+   M /trunk/src/zzuf.c
+
+  * Version 0.2 is ready.
+
+------------------------------------------------------------------------
 r110 | sam | 2007-01-06 01:26:39 +0100 (Sat, 06 Jan 2007) | 2 lines
 Changed paths:
    M /trunk/doc/zzuf.1

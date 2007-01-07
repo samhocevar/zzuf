@@ -1,13 +1,13 @@
 # $Id: configure.ac 98 2006-09-22 16:27:37Z sam $
 
-AC_INIT(zzuf, 0.2)
+AC_INIT(zzuf, 0.3)
 
 AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR(src/zzuf.c)
 AC_CONFIG_AUX_DIR(autotools)
 AC_CANONICAL_SYSTEM
 
-AM_INIT_AUTOMAKE(zzuf, 0.2)
+AM_INIT_AUTOMAKE(zzuf, 0.3)
 AM_CONFIG_HEADER(config.h)
 
 AM_PROG_CC_C_O
