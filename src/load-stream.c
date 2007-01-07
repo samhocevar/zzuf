@@ -566,8 +566,8 @@ char *fgetln(FILE *stream, size_t *len)
 #ifdef HAVE___SREFILL
 int __srefill(FILE *fp)
 {
-    off_t oldpos, newpos;
-    int ret, fd;
+    off_t newpos;
+    int ret, fd, tmp;
 
     if(!_zz_ready)
         LOADSYM(__srefill);
@@ -575,9 +575,11 @@ int __srefill(FILE *fp)
     if(!_zz_ready || !_zz_iswatched(fd))
         return __srefill_orig(fp);
 
-    oldpos = lseek(fd, 0, SEEK_CUR);
     ret = __srefill_orig(fp);
+    tmp = _zz_disabled;
+    _zz_disabled = 1;
     newpos = lseek(fd, 0, SEEK_CUR);
+    _zz_disabled = tmp;
     if(ret != EOF)
     {
         if(newpos != -1)
