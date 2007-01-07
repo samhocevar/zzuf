@@ -30,6 +30,9 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#ifdef HAVE___SREFILL
+#   include <unistd.h> /* Needed for __srefill’s lseek() call */
+#endif
 
 #include "libzzuf.h"
 #include "debug.h"
