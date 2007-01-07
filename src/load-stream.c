@@ -29,6 +29,7 @@
 #include <dlfcn.h>
 
 #include <stdio.h>
+#include <sys/types.h>
 
 #include "libzzuf.h"
 #include "debug.h"
@@ -41,6 +42,9 @@ static FILE *  (*fopen_orig)   (const char *path, const char *mode);
 static FILE *  (*fopen64_orig) (const char *path, const char *mode);
 #endif
 static int     (*fseek_orig)   (FILE *stream, long offset, int whence);
+#ifdef HAVE_FSEEKO
+static int     (*fseeko_orig)  (FILE *stream, off_t offset, int whence);
+#endif
 static void    (*rewind_orig)  (FILE *stream);
 static size_t  (*fread_orig)   (void *ptr, size_t size, size_t nmemb,
                                 FILE *stream);
@@ -75,6 +79,9 @@ void _zz_load_stream(void)
     LOADSYM(fopen64);
 #endif
     LOADSYM(fseek);
+#ifdef HAVE_FSEEKO
+    LOADSYM(fseeko);
+#endif
     LOADSYM(rewind);
     LOADSYM(fread);
     LOADSYM(getc);
@@ -128,38 +135,49 @@ FILE *fopen64(const char *path, const char *mode)
 }
 #endif
 
+#define FSEEK(fn, fn2) \
+    do \
+    { \
+        int fd; \
+        if(!_zz_ready) \
+            LOADSYM(fn); \
+        fd = fileno(stream); \
+        if(!_zz_ready || !_zz_iswatched(fd)) \
+            return ORIG(fn)(stream, offset, whence); \
+        _zz_disabled = 1; \
+        ret = ORIG(fn)(stream, offset, whence); \
+        _zz_disabled = 0; \
+        debug(STR(fn)"([%i], %lli, %i) = %i", \
+              fd, (long long int)offset, whence, ret); \
+        if(ret == 0) \
+        { \
+            /* FIXME: check what happens when fseek()ing a pipe */ \
+            switch(whence) \
+            { \
+                case SEEK_END: \
+                    offset = fn2(stream); \
+                    /* fall through */ \
+                case SEEK_SET: \
+                    _zz_setpos(fd, offset); \
+                    break; \
+                case SEEK_CUR: \
+                    _zz_addpos(fd, offset); \
+                    break; \
+            } \
+        } \
+    } while(0)
+
 int fseek(FILE *stream, long offset, int whence)
 {
-    int ret, fd;
-
-    if(!_zz_ready)
-        LOADSYM(fseek);
-    fd = fileno(stream);
-    if(!_zz_ready || !_zz_iswatched(fd))
-        return fseek_orig(stream, offset, whence);
-
-    _zz_disabled = 1;
-    ret = fseek_orig(stream, offset, whence);
-    _zz_disabled = 0;
-    debug("fseek([%i], %li, %i) = %i", fd, offset, whence, ret);
-    if(ret != 0)
-        return ret;
-
-    /* FIXME: check what happens when fseek()ing a pipe */
-    switch(whence)
-    {
-        case SEEK_END:
-            offset = ftell(stream);
-            /* fall through */
-        case SEEK_SET:
-            _zz_setpos(fd, offset);
-            break;
-        case SEEK_CUR:
-            _zz_addpos(fd, offset);
-            break;
-    }
-    return 0;
+    int ret; FSEEK(fseek, ftell); return ret;
 }
+
+#ifdef HAVE_FSEEKO
+int fseeko(FILE *stream, off_t offset, int whence)
+{
+    int ret; FSEEK(fseeko, ftello); return ret;
+}
+#endif
 
 void rewind(FILE *stream)
 {
