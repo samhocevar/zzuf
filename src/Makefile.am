@@ -1,7 +1,7 @@
 COMMON = random.c random.h fd.c fd.h fuzz.c fuzz.h
 
 bin_PROGRAMS = zzuf
-zzuf_SOURCES = zzuf.c $(COMMON)
+zzuf_SOURCES = zzuf.c $(COMMON) md5.c md5.h
 zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\"
 
 pkglib_LTLIBRARIES = libzzuf.la

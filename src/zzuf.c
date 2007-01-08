@@ -41,6 +41,7 @@
 #include "random.h"
 #include "fd.h"
 #include "fuzz.h"
+#include "md5.h"
 
 static void spawn_child(char **);
 static void clean_children(void);
@@ -69,6 +70,7 @@ static struct child_list
     int fd[3]; /* 0 is debug, 1 is stderr, 2 is stdout */
     int bytes, seed;
     time_t date;
+    struct md5 *ctx;
 } *child_list;
 static int maxforks = 1, child_count = 0, maxcrashes = 1, crashes = 0;
 
@@ -76,6 +78,7 @@ static int seed = 0;
 static int endseed = 1;
 static int quiet = 0;
 static int maxbytes = -1;
+static int md5 = 0;
 static double maxtime = -1.0;
 
 #define ZZUF_FD_SET(fd, p_fdset, maxfd) \
@@ -114,6 +117,7 @@ int main(int argc, char *argv[])
             { "max-forks",   1, NULL, 'F' },
             { "stdin",       0, NULL, 'i' },
             { "include",     1, NULL, 'I' },
+            { "md5",         0, NULL, 'M' },
             { "network",     0, NULL, 'n' },
             { "protect",     1, NULL, 'P' },
             { "quiet",       0, NULL, 'q' },
@@ -125,11 +129,11 @@ int main(int argc, char *argv[])
             { "help",        0, NULL, 'h' },
             { "version",     0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:nP:qr:R:s:ST:hv",
+        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:MnP:qr:R:s:ST:hv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cC:dE:F:iI:nP:qr:R:s:ST:hv");
+        int c = getopt(argc, argv, "B:cC:dE:F:iI:MnP:qr:R:s:ST:hv");
 #   endif
         if(c == -1)
             break;
@@ -171,6 +175,9 @@ int main(int argc, char *argv[])
                 printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
                 return EXIT_FAILURE;
             }
+            break;
+        case 'M': /* --md5 */
+            md5 = 1;
             break;
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
@@ -219,6 +226,12 @@ int main(int argc, char *argv[])
     /* If asked to read from the standard input */
     if(optind >= argc)
     {
+        uint8_t md5sum[16];
+        struct md5 *ctx = NULL;
+
+        if(md5)
+            ctx = _zz_md5_init();
+
         if(endseed != seed + 1)
         {
             printf("%s: seed ranges are incompatible with stdin fuzzing\n",
@@ -245,7 +258,22 @@ int main(int argc, char *argv[])
             _zz_fuzz(0, buf, ret);
             _zz_addpos(0, ret);
 
-            fwrite(buf, 1, ret, stdout);
+            if(md5)
+                _zz_md5_add(ctx, buf, ret);
+            else
+                fwrite(buf, 1, ret, stdout);
+        }
+
+        if(md5)
+        {
+            _zz_md5_fini(md5sum, ctx);
+            fprintf(stdout, "zzuf[seed=%i]: %.02x%.02x%.02x%.02x%.02x%.02x"
+                    "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
+                    seed, md5sum[0], md5sum[1], md5sum[2], md5sum[3],
+                    md5sum[4], md5sum[5], md5sum[6], md5sum[7],
+                    md5sum[8], md5sum[9], md5sum[10], md5sum[11],
+                    md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
+            fflush(stdout);
         }
 
         _zz_unregister(0);
@@ -369,7 +397,7 @@ static void spawn_child(char **argv)
     pid_t pid;
     int i, j;
 
-    /* Find an empty slot */
+    /* Find the empty slot */
     for(i = 0; i < maxforks; i++)
         if(child_list[i].status == STATUS_FREE)
             break;
@@ -408,23 +436,24 @@ static void spawn_child(char **argv)
                 perror(argv[0]);
                 exit(EXIT_FAILURE);
             }
-            break;
-        default:
-            /* We’re the parent, acknowledge spawn */
-            child_list[i].date = time(NULL);
-            child_list[i].pid = pid;
-            for(j = 0; j < 3; j++)
-            {
-                close(fd[j][1]);
-                child_list[i].fd[j] = fd[j][0];
-            }
-            child_list[i].bytes = 0;
-            child_list[i].seed = seed;
-            child_list[i].status = STATUS_RUNNING;
-            child_count++;
-            seed++;
-            break;
+            return;
     }
+
+    /* We’re the parent, acknowledge spawn */
+    child_list[i].date = time(NULL);
+    child_list[i].pid = pid;
+    for(j = 0; j < 3; j++)
+    {
+        close(fd[j][1]);
+        child_list[i].fd[j] = fd[j][0];
+    }
+    child_list[i].bytes = 0;
+    child_list[i].seed = seed;
+    child_list[i].status = STATUS_RUNNING;
+    if(md5)
+        child_list[i].ctx = _zz_md5_init();
+    child_count++;
+    seed++;
 }
 
 static void clean_children(void)
@@ -473,6 +502,7 @@ static void clean_children(void)
     /* Collect dead children */
     for(i = 0; i < maxforks; i++)
     {
+        uint8_t md5sum[16];
         int status;
         pid_t pid;
 
@@ -502,6 +532,16 @@ static void clean_children(void)
             if(child_list[i].fd[j] >= 0)
                 close(child_list[i].fd[j]);
 
+        if(md5)
+        {
+            _zz_md5_fini(md5sum, child_list[i].ctx);
+            fprintf(stdout, "zzuf[seed=%i]: %.02x%.02x%.02x%.02x%.02x%.02x"
+                    "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
+                    child_list[i].seed, md5sum[0], md5sum[1], md5sum[2],
+                    md5sum[3], md5sum[4], md5sum[5], md5sum[6], md5sum[7],
+                    md5sum[8], md5sum[9], md5sum[10], md5sum[11], md5sum[12],
+                    md5sum[13], md5sum[14], md5sum[15]);
+        }
         child_list[i].status = STATUS_FREE;
         child_count--;
     }
@@ -537,7 +577,7 @@ static void read_children(void)
     /* XXX: cute (i, j) iterating hack */
     for(i = 0, j = 0; i < maxforks; i += (j == 2), j = (j + 1) % 3)
     {
-        char buf[BUFSIZ];
+        uint8_t buf[BUFSIZ];
 
         if(child_list[i].status != STATUS_RUNNING)
             continue;
@@ -551,7 +591,10 @@ static void read_children(void)
             /* We got data */
             if(j != 0)
                 child_list[i].bytes += ret;
-            if(!quiet || j == 0)
+
+            if(md5 && j > 0)
+                _zz_md5_add(child_list[i].ctx, buf, ret);
+            else if(!quiet || j == 0)
                 write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);
         }
         else if(ret == 0)
@@ -606,10 +649,10 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [-cdinqS] [-r ratio] [-s seed | -s start:stop]\n");
-    printf("                      [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
-    printf("                      [-P protect] [-R refuse]\n");
-    printf("                      [-I include] [-E exclude] [PROGRAM [ARGS]...]\n");
+    printf("Usage: zzuf [-cdiMnqS] [-r ratio] [-s seed | -s start:stop]\n");
+    printf("                       [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
+    printf("                       [-P protect] [-R refuse]\n");
+    printf("                       [-I include] [-E exclude] [PROGRAM [ARGS]...]\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
     printf("       zzuf -v | --version\n");
@@ -629,6 +672,7 @@ static void usage(void)
     printf("  -F, --max-forks <n>      number of concurrent children (default 1)\n");
     printf("  -i, --stdin              fuzz standard input\n");
     printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
+    printf("  -M, --md5                compute the output's MD5 hash\n");
     printf("  -n, --network            fuzz network input\n");
     printf("  -P, --protect <list>     protect bytes and characters in <list>\n");
     printf("  -q, --quiet              do not print children's messages\n");
@@ -649,6 +693,7 @@ static void usage(void)
     printf("  -F <n>           number of concurrent forks (default 1)\n");
     printf("  -i               fuzz standard input\n");
     printf("  -I <regex>       only fuzz files matching <regex>\n");
+    printf("  -M               compute the output's MD5 hash\n");
     printf("  -n               fuzz network input\n");
     printf("  -P <list>        protect bytes and characters in <list>\n");
     printf("  -q               do not print the fuzzed application's messages\n");
