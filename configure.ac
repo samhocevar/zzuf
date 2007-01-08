@@ -22,7 +22,8 @@ AC_CHECK_TYPES(sighandler_t, [], [],
 AC_CHECK_TYPES(sig_t, [], [],
   [#include <signal.h>])
 AC_CHECK_TYPES(socklen_t, [], [],
-  [#include <sys/types.h>])
+  [#include <sys/types.h>
+   #include <sys/socket.h>])
 
 AC_CHECK_FUNCS(getopt_long,
  [AC_DEFINE(HAVE_GETOPT_LONG, 1, Define to 1 if you have the `getopt_long' function.)],
