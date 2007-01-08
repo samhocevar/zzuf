@@ -19,15 +19,18 @@ check()
     CMD="$2"
     ALIAS="$3"
     echo -n " $(echo "$ALIAS .............." | cut -b1-18) "
-    NEWMD5="$(eval "$ZZUF $ZZOPTS $CMD" 2>/dev/null | $MD5PROG | cut -b1-32)"
-    if [ -z "$MD5" ]; then
-        MD5="$NEWMD5"
-        echo "$NEWMD5"
-    elif [ "$NEWMD5" != "$MD5" ]; then
-        OK=0
-        echo "$NEWMD5 FAILED"
+    MD5="$(eval "$ZZUF -M $ZZOPTS $CMD" 2>/dev/null | cut -f2 -d' ')"
+    if [ -z "$REFMD5" ]; then
+        REFMD5="$MD5"
+        echo "$MD5"
     else
-        echo 'ok'
+        TESTED=$(($TESTED + 1))
+        if [ "$MD5" != "$REFMD5" ]; then
+            FAILED=$(($FAILED + 1))
+            echo "$MD5 FAILED"
+        else
+            echo 'ok'
+        fi
     fi
 }
 
@@ -51,14 +54,6 @@ seed=$((0$1))
 ZZUF="$(dirname "$0")/../src/zzuf"
 FDCAT="$(dirname "$0")/fdcat"
 STREAMCAT="$(dirname "$0")/streamcat"
-if md5sum /dev/null >/dev/null 2>&1; then
-  MD5PROG=md5sum
-elif md5 /dev/null >/dev/null 2>&1; then
-  MD5PROG=md5
-else
-  echo "error: no md5 program found (tried: md5sum, md5)"
-  exit 1
-fi
 if [ ! -f "$FDCAT" -o ! -f "$STREAMCAT" ]; then
   echo "error: test/fdcat or test/streamcat are missing"
   exit 1
@@ -84,8 +79,7 @@ for r in 0.0 0.00001 0.001 0.1 10.0; do
           *text*) ZZOPTS="$ZZOPTS -P '\n'" ;;
         esac
         echo "*** file $file, ratio $r ***"
-        OK=1
-        MD5=""
+        REFMD5=""
         check "$ZZOPTS" "< $file" "zzuf"
         check "$ZZOPTS" "$FDCAT $file" "fdcat"
         check "$ZZOPTS" "$STREAMCAT $file" "streamcat"
@@ -118,11 +112,6 @@ for r in 0.0 0.00001 0.001 0.1 10.0; do
             #check "$ZZOPTS" "-i cut -- -b1- < $file" "|cut -b1-"
             ;;
         esac
-        if [ "$OK" != 1 ]; then
-            echo "*** FAILED ***"
-            FAILED=$(($FAILED + 1))
-        fi
-        TESTED=$(($TESTED + 1))
     done
 done
 
