@@ -45,13 +45,19 @@
 #include "load.h"
 #include "fd.h"
 
+#ifdef HAVE_SOCKLEN_T
+#   define SOCKLEN_T socklen_t
+#else
+#   define SOCKLEN_T int
+#endif
+
 /* Library functions that we divert */
 static int     (*open_orig)    (const char *file, int oflag, ...);
 #ifdef HAVE_OPEN64
 static int     (*open64_orig)  (const char *file, int oflag, ...);
 #endif
 static int     (*accept_orig)  (int sockfd, struct sockaddr *addr,
-                                socklen_t *addrlen);
+                                SOCKLEN_T *addrlen);
 static int     (*socket_orig)  (int domain, int type, int protocol);
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
 static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
@@ -134,7 +140,7 @@ int open64(const char *file, int oflag, ...)
 }
 #endif
 
-int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
+int accept(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 {
     int ret;
 
