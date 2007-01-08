@@ -613,24 +613,34 @@ static void read_children(void)
 static void set_environment(char const *progpath)
 {
     char *libpath, *tmp;
-    int len = strlen(progpath);
-#ifdef __APPLE__
+    int ret, len = strlen(progpath);
+#if defined __APPLE__
 #   define FILENAME "libzzuf.dylib"
+#   define EXTRAINFO ""
 #   define PRELOAD "DYLD_INSERT_LIBRARIES"
     setenv("DYLD_FORCE_FLAT_NAMESPACE", "1", 1);
+#elif defined __osf__
+#   define FILENAME "libzzuf.so"
+#   define EXTRAINFO ":DEFAULT"
+#   define PRELOAD "_RLD_LIST"
 #else
 #   define FILENAME "libzzuf.so"
+#   define EXTRAINFO ""
 #   define PRELOAD "LD_PRELOAD"
 #endif
 
-    libpath = malloc(len + strlen("/.libs/" FILENAME) + 1);
+    libpath = malloc(len + strlen("/.libs/" FILENAME EXTRAINFO) + 1);
     strcpy(libpath, progpath);
+
     tmp = strrchr(libpath, '/');
     strcpy(tmp ? tmp + 1 : libpath, ".libs/" FILENAME);
-    if(access(libpath, R_OK) == 0)
+    ret = access(libpath, R_OK);
+
+    strcpy(tmp ? tmp + 1 : libpath, ".libs/" FILENAME EXTRAINFO);
+    if(ret == 0)
         setenv(PRELOAD, libpath, 1);
     else
-        setenv(PRELOAD, LIBDIR "/" FILENAME, 1);
+        setenv(PRELOAD, LIBDIR "/" FILENAME EXTRAINFO, 1);
     free(libpath);
 }
 
