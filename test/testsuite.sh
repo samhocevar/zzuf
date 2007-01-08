@@ -50,7 +50,7 @@ cleanup() {
 
 trap "echo ''; echo '*** ABORTED ***'; cleanup; exit 0" 1 2 15
 
-seed=$((0$1))
+seed=$((0+0$1))
 ZZUF="$(dirname "$0")/../src/zzuf"
 FDCAT="$(dirname "$0")/fdcat"
 STREAMCAT="$(dirname "$0")/streamcat"
