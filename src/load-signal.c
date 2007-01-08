@@ -41,6 +41,8 @@
 #   define SIG_T sighandler_t
 #elif defined HAVE_SIG_T
 #   define SIG_T sig_t
+#else
+    typedef void (*SIG_T) (int);
 #endif
 
 /* Library functions that we divert */
