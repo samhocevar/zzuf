@@ -592,7 +592,7 @@ static void read_children(void)
             if(j != 0)
                 child_list[i].bytes += ret;
 
-            if(md5 && j > 0)
+            if(md5 && j == 2)
                 _zz_md5_add(child_list[i].ctx, buf, ret);
             else if(!quiet || j == 0)
                 write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);

@@ -95,8 +95,8 @@ Multiple \fB\-I\fR flags can be specified, in which case files matching any one
 of the regular expressions will be fuzzed. See also the \fB\-c\fR flag.
 .TP
 \fB\-M\fR, \fB\-\-md5\fR
-Instead of displaying the program's output, just print the MD5 digest of that
-output.
+Instead of displaying the program's standard output, just print the MD5 digest
+of that output. The standard error channel is left untouched.
 .TP
 \fB\-n\fR, \fB\-\-network\fR
 Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
