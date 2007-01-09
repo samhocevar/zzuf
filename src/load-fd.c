@@ -297,8 +297,10 @@ int nbmaps = 0;
                       start, (long int)length, prot, flags, fd, \
                       (long long int)offset, ret, b[0]); \
         } \
-        debug(STR(fn)"(%p, %li, %i, %i, %i, %lli) = %p", start, \
-              (long int)length, prot, flags, fd, (long long int)offset, ret); \
+        else \
+            debug(STR(fn)"(%p, %li, %i, %i, %i, %lli) = %p", \
+                  start, (long int)length, prot, flags, fd, \
+                  (long long int)offset, ret); \
     } while(0)
 
 void *mmap(void *start, size_t length, int prot, int flags,
