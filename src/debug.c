@@ -81,7 +81,14 @@ void _zz_debug(char const *format, ...)
         if(*f == 'c')
         {
             char i = (char)(unsigned char)va_arg(args, int);
-            write(fd, &i, 1);
+            if(i >= 0x20 && i < 0x7f)
+                write(fd, &i, 1);
+            else
+            {
+                write(fd, "\\x", 2);
+                write(fd, hex2char + ((i & 0xf0) >> 4), 1);
+                write(fd, hex2char + (i & 0x0f), 1);
+            }
         }
         else if(*f == 'i')
         {
