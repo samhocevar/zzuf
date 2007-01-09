@@ -4,7 +4,7 @@ zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
 \fBzzuf\fR [\fB\-cdiMnqS\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR | \fB\-s\fR \fIstart:stop\fR]
 .br
-                [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-O\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
+                [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
 .br
                 [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
 .br
@@ -30,13 +30,18 @@ If you want to specify flags for your application, put a \(oq\fB\-\-\fR\(cq
 marker before them on the command line (otherwise \fBzzuf\fR will try to
 interpret them as arguments for itself), eg:
 .PP
-\fB    zzuf \-O 1000 cat \-\- \-v /dev/zero\fR
+\fB    zzuf \-B 1000 cat \-\- \-v /dev/zero\fR
 .PP
 When no program is specified, \fBzzuf\fR simply fuzzes the standard input, as
 if the \fBcat\fR utility had been called:
 .PP
 \fB    zzuf < /dev/zero\fR
 .SH OPTIONS
+.TP
+\fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
+Automatically terminate child processes that output more than \fIn\fR bytes
+on the standard output and standard error channels. This is useful to detect
+infinite loops. See also the \fB\-T\fR flag.
 .TP
 \fB\-c\fR, \fB\-\-cmdline\fR
 Only fuzz files whose name is specified in the target application's command
@@ -95,11 +100,6 @@ of that output. The standard error channel is left untouched.
 .TP
 \fB\-n\fR, \fB\-\-network\fR
 Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
-.TP
-\fB\-O\fR, \fB\-\-max\-output\fR=\fIn\fR
-Automatically terminate child processes that output more than \fIn\fR bytes
-on the standard output and standard error channels. This is useful to detect
-infinite loops. See also the \fB\-T\fR flag.
 .TP
 \fB\-P\fR, \fB\-\-protect\fR=\fIlist\fR
 Protect a list of characters so that if they appear in input data that would
@@ -186,7 +186,7 @@ how to set such limits.
 \fB\-T\fR, \fB\-\-max\-time\fR=\fIn\fR
 Automatically terminate child processes that run for more than \fIn\fR
 seconds. This is useful to detect infinite loops or processes stuck in other
-situations. See also the \fB\-O\fR flag.
+situations. See also the \fB\-B\fR flag.
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Display a short help message and exit.

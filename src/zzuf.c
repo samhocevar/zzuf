@@ -77,7 +77,7 @@ static int maxforks = 1, child_count = 0, maxcrashes = 1, crashes = 0;
 static int seed = 0;
 static int endseed = 1;
 static int quiet = 0;
-static int maxoutput = -1;
+static int maxbytes = -1;
 static int md5 = 0;
 static double maxtime = -1.0;
 
@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
         static struct option long_options[] =
         {
             /* Long option, needs arg, flag, short option */
+            { "max-bytes",   1, NULL, 'B' },
             { "cmdline",     0, NULL, 'c' },
             { "max-crashes", 1, NULL, 'C' },
             { "debug",       0, NULL, 'd' },
@@ -118,7 +119,6 @@ int main(int argc, char *argv[])
             { "include",     1, NULL, 'I' },
             { "md5",         0, NULL, 'M' },
             { "network",     0, NULL, 'n' },
-            { "max-output",  1, NULL, 'O' },
             { "protect",     1, NULL, 'P' },
             { "quiet",       0, NULL, 'q' },
             { "ratio",       1, NULL, 'r' },
@@ -129,17 +129,20 @@ int main(int argc, char *argv[])
             { "help",        0, NULL, 'h' },
             { "version",     0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "cC:dE:F:iI:MnO:P:qr:R:s:ST:hv",
+        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:MnP:qr:R:s:ST:hv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "cC:dE:F:iI:MnO:P:qr:R:s:ST:hv");
+        int c = getopt(argc, argv, "B:cC:dE:F:iI:MnP:qr:R:s:ST:hv");
 #   endif
         if(c == -1)
             break;
 
         switch(c)
         {
+        case 'B': /* --max-bytes */
+            maxbytes = atoi(optarg);
+            break;
         case 'c': /* --cmdline */
             cmdline = 1;
             break;
@@ -178,9 +181,6 @@ int main(int argc, char *argv[])
             break;
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
-            break;
-        case 'O': /* --max-output */
-            maxoutput = atoi(optarg);
             break;
         case 'P': /* --protect */
             protect = optarg;
@@ -465,7 +465,7 @@ static void clean_children(void)
     for(i = 0; i < maxforks; i++)
     {
         if(child_list[i].status == STATUS_RUNNING
-            && maxoutput >= 0 && child_list[i].bytes > maxoutput)
+            && maxbytes >= 0 && child_list[i].bytes > maxbytes)
         {
             fprintf(stdout, "zzuf[seed=%i]: data exceeded, sending SIGTERM\n",
                     child_list[i].seed);
@@ -674,6 +674,7 @@ static void usage(void)
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
 #   ifdef HAVE_GETOPT_LONG
+    printf("  -B, --max-bytes <n>      kill children that output more than <n> bytes\n");
     printf("  -c, --cmdline            only fuzz files specified in the command line\n");
     printf("  -C, --max-crashes <n>    stop after <n> children have crashed (default 1)\n");
     printf("  -d, --debug              print debug messages\n");
@@ -683,7 +684,6 @@ static void usage(void)
     printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
     printf("  -M, --md5                compute the output's MD5 hash\n");
     printf("  -n, --network            fuzz network input\n");
-    printf("  -O, --max-output <n>     kill children that output more than <n> bytes\n");
     printf("  -P, --protect <list>     protect bytes and characters in <list>\n");
     printf("  -q, --quiet              do not print children's messages\n");
     printf("  -r, --ratio <ratio>      bit fuzzing ratio (default 0.004)\n");
@@ -695,6 +695,7 @@ static void usage(void)
     printf("  -h, --help               display this help and exit\n");
     printf("  -v, --version            output version information and exit\n");
 #   else
+    printf("  -B <n>           kill children that output more than <n> bytes\n");
     printf("  -c               only fuzz files specified in the command line\n");
     printf("  -C <n>           stop after <n> children have crashed (default 1)\n");
     printf("  -d               print debug messages\n");
@@ -704,7 +705,6 @@ static void usage(void)
     printf("  -I <regex>       only fuzz files matching <regex>\n");
     printf("  -M               compute the output's MD5 hash\n");
     printf("  -n               fuzz network input\n");
-    printf("  -O <n>           kill children that output more than <n> bytes\n");
     printf("  -P <list>        protect bytes and characters in <list>\n");
     printf("  -q               do not print the fuzzed application's messages\n");
     printf("  -r <ratio>       bit fuzzing ratio (default 0.004)\n");
