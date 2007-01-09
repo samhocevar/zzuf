@@ -38,6 +38,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#if defined HAVE_LIBC_H
+#   include <libc.h>
+#endif
 
 #include "libzzuf.h"
 #include "debug.h"
@@ -71,6 +74,11 @@ static void *  (*mmap64_orig)  (void *start, size_t length, int prot,
                                 int flags, int fd, off64_t offset);
 #endif
 static int     (*munmap_orig)  (void *start, size_t length);
+#ifdef HAVE_MAP_FD
+static kern_return_t (*map_fd_orig) (int fd, vm_offset_t offset,
+                                     vm_offset_t *addr, boolean_t find_space,
+                                     vm_size_t numbytes);
+#endif
 static int     (*close_orig)   (int fd);
 
 
@@ -92,6 +100,9 @@ void _zz_load_fd(void)
     LOADSYM(mmap64);
 #endif
     LOADSYM(munmap);
+#ifdef HAVE_MAP_FD
+    LOADSYM(map_fd);
+#endif
     LOADSYM(close);
 }
 
@@ -304,6 +315,36 @@ int munmap(void *start, size_t length)
 
     return munmap_orig(start, length);
 }
+
+#ifdef HAVE_MAP_FD
+kern_return_t map_fd(int fd, vm_offset_t offset, vm_offset_t *addr,
+                     boolean_t find_space, vm_size_t numbytes)
+{
+    kern_return_t ret;
+
+    if(!_zz_ready)
+        LOADSYM(map_fd);
+    ret = map_fd_orig(fd, offset, addr, find_space, numbytes);
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+        return ret;
+
+    if(ret == 0)
+    {
+        void *tmp = malloc(numbytes);
+        memcpy(tmp, (void *)*addr, numbytes);
+        _zz_fuzz(fd, tmp, numbytes);
+        *addr = (vm_offset_t)tmp;
+        /* FIXME: the map is never freed; there is no such thing as unmap_fd,
+         * but I suppose that kind of map should go when the filedesciptor is
+         * closed (unlike mmap, which returns a persistent buffer). */
+    }
+
+    debug("map_fd(%i, %lli, &%p, %i, %lli) = %i", fd, (long long int)offset,
+          (void *)*addr, (int)find_space, (long long int)numbytes, ret);
+
+    return ret;
+}
+#endif
 
 int close(int fd)
 {
