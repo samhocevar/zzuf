@@ -261,7 +261,7 @@ int nbmaps = 0;
         if(ret) \
         { \
             void *tmp = malloc(length); \
-            int i; \
+            int i, oldpos; \
             for(i = 0; i < nbmaps; i += 2) \
                 if(maps[i] == NULL) \
                     break; \
@@ -272,8 +272,11 @@ int nbmaps = 0;
             } \
             maps[i] = tmp; \
             maps[i + 1] = ret; \
+            oldpos = _zz_getpos(fd); \
+            _zz_setpos(fd, offset); /* mmap() maps the fd at offset 0 */ \
             memcpy(tmp, ret, length); /* FIXME: get rid of this */ \
             _zz_fuzz(fd, tmp, length); \
+            _zz_setpos(fd, oldpos); \
             ret = tmp; \
         } \
         debug(STR(fn)"(%p, %li, %i, %i, %i, %lli) = %p", start, \
