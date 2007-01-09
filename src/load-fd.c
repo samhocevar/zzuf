@@ -199,12 +199,22 @@ ssize_t read(int fd, void *buf, size_t count)
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;
 
-    debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
     if(ret > 0)
     {
+        char *b = buf;
+
         _zz_fuzz(fd, buf, ret);
         _zz_addpos(fd, ret);
+
+        if(ret >= 4)
+            debug("read(%i, %p, %li) = %i \"%c%c%c%c...", fd, buf,
+                  (long int)count, ret, b[0], b[1], b[2], b[3]);
+        else
+            debug("read(%i, %p, %li) = %i \"%c...", fd, buf,
+                  (long int)count, ret, b[0]);
     }
+    else
+        debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
 
     /* Sanity check, can be OK though (for instance with a character device) */
 #ifdef HAVE_LSEEK64
@@ -258,9 +268,9 @@ int nbmaps = 0;
         ret = ORIG(fn)(start, length, prot, flags, fd, offset); \
         if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled) \
             return ret; \
-        if(ret) \
+        if(ret && length) \
         { \
-            void *tmp = malloc(length); \
+            char *b = malloc(length); \
             int i, oldpos; \
             for(i = 0; i < nbmaps; i += 2) \
                 if(maps[i] == NULL) \
@@ -270,14 +280,22 @@ int nbmaps = 0;
                 nbmaps += 2; \
                 maps = realloc(maps, nbmaps * sizeof(void *)); \
             } \
-            maps[i] = tmp; \
+            maps[i] = b; \
             maps[i + 1] = ret; \
             oldpos = _zz_getpos(fd); \
             _zz_setpos(fd, offset); /* mmap() maps the fd at offset 0 */ \
-            memcpy(tmp, ret, length); /* FIXME: get rid of this */ \
-            _zz_fuzz(fd, tmp, length); \
+            memcpy(b, ret, length); /* FIXME: get rid of this */ \
+            _zz_fuzz(fd, (uint8_t *)b, length); \
             _zz_setpos(fd, oldpos); \
-            ret = tmp; \
+            ret = b; \
+            if(length >= 4) \
+                debug(STR(fn)"(%p, %li, %i, %i, %i, %lli) = %p \"%c%c%c%c...", \
+                      start, (long int)length, prot, flags, fd, \
+                      (long long int)offset, ret, b[0], b[1], b[2], b[3]); \
+            else \
+                debug(STR(fn)"(%p, %li, %i, %i, %i, %lli) = %p \"%c...", \
+                      start, (long int)length, prot, flags, fd, \
+                      (long long int)offset, ret, b[0]); \
         } \
         debug(STR(fn)"(%p, %li, %i, %i, %i, %lli) = %p", start, \
               (long int)length, prot, flags, fd, (long long int)offset, ret); \
@@ -331,19 +349,29 @@ kern_return_t map_fd(int fd, vm_offset_t offset, vm_offset_t *addr,
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;
 
-    if(ret == 0)
+    if(ret == 0 && numbytes)
     {
-        void *tmp = malloc(numbytes);
-        memcpy(tmp, (void *)*addr, numbytes);
-        _zz_fuzz(fd, tmp, numbytes);
-        *addr = (vm_offset_t)tmp;
+        /* FIXME: do we also have to rewind the filedescriptor like in mmap? */
+        void *b = malloc(numbytes);
+        memcpy(b, (void *)*addr, numbytes);
+        _zz_fuzz(fd, b, numbytes);
+        *addr = (vm_offset_t)b;
         /* FIXME: the map is never freed; there is no such thing as unmap_fd,
-         * but I suppose that kind of map should go when the filedesciptor is
+         * but I suppose that kind of map should go when the filedescriptor is
          * closed (unlike mmap, which returns a persistent buffer). */
-    }
 
-    debug("map_fd(%i, %lli, &%p, %i, %lli) = %i", fd, (long long int)offset,
-          (void *)*addr, (int)find_space, (long long int)numbytes, ret);
+        if(numbytes >= 4)
+           debug("map_fd(%i, %lli, &%p, %i, %lli) = %i \"%c%c%c%c", fd,
+                 (long long int)offset, (void *)*addr, (int)find_space,
+                 (long long int)numbytes, ret, b[0], b[1], b[2], b[3]);
+        else
+           debug("map_fd(%i, %lli, &%p, %i, %lli) = %i \"%c", fd,
+                 (long long int)offset, (void *)*addr, (int)find_space,
+                 (long long int)numbytes, ret, b[0]);
+    }
+    else
+        debug("map_fd(%i, %lli, &%p, %i, %lli) = %i", fd, (long long int)offset,
+              (void *)*addr, (int)find_space, (long long int)numbytes, ret);
 
     return ret;
 }
