@@ -79,6 +79,7 @@ static int endseed = 1;
 static int quiet = 0;
 static int maxbytes = -1;
 static int md5 = 0;
+static int checkexit = 0;
 static double maxtime = -1.0;
 
 #define ZZUF_FD_SET(fd, p_fdset, maxfd) \
@@ -126,14 +127,15 @@ int main(int argc, char *argv[])
             { "seed",        1, NULL, 's' },
             { "signal",      0, NULL, 'S' },
             { "max-time",    1, NULL, 'T' },
+            { "check-exit",  0, NULL, 'x' },
             { "help",        0, NULL, 'h' },
             { "version",     0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:MnP:qr:R:s:ST:hv",
+        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:MnP:qr:R:s:ST:xhv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cC:dE:F:iI:MnP:qr:R:s:ST:hv");
+        int c = getopt(argc, argv, "B:cC:dE:F:iI:MnP:qr:R:s:ST:xhv");
 #   endif
         if(c == -1)
             break;
@@ -205,6 +207,9 @@ int main(int argc, char *argv[])
             break;
         case 'T': /* --max-time */
             maxtime = atof(optarg);
+            break;
+        case 'x': /* --check-exit */
+            checkexit = 1;
             break;
         case 'h': /* --help */
             usage();
@@ -515,7 +520,7 @@ static void clean_children(void)
         if(pid <= 0)
             continue;
 
-        if(WIFEXITED(status) && WEXITSTATUS(status))
+        if(checkexit && WIFEXITED(status) && WEXITSTATUS(status))
         {
             fprintf(stdout, "zzuf[seed=%i]: exit %i\n",
                     child_list[i].seed, WEXITSTATUS(status));
@@ -659,10 +664,10 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [-cdiMnqS] [-r ratio] [-s seed | -s start:stop]\n");
-    printf("                       [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
-    printf("                       [-P protect] [-R refuse]\n");
-    printf("                       [-I include] [-E exclude] [PROGRAM [ARGS]...]\n");
+    printf("Usage: zzuf [-cdiMnqSx] [-r ratio] [-s seed | -s start:stop]\n");
+    printf("                        [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
+    printf("                        [-P protect] [-R refuse]\n");
+    printf("                        [-I include] [-E exclude] [PROGRAM [ARGS]...]\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
     printf("       zzuf -v | --version\n");
@@ -692,6 +697,7 @@ static void usage(void)
     printf("      --seed <start:stop>  specify a seed range\n");
     printf("  -S, --signal             prevent children from diverting crashing signals\n");
     printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
+    printf("  -x, --check-exit         report processes that exit with a non-zero status\n");
     printf("  -h, --help               display this help and exit\n");
     printf("  -v, --version            output version information and exit\n");
 #   else
@@ -713,6 +719,7 @@ static void usage(void)
     printf("     <start:stop>  specify a seed range\n");
     printf("  -S               prevent children from diverting crashing signals\n");
     printf("  -T <n>           kill children that run for more than <n> seconds\n");
+    printf("  -x               report processes that exit with a non-zero status\n");
     printf("  -h               display this help and exit\n");
     printf("  -v               output version information and exit\n");
 #   endif

@@ -60,7 +60,8 @@ specific files.
 Stop forking when at least \fIn\fR children have crashed. The default value
 is 1, meaning \fBzzuf\fR will stop as soon as one child has crashed. A process
 is considered to have crashed if any signal (such as, but not limited to,
-\fBSIGSEGV\fR) caused it to exit.
+\fBSIGSEGV\fR) caused it to exit. If the \fB\-x\fR flag is used, this will
+also include processes that exit with a non-zero status.
 
 This option is only relevant if the \fB\-s\fR flag is used with an interval
 argument.
@@ -187,6 +188,10 @@ how to set such limits.
 Automatically terminate child processes that run for more than \fIn\fR
 seconds. This is useful to detect infinite loops or processes stuck in other
 situations. See also the \fB\-B\fR flag.
+.TP
+\fB\-x\fR, \fB\-\-check\-exit\fR
+Report processes that exit with a non-zero status. By default only processes
+that crash due to a signal are reported.
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Display a short help message and exit.
