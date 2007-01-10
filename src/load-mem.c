@@ -108,18 +108,20 @@ void _zz_load_mem(void)
 
 /* 32k of ugly static memory for programs that call us *before* we’re
  * initialised */
-uint64_t dummy_buffer[4096];
+static uint64_t dummy_buffer[4096];
+static int dummy_offset = 0;
 
 void *calloc(size_t nmemb, size_t size)
 {
     void *ret;
     if(!_zz_ready)
     {
-        /* Calloc says we must zero the data */
         int i = (nmemb * size + 7) / 8;
-        while(i--)
-            dummy_buffer[i] = 0;
-        return dummy_buffer;
+        ret = dummy_buffer + dummy_offset;
+        dummy_offset += i;
+        /* Calloc says we must zero the data */
+        memset(ret, 0, size);
+        return ret;
     }
     ret = calloc_orig(nmemb, size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
@@ -131,7 +133,12 @@ void *malloc(size_t size)
 {
     void *ret;
     if(!_zz_ready)
-        return dummy_buffer;
+    {
+        int i = (size + 7) / 8;
+        ret = dummy_buffer + dummy_offset;
+        dummy_offset += i;
+        return ret;
+    }
     ret = malloc_orig(size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
@@ -140,7 +147,8 @@ void *malloc(size_t size)
 
 void free(void *ptr)
 {
-    if(ptr == dummy_buffer)
+    if((uintptr_t)ptr >= (uintptr_t)dummy_buffer
+       && (uintptr_t)ptr <= (uintptr_t)dummy_buffer + sizeof(dummy_buffer))
         return;
     if(!_zz_ready)
         LOADSYM(free);
@@ -150,8 +158,9 @@ void free(void *ptr)
 void *realloc(void *ptr, size_t size)
 {
     void *ret;
-    if(ptr == dummy_buffer)
-        return ptr;
+    if((uintptr_t)ptr >= (uintptr_t)dummy_buffer
+       && (uintptr_t)ptr <= (uintptr_t)dummy_buffer + sizeof(dummy_buffer))
+        return ptr; /* FIXME: who would call realloc() so early? */
     if(!_zz_ready)
         LOADSYM(realloc);
     ret = realloc_orig(ptr, size);
