@@ -321,9 +321,9 @@ kern_return_t map_fd(int fd, vm_offset_t offset, vm_offset_t *addr,
     if(ret == 0 && numbytes)
     {
         /* FIXME: do we also have to rewind the filedescriptor like in mmap? */
-        void *b = malloc(numbytes);
+        char *b = malloc(numbytes);
         memcpy(b, (void *)*addr, numbytes);
-        _zz_fuzz(fd, b, numbytes);
+        _zz_fuzz(fd, (void *)b, numbytes);
         *addr = (vm_offset_t)b;
         /* FIXME: the map is never freed; there is no such thing as unmap_fd,
          * but I suppose that kind of map should go when the filedescriptor is
