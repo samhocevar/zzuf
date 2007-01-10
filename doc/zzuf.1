@@ -2,11 +2,11 @@
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-cdiMnqS\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR | \fB\-s\fR \fIstart:stop\fR]
+\fBzzuf\fR [\fB\-cdiMnqS\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR]
 .br
                 [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
 .br
-                [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
+                [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
 .br
                 [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fIARGS\fR]...]
 .br
@@ -98,6 +98,15 @@ of the regular expressions will be fuzzed. See also the \fB\-c\fR flag.
 \fB\-m\fR, \fB\-\-md5\fR
 Instead of displaying the program's standard output, just print the MD5 digest
 of that output. The standard error channel is left untouched.
+.TP
+\fB\-M\fR, \fB\-\-max-memory\fR=\fImegabytes\fR
+Specify the maximum amount of memory, in megabytes, that children are allowed
+to allocate. This is useful to detect infinite loops that eat up a lot of
+memory. The value should set reasonably high so as not to interfer with normal
+program operation.
+
+\fBZzuf\fR uses the \fBsetrlimit\fR() call to set memory usage limitations and
+relies on the operating system's ability to enforce such limitations.
 .TP
 \fB\-n\fR, \fB\-\-network\fR
 Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
@@ -227,7 +236,7 @@ can be read by \fBVLC\fR to reproduce the same behaviour without using
 \fBzzuf\fR:
 .PP
 \fB    zzuf \-c \-s 87423 \-r 0.01 vlc movie.avi\fR
-\fB    zzuf \-c \-s 87423 \-r 0.01 cp movie.avi fuzzy\-movie.avi\fR
+\fB    zzuf \-c \-s 87423 \-r 0.01 <movie.avi >fuzzy\-movie.avi\fR
 \fB    vlc fuzzy\-movie.avi\fR
 .PP
 Fuzz 2% of \fBMPlayer\fR's input bits (\fB\-r\ 0.02\fR) with seeds 0 to 9999
@@ -240,8 +249,8 @@ and disabling its \fBSIGSEGV\fR signal handler (\fB\-S\fR):
 \fB      mplayer \-\- \-benchmark \-vo null \-fps 1000 movie.avi\fR
 .SH RESTRICTIONS
 .PP
-Due to \fBzzuf\fR using shared object preloading (\fBLD_PRELOAD\fR on most
-Unix systems, \fBDYLD_INSERT_LIBRARIES\fR on Mac OS X) to run its child
+Due to \fBzzuf\fR using shared object preloading (\fBLD_PRELOAD\fR,
+\fB_RLD_LIST\fB, \fBDYLD_INSERT_LIBRARIES\fR, etc.) to run its child
 processes, it will fail in the presence of any mechanism that disables
 preloading. For instance setuid root binaries will not be fuzzed when run
 as an unprivileged user.
@@ -266,18 +275,23 @@ As of now, \fBzzuf\fR does not really support multithreaded applications. The
 behaviour with multithreaded applications where more than one thread does file
 descriptor operations is undefined.
 .SH NOTES
-In order to intercept file and network operations and signal handlers,
-\fBzzuf\fR diverts and reimplements the following functions, which can
-be private libc symbols, too:
+In order to intercept file and network operations, signal handlers and memory
+allocations, \fBzzuf\fR diverts and reimplements the following functions,
+which can be private libc symbols, too:
 .TP
 Unix file descriptor handling:
 \fBopen\fR(), \fBlseek\fR(), \fBread\fR(), \fBaccept\fR(), \fBsocket\fR(),
-\fBmmap\fR(), \fBmunmap\fR(), \fBclose\fR()
+\fBclose\fR()
 .TP
 Standard IO streams:
 \fBfopen\fR(), \fBfreopen\fR(), \fBfseek\fR(), \fBfseeko\fR(), \fBrewind\fR(),
 \fBfread\fR(), \fBgetc\fR(), \fBfgetc\fR(), \fBfgets\fR(), \fBungetc\fR(),
 \fBfclose\fR()
+.TP
+Memory management:
+\fBmmap\fR(), \fBmunmap\fR(), \fBmalloc\fR(), \fBcalloc\fR(), \fBvalloc\fR(),
+\fBfree\fR(), \fBmemalign\fR(), \fBposix_memalign\fR(), \fBbrk\fR(),
+\fBsbrk\fR()
 .TP
 Linux-specific:
 \fBopen64\fR(), \fBlseek64\fR(), \fBmmap64\fR(), \fB_IO_getc\fR(),

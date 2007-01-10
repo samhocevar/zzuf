@@ -44,6 +44,7 @@ int   _zz_ready    = 0;
 int   _zz_disabled = 0;
 int   _zz_hasdebug = 0;
 int   _zz_signal   = 0;
+int   _zz_memory   = 0;
 int   _zz_network  = 0;
 
 /* Library initialisation shit */
@@ -82,6 +83,10 @@ void _zz_init(void)
     tmp = getenv("ZZUF_SIGNAL");
     if(tmp && *tmp == '1')
         _zz_signal = 1;
+
+    tmp = getenv("ZZUF_MEMORY");
+    if(tmp && *tmp == '1')
+        _zz_memory = 1;
 
     tmp = getenv("ZZUF_NETWORK");
     if(tmp && *tmp == '1')

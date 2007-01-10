@@ -39,6 +39,7 @@ extern int   _zz_ready;
 extern int   _zz_disabled;
 extern int   _zz_hasdebug;
 extern int   _zz_signal;
+extern int   _zz_memory;
 extern int   _zz_network;
 
 /* Library initialisation shit */

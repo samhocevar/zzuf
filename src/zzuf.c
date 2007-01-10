@@ -36,6 +36,8 @@
 #include <sys/time.h>
 #include <time.h>
 #include <sys/wait.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "libzzuf.h"
 #include "random.h"
@@ -80,6 +82,7 @@ static int quiet = 0;
 static int maxbytes = -1;
 static int md5 = 0;
 static int checkexit = 0;
+static int maxmem = -1;
 static double maxtime = -1.0;
 
 #define ZZUF_FD_SET(fd, p_fdset, maxfd) \
@@ -119,6 +122,7 @@ int main(int argc, char *argv[])
             { "stdin",       0, NULL, 'i' },
             { "include",     1, NULL, 'I' },
             { "md5",         0, NULL, 'm' },
+            { "max-memory",  1, NULL, 'M' },
             { "network",     0, NULL, 'n' },
             { "protect",     1, NULL, 'P' },
             { "quiet",       0, NULL, 'q' },
@@ -131,11 +135,11 @@ int main(int argc, char *argv[])
             { "help",        0, NULL, 'h' },
             { "version",     0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:mnP:qr:R:s:ST:xhv",
+        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:mM:nP:qr:R:s:ST:xhv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cC:dE:F:iI:mnP:qr:R:s:ST:xhv");
+        int c = getopt(argc, argv, "B:cC:dE:F:iI:mM:nP:qr:R:s:ST:xhv");
 #   endif
         if(c == -1)
             break;
@@ -180,6 +184,10 @@ int main(int argc, char *argv[])
             break;
         case 'm': /* --md5 */
             md5 = 1;
+            break;
+        case 'M': /* --max-memory */
+            setenv("ZZUF_MEMORY", "1", 1);
+            maxmem = atoi(optarg);
             break;
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
@@ -424,6 +432,14 @@ static void spawn_child(char **argv)
             return;
         case 0:
             /* We’re the child */
+            if(maxmem >= 0)
+            {
+                struct rlimit rlim;
+                rlim.rlim_cur = maxmem * 1000000;
+                rlim.rlim_max = maxmem * 1000000;
+                setrlimit(RLIMIT_AS, &rlim);
+            }
+
             for(j = 0; j < 3; j++)
             {
                 close(fd[j][0]);
@@ -528,8 +544,10 @@ static void clean_children(void)
         }
         else if(WIFSIGNALED(status))
         {
-            fprintf(stdout, "zzuf[seed=%i]: signal %i\n",
-                    child_list[i].seed, WTERMSIG(status));
+            fprintf(stdout, "zzuf[seed=%i]: signal %i%s\n",
+                    child_list[i].seed, WTERMSIG(status),
+                      (WTERMSIG(status) == SIGKILL && maxmem >= 0) ?
+                      " (memory exceeded?)" : "");
             crashes++;
         }
 
@@ -666,7 +684,7 @@ static void usage(void)
 {
     printf("Usage: zzuf [-cdimnqSx] [-r ratio] [-s seed | -s start:stop]\n");
     printf("                        [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
-    printf("                        [-P protect] [-R refuse]\n");
+    printf("                        [-M bytes] [-P protect] [-R refuse]\n");
     printf("                        [-I include] [-E exclude] [PROGRAM [ARGS]...]\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
@@ -688,6 +706,7 @@ static void usage(void)
     printf("  -i, --stdin              fuzz standard input\n");
     printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
     printf("  -m, --md5                compute the output's MD5 hash\n");
+    printf("  -M, --max-memory <n>     maximum child virtual memory size in MB\n");
     printf("  -n, --network            fuzz network input\n");
     printf("  -P, --protect <list>     protect bytes and characters in <list>\n");
     printf("  -q, --quiet              do not print children's messages\n");
@@ -710,6 +729,7 @@ static void usage(void)
     printf("  -i               fuzz standard input\n");
     printf("  -I <regex>       only fuzz files matching <regex>\n");
     printf("  -m               compute the output's MD5 hash\n");
+    printf("  -M               maximum child virtual memory size in MB\n");
     printf("  -n               fuzz network input\n");
     printf("  -P <list>        protect bytes and characters in <list>\n");
     printf("  -q               do not print the fuzzed application's messages\n");

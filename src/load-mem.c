@@ -22,6 +22,8 @@
 #define _GNU_SOURCE
 /* Use this to get mmap64() on glibc systems */
 #define _LARGEFILE64_SOURCE
+/* Use this to get posix_memalign */
+#define _XOPEN_SOURCE 600
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
@@ -31,7 +33,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <errno.h>
+#include <signal.h>
 
+#include <malloc.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #if defined HAVE_LIBC_H
@@ -45,13 +50,27 @@
 #include "fd.h"
 
 /* Library functions that we divert */
-static void *  (*mmap_orig)    (void *start, size_t length, int prot,
-                                int flags, int fd, off_t offset);
+static void *  (*calloc_orig)   (size_t nmemb, size_t size);
+static void *  (*malloc_orig)   (size_t size);
+static void    (*free_orig)     (void *ptr);
+static void *  (*valloc_orig)   (size_t size);
+static void *  (*memalign_orig) (size_t boundary, size_t size);
+static int     (*posix_memalign_orig) (void **memptr, size_t alignment,
+                                       size_t size);
+static void *  (*realloc_orig)  (void *ptr, size_t size);
+static int     (*brk_orig)      (void *end_data_segment);
+static void *  (*sbrk_orig)     (intptr_t increment);
+
+static void *  (*mmap_orig)     (void *start, size_t length, int prot,
+                                 int flags, int fd, off_t offset);
+/* TODO */
+/* static void *  (*mremap_orig)   (void *old_address, size_t old_size,
+                                 size_t new_size, int flags); */
 #ifdef HAVE_MMAP64
-static void *  (*mmap64_orig)  (void *start, size_t length, int prot,
-                                int flags, int fd, off64_t offset);
+static void *  (*mmap64_orig)   (void *start, size_t length, int prot,
+                                 int flags, int fd, off64_t offset);
 #endif
-static int     (*munmap_orig)  (void *start, size_t length);
+static int     (*munmap_orig)   (void *start, size_t length);
 #ifdef HAVE_MAP_FD
 static kern_return_t (*map_fd_orig) (int fd, vm_offset_t offset,
                                      vm_offset_t *addr, boolean_t find_space,
@@ -60,6 +79,16 @@ static kern_return_t (*map_fd_orig) (int fd, vm_offset_t offset,
 
 void _zz_load_mem(void)
 {
+    LOADSYM(calloc);
+    LOADSYM(malloc);
+    LOADSYM(free);
+    LOADSYM(realloc);
+    LOADSYM(valloc);
+    LOADSYM(memalign);
+    LOADSYM(posix_memalign);
+    LOADSYM(brk);
+    LOADSYM(sbrk);
+
     LOADSYM(mmap);
 #ifdef HAVE_MMAP64
     LOADSYM(mmap64);
@@ -68,6 +97,115 @@ void _zz_load_mem(void)
 #ifdef HAVE_MAP_FD
     LOADSYM(map_fd);
 #endif
+}
+
+/* 32k of ugly static memory for programs that call us *before* we’re
+ * initialised */
+uint64_t dummy_buffer[4096];
+
+void *calloc(size_t nmemb, size_t size)
+{
+    void *ret;
+    if(!_zz_ready)
+    {
+        /* Calloc says we must zero the data */
+        int i = (nmemb * size + 7) / 8;
+        while(i--)
+            dummy_buffer[i] = 0;
+        return dummy_buffer;
+    }
+    ret = calloc_orig(nmemb, size);
+    if(ret == NULL && _zz_memory && errno == ENOMEM)
+        raise(SIGKILL);
+    return ret;
+}
+
+void *malloc(size_t size)
+{
+    void *ret;
+    if(!_zz_ready)
+        return dummy_buffer;
+    ret = malloc_orig(size);
+    if(ret == NULL && _zz_memory && errno == ENOMEM)
+        raise(SIGKILL);
+    return ret;
+}
+
+void free(void *ptr)
+{
+    if(ptr == dummy_buffer)
+        return;
+    if(!_zz_ready)
+        LOADSYM(free);
+    free_orig(ptr);
+}
+
+void *realloc(void *ptr, size_t size)
+{
+    void *ret;
+    if(ptr == dummy_buffer)
+        return ptr;
+    if(!_zz_ready)
+        LOADSYM(realloc);
+    ret = realloc_orig(ptr, size);
+    if(ret == NULL && _zz_memory && errno == ENOMEM)
+        raise(SIGKILL);
+    return ret;
+}
+
+void *valloc(size_t size)
+{
+    void *ret;
+    if(!_zz_ready)
+        LOADSYM(valloc);
+    ret = valloc_orig(size);
+    if(ret == NULL && _zz_memory && errno == ENOMEM)
+        raise(SIGKILL);
+    return ret;
+}
+
+void *memalign(size_t boundary, size_t size)
+{
+    void *ret;
+    if(!_zz_ready)
+        LOADSYM(memalign);
+    ret = memalign_orig(boundary, size);
+    if(ret == NULL && _zz_memory && errno == ENOMEM)
+        raise(SIGKILL);
+    return ret;
+}
+
+int posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+    int ret;
+    if(!_zz_ready)
+        LOADSYM(posix_memalign);
+    ret = posix_memalign_orig(memptr, alignment, size);
+    if(ret == ENOMEM && _zz_memory)
+        raise(SIGKILL);
+    return ret;
+}
+
+int brk(void *end_data_segment)
+{
+    int ret;
+    if(!_zz_ready)
+        LOADSYM(brk);
+    ret = brk_orig(end_data_segment);
+    if(ret == -1 && _zz_memory && errno == ENOMEM)
+        raise(SIGKILL);
+    return ret;
+}
+
+void *sbrk(intptr_t increment)
+{
+    void *ret;
+    if(!_zz_ready)
+        LOADSYM(sbrk);
+    ret = sbrk_orig(increment);
+    if(ret == (void *)-1 && _zz_memory && errno == ENOMEM)
+        raise(SIGKILL);
+    return ret;
 }
 
 /* Table used for mmap() and munmap() */
