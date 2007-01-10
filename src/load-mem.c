@@ -23,7 +23,9 @@
 /* Use this to get mmap64() on glibc systems */
 #define _LARGEFILE64_SOURCE
 /* Use this to get posix_memalign */
-#define _XOPEN_SOURCE 600
+#if defined HAVE_POSIX_MEMALIGN
+#   define _XOPEN_SOURCE 600
+#endif
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
@@ -56,9 +58,13 @@ static void *  (*calloc_orig)   (size_t nmemb, size_t size);
 static void *  (*malloc_orig)   (size_t size);
 static void    (*free_orig)     (void *ptr);
 static void *  (*valloc_orig)   (size_t size);
+#ifdef HAVE_MEMALIGN
 static void *  (*memalign_orig) (size_t boundary, size_t size);
+#endif
+#ifdef HAVE_POSIX_MEMALIGN
 static int     (*posix_memalign_orig) (void **memptr, size_t alignment,
                                        size_t size);
+#endif
 static void *  (*realloc_orig)  (void *ptr, size_t size);
 static int     (*brk_orig)      (void *end_data_segment);
 static void *  (*sbrk_orig)     (intptr_t increment);
@@ -86,8 +92,12 @@ void _zz_load_mem(void)
     LOADSYM(free);
     LOADSYM(realloc);
     LOADSYM(valloc);
+#ifdef HAVE_MEMALIGN
     LOADSYM(memalign);
+#endif
+#ifdef HAVE_POSIX_MEMALIGN
     LOADSYM(posix_memalign);
+#endif
     LOADSYM(brk);
     LOADSYM(sbrk);
 
@@ -166,6 +176,7 @@ void *valloc(size_t size)
     return ret;
 }
 
+#ifdef HAVE_MEMALIGN
 void *memalign(size_t boundary, size_t size)
 {
     void *ret;
@@ -176,7 +187,9 @@ void *memalign(size_t boundary, size_t size)
         raise(SIGKILL);
     return ret;
 }
+#endif
 
+#ifdef HAVE_POSIX_MEMALIGN
 int posix_memalign(void **memptr, size_t alignment, size_t size)
 {
     int ret;
@@ -187,6 +200,7 @@ int posix_memalign(void **memptr, size_t alignment, size_t size)
         raise(SIGKILL);
     return ret;
 }
+#endif
 
 int brk(void *end_data_segment)
 {
