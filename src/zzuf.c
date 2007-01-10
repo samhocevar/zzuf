@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
             { "max-forks",   1, NULL, 'F' },
             { "stdin",       0, NULL, 'i' },
             { "include",     1, NULL, 'I' },
-            { "md5",         0, NULL, 'M' },
+            { "md5",         0, NULL, 'm' },
             { "network",     0, NULL, 'n' },
             { "protect",     1, NULL, 'P' },
             { "quiet",       0, NULL, 'q' },
@@ -131,11 +131,11 @@ int main(int argc, char *argv[])
             { "help",        0, NULL, 'h' },
             { "version",     0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:MnP:qr:R:s:ST:xhv",
+        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:mnP:qr:R:s:ST:xhv",
                             long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cC:dE:F:iI:MnP:qr:R:s:ST:xhv");
+        int c = getopt(argc, argv, "B:cC:dE:F:iI:mnP:qr:R:s:ST:xhv");
 #   endif
         if(c == -1)
             break;
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
             break;
-        case 'M': /* --md5 */
+        case 'm': /* --md5 */
             md5 = 1;
             break;
         case 'n': /* --network */
@@ -664,7 +664,7 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [-cdiMnqSx] [-r ratio] [-s seed | -s start:stop]\n");
+    printf("Usage: zzuf [-cdimnqSx] [-r ratio] [-s seed | -s start:stop]\n");
     printf("                        [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
     printf("                        [-P protect] [-R refuse]\n");
     printf("                        [-I include] [-E exclude] [PROGRAM [ARGS]...]\n");
@@ -687,7 +687,7 @@ static void usage(void)
     printf("  -F, --max-forks <n>      number of concurrent children (default 1)\n");
     printf("  -i, --stdin              fuzz standard input\n");
     printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
-    printf("  -M, --md5                compute the output's MD5 hash\n");
+    printf("  -m, --md5                compute the output's MD5 hash\n");
     printf("  -n, --network            fuzz network input\n");
     printf("  -P, --protect <list>     protect bytes and characters in <list>\n");
     printf("  -q, --quiet              do not print children's messages\n");
@@ -709,7 +709,7 @@ static void usage(void)
     printf("  -F <n>           number of concurrent forks (default 1)\n");
     printf("  -i               fuzz standard input\n");
     printf("  -I <regex>       only fuzz files matching <regex>\n");
-    printf("  -M               compute the output's MD5 hash\n");
+    printf("  -m               compute the output's MD5 hash\n");
     printf("  -n               fuzz network input\n");
     printf("  -P <list>        protect bytes and characters in <list>\n");
     printf("  -q               do not print the fuzzed application's messages\n");

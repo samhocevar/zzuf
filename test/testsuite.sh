@@ -19,7 +19,7 @@ check()
     CMD="$2"
     ALIAS="$3"
     echo -n " $(echo "$ALIAS .............." | cut -b1-18) "
-    MD5="$(eval "$ZZUF -M $ZZOPTS $CMD" 2>/dev/null | cut -f2 -d' ')"
+    MD5="$(eval "$ZZUF -m $ZZOPTS $CMD" 2>/dev/null | cut -f2 -d' ')"
     if [ -z "$REFMD5" ]; then
         REFMD5="$MD5"
         echo "$MD5"
