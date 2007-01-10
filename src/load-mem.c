@@ -36,7 +36,9 @@
 #include <errno.h>
 #include <signal.h>
 
-#include <malloc.h>
+#if defined HAVE_MALLOC_H
+#   include <malloc.h>
+#endif
 #include <unistd.h>
 #include <sys/mman.h>
 #if defined HAVE_LIBC_H

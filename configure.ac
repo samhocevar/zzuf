@@ -14,7 +14,7 @@ AM_PROG_CC_C_O
 AC_PROG_CPP
 AC_PROG_LIBTOOL
 
-AC_CHECK_HEADERS(inttypes.h stdint.h getopt.h libc.h)
+AC_CHECK_HEADERS(inttypes.h stdint.h getopt.h libc.h malloc.h)
 AC_CHECK_FUNCS(open64 lseek64 mmap64 fopen64 fseeko _IO_getc getline getdelim __getdelim fgetln __srefill map_fd)
 AC_CHECK_TYPES(sighandler_t, [], [],
   [#define _GNU_SOURCE
