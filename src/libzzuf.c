@@ -94,6 +94,7 @@ void _zz_init(void)
         _zz_register(0);
 
     _zz_load_fd();
+    _zz_load_mem();
     _zz_load_signal();
     _zz_load_stream();
 
