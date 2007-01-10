@@ -53,6 +53,8 @@
 #include "load.h"
 #include "fd.h"
 
+/* TODO: mremap, maybe brk/sbrk */
+
 /* Library functions that we divert */
 static void *  (*calloc_orig)   (size_t nmemb, size_t size);
 static void *  (*malloc_orig)   (size_t size);
@@ -66,14 +68,9 @@ static int     (*posix_memalign_orig) (void **memptr, size_t alignment,
                                        size_t size);
 #endif
 static void *  (*realloc_orig)  (void *ptr, size_t size);
-static int     (*brk_orig)      (void *end_data_segment);
-static void *  (*sbrk_orig)     (intptr_t increment);
 
 static void *  (*mmap_orig)     (void *start, size_t length, int prot,
                                  int flags, int fd, off_t offset);
-/* TODO */
-/* static void *  (*mremap_orig)   (void *old_address, size_t old_size,
-                                 size_t new_size, int flags); */
 #ifdef HAVE_MMAP64
 static void *  (*mmap64_orig)   (void *start, size_t length, int prot,
                                  int flags, int fd, off64_t offset);
@@ -98,8 +95,6 @@ void _zz_load_mem(void)
 #ifdef HAVE_POSIX_MEMALIGN
     LOADSYM(posix_memalign);
 #endif
-    LOADSYM(brk);
-    LOADSYM(sbrk);
 
     LOADSYM(mmap);
 #ifdef HAVE_MMAP64
@@ -201,28 +196,6 @@ int posix_memalign(void **memptr, size_t alignment, size_t size)
     return ret;
 }
 #endif
-
-int brk(void *end_data_segment)
-{
-    int ret;
-    if(!_zz_ready)
-        LOADSYM(brk);
-    ret = brk_orig(end_data_segment);
-    if(ret == -1 && _zz_memory && errno == ENOMEM)
-        raise(SIGKILL);
-    return ret;
-}
-
-void *sbrk(intptr_t increment)
-{
-    void *ret;
-    if(!_zz_ready)
-        LOADSYM(sbrk);
-    ret = sbrk_orig(increment);
-    if(ret == (void *)-1 && _zz_memory && errno == ENOMEM)
-        raise(SIGKILL);
-    return ret;
-}
 
 /* Table used for mmap() and munmap() */
 void **maps = NULL;
