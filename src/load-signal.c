@@ -93,8 +93,7 @@ SIG_T signal(int signum, SIG_T handler)
 {
     SIG_T ret;
 
-    if(!_zz_ready)
-        LOADSYM(signal);
+    LOADSYM(signal);
 
     if(!_zz_signal)
         return signal_orig(signum, handler);
@@ -110,8 +109,7 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
 {
     int ret;
 
-    if(!_zz_ready)
-        LOADSYM(sigaction);
+    LOADSYM(sigaction);
 
     if(!_zz_signal)
         return sigaction_orig(signum, act, oldact);

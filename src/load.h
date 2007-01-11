@@ -21,7 +21,8 @@
 
 #define LOADSYM(x) \
     do { \
-        ORIG(x) = dlsym(RTLD_NEXT, STR(x)); \
+        if(!ORIG(x)) \
+            ORIG(x) = dlsym(RTLD_NEXT, STR(x)); \
         if(!ORIG(x)) \
             abort(); \
     } while(0)

@@ -86,8 +86,7 @@ void _zz_load_fd(void)
     do \
     { \
         int mode = 0; \
-        if(!_zz_ready) \
-            LOADSYM(fn); \
+        LOADSYM(fn); \
         if(oflag & O_CREAT) \
         { \
             va_list va; \
@@ -131,8 +130,7 @@ int accept(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 {
     int ret;
 
-    if(!_zz_ready)
-        LOADSYM(accept);
+    LOADSYM(accept);
     ret = accept_orig(sockfd, addr, addrlen);
     if(!_zz_ready || _zz_disabled || !_zz_network)
         return ret;
@@ -150,8 +148,7 @@ int socket(int domain, int type, int protocol)
 {
     int ret;
 
-    if(!_zz_ready)
-        LOADSYM(socket);
+    LOADSYM(socket);
     ret = socket_orig(domain, type, protocol);
     if(!_zz_ready || _zz_disabled || !_zz_network)
         return ret;
@@ -169,8 +166,7 @@ ssize_t read(int fd, void *buf, size_t count)
 {
     int ret;
 
-    if(!_zz_ready)
-        LOADSYM(read);
+    LOADSYM(read);
     ret = read_orig(fd, buf, count);
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;
@@ -206,8 +202,7 @@ ssize_t read(int fd, void *buf, size_t count)
 #define LSEEK(fn, off_t) \
     do \
     { \
-        if(!_zz_ready) \
-            LOADSYM(fn); \
+        LOADSYM(fn); \
         ret = ORIG(fn)(fd, offset, whence); \
         if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled) \
             return ret; \
@@ -237,8 +232,7 @@ int close(int fd)
 {
     int ret;
 
-    if(!_zz_ready)
-        LOADSYM(close);
+    LOADSYM(close);
 
     /* Hey, it’s our debug channel! Silently pretend we closed it. */
     if(fd == DEBUG_FILENO)

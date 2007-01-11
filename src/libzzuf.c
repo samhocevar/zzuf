@@ -52,6 +52,11 @@ void _zz_init(void)
 {
     char *tmp;
 
+    _zz_load_mem();
+    _zz_load_signal();
+    _zz_load_fd();
+    _zz_load_stream();
+
     tmp = getenv("ZZUF_DEBUG");
     if(tmp && *tmp == '1')
         _zz_hasdebug = 1;
@@ -97,11 +102,6 @@ void _zz_init(void)
     tmp = getenv("ZZUF_STDIN");
     if(tmp && *tmp == '1')
         _zz_register(0);
-
-    _zz_load_fd();
-    _zz_load_mem();
-    _zz_load_signal();
-    _zz_load_stream();
 
     _zz_ready = 1;
 

@@ -131,11 +131,9 @@ void _zz_load_stream(void)
 #define FOPEN(fn) \
     do \
     { \
+        LOADSYM(fn); \
         if(!_zz_ready) \
-        { \
-            LOADSYM(fn); \
             return ORIG(fn)(path, mode); \
-        } \
         _zz_disabled = 1; \
         ret = ORIG(fn)(path, mode); \
         _zz_disabled = 0; \
@@ -164,8 +162,7 @@ FILE *freopen(const char *path, const char *mode, FILE *stream)
     FILE *ret;
     int fd0 = -1, fd1 = -1, disp = 0;
 
-    if(!_zz_ready)
-        LOADSYM(freopen);
+    LOADSYM(freopen);
     if(_zz_ready && (fd0 = fileno(stream)) >= 0 && _zz_iswatched(fd0))
     {
         _zz_unregister(fd0);
@@ -215,8 +212,7 @@ FILE *freopen(const char *path, const char *mode, FILE *stream)
     do \
     { \
         int fd; \
-        if(!_zz_ready) \
-            LOADSYM(fn); \
+        LOADSYM(fn); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd)) \
             return ORIG(fn)(stream, offset, whence); \
@@ -244,8 +240,7 @@ void rewind(FILE *stream)
 {
     int fd;
 
-    if(!_zz_ready)
-        LOADSYM(rewind);
+    LOADSYM(rewind);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
     {
@@ -275,8 +270,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     size_t ret;
     int fd;
 
-    if(!_zz_ready)
-        LOADSYM(fread);
+    LOADSYM(fread);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
         return fread_orig(ptr, size, nmemb, stream);
@@ -323,8 +317,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 #define FGETC(fn) \
     do { \
         int fd; \
-        if(!_zz_ready) \
-            LOADSYM(fn); \
+        LOADSYM(fn); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd)) \
             return ORIG(fn)(stream); \
@@ -361,8 +354,7 @@ char *fgets(char *s, int size, FILE *stream)
     char *ret = s;
     int fd;
 
-    if(!_zz_ready)
-        LOADSYM(fgets);
+    LOADSYM(fgets);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
         return fgets_orig(s, size, stream);
@@ -416,8 +408,7 @@ int ungetc(int c, FILE *stream)
     unsigned char ch = c;
     int ret, fd;
 
-    if(!_zz_ready)
-        LOADSYM(ungetc);
+    LOADSYM(ungetc);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
         return ungetc_orig(c, stream);
@@ -450,8 +441,7 @@ int fclose(FILE *fp)
 {
     int ret, fd;
 
-    if(!_zz_ready)
-        LOADSYM(fclose);
+    LOADSYM(fclose);
     fd = fileno(fp);
     if(!_zz_ready || !_zz_iswatched(fd))
         return fclose_orig(fp);
@@ -470,8 +460,7 @@ int fclose(FILE *fp)
         char *line; \
         ssize_t done, size; \
         int fd, finished = 0; \
-        if(!_zz_ready) \
-            LOADSYM(fn); \
+        LOADSYM(fn); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd)) \
             return getdelim_orig(lineptr, n, delim, stream); \
@@ -552,8 +541,7 @@ char *fgetln(FILE *stream, size_t *len)
 #endif
     int fd;
 
-    if(!_zz_ready)
-        LOADSYM(fgetln);
+    LOADSYM(fgetln);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
         return fgetln_orig(stream, len);
@@ -602,8 +590,7 @@ int __srefill(FILE *fp)
     off_t newpos;
     int ret, fd, tmp;
 
-    if(!_zz_ready)
-        LOADSYM(__srefill);
+    LOADSYM(__srefill);
     fd = fileno(fp);
     if(!_zz_ready || !_zz_iswatched(fd))
         return __srefill_orig(fp);

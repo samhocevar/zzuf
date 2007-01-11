@@ -114,7 +114,7 @@ static int dummy_offset = 0;
 void *calloc(size_t nmemb, size_t size)
 {
     void *ret;
-    if(!_zz_ready)
+    if(!calloc_orig)
     {
         int i = (nmemb * size + 7) / 8;
         ret = dummy_buffer + dummy_offset;
@@ -132,7 +132,7 @@ void *calloc(size_t nmemb, size_t size)
 void *malloc(size_t size)
 {
     void *ret;
-    if(!_zz_ready)
+    if(!malloc_orig)
     {
         int i = (size + 7) / 8;
         ret = dummy_buffer + dummy_offset;
@@ -150,8 +150,7 @@ void free(void *ptr)
     if((uintptr_t)ptr >= (uintptr_t)dummy_buffer
        && (uintptr_t)ptr <= (uintptr_t)dummy_buffer + sizeof(dummy_buffer))
         return;
-    if(!_zz_ready)
-        LOADSYM(free);
+    LOADSYM(free);
     free_orig(ptr);
 }
 
@@ -161,8 +160,7 @@ void *realloc(void *ptr, size_t size)
     if((uintptr_t)ptr >= (uintptr_t)dummy_buffer
        && (uintptr_t)ptr <= (uintptr_t)dummy_buffer + sizeof(dummy_buffer))
         return ptr; /* FIXME: who would call realloc() so early? */
-    if(!_zz_ready)
-        LOADSYM(realloc);
+    LOADSYM(realloc);
     ret = realloc_orig(ptr, size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
@@ -172,8 +170,7 @@ void *realloc(void *ptr, size_t size)
 void *valloc(size_t size)
 {
     void *ret;
-    if(!_zz_ready)
-        LOADSYM(valloc);
+    LOADSYM(valloc);
     ret = valloc_orig(size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
@@ -184,8 +181,7 @@ void *valloc(size_t size)
 void *memalign(size_t boundary, size_t size)
 {
     void *ret;
-    if(!_zz_ready)
-        LOADSYM(memalign);
+    LOADSYM(memalign);
     ret = memalign_orig(boundary, size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
@@ -197,8 +193,7 @@ void *memalign(size_t boundary, size_t size)
 int posix_memalign(void **memptr, size_t alignment, size_t size)
 {
     int ret;
-    if(!_zz_ready)
-        LOADSYM(posix_memalign);
+    LOADSYM(posix_memalign);
     ret = posix_memalign_orig(memptr, alignment, size);
     if(ret == ENOMEM && _zz_memory)
         raise(SIGKILL);
@@ -212,8 +207,7 @@ int nbmaps = 0;
 
 #define MMAP(fn, off_t) \
     do { \
-        if(!_zz_ready) \
-            LOADSYM(fn); \
+        LOADSYM(fn); \
         ret = ORIG(fn)(start, length, prot, flags, fd, offset); \
         if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled) \
             return ret; \
@@ -270,8 +264,7 @@ int munmap(void *start, size_t length)
 {
     int ret, i;
 
-    if(!_zz_ready)
-        LOADSYM(munmap);
+    LOADSYM(munmap);
     for(i = 0; i < nbmaps; i++)
     {
         if(maps[i] != start)
@@ -294,8 +287,7 @@ kern_return_t map_fd(int fd, vm_offset_t offset, vm_offset_t *addr,
 {
     kern_return_t ret;
 
-    if(!_zz_ready)
-        LOADSYM(map_fd);
+    LOADSYM(map_fd);
     ret = map_fd_orig(fd, offset, addr, find_space, numbytes);
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;
