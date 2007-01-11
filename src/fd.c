@@ -26,6 +26,7 @@
 #endif
 #include <stdlib.h>
 #include <regex.h>
+#include <string.h>
 
 #include "libzzuf.h"
 #include "fd.h"
@@ -34,9 +35,12 @@
 static regex_t re_include, re_exclude;
 static int has_include = 0, has_exclude = 0;
 
-/* File descriptor stuff */
-/* TODO: split this into a static table of around 32 file descriptors, for
- * most common uses, and a dynamic table for optional additional fds. */
+/* File descriptor stuff. When program is launched, we use the static array of
+ * 32 structures, which ought to be enough for most programs. If it happens
+ * not to be the case, ie. if the process opens more than 32 file descriptors
+ * at the same time, a bigger array is malloc()ed and replaces the static one.
+ */
+#define STATIC_FILES 32
 static struct files
 {
     int managed;
@@ -45,8 +49,8 @@ static struct files
     /* Public stuff */
     struct fuzz fuzz;
 }
-*files;
-static int *fds;
+*files, static_files[STATIC_FILES];
+static int *fds, static_fds[STATIC_FILES];
 static int maxfd, nfiles;
 
 void _zz_include(char const *regex)
@@ -66,11 +70,11 @@ void _zz_fd_init(void)
     /* We start with 32 file descriptors. This is to reduce the number of
      * calls to malloc() that we do, so we get better chances that memory
      * corruption errors are reproducible */
-    files = malloc(32 * sizeof(*files));
+    files = static_files;
     for(nfiles = 0; nfiles < 32; nfiles++)
         files[nfiles].managed = 0;
 
-    fds = malloc(32 * sizeof(int));
+    fds = static_fds;
     for(maxfd = 0; maxfd < 32; maxfd++)
         fds[maxfd] = -1;
 }
@@ -88,8 +92,10 @@ void _zz_fd_fini(void)
          * closed properly, there's a leak, but it's not our problem. */
     }
 
-    free(files);
-    free(fds);
+    if(files != static_files)
+       free(files);
+    if(fds != static_fds)
+        free(fds);
 }
 
 int _zz_mustwatch(char const *file)
@@ -118,9 +124,16 @@ void _zz_register(int fd)
     if(fd < 0 || fd > 65535 || (fd < maxfd && fds[fd] != -1))
         return;
 
+    /* If filedescriptor is outside our bounds */
     while(fd >= maxfd)
     {
-        fds = realloc(fds, 2 * maxfd * sizeof(int));
+        if(fds == static_fds)
+        {
+            fds = malloc(2 * maxfd * sizeof(*fds));
+            memcpy(fds, static_fds, maxfd * sizeof(*fds));
+        }
+        else
+            fds = realloc(fds, 2 * maxfd * sizeof(*fds));
         for(i = maxfd; i < maxfd * 2; i++)
             fds[i] = -1;
         maxfd *= 2;
@@ -135,7 +148,13 @@ void _zz_register(int fd)
     if(i == nfiles)
     {
         nfiles++;
-        files = realloc(files, nfiles * sizeof(struct files));
+        if(files == static_files)
+        {
+            files = malloc(nfiles * sizeof(*files));
+            memcpy(files, static_files, nfiles * sizeof(*files));
+        }
+        else
+            files = realloc(files, nfiles * sizeof(*files));
     }
 
     files[i].managed = 1;
