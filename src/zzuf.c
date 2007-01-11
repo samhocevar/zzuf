@@ -542,7 +542,9 @@ static void clean_children(void)
                     child_list[i].seed, WEXITSTATUS(status));
             crashes++;
         }
-        else if(WIFSIGNALED(status))
+        else if(WIFSIGNALED(status)
+                 && !(WTERMSIG(status) == SIGTERM
+                       && child_list[i].status == STATUS_SIGTERM))
         {
             fprintf(stdout, "zzuf[seed=%i]: signal %i%s\n",
                     child_list[i].seed, WTERMSIG(status),
