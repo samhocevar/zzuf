@@ -31,8 +31,8 @@
 #include "fd.h"
 
 /* Regex stuff */
-static regex_t * re_include = NULL;
-static regex_t * re_exclude = NULL;
+static regex_t re_include, re_exclude;
+static int has_include = 0, has_exclude = 0;
 
 /* File descriptor stuff */
 static struct files
@@ -49,24 +49,14 @@ static int maxfd, nfiles;
 
 void _zz_include(char const *regex)
 {
-    re_include = malloc(sizeof(*re_include));
-
-    if(regcomp(re_include, regex, REG_EXTENDED) != 0)
-    {
-        free(re_include);
-        re_include = NULL;
-    }
+    if(regcomp(&re_include, regex, REG_EXTENDED) == 0)
+        has_include = 1;
 }
 
 void _zz_exclude(char const *regex)
 {
-    re_exclude = malloc(sizeof(*re_exclude));
-
-    if(regcomp(re_exclude, regex, REG_EXTENDED) != 0)
-    {
-        free(re_exclude);
-        re_exclude = NULL;
-    }
+    if(regcomp(&re_exclude, regex, REG_EXTENDED) == 0)
+        has_exclude = 1;
 }
 
 void _zz_fd_init(void)
@@ -99,10 +89,10 @@ void _zz_fd_fini(void)
 
 int _zz_mustwatch(char const *file)
 {
-    if(re_include && regexec(re_include, file, 0, NULL, 0) == REG_NOMATCH)
+    if(has_include && regexec(&re_include, file, 0, NULL, 0) == REG_NOMATCH)
         return 0; /* not included: ignore */
 
-    if(re_exclude && regexec(re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
+    if(has_exclude && regexec(&re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
         return 0; /* excluded: ignore */
 
     return 1; /* default */
