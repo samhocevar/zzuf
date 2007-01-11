@@ -53,7 +53,7 @@
 #include "load.h"
 #include "fd.h"
 
-/* TODO: mremap, maybe brk/sbrk */
+/* TODO: mremap, maybe brk/sbrk (haha) */
 
 /* Library functions that we divert */
 static void *  (*calloc_orig)   (size_t nmemb, size_t size);
@@ -106,21 +106,23 @@ void _zz_load_mem(void)
 #endif
 }
 
-/* 32k of ugly static memory for programs that call us *before* we’re
- * initialised */
-static uint64_t dummy_buffer[4096];
+/* We need a static memory buffer because some functions call memory
+ * allocation routines before our library is loaded. Hell, even dlsym()
+ * calls calloc(), so we need to do something about it */
+#define DUMMY_BYTES 655360 /* 640 kB ought to be enough for anybody */
+static uint64_t dummy_buffer[DUMMY_BYTES / 8];
 static int dummy_offset = 0;
+#define DUMMY_START ((uintptr_t)dummy_buffer)
+#define DUMMY_STOP ((uintptr_t)dummy_buffer + DUMMY_BYTES)
 
 void *calloc(size_t nmemb, size_t size)
 {
     void *ret;
     if(!calloc_orig)
     {
-        int i = (nmemb * size + 7) / 8;
         ret = dummy_buffer + dummy_offset;
-        dummy_offset += i;
-        /* Calloc says we must zero the data */
-        memset(ret, 0, size);
+        memset(ret, 0, (nmemb * size + 7) / 8);
+        dummy_offset += (nmemb * size + 7) / 8;
         return ret;
     }
     ret = calloc_orig(nmemb, size);
@@ -134,9 +136,8 @@ void *malloc(size_t size)
     void *ret;
     if(!malloc_orig)
     {
-        int i = (size + 7) / 8;
         ret = dummy_buffer + dummy_offset;
-        dummy_offset += i;
+        dummy_offset += (size + 7) / 8;
         return ret;
     }
     ret = malloc_orig(size);
@@ -147,8 +148,7 @@ void *malloc(size_t size)
 
 void free(void *ptr)
 {
-    if((uintptr_t)ptr >= (uintptr_t)dummy_buffer
-       && (uintptr_t)ptr <= (uintptr_t)dummy_buffer + sizeof(dummy_buffer))
+    if((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
         return;
     LOADSYM(free);
     free_orig(ptr);
@@ -157,9 +157,13 @@ void free(void *ptr)
 void *realloc(void *ptr, size_t size)
 {
     void *ret;
-    if((uintptr_t)ptr >= (uintptr_t)dummy_buffer
-       && (uintptr_t)ptr <= (uintptr_t)dummy_buffer + sizeof(dummy_buffer))
-        return ptr; /* FIXME: who would call realloc() so early? */
+    if((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
+    {
+        ret = dummy_buffer + dummy_offset;
+        memcpy(ret, ptr, size);
+        dummy_offset += (size + 7) * 8;
+        return ret;
+    }
     LOADSYM(realloc);
     ret = realloc_orig(ptr, size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
