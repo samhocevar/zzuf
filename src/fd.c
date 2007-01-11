@@ -35,6 +35,8 @@ static regex_t re_include, re_exclude;
 static int has_include = 0, has_exclude = 0;
 
 /* File descriptor stuff */
+/* TODO: split this into a static table of around 32 file descriptors, for
+ * most common uses, and a dynamic table for optional additional fds. */
 static struct files
 {
     int managed;
@@ -61,12 +63,15 @@ void _zz_exclude(char const *regex)
 
 void _zz_fd_init(void)
 {
-    files = NULL;
-    nfiles = 0;
+    /* We start with 32 file descriptors. This is to reduce the number of
+     * calls to malloc() that we do, so we get better chances that memory
+     * corruption errors are reproducible */
+    files = malloc(32 * sizeof(*files));
+    for(nfiles = 0; nfiles < 32; nfiles++)
+        files[nfiles].managed = 0;
 
-    /* Start with one fd in the lookup table */
-    fds = malloc(1 * sizeof(int));
-    for(maxfd = 0; maxfd < 1; maxfd++)
+    fds = malloc(32 * sizeof(int));
+    for(maxfd = 0; maxfd < 32; maxfd++)
         fds[maxfd] = -1;
 }
 
@@ -136,7 +141,6 @@ void _zz_register(int fd)
     files[i].managed = 1;
     files[i].pos = 0;
     files[i].fuzz.cur = -1;
-    files[i].fuzz.data = malloc(CHUNKBYTES);
 #ifdef HAVE_FGETLN
     files[i].fuzz.tmp = NULL;
 #endif
@@ -150,7 +154,6 @@ void _zz_unregister(int fd)
         return;
 
     files[fds[fd]].managed = 0;
-    free(files[fds[fd]].fuzz.data);
 #ifdef HAVE_FGETLN
     if(files[fds[fd]].fuzz.tmp)
         free(files[fds[fd]].fuzz.tmp);
