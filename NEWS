@@ -1,5 +1,11 @@
 $Id$
 
+Changes from 0.3 to 0.4
+
+ * check for memory exhausting processes
+ * built-in MD5 hashing
+ * fix for mmap(), OS X map_fd() support
+
 Changes from 0.2 to 0.3
 
  * FreeBSD, NetBSD and OpenBSD support

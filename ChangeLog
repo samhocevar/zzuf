@@ -1,4 +1,265 @@
 ------------------------------------------------------------------------
+r188 | sam | 2007-01-12 00:30:29 +0100 (Fri, 12 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/src/fd.c
+
+  * Got rid of malloc() for each file opened. Now we only start calling
+    malloc() after the 32th file descriptor.
+
+------------------------------------------------------------------------
+r187 | sam | 2007-01-11 23:43:45 +0100 (Thu, 11 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/src/libzzuf.h
+
+  * Reduce number of malloc() calls within libzzuf.
+
+------------------------------------------------------------------------
+r186 | sam | 2007-01-11 23:11:56 +0100 (Thu, 11 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/fd.c
+
+  * Remove two useless malloc() calls.
+
+------------------------------------------------------------------------
+r185 | sam | 2007-01-11 23:11:28 +0100 (Thu, 11 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Don't stop if the process was killed by us.
+
+------------------------------------------------------------------------
+r184 | sam | 2007-01-11 11:21:11 +0100 (Thu, 11 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-mem.c
+
+  * Better realloc dummy implementation.
+
+------------------------------------------------------------------------
+r183 | sam | 2007-01-11 01:39:59 +0100 (Thu, 11 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/libzzuf.c
+   M /trunk/src/load-fd.c
+   M /trunk/src/load-mem.c
+   M /trunk/src/load-signal.c
+   M /trunk/src/load-stream.c
+   M /trunk/src/load.h
+
+  * Minor code factorisation into LOADSYM().
+
+------------------------------------------------------------------------
+r182 | sam | 2007-01-11 01:27:47 +0100 (Thu, 11 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Typo in the manpage.
+
+------------------------------------------------------------------------
+r181 | sam | 2007-01-10 19:11:13 +0100 (Wed, 10 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-mem.c
+
+  * Allow several calls to malloc()/calloc() in the library preloading stage.
+
+------------------------------------------------------------------------
+r180 | sam | 2007-01-10 18:31:58 +0100 (Wed, 10 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/load-mem.c
+
+  * Removed brk/sbrk, they're so outdated and useless.
+
+------------------------------------------------------------------------
+r179 | sam | 2007-01-10 18:25:09 +0100 (Wed, 10 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-mem.c
+
+  * Oops, fixed an old OS X build failure.
+
+------------------------------------------------------------------------
+r178 | sam | 2007-01-10 18:23:23 +0100 (Wed, 10 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/load-mem.c
+
+  * Check for memalign and posix_memalign.
+
+------------------------------------------------------------------------
+r177 | sam | 2007-01-10 18:19:48 +0100 (Wed, 10 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/load-mem.c
+
+  * Check for malloc.h.
+
+------------------------------------------------------------------------
+r176 | sam | 2007-01-10 18:17:26 +0100 (Wed, 10 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/libzzuf.c
+   M /trunk/src/libzzuf.h
+   M /trunk/src/load-mem.c
+   M /trunk/src/zzuf.c
+
+  * Implemented memory limits. Probably breaks on other arches because of all
+    the new functions.
+
+------------------------------------------------------------------------
+r175 | sam | 2007-01-10 16:22:09 +0100 (Wed, 10 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+   M /trunk/test/testsuite.sh
+
+  * Changed -M to -m (for --md5).
+
+------------------------------------------------------------------------
+r174 | sam | 2007-01-10 15:57:22 +0100 (Wed, 10 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   M /trunk/src/libzzuf.c
+   M /trunk/src/load-fd.c
+   A /trunk/src/load-mem.c (from /trunk/src/load-fd.c:173)
+   M /trunk/src/load.h
+
+  * Split load-fd.c into load-fd.c and load-mem.c (mmap, etc.).
+
+------------------------------------------------------------------------
+r173 | sam | 2007-01-09 17:39:07 +0100 (Tue, 09 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-fd.c
+
+  * Fixed double mmap debug message.
+
+------------------------------------------------------------------------
+r172 | sam | 2007-01-09 17:16:00 +0100 (Tue, 09 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/src/load-fd.c
+
+  * Add verbosity to read() and mmap() so that we roughly know where we
+    are reading.
+
+------------------------------------------------------------------------
+r171 | sam | 2007-01-09 17:14:31 +0100 (Tue, 09 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/debug.c
+
+  * Change debug's %c so that it automatically escapes binary characters.
+
+------------------------------------------------------------------------
+r170 | sam | 2007-01-09 16:40:08 +0100 (Tue, 09 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-fd.c
+
+  * mmap() maps the file descriptor at offset 0.
+
+------------------------------------------------------------------------
+r169 | sam | 2007-01-09 12:22:09 +0100 (Tue, 09 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Don’t report exit status by default.
+  * Add -x/--check-exit to get back to the previous behaviour.
+
+------------------------------------------------------------------------
+r168 | sam | 2007-01-09 11:07:35 +0100 (Tue, 09 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Bah, reverted that. We'll use -O for --offset.
+
+------------------------------------------------------------------------
+r167 | sam | 2007-01-09 11:05:47 +0100 (Tue, 09 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Rename -B/--max-bytes to -O/--max-output so that we can implement -A/-B.
+
+------------------------------------------------------------------------
+r166 | sam | 2007-01-09 11:02:57 +0100 (Tue, 09 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/doc/zzuf.1
+   M /trunk/src/load-fd.c
+
+  * Implement map_fd for OS X.
+
+------------------------------------------------------------------------
+r165 | sam | 2007-01-08 22:51:06 +0100 (Mon, 08 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/test/testsuite.sh
+
+  * Fixed testsuite for anal shells.
+
+------------------------------------------------------------------------
+r164 | sam | 2007-01-08 22:49:57 +0100 (Mon, 08 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Tru64 loader support (_RLD_LIST).
+
+------------------------------------------------------------------------
+r163 | sam | 2007-01-08 22:48:39 +0100 (Mon, 08 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+  * Fix the socklen_t type detection on Linux.
+
+------------------------------------------------------------------------
+r162 | sam | 2007-01-08 22:05:05 +0100 (Mon, 08 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-signal.c
+
+  * Define sig_t to void (*) (int) if it does not exist.
+
+------------------------------------------------------------------------
+r161 | sam | 2007-01-08 22:03:32 +0100 (Mon, 08 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/load-fd.c
+
+  * Define socklen_t to int if it does not exist.
+
+------------------------------------------------------------------------
+r160 | sam | 2007-01-08 19:15:49 +0100 (Mon, 08 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/test/testsuite.sh
+
+  * Test suite now uses the new MD5 feature.
+
+------------------------------------------------------------------------
+r159 | sam | 2007-01-08 18:54:16 +0100 (Mon, 08 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Changed --md5 to only compute the standard output.
+
+------------------------------------------------------------------------
+r158 | sam | 2007-01-08 18:50:34 +0100 (Mon, 08 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/Makefile.am
+   A /trunk/src/md5.c
+   A /trunk/src/md5.h
+   M /trunk/src/zzuf.c
+
+  * Implemented -M/--md5 flag.
+
+------------------------------------------------------------------------
+r157 | sam | 2007-01-07 22:29:37 +0100 (Sun, 07 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+   M /trunk/configure.ac
+
+  * Version 0.3.
+  * Updated NEWS and ChangeLog.
+
+------------------------------------------------------------------------
 r156 | sam | 2007-01-07 22:14:26 +0100 (Sun, 07 Jan 2007) | 2 lines
 Changed paths:
    M /trunk/src/fd.c
