@@ -44,7 +44,9 @@
 #include "md5.h"
 #include "timer.h"
 
-static void spawn_child(char **);
+static void loop_stdin(void);
+
+static void spawn_children(void);
 static void clean_children(void);
 static void read_children(void);
 
@@ -75,6 +77,8 @@ static struct child_list
 } *child_list;
 static int maxforks = 1, child_count = 0, maxcrashes = 1, crashes = 0;
 
+static char **newargv;
+static char *protect = NULL, *refuse = NULL;
 static int seed = 0;
 static int endseed = 1;
 static int quiet = 0;
@@ -83,6 +87,7 @@ static int md5 = 0;
 static int checkexit = 0;
 static int maxmem = -1;
 static int64_t maxtime = -1;
+static int64_t lastlaunch = 0;
 
 #define ZZUF_FD_SET(fd, p_fdset, maxfd) \
     if(fd >= 0) \
@@ -97,11 +102,10 @@ static int64_t maxtime = -1;
 
 int main(int argc, char *argv[])
 {
-    char **newargv;
-    char *parser, *include, *exclude, *protect, *refuse;
+    char *parser, *include, *exclude;
     int i, cmdline = 0;
 
-    include = exclude = protect = refuse = NULL;
+    include = exclude = NULL;
 
 #if defined(HAVE_GETOPT_H)
     for(;;)
@@ -238,12 +242,6 @@ int main(int argc, char *argv[])
     /* If asked to read from the standard input */
     if(optind >= argc)
     {
-        uint8_t md5sum[16];
-        struct md5 *ctx = NULL;
-
-        if(md5)
-            ctx = _zz_md5_init();
-
         if(endseed != seed + 1)
         {
             printf("%s: seed ranges are incompatible with stdin fuzzing\n",
@@ -252,55 +250,12 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        if(protect)
-            _zz_protect(protect);
-        if(refuse)
-            _zz_refuse(refuse);
-
-        _zz_fd_init();
-        _zz_register(0);
-
-        for(;;)
-        {
-            uint8_t buf[BUFSIZ];
-            int ret, off = 0, nw = 0;
-
-            ret = read(0, buf, BUFSIZ);
-            if(ret <= 0)
-                break;
-
-            _zz_fuzz(0, buf, ret);
-            _zz_addpos(0, ret);
-
-            if(md5)
-                _zz_md5_add(ctx, buf, ret);
-            else while(ret)
-            {
-                if((nw = write(1, buf + off, (size_t)ret)) < 0)
-                    break;
-                ret -= nw;
-                off += nw;
-            }
-        }
-
-        if(md5)
-        {
-            _zz_md5_fini(md5sum, ctx);
-            fprintf(stdout, "zzuf[seed=%i]: %.02x%.02x%.02x%.02x%.02x%.02x"
-                    "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
-                    seed, md5sum[0], md5sum[1], md5sum[2], md5sum[3],
-                    md5sum[4], md5sum[5], md5sum[6], md5sum[7],
-                    md5sum[8], md5sum[9], md5sum[10], md5sum[11],
-                    md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
-            fflush(stdout);
-        }
-
-        _zz_unregister(0);
-        _zz_fd_fini();
+        loop_stdin();
 
         return EXIT_SUCCESS;
     }
 
+    /* If asked to launch programs */
     if(cmdline)
     {
         int dashdash = 0;
@@ -342,10 +297,8 @@ int main(int argc, char *argv[])
     /* Main loop */
     while(child_count || seed < endseed)
     {
-        /* Spawn one new child, if necessary */
-        if(child_count < maxforks && seed < endseed &&
-                             (maxcrashes && crashes < maxcrashes))
-            spawn_child(newargv);
+        /* Spawn new children, if necessary */
+        spawn_children();
 
         /* Cleanup dead or dying children */
         clean_children();
@@ -362,6 +315,61 @@ int main(int argc, char *argv[])
     free(child_list);
 
     return EXIT_SUCCESS;    
+}
+
+static void loop_stdin(void)
+{
+    uint8_t md5sum[16];
+    struct md5 *ctx = NULL;
+
+    if(md5)
+        ctx = _zz_md5_init();
+
+    if(protect)
+        _zz_protect(protect);
+    if(refuse)
+        _zz_refuse(refuse);
+
+    _zz_fd_init();
+    _zz_register(0);
+
+    for(;;)
+    {
+        uint8_t buf[BUFSIZ];
+        int ret, off = 0, nw = 0;
+
+        ret = read(0, buf, BUFSIZ);
+        if(ret <= 0)
+            break;
+
+        _zz_fuzz(0, buf, ret);
+        _zz_addpos(0, ret);
+
+        if(md5)
+            _zz_md5_add(ctx, buf, ret);
+        else while(ret)
+        {
+            if((nw = write(1, buf + off, (size_t)ret)) < 0)
+                break;
+            ret -= nw;
+            off += nw;
+        }
+    }
+
+    if(md5)
+    {
+        _zz_md5_fini(md5sum, ctx);
+        fprintf(stdout, "zzuf[seed=%i]: %.02x%.02x%.02x%.02x%.02x%.02x"
+                "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
+                seed, md5sum[0], md5sum[1], md5sum[2], md5sum[3],
+                md5sum[4], md5sum[5], md5sum[6], md5sum[7],
+                md5sum[8], md5sum[9], md5sum[10], md5sum[11],
+                md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
+        fflush(stdout);
+    }
+
+    _zz_unregister(0);
+    _zz_fd_fini();
 }
 
 static char *merge_file(char *regex, char *file)
@@ -408,13 +416,22 @@ static char *merge_regex(char *regex, char *string)
     return regex;
 }
 
-static void spawn_child(char **argv)
+static void spawn_children(void)
 {
     static int const files[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
     char buf[BUFSIZ];
     int fd[3][2];
     pid_t pid;
     int i, j;
+
+    if(child_count == maxforks)
+        return; /* no slot */
+
+    if(seed == endseed)
+        return; /* job finished */
+
+    if(maxcrashes && crashes >= maxcrashes)
+        return; /* all jobs crashed */
 
     /* Find the empty slot */
     for(i = 0; i < maxforks; i++)
@@ -458,16 +475,18 @@ static void spawn_child(char **argv)
             setenv("ZZUF_SEED", buf, 1);
 
             /* Run our process */
-            if(execvp(argv[0], argv))
+            if(execvp(newargv[0], newargv))
             {
-                perror(argv[0]);
+                perror(newargv[0]);
                 exit(EXIT_FAILURE);
             }
             return;
     }
 
+    lastlaunch = _zz_time();
+
     /* We’re the parent, acknowledge spawn */
-    child_list[i].date = _zz_time();
+    child_list[i].date = lastlaunch;
     child_list[i].pid = pid;
     for(j = 0; j < 3; j++)
     {
@@ -479,6 +498,7 @@ static void spawn_child(char **argv)
     child_list[i].status = STATUS_RUNNING;
     if(md5)
         child_list[i].ctx = _zz_md5_init();
+
     child_count++;
     seed++;
 }
