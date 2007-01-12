@@ -693,7 +693,7 @@ static void usage(void)
     printf("Usage: zzuf [-cdimnqSx] [-r ratio] [-s seed | -s start:stop]\n");
     printf("                        [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
     printf("                        [-M bytes] [-P protect] [-R refuse]\n");
-    printf("                        [-I include] [-E exclude] [PROGRAM [ARGS]...]\n");
+    printf("                        [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
     printf("       zzuf -v | --version\n");
@@ -701,7 +701,7 @@ static void usage(void)
     printf("       zzuf -h\n");
     printf("       zzuf -v\n");
 #   endif
-    printf("Run COMMAND and randomly fuzz its input.\n");
+    printf("Run PROGRAM with optional arguments ARGS and fuzz its input.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
 #   ifdef HAVE_GETOPT_LONG
