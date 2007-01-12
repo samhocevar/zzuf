@@ -1,3 +1,4 @@
+# $Id$
 
 SUBDIRS = src test doc
 DIST_SUBDIRS = $(SUBDIRS)

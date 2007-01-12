@@ -33,8 +33,6 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/time.h>
-#include <time.h>
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -44,6 +42,7 @@
 #include "fd.h"
 #include "fuzz.h"
 #include "md5.h"
+#include "timer.h"
 
 static void spawn_child(char **);
 static void clean_children(void);
@@ -71,7 +70,7 @@ static struct child_list
     pid_t pid;
     int fd[3]; /* 0 is debug, 1 is stderr, 2 is stdout */
     int bytes, seed;
-    time_t date;
+    int64_t date;
     struct md5 *ctx;
 } *child_list;
 static int maxforks = 1, child_count = 0, maxcrashes = 1, crashes = 0;
@@ -83,7 +82,7 @@ static int maxbytes = -1;
 static int md5 = 0;
 static int checkexit = 0;
 static int maxmem = -1;
-static double maxtime = -1.0;
+static int64_t maxtime = -1;
 
 #define ZZUF_FD_SET(fd, p_fdset, maxfd) \
     if(fd >= 0) \
@@ -214,7 +213,7 @@ int main(int argc, char *argv[])
             setenv("ZZUF_SIGNAL", "1", 1);
             break;
         case 'T': /* --max-time */
-            maxtime = atof(optarg);
+            maxtime = (int64_t)(atof(optarg) * 1000000.0);
             break;
         case 'x': /* --check-exit */
             checkexit = 1;
@@ -468,7 +467,7 @@ static void spawn_child(char **argv)
     }
 
     /* We’re the parent, acknowledge spawn */
-    child_list[i].date = time(NULL);
+    child_list[i].date = _zz_time();
     child_list[i].pid = pid;
     for(j = 0; j < 3; j++)
     {
@@ -486,7 +485,7 @@ static void spawn_child(char **argv)
 
 static void clean_children(void)
 {
-    time_t now = time(NULL);
+    int64_t now = _zz_time();
     int i, j;
 
     /* Terminate children if necessary */
@@ -503,8 +502,8 @@ static void clean_children(void)
         }
 
         if(child_list[i].status == STATUS_RUNNING
-            && maxtime >= 0.0
-            && difftime(now, child_list[i].date) > maxtime)
+            && maxtime >= 0
+            && now > child_list[i].date + maxtime)
         {
             fprintf(stdout, "zzuf[seed=%i]: time exceeded, sending SIGTERM\n",
                     child_list[i].seed);
@@ -514,11 +513,11 @@ static void clean_children(void)
         }
     }
 
-    /* Kill children if necessary */
+    /* Kill children if necessary (still there after 2 seconds) */
     for(i = 0; i < maxforks; i++)
     {
         if(child_list[i].status == STATUS_SIGTERM
-            && difftime(now, child_list[i].date) > 2.0)
+            && now > child_list[i].date + 2000000)
         {
             fprintf(stdout, "zzuf[seed=%i]: not responding, sending SIGKILL\n",
                     child_list[i].seed);
