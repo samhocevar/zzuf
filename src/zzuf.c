@@ -263,8 +263,10 @@ int main(int argc, char *argv[])
 
         for(;;)
         {
-            uint8_t buf[12];
-            int ret = fread(buf, 1, 12, stdin);
+            uint8_t buf[BUFSIZ];
+            int ret, off = 0, nw = 0;
+
+            ret = read(0, buf, BUFSIZ);
             if(ret <= 0)
                 break;
 
@@ -273,8 +275,13 @@ int main(int argc, char *argv[])
 
             if(md5)
                 _zz_md5_add(ctx, buf, ret);
-            else
-                fwrite(buf, 1, ret, stdout);
+            else while(ret)
+            {
+                if((nw = write(1, buf + off, (size_t)ret)) < 0)
+                    break;
+                ret -= nw;
+                off += nw;
+            }
         }
 
         if(md5)
