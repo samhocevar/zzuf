@@ -245,7 +245,9 @@ can be read by \fBVLC\fR to reproduce the same behaviour without using
 \fBzzuf\fR:
 .PP
 \fB    zzuf \-c \-s 87423 \-r 0.01 vlc movie.avi\fR
+.br
 \fB    zzuf \-c \-s 87423 \-r 0.01 <movie.avi >fuzzy\-movie.avi\fR
+.br
 \fB    vlc fuzzy\-movie.avi\fR
 .PP
 Fuzz 2% of \fBMPlayer\fR's input bits (\fB\-r\ 0.02\fR) with seeds 0 to 9999
@@ -256,13 +258,16 @@ if it takes more than one minute to read the file (\fB\-T\ 60\fR) and
 disabling its \fBSIGSEGV\fR signal handler (\fB\-S\fR):
 .PP
 \fB    zzuf \-c \-r 0.02 \-q \-s 0:10000 \-F 5 \-D 0.5 \-T 60 \-S \\\fR
+.br
 \fB      mplayer \-\- \-benchmark \-vo null \-fps 1000 movie.avi\fR
 .PP
 Create an HTML-like file that loads 1000 times the same \fBhello.gif\fR image
 and open it in \fBFirefox\fR in auto-increment mode (\fB\-A\fR):
 .PP
 \fB    awk \(aqBEGIN { for(i=0; i<1000; i++) { print \\\fR
+.br
 \fB                   "<img src=\\"hello.gif#"i"\\">" }}\(aq > hello.html\fR
+.br
 \fB    zzuf -A -I \(aqhello[.]gif\(aq -r 0.001 firefox hello.html\fR
 .SH RESTRICTIONS
 .PP
