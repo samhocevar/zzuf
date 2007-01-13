@@ -87,6 +87,7 @@ static int md5 = 0;
 static int checkexit = 0;
 static int maxmem = -1;
 static int64_t maxtime = -1;
+static int64_t delay = 0;
 static int64_t lastlaunch = 0;
 
 #define ZZUF_FD_SET(fd, p_fdset, maxfd) \
@@ -110,6 +111,7 @@ int main(int argc, char *argv[])
 #if defined(HAVE_GETOPT_H)
     for(;;)
     {
+#   define OPTSTR "B:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:xhv"
 #   ifdef HAVE_GETOPT_LONG
 #       define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
@@ -120,6 +122,7 @@ int main(int argc, char *argv[])
             { "cmdline",     0, NULL, 'c' },
             { "max-crashes", 1, NULL, 'C' },
             { "debug",       0, NULL, 'd' },
+            { "delay",       1, NULL, 'D' },
             { "exclude",     1, NULL, 'E' },
             { "max-forks",   1, NULL, 'F' },
             { "stdin",       0, NULL, 'i' },
@@ -138,11 +141,10 @@ int main(int argc, char *argv[])
             { "help",        0, NULL, 'h' },
             { "version",     0, NULL, 'v' },
         };
-        int c = getopt_long(argc, argv, "B:cC:dE:F:iI:mM:nP:qr:R:s:ST:xhv",
-                            long_options, &option_index);
+        int c = getopt_long(argc, argv, OPTSTR, long_options, &option_index);
 #   else
 #       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, "B:cC:dE:F:iI:mM:nP:qr:R:s:ST:xhv");
+        int c = getopt(argc, argv, OPTSTR);
 #   endif
         if(c == -1)
             break;
@@ -162,6 +164,9 @@ int main(int argc, char *argv[])
             break;
         case 'd': /* --debug */
             setenv("ZZUF_DEBUG", "1", 1);
+            break;
+        case 'D': /* --delay */
+            delay = (int64_t)(atof(optarg) * 1000000.0);
             break;
         case 'E': /* --exclude */
             exclude = merge_regex(exclude, optarg);
@@ -421,6 +426,7 @@ static void spawn_children(void)
     static int const files[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
     char buf[BUFSIZ];
     int fd[3][2];
+    int64_t now = _zz_time();
     pid_t pid;
     int i, j;
 
@@ -432,6 +438,9 @@ static void spawn_children(void)
 
     if(maxcrashes && crashes >= maxcrashes)
         return; /* all jobs crashed */
+
+    if(delay > 0 && lastlaunch + delay > now)
+        return; /* too early */
 
     /* Find the empty slot */
     for(i = 0; i < maxforks; i++)
@@ -483,10 +492,8 @@ static void spawn_children(void)
             return;
     }
 
-    lastlaunch = _zz_time();
-
     /* We’re the parent, acknowledge spawn */
-    child_list[i].date = lastlaunch;
+    child_list[i].date = now;
     child_list[i].pid = pid;
     for(j = 0; j < 3; j++)
     {
@@ -499,6 +506,7 @@ static void spawn_children(void)
     if(md5)
         child_list[i].ctx = _zz_md5_init();
 
+    lastlaunch = now;
     child_count++;
     seed++;
 }
@@ -711,8 +719,8 @@ static void version(void)
 static void usage(void)
 {
     printf("Usage: zzuf [-cdimnqSx] [-r ratio] [-s seed | -s start:stop]\n");
-    printf("                        [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
-    printf("                        [-M bytes] [-P protect] [-R refuse]\n");
+    printf("                        [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
+    printf("                        [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
     printf("                        [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
@@ -729,6 +737,7 @@ static void usage(void)
     printf("  -c, --cmdline            only fuzz files specified in the command line\n");
     printf("  -C, --max-crashes <n>    stop after <n> children have crashed (default 1)\n");
     printf("  -d, --debug              print debug messages\n");
+    printf("  -D, --delay              delay between forks\n");
     printf("  -E, --exclude <regex>    do not fuzz files matching <regex>\n");
     printf("  -F, --max-forks <n>      number of concurrent children (default 1)\n");
     printf("  -i, --stdin              fuzz standard input\n");
@@ -752,6 +761,7 @@ static void usage(void)
     printf("  -c               only fuzz files specified in the command line\n");
     printf("  -C <n>           stop after <n> children have crashed (default 1)\n");
     printf("  -d               print debug messages\n");
+    printf("  -D               delay between forks\n");
     printf("  -E <regex>       do not fuzz files matching <regex>\n");
     printf("  -F <n>           number of concurrent forks (default 1)\n");
     printf("  -i               fuzz standard input\n");

@@ -4,9 +4,9 @@ zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
 \fBzzuf\fR [\fB\-cdiMnqSx\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR]
 .br
-                 [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
+                 [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
 .br
-                 [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
+                 [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
 .br
                  [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
 .br
@@ -69,6 +69,10 @@ argument.
 \fB\-d\fR, \fB\-\-debug\fR
 Activate the display of debug messages.
 .TP
+\fB\-D\fR, \fB\-\-delay\fR=\fIdelay\fR
+Do not launch more than one process every \fIdelay\fR seconds. This option
+should be used together with \fB\-F\fR to avoid fork bombs.
+.TP
 \fB\-E\fR, \fB\-\-exclude\fR=\fIregex\fR
 Do not fuzz files whose name matches the \fIregex\fR regular expression. This
 option supersedes anything that is specified by the \fB\-I\fR flag. Use this
@@ -82,7 +86,7 @@ of the regular expressions will be ignored.
 Specify the number of simultaneous children that can be run.
 
 This option is only relevant if the \fB\-s\fR flag is used with an interval
-argument.
+argument. See also the \fB\-D\fR flag.
 .TP
 \fB\-i\fR, \fB\-\-stdin\fR
 Fuzz the application's standard input. By default \fBzzuf\fR only fuzzes files.
@@ -241,11 +245,12 @@ can be read by \fBVLC\fR to reproduce the same behaviour without using
 .PP
 Fuzz 2% of \fBMPlayer\fR's input bits (\fB\-r\ 0.02\fR) with seeds 0 to 9999
 (\fB\-s\ 0:10000\fR), disabling its standard output messages (\fB\-q\fR),
-launching up to three simultaneous child processes (\fB\-F\ 3\fR), killing
-\fBMPlayer\fR if it takes more than one minute to read the file (\fB\-T\ 60\fR)
-and disabling its \fBSIGSEGV\fR signal handler (\fB\-S\fR):
+launching up to five simultaneous child processes (\fB\-F\ 5\fR) but wait at
+least half a second between launches (\fB\-D\ 0.5\fR), killing \fBMPlayer\fR
+if it takes more than one minute to read the file (\fB\-T\ 60\fR) and
+disabling its \fBSIGSEGV\fR signal handler (\fB\-S\fR):
 .PP
-\fB    zzuf \-c \-r 0.02 \-q \-s 0:10000 \-F 3 \-T 60 \-S \\\fR
+\fB    zzuf \-c \-r 0.02 \-q \-s 0:10000 \-F 5 \-D 0.5 \-T 60 \-S \\\fR
 \fB      mplayer \-\- \-benchmark \-vo null \-fps 1000 movie.avi\fR
 .SH RESTRICTIONS
 .PP
