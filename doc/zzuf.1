@@ -2,13 +2,13 @@
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-cdiMnqSx\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR]
+\fBzzuf\fR [\fB\-AcdiMnqSx\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR]
 .br
-                 [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
+                  [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
 .br
-                 [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
+                  [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
 .br
-                 [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
+                  [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
 .br
@@ -37,6 +37,11 @@ if the \fBcat\fR utility had been called:
 .PP
 \fB    zzuf < /dev/zero\fR
 .SH OPTIONS
+.TP
+\fB\-A\fR, \fB\-\-autoinc\fR
+Increment random seed each time a new file is opened. This is only required
+if the same application is expected to open the same file several times and
+you want to test a different seed each time.
 .TP
 \fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
 Automatically terminate child processes that output more than \fIn\fR bytes
@@ -252,6 +257,13 @@ disabling its \fBSIGSEGV\fR signal handler (\fB\-S\fR):
 .PP
 \fB    zzuf \-c \-r 0.02 \-q \-s 0:10000 \-F 5 \-D 0.5 \-T 60 \-S \\\fR
 \fB      mplayer \-\- \-benchmark \-vo null \-fps 1000 movie.avi\fR
+.PP
+Create an HTML-like file that loads 1000 times the same \fBhello.gif\fR image
+and open it in \fBFirefox\fR in auto-increment mode (\fB\-A\fR):
+.PP
+\fB    awk \(aqBEGIN { for(i=0; i<1000; i++) { print \\\fR
+\fB                   "<img src=\\"hello.gif#"i"\\">" }}\(aq > hello.html\fR
+\fB    zzuf -A -I \(aqhello[.]gif\(aq -r 0.001 firefox hello.html\fR
 .SH RESTRICTIONS
 .PP
 Due to \fBzzuf\fR using shared object preloading (\fBLD_PRELOAD\fR,

@@ -111,13 +111,14 @@ int main(int argc, char *argv[])
 #if defined(HAVE_GETOPT_H)
     for(;;)
     {
-#   define OPTSTR "B:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:xhv"
+#   define OPTSTR "AB:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:xhv"
 #   ifdef HAVE_GETOPT_LONG
 #       define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct option long_options[] =
         {
             /* Long option, needs arg, flag, short option */
+            { "autoinc",     0, NULL, 'A' },
             { "max-bytes",   1, NULL, 'B' },
             { "cmdline",     0, NULL, 'c' },
             { "max-crashes", 1, NULL, 'C' },
@@ -151,6 +152,9 @@ int main(int argc, char *argv[])
 
         switch(c)
         {
+        case 'A': /* --autoinc */
+            setenv("ZZUF_AUTOINC", "1", 1);
+            break;
         case 'B': /* --max-bytes */
             maxbytes = atoi(optarg);
             break;
@@ -722,10 +726,10 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [-cdimnqSx] [-r ratio] [-s seed | -s start:stop]\n");
-    printf("                        [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
-    printf("                        [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
-    printf("                        [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
+    printf("Usage: zzuf [-AcdimnqSx] [-r ratio] [-s seed | -s start:stop]\n");
+    printf("                         [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
+    printf("                         [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
+    printf("                         [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
     printf("       zzuf -v | --version\n");
@@ -737,6 +741,7 @@ static void usage(void)
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
 #   ifdef HAVE_GETOPT_LONG
+    printf("  -A, --autoinc            increment seed each time a new file is opened\n");
     printf("  -B, --max-bytes <n>      kill children that output more than <n> bytes\n");
     printf("  -c, --cmdline            only fuzz files specified in the command line\n");
     printf("  -C, --max-crashes <n>    stop after <n> children have crashed (default 1)\n");
@@ -761,6 +766,7 @@ static void usage(void)
     printf("  -h, --help               display this help and exit\n");
     printf("  -v, --version            output version information and exit\n");
 #   else
+    printf("  -A               increment seed each time a new file is opened\n");
     printf("  -B <n>           kill children that output more than <n> bytes\n");
     printf("  -c               only fuzz files specified in the command line\n");
     printf("  -C <n>           stop after <n> children have crashed (default 1)\n");

@@ -27,6 +27,8 @@
 
 struct fuzz
 {
+    uint32_t seed;
+    float ratio;
     int cur;
 #ifdef HAVE_FGETLN
     char *tmp;
@@ -35,12 +37,13 @@ struct fuzz
 };
 
 /* Internal variables */
-extern int   _zz_ready;
-extern int   _zz_disabled;
-extern int   _zz_hasdebug;
-extern int   _zz_signal;
-extern int   _zz_memory;
-extern int   _zz_network;
+extern int _zz_ready;
+extern int _zz_disabled;
+extern int _zz_hasdebug;
+extern int _zz_signal;
+extern int _zz_memory;
+extern int _zz_network;
+extern int _zz_autoinc;
 
 /* Library initialisation shit */
 extern void _zz_init(void) __attribute__((constructor));

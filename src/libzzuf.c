@@ -70,6 +70,10 @@ void _zz_init(void)
     if(tmp && *tmp)
         _zz_setratio(atof(tmp));
 
+    tmp = getenv("ZZUF_AUTOINC");
+    if(tmp && *tmp == '1')
+        _zz_setautoinc();
+
     tmp = getenv("ZZUF_PROTECT");
     if(tmp && *tmp)
         _zz_protect(tmp);

@@ -28,6 +28,7 @@
 #include <regex.h>
 #include <string.h>
 
+#include "debug.h"
 #include "libzzuf.h"
 #include "fd.h"
 
@@ -44,7 +45,6 @@ static int has_include = 0, has_exclude = 0;
 static struct files
 {
     int managed;
-    uint64_t seed;
     uint64_t pos;
     /* Public stuff */
     struct fuzz fuzz;
@@ -52,6 +52,10 @@ static struct files
 *files, static_files[STATIC_FILES];
 static int *fds, static_fds[STATIC_FILES];
 static int maxfd, nfiles;
+
+static int32_t seed = 0;
+static float   ratio = 0.004f;
+static int     autoinc = 0;
 
 void _zz_include(char const *regex)
 {
@@ -63,6 +67,25 @@ void _zz_exclude(char const *regex)
 {
     if(regcomp(&re_exclude, regex, REG_EXTENDED) == 0)
         has_exclude = 1;
+}
+
+void _zz_setseed(int32_t s)
+{
+    seed = s;
+}
+
+void _zz_setratio(float r)
+{
+    if(r < 0.0f)
+        r = 0.0f;
+    else if(r > 5.0f)
+        r = 5.0f;
+    ratio = r;
+}
+
+void _zz_setautoinc(void)
+{
+    autoinc = 1;
 }
 
 void _zz_fd_init(void)
@@ -124,6 +147,11 @@ void _zz_register(int fd)
     if(fd < 0 || fd > 65535 || (fd < maxfd && fds[fd] != -1))
         return;
 
+#if 0
+    if(autoinc)
+        debug("using seed %li", (long int)seed);
+#endif
+
     /* If filedescriptor is outside our bounds */
     while(fd >= maxfd)
     {
@@ -159,10 +187,15 @@ void _zz_register(int fd)
 
     files[i].managed = 1;
     files[i].pos = 0;
+    files[i].fuzz.seed = seed;
+    files[i].fuzz.ratio = ratio;
     files[i].fuzz.cur = -1;
 #ifdef HAVE_FGETLN
     files[i].fuzz.tmp = NULL;
 #endif
+
+    if(autoinc)
+        seed++;
 
     fds[fd] = i;
 }

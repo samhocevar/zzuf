@@ -18,6 +18,9 @@
 
 extern void _zz_include(char const *);
 extern void _zz_exclude(char const *);
+extern void _zz_setseed(int32_t);
+extern void _zz_setratio(float);
+extern void _zz_setautoinc(void);
 extern void _zz_fd_init(void);
 extern void _zz_fd_fini(void);
 

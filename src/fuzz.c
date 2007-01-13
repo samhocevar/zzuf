@@ -36,11 +36,10 @@
 #define MAGIC2 0x783bc31f
 
 /* Fuzzing variables */
-static int   protect[256];
-static int   refuse[256];
-static float ratio = 0.004f;
-static int   seed  = 0;
+static int protect[256];
+static int refuse[256];
 
+/* Local prototypes */
 static void readchars(int *, char const *);
 
 void _zz_protect(char const *list)
@@ -51,20 +50,6 @@ void _zz_protect(char const *list)
 void _zz_refuse(char const *list)
 {
     readchars(refuse, list);
-}
-
-void _zz_setseed(int s)
-{
-    seed = s;
-}
-
-void _zz_setratio(float r)
-{
-    if(r < 0.0f)
-        r = 0.0f;
-    else if(r > 5.0f)
-        r = 5.0f;
-    ratio = r;
 }
 
 void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
@@ -90,16 +75,14 @@ void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
         /* Cache bitmask array */
         if(fuzz->cur != (int)i)
         {
-            uint32_t chunkseed = i * MAGIC1;
+            uint32_t chunkseed = (i + (int)(fuzz->ratio * MAGIC1)) ^ MAGIC2;
+            _zz_srand(fuzz->seed ^ chunkseed);
 
             memset(fuzz->data, 0, CHUNKBYTES);
 
             /* Add some random dithering to handle ratio < 1.0/CHUNKBYTES */
-            _zz_srand(seed ^ chunkseed);
-            todo = (int)((ratio * (8 * CHUNKBYTES * 1000)
+            todo = (int)((fuzz->ratio * (8 * CHUNKBYTES * 1000)
                                              + _zz_rand(1000)) / 1000.0);
-            _zz_srand(seed ^ chunkseed ^ (todo * MAGIC2));
-
             while(todo--)
             {
                 unsigned int idx = _zz_rand(CHUNKBYTES);
