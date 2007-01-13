@@ -25,6 +25,7 @@
 #   include <inttypes.h>
 #endif
 #include <stdio.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,7 +106,7 @@ void _zz_init(void)
 
     _zz_ready = 1;
 
-    debug("libzzuf initialised");
+    debug("libzzuf initialised for PID %li", (long int)getpid());
 }
 
 /* Deinitialisation */
