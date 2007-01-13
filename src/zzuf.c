@@ -379,9 +379,13 @@ static void loop_stdin(void)
 
 static char *merge_file(char *regex, char *file)
 {
-    char *newfile = malloc(1 + 2 * strlen(file) + 1 + 1), *tmp = newfile;
+    char *newfile = malloc(5 + 2 * strlen(file) + 1 + 1), *tmp = newfile;
 
+    *tmp++ = '(';
     *tmp++ = '^';
+    *tmp++ = '|';
+    *tmp++ = '/';
+    *tmp++ = ')';
     while(*file)
     {
         if(strchr("^.[$()|*+?{\\", *file))
