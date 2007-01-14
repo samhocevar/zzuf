@@ -1,5 +1,11 @@
 $Id$
 
+Changes from 0.4 to 0.5
+
+ * ratio range support
+ * auto-increment mode
+ * better timing support, better debug messages, improved documentation
+
 Changes from 0.3 to 0.4
 
  * check for memory exhausting processes

@@ -1,4 +1,182 @@
 ------------------------------------------------------------------------
+r208 | sam | 2007-01-15 00:42:34 +0100 (Mon, 15 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * interval -> range.
+
+------------------------------------------------------------------------
+r207 | sam | 2007-01-15 00:41:03 +0100 (Mon, 15 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/doc/zzuf.1
+   M /trunk/src/Makefile.am
+   M /trunk/src/fd.c
+   M /trunk/src/fd.h
+   M /trunk/src/libzzuf.c
+   M /trunk/src/zzuf.c
+
+  * Support ranges with the -r flag.
+
+------------------------------------------------------------------------
+r206 | sam | 2007-01-14 21:47:18 +0100 (Sun, 14 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/src/fd.h
+   M /trunk/src/libzzuf.h
+   M /trunk/src/zzuf.c
+
+  * Oops, ratio should be a double, not a float.
+
+------------------------------------------------------------------------
+r205 | sam | 2007-01-14 21:28:09 +0100 (Sun, 14 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Exit non-zero if one process crashed.
+
+------------------------------------------------------------------------
+r204 | sam | 2007-01-14 21:18:31 +0100 (Sun, 14 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Display our information to stderr, not stdout. Documented that.
+
+------------------------------------------------------------------------
+r203 | sam | 2007-01-14 21:17:45 +0100 (Sun, 14 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/src/libzzuf.h
+   M /trunk/src/zzuf.c
+
+  * Only display our own kills in verbose mode.
+  * Factorise min/max ratio values.
+
+------------------------------------------------------------------------
+r202 | sam | 2007-01-14 18:47:01 +0100 (Sun, 14 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Added -v/--verbose (unused yet).
+
+------------------------------------------------------------------------
+r201 | sam | 2007-01-14 12:03:37 +0100 (Sun, 14 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Set --version to -V, not -v. We'll use -v for verbose.
+
+------------------------------------------------------------------------
+r200 | sam | 2007-01-14 02:03:44 +0100 (Sun, 14 Jan 2007) | 4 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Fix a problem with filedescriptor 17 being reused for other purposes than
+    the debugging channel.
+  * Print signal name, eg. SIGABRT instead of just "signal 6".
+
+------------------------------------------------------------------------
+r199 | sam | 2007-01-13 23:47:56 +0100 (Sat, 13 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Minor documentation layout fix.
+
+------------------------------------------------------------------------
+r198 | sam | 2007-01-13 20:33:48 +0100 (Sat, 13 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/fd.c
+   M /trunk/src/fd.h
+   M /trunk/src/fuzz.c
+   M /trunk/src/fuzz.h
+   M /trunk/src/libzzuf.c
+   M /trunk/src/libzzuf.h
+   M /trunk/src/zzuf.c
+
+  * Added auto-increment mode. Not very handy to use yet.
+
+------------------------------------------------------------------------
+r197 | sam | 2007-01-13 19:00:03 +0100 (Sat, 13 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/libzzuf.c
+
+  * Print program PID when initialising libzzuf.
+
+------------------------------------------------------------------------
+r196 | sam | 2007-01-13 11:59:07 +0100 (Sat, 13 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Fixed -c behaviour. Sometimes apps open "$PWD/file" when asked to
+    simply open "file" (eg. eog).
+
+------------------------------------------------------------------------
+r195 | sam | 2007-01-13 11:50:38 +0100 (Sat, 13 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Implemented -D/--delay to avoid fork bombs.
+
+------------------------------------------------------------------------
+r194 | sam | 2007-01-12 19:01:27 +0100 (Fri, 12 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Refactored some shit around.
+
+------------------------------------------------------------------------
+r193 | sam | 2007-01-12 17:20:14 +0100 (Fri, 12 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Minor documentation fixes.
+
+------------------------------------------------------------------------
+r192 | sam | 2007-01-12 16:47:48 +0100 (Fri, 12 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/Makefile.am
+   M /trunk/src/Makefile.am
+   A /trunk/src/timer.c
+   A /trunk/src/timer.h
+   M /trunk/src/zzuf.c
+
+  * Change timing functions to gettimeofday() instead of time() for more
+    precision.
+
+------------------------------------------------------------------------
+r191 | sam | 2007-01-12 15:19:55 +0100 (Fri, 12 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/AUTHORS
+   M /trunk/README
+   M /trunk/doc/zzuf.1
+
+  * Lowercase zzuf everywhere.
+
+------------------------------------------------------------------------
+r190 | sam | 2007-01-12 11:09:22 +0100 (Fri, 12 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Better line-buffered stdin reads.
+
+------------------------------------------------------------------------
+r189 | sam | 2007-01-12 00:36:28 +0100 (Fri, 12 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+   M /trunk/configure.ac
+
+  * Version 0.4.
+  * Updated NEWS and ChangeLog.
+
+------------------------------------------------------------------------
 r188 | sam | 2007-01-12 00:30:29 +0100 (Fri, 12 Jan 2007) | 3 lines
 Changed paths:
    M /trunk/src/fd.c

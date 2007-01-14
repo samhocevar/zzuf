@@ -3,6 +3,7 @@
     + stdio:
       - fscanf
       - fgetws, fgetwc, ungetwc
+      - pipe, dup, dup2
     + zlib functions (eg. libpng)
     + divert crc checks or recompute checksums (yeah)
 
@@ -11,5 +12,5 @@
 
   * Marker support (eg. \r\n\r\n in HTTP responses)
 
-  * ASCII support, UTF-8 support
+  * ASCII support (more or less done), UTF-8 support
 
