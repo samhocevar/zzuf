@@ -54,7 +54,7 @@ static int *fds, static_fds[STATIC_FILES];
 static int maxfd, nfiles;
 
 static int32_t seed = DEFAULT_SEED;
-static float   ratio = DEFAULT_RATIO;
+static double  ratio = DEFAULT_RATIO;
 static int     autoinc = 0;
 
 void _zz_include(char const *regex)
@@ -74,7 +74,7 @@ void _zz_setseed(int32_t s)
     seed = s;
 }
 
-void _zz_setratio(float r)
+void _zz_setratio(double r)
 {
     if(r < MIN_RATIO)
         r = MIN_RATIO;

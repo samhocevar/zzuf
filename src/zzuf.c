@@ -82,8 +82,8 @@ static char **newargv;
 static char *protect = NULL, *refuse = NULL;
 static uint32_t seed = DEFAULT_SEED;
 static uint32_t endseed = DEFAULT_SEED + 1;
-static float ratio = DEFAULT_RATIO;
-static float endratio = DEFAULT_RATIO;
+static double ratio = DEFAULT_RATIO;
+static double endratio = DEFAULT_RATIO;
 static int quiet = 0;
 static int maxbytes = -1;
 static int md5 = 0;
@@ -443,7 +443,7 @@ static char *merge_regex(char *regex, char *string)
 static void spawn_children(void)
 {
     static int const files[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
-    char buf[BUFSIZ];
+    char buf[64];
     int fd[3][2];
     int64_t now = _zz_time();
     pid_t pid;
