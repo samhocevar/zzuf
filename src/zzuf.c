@@ -380,13 +380,12 @@ static void loop_stdin(void)
     if(md5)
     {
         _zz_md5_fini(md5sum, ctx);
-        fprintf(stdout, "zzuf[seed=%i]: %.02x%.02x%.02x%.02x%.02x%.02x"
+        fprintf(stderr, "zzuf[seed=%i]: %.02x%.02x%.02x%.02x%.02x%.02x"
                 "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
                 seed, md5sum[0], md5sum[1], md5sum[2], md5sum[3],
                 md5sum[4], md5sum[5], md5sum[6], md5sum[7],
                 md5sum[8], md5sum[9], md5sum[10], md5sum[11],
                 md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
-        fflush(stdout);
     }
 
     _zz_unregister(0);
@@ -520,7 +519,7 @@ static void spawn_children(void)
     }
 
     if(verbose)
-        fprintf(stdout, "zzuf[seed=%i]: launched %s\n", seed, newargv[0]);
+        fprintf(stderr, "zzuf[seed=%i]: launched %s\n", seed, newargv[0]);
 
     /* We’re the parent, acknowledge spawn */
     child_list[i].date = now;
@@ -553,7 +552,7 @@ static void clean_children(void)
             && maxbytes >= 0 && child_list[i].bytes > maxbytes)
         {
             if(verbose)
-                fprintf(stdout, "zzuf[seed=%i]: data output exceeded,"
+                fprintf(stderr, "zzuf[seed=%i]: data output exceeded,"
                                 " sending SIGTERM\n", child_list[i].seed);
             kill(child_list[i].pid, SIGTERM);
             child_list[i].date = now;
@@ -565,7 +564,7 @@ static void clean_children(void)
             && now > child_list[i].date + maxtime)
         {
             if(verbose)
-                fprintf(stdout, "zzuf[seed=%i]: running time exceeded,"
+                fprintf(stderr, "zzuf[seed=%i]: running time exceeded,"
                                 " sending SIGTERM\n", child_list[i].seed);
             kill(child_list[i].pid, SIGTERM);
             child_list[i].date = now;
@@ -580,7 +579,7 @@ static void clean_children(void)
             && now > child_list[i].date + 2000000)
         {
             if(verbose)
-                fprintf(stdout, "zzuf[seed=%i]: not responding,"
+                fprintf(stderr, "zzuf[seed=%i]: not responding,"
                                 " sending SIGKILL\n", child_list[i].seed);
             kill(child_list[i].pid, SIGKILL);
             child_list[i].status = STATUS_SIGKILL;
@@ -605,7 +604,7 @@ static void clean_children(void)
 
         if(checkexit && WIFEXITED(status) && WEXITSTATUS(status))
         {
-            fprintf(stdout, "zzuf[seed=%i]: exit %i\n",
+            fprintf(stderr, "zzuf[seed=%i]: exit %i\n",
                     child_list[i].seed, WEXITSTATUS(status));
             crashes++;
         }
@@ -613,7 +612,7 @@ static void clean_children(void)
                  && !(WTERMSIG(status) == SIGTERM
                        && child_list[i].status == STATUS_SIGTERM))
         {
-            fprintf(stdout, "zzuf[seed=%i]: signal %i%s%s\n",
+            fprintf(stderr, "zzuf[seed=%i]: signal %i%s%s\n",
                     child_list[i].seed, WTERMSIG(status),
                     sig2str(WTERMSIG(status)),
                       (WTERMSIG(status) == SIGKILL && maxmem >= 0) ?
@@ -628,7 +627,7 @@ static void clean_children(void)
         if(md5)
         {
             _zz_md5_fini(md5sum, child_list[i].ctx);
-            fprintf(stdout, "zzuf[seed=%i]: %.02x%.02x%.02x%.02x%.02x%.02x"
+            fprintf(stderr, "zzuf[seed=%i]: %.02x%.02x%.02x%.02x%.02x%.02x"
                     "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
                     child_list[i].seed, md5sum[0], md5sum[1], md5sum[2],
                     md5sum[3], md5sum[4], md5sum[5], md5sum[6], md5sum[7],
@@ -638,8 +637,6 @@ static void clean_children(void)
         child_list[i].status = STATUS_FREE;
         child_count--;
     }
-
-    fflush(stdout);
 }
 
 static void read_children(void)
