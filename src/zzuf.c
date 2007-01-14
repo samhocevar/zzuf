@@ -50,6 +50,7 @@ static void spawn_children(void);
 static void clean_children(void);
 static void read_children(void);
 
+static char const *sig2str(int);
 static char *merge_regex(char *, char *);
 static char *merge_file(char *, char *);
 static void set_environment(char const *);
@@ -480,11 +481,16 @@ static void spawn_children(void)
                 setrlimit(RLIMIT_AS, &rlim);
             }
 
-            for(j = 0; j < 3; j++)
+            /* We loop in reverse order so that files[0] is done last,
+             * just in case one of the other dup2()ed fds had the value */
+            for(j = 3; j--; )
             {
                 close(fd[j][0]);
-                dup2(fd[j][1], files[j]);
-                close(fd[j][1]);
+                if(fd[j][1] != files[j])
+                {
+                    dup2(fd[j][1], files[j]);
+                    close(fd[j][1]);
+                }
             }
 
             /* Set environment variables */
@@ -588,8 +594,9 @@ static void clean_children(void)
                  && !(WTERMSIG(status) == SIGTERM
                        && child_list[i].status == STATUS_SIGTERM))
         {
-            fprintf(stdout, "zzuf[seed=%i]: signal %i%s\n",
+            fprintf(stdout, "zzuf[seed=%i]: signal %i%s%s\n",
                     child_list[i].seed, WTERMSIG(status),
+                    sig2str(WTERMSIG(status)),
                       (WTERMSIG(status) == SIGKILL && maxmem >= 0) ?
                       " (memory exceeded?)" : "");
             crashes++;
@@ -675,6 +682,36 @@ static void read_children(void)
                 child_list[i].status = STATUS_EOF;
         }
     }
+}
+
+static char const *sig2str(int signum)
+{
+    switch(signum)
+    {
+        case SIGABRT:  return " (SIGABRT)";
+        case SIGFPE:   return " (SIGFPE)";
+        case SIGILL:   return " (SIGILL)";
+        case SIGQUIT:  return " (SIGQUIT)";
+        case SIGSEGV:  return " (SIGSEGV)";
+        case SIGTRAP:  return " (SIGTRAP)";
+#ifdef SIGSYS
+        case SIGSYS:   return " (SIGSYS)";
+#endif
+#ifdef SIGEMT
+        case SIGEMT:   return " (SIGEMT)";
+#endif
+#ifdef SIGBUS
+        case SIGBUS:   return " (SIGBUS)";
+#endif
+#ifdef SIGXCPU
+        case SIGXCPU:  return " (SIGXCPU)";
+#endif
+#ifdef SIGXFSZ
+        case SIGXFSZ:  return " (SIGXFSZ)";
+#endif
+    }
+
+    return "";
 }
 
 static void set_environment(char const *progpath)
