@@ -2,13 +2,13 @@
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-AcdiMnqSx\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR]
+\fBzzuf\fR [\fB\-AcdiMnqSvx\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR]
 .br
-                  [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
+                   [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
 .br
-                  [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
+                   [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
 .br
-                  [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
+                   [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
 .br
@@ -206,6 +206,10 @@ how to set such limits.
 Automatically terminate child processes that run for more than \fIn\fR
 seconds. This is useful to detect infinite loops or processes stuck in other
 situations. See also the \fB\-B\fR flag.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Print information during the run, such as the current seed, what processes
+get run, their exit status, etc.
 .TP
 \fB\-x\fR, \fB\-\-check\-exit\fR
 Report processes that exit with a non-zero status. By default only processes

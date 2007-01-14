@@ -86,6 +86,7 @@ static int quiet = 0;
 static int maxbytes = -1;
 static int md5 = 0;
 static int checkexit = 0;
+static int verbose = 0;
 static int maxmem = -1;
 static int64_t maxtime = -1;
 static int64_t delay = 0;
@@ -112,7 +113,7 @@ int main(int argc, char *argv[])
 #if defined(HAVE_GETOPT_H)
     for(;;)
     {
-#   define OPTSTR "AB:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:xhV"
+#   define OPTSTR "AB:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:vxhV"
 #   ifdef HAVE_GETOPT_LONG
 #       define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
@@ -139,6 +140,7 @@ int main(int argc, char *argv[])
             { "seed",        1, NULL, 's' },
             { "signal",      0, NULL, 'S' },
             { "max-time",    1, NULL, 'T' },
+            { "verbose",     0, NULL, 'v' },
             { "check-exit",  0, NULL, 'x' },
             { "help",        0, NULL, 'h' },
             { "version",     0, NULL, 'V' },
@@ -231,6 +233,9 @@ int main(int argc, char *argv[])
             break;
         case 'x': /* --check-exit */
             checkexit = 1;
+            break;
+        case 'v': /* --verbose */
+            verbose = 1;
             break;
         case 'h': /* --help */
             usage();
@@ -536,7 +541,7 @@ static void clean_children(void)
         if(child_list[i].status == STATUS_RUNNING
             && maxbytes >= 0 && child_list[i].bytes > maxbytes)
         {
-            fprintf(stdout, "zzuf[seed=%i]: data exceeded, sending SIGTERM\n",
+            fprintf(stdout, "zzuf[seed=%i]: data output exceeded, sending SIGTERM\n",
                     child_list[i].seed);
             kill(child_list[i].pid, SIGTERM);
             child_list[i].date = now;
@@ -547,7 +552,7 @@ static void clean_children(void)
             && maxtime >= 0
             && now > child_list[i].date + maxtime)
         {
-            fprintf(stdout, "zzuf[seed=%i]: time exceeded, sending SIGTERM\n",
+            fprintf(stdout, "zzuf[seed=%i]: running time exceeded, sending SIGTERM\n",
                     child_list[i].seed);
             kill(child_list[i].pid, SIGTERM);
             child_list[i].date = now;
@@ -763,10 +768,10 @@ static void version(void)
 #if defined(HAVE_GETOPT_H)
 static void usage(void)
 {
-    printf("Usage: zzuf [-AcdimnqSx] [-r ratio] [-s seed | -s start:stop]\n");
-    printf("                         [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
-    printf("                         [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
-    printf("                         [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
+    printf("Usage: zzuf [-AcdimnqSvx] [-r ratio] [-s seed | -s start:stop]\n");
+    printf("                          [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
+    printf("                          [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
+    printf("                          [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
     printf("       zzuf -V | --version\n");
@@ -799,6 +804,7 @@ static void usage(void)
     printf("      --seed <start:stop>  specify a seed range\n");
     printf("  -S, --signal             prevent children from diverting crashing signals\n");
     printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
+    printf("  -v, --verbose            print information during the run\n");
     printf("  -x, --check-exit         report processes that exit with a non-zero status\n");
     printf("  -h, --help               display this help and exit\n");
     printf("  -V, --version            output version information and exit\n");
@@ -824,6 +830,7 @@ static void usage(void)
     printf("     <start:stop>  specify a seed range\n");
     printf("  -S               prevent children from diverting crashing signals\n");
     printf("  -T <n>           kill children that run for more than <n> seconds\n");
+    printf("  -v               print information during the run\n");
     printf("  -x               report processes that exit with a non-zero status\n");
     printf("  -h               display this help and exit\n");
     printf("  -V               output version information and exit\n");
