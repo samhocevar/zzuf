@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
     free(newargv);
     free(child_list);
 
-    return EXIT_SUCCESS;    
+    return crashes ? EXIT_FAILURE : EXIT_SUCCESS;    
 }
 
 static void loop_stdin(void)

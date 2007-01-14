@@ -220,6 +220,10 @@ Display a short help message and exit.
 .TP
 \fB\-V\fR, \fB\-\-version\fR
 Output version information and exit.
+.SH DIAGNOSTICS
+.PP
+Exit status is zero if no child process crashed. If one or several children
+crashed, \fBzzuf\fR exits with status 1.
 .SH EXAMPLES
 .PP
 Fuzz the input of the \fBcat\fR program using default settings:
