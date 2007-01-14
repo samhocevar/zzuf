@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 #if defined(HAVE_GETOPT_H)
     for(;;)
     {
-#   define OPTSTR "AB:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:xhv"
+#   define OPTSTR "AB:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:xhV"
 #   ifdef HAVE_GETOPT_LONG
 #       define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
             { "max-time",    1, NULL, 'T' },
             { "check-exit",  0, NULL, 'x' },
             { "help",        0, NULL, 'h' },
-            { "version",     0, NULL, 'v' },
+            { "version",     0, NULL, 'V' },
         };
         int c = getopt_long(argc, argv, OPTSTR, long_options, &option_index);
 #   else
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
         case 'h': /* --help */
             usage();
             return 0;
-        case 'v': /* --version */
+        case 'V': /* --version */
             version();
             return 0;
         default:
@@ -769,10 +769,10 @@ static void usage(void)
     printf("                         [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
 #   ifdef HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
-    printf("       zzuf -v | --version\n");
+    printf("       zzuf -V | --version\n");
 #   else
     printf("       zzuf -h\n");
-    printf("       zzuf -v\n");
+    printf("       zzuf -V\n");
 #   endif
     printf("Run PROGRAM with optional arguments ARGS and fuzz its input.\n");
     printf("\n");
@@ -801,7 +801,7 @@ static void usage(void)
     printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
     printf("  -x, --check-exit         report processes that exit with a non-zero status\n");
     printf("  -h, --help               display this help and exit\n");
-    printf("  -v, --version            output version information and exit\n");
+    printf("  -V, --version            output version information and exit\n");
 #   else
     printf("  -A               increment seed each time a new file is opened\n");
     printf("  -B <n>           kill children that output more than <n> bytes\n");
@@ -826,7 +826,7 @@ static void usage(void)
     printf("  -T <n>           kill children that run for more than <n> seconds\n");
     printf("  -x               report processes that exit with a non-zero status\n");
     printf("  -h               display this help and exit\n");
-    printf("  -v               output version information and exit\n");
+    printf("  -V               output version information and exit\n");
 #   endif
     printf("\n");
     printf("Written by Sam Hocevar. Report bugs to <sam@zoy.org>.\n");
