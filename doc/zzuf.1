@@ -68,7 +68,7 @@ is considered to have crashed if any signal (such as, but not limited to,
 \fBSIGSEGV\fR) caused it to exit. If the \fB\-x\fR flag is used, this will
 also include processes that exit with a non-zero status.
 
-This option is only relevant if the \fB\-s\fR flag is used with an interval
+This option is only relevant if the \fB\-s\fR flag is used with a range
 argument.
 .TP
 \fB\-d\fR, \fB\-\-debug\fR
@@ -90,7 +90,7 @@ of the regular expressions will be ignored.
 \fB\-F\fR, \fB\-\-max\-forks\fR=\fIforks\fR
 Specify the number of simultaneous children that can be run.
 
-This option is only relevant if the \fB\-s\fR flag is used with an interval
+This option is only relevant if the \fB\-s\fR flag is used with a range
 argument. See also the \fB\-D\fR flag.
 .TP
 \fB\-i\fR, \fB\-\-stdin\fR
@@ -175,9 +175,9 @@ bits. A value of 1.0 or more will fuzz all the bytes, theoretically making
 the input files undiscernible from random data. The default fuzzing ratio
 is 0.004 (fuzz 0.4% of the files' bits).
 
-An interval can be specified. When doing so, \fBzzuf\fR will pick ratio
-values from the interval. This is only meaningful if an interval is also
-specified with the \fB\-s\fR flag.
+A range can also be specified. When doing so, \fBzzuf\fR will pick ratio
+values from the interval. This is only meaningful if the argument given to
+the \fB\-s\fR flag is also a range.
 .TP
 \fB\-R\fR, \fB\-\-refuse\fR=\fIlist\fR
 Refuse a list of characters by not fuzzing bytes that would otherwise be
@@ -191,13 +191,13 @@ See the \fB\-P\fR option for a description of \fIlist\fR.
 .TP
 \fB\-s\fR, \fB\-\-seed\fR=\fIstart:stop\fR
 .PD
-Specify the random seed to use for fuzzing, or an interval of random seeds.
+Specify the random seed to use for fuzzing, or a range of random seeds.
 Running \fBzzuf\fR twice with the same random seed will fuzz the files exactly
 the same way, even with a different target application. The purpose of this is
 to use simple utilities such as \fBcat\fR or \fBcp\fR to generate a file that
 causes the target application to crash.
 
-If an interval is specified, \fBzzuf\fR will run the application several times,
+If a range is specified, \fBzzuf\fR will run the application several times,
 each time with a different seed, and report the behaviour of each run.
 .TP
 \fB\-S\fR, \fB\-\-signal\fR
