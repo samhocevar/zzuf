@@ -53,8 +53,8 @@ static struct files
 static int *fds, static_fds[STATIC_FILES];
 static int maxfd, nfiles;
 
-static int32_t seed = 0;
-static float   ratio = 0.004f;
+static int32_t seed = DEFAULT_SEED;
+static float   ratio = DEFAULT_RATIO;
 static int     autoinc = 0;
 
 void _zz_include(char const *regex)
@@ -76,10 +76,10 @@ void _zz_setseed(int32_t s)
 
 void _zz_setratio(float r)
 {
-    if(r < 0.0f)
-        r = 0.0f;
-    else if(r > 5.0f)
-        r = 5.0f;
+    if(r < MIN_RATIO)
+        r = MIN_RATIO;
+    else if(r > MAX_RATIO)
+        r = MAX_RATIO;
     ratio = r;
 }
 

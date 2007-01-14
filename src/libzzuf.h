@@ -25,6 +25,14 @@
  * any part of the file without reading the whole file. */
 #define CHUNKBYTES 1024
 
+/* Default seed is 0. Why not? */
+#define DEFAULT_SEED 0
+
+/* The default fuzzing ratio is, arbitrarily, 0.4% */
+#define DEFAULT_RATIO 0.004f
+#define MIN_RATIO 0.00001f
+#define MAX_RATIO 5.0f
+
 struct fuzz
 {
     uint32_t seed;

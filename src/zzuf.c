@@ -80,8 +80,10 @@ static int maxforks = 1, child_count = 0, maxcrashes = 1, crashes = 0;
 
 static char **newargv;
 static char *protect = NULL, *refuse = NULL;
-static int seed = 0;
-static int endseed = 1;
+static uint32_t seed = DEFAULT_SEED;
+static uint32_t endseed = DEFAULT_SEED + 1;
+static float ratio = DEFAULT_RATIO;
+static float endratio = DEFAULT_RATIO;
 static int quiet = 0;
 static int maxbytes = -1;
 static int md5 = 0;
@@ -214,16 +216,17 @@ int main(int argc, char *argv[])
             quiet = 1;
             break;
         case 'r': /* --ratio */
-            setenv("ZZUF_RATIO", optarg, 1);
-            _zz_setratio(atof(optarg));
+            parser = strchr(optarg, ':');
+            ratio = atof(optarg);
+            endratio = parser ? atof(parser + 1) : ratio;
             break;
         case 'R': /* --refuse */
             refuse = optarg;
             break;
         case 's': /* --seed */
             parser = strchr(optarg, ':');
-            _zz_setseed(seed = atol(optarg));
-            endseed = parser ? atoi(parser + 1) : seed + 1;
+            seed = atol(optarg);
+            endseed = parser ? (uint32_t)atoi(parser + 1) : seed + 1;
             break;
         case 'S': /* --signal */
             setenv("ZZUF_SIGNAL", "1", 1);
@@ -264,6 +267,9 @@ int main(int argc, char *argv[])
             printf(MOREINFO, argv[0]);
             return EXIT_FAILURE;
         }
+
+        _zz_setseed(seed);
+        _zz_setratio(ratio);
 
         loop_stdin();
 
@@ -501,6 +507,8 @@ static void spawn_children(void)
             /* Set environment variables */
             sprintf(buf, "%i", seed);
             setenv("ZZUF_SEED", buf, 1);
+            sprintf(buf, "%g", ratio);
+            setenv("ZZUF_RATIO", buf, 1);
 
             /* Run our process */
             if(execvp(newargv[0], newargv))
@@ -510,6 +518,9 @@ static void spawn_children(void)
             }
             return;
     }
+
+    if(verbose)
+        fprintf(stdout, "zzuf[seed=%i]: launched %s\n", seed, newargv[0]);
 
     /* We’re the parent, acknowledge spawn */
     child_list[i].date = now;
@@ -541,8 +552,9 @@ static void clean_children(void)
         if(child_list[i].status == STATUS_RUNNING
             && maxbytes >= 0 && child_list[i].bytes > maxbytes)
         {
-            fprintf(stdout, "zzuf[seed=%i]: data output exceeded, sending SIGTERM\n",
-                    child_list[i].seed);
+            if(verbose)
+                fprintf(stdout, "zzuf[seed=%i]: data output exceeded,"
+                                " sending SIGTERM\n", child_list[i].seed);
             kill(child_list[i].pid, SIGTERM);
             child_list[i].date = now;
             child_list[i].status = STATUS_SIGTERM;
@@ -552,8 +564,9 @@ static void clean_children(void)
             && maxtime >= 0
             && now > child_list[i].date + maxtime)
         {
-            fprintf(stdout, "zzuf[seed=%i]: running time exceeded, sending SIGTERM\n",
-                    child_list[i].seed);
+            if(verbose)
+                fprintf(stdout, "zzuf[seed=%i]: running time exceeded,"
+                                " sending SIGTERM\n", child_list[i].seed);
             kill(child_list[i].pid, SIGTERM);
             child_list[i].date = now;
             child_list[i].status = STATUS_SIGTERM;
@@ -566,8 +579,9 @@ static void clean_children(void)
         if(child_list[i].status == STATUS_SIGTERM
             && now > child_list[i].date + 2000000)
         {
-            fprintf(stdout, "zzuf[seed=%i]: not responding, sending SIGKILL\n",
-                    child_list[i].seed);
+            if(verbose)
+                fprintf(stdout, "zzuf[seed=%i]: not responding,"
+                                " sending SIGKILL\n", child_list[i].seed);
             kill(child_list[i].pid, SIGKILL);
             child_list[i].status = STATUS_SIGKILL;
         }
