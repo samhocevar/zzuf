@@ -73,6 +73,7 @@ static struct child_list
     pid_t pid;
     int fd[3]; /* 0 is debug, 1 is stderr, 2 is stdout */
     int bytes, seed;
+    double ratio;
     int64_t date;
     struct md5 *ctx;
 } *child_list;
@@ -82,8 +83,8 @@ static char **newargv;
 static char *protect = NULL, *refuse = NULL;
 static uint32_t seed = DEFAULT_SEED;
 static uint32_t endseed = DEFAULT_SEED + 1;
-static double ratio = DEFAULT_RATIO;
-static double endratio = DEFAULT_RATIO;
+static double minratio = DEFAULT_RATIO;
+static double maxratio = DEFAULT_RATIO;
 static int quiet = 0;
 static int maxbytes = -1;
 static int md5 = 0;
@@ -217,8 +218,8 @@ int main(int argc, char *argv[])
             break;
         case 'r': /* --ratio */
             parser = strchr(optarg, ':');
-            ratio = atof(optarg);
-            endratio = parser ? atof(parser + 1) : ratio;
+            minratio = atof(optarg);
+            maxratio = parser ? atof(parser + 1) : minratio;
             break;
         case 'R': /* --refuse */
             refuse = optarg;
@@ -257,6 +258,9 @@ int main(int argc, char *argv[])
     int optind = 1;
 #endif
 
+    _zz_setratio(minratio, maxratio);
+    _zz_setseed(seed);
+
     /* If asked to read from the standard input */
     if(optind >= argc)
     {
@@ -267,9 +271,6 @@ int main(int argc, char *argv[])
             printf(MOREINFO, argv[0]);
             return EXIT_FAILURE;
         }
-
-        _zz_setseed(seed);
-        _zz_setratio(ratio);
 
         loop_stdin();
 
@@ -380,9 +381,9 @@ static void loop_stdin(void)
     if(md5)
     {
         _zz_md5_fini(md5sum, ctx);
-        fprintf(stderr, "zzuf[seed=%i]: %.02x%.02x%.02x%.02x%.02x%.02x"
-                "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
-                seed, md5sum[0], md5sum[1], md5sum[2], md5sum[3],
+        fprintf(stderr, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x"
+                "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
+                seed, minratio, md5sum[0], md5sum[1], md5sum[2], md5sum[3],
                 md5sum[4], md5sum[5], md5sum[6], md5sum[7],
                 md5sum[8], md5sum[9], md5sum[10], md5sum[11],
                 md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
@@ -506,8 +507,10 @@ static void spawn_children(void)
             /* Set environment variables */
             sprintf(buf, "%i", seed);
             setenv("ZZUF_SEED", buf, 1);
-            sprintf(buf, "%g", ratio);
-            setenv("ZZUF_RATIO", buf, 1);
+            sprintf(buf, "%g", minratio);
+            setenv("ZZUF_MINRATIO", buf, 1);
+            sprintf(buf, "%g", maxratio);
+            setenv("ZZUF_MAXRATIO", buf, 1);
 
             /* Run our process */
             if(execvp(newargv[0], newargv))
@@ -517,9 +520,6 @@ static void spawn_children(void)
             }
             return;
     }
-
-    if(verbose)
-        fprintf(stderr, "zzuf[seed=%i]: launched %s\n", seed, newargv[0]);
 
     /* We’re the parent, acknowledge spawn */
     child_list[i].date = now;
@@ -531,13 +531,20 @@ static void spawn_children(void)
     }
     child_list[i].bytes = 0;
     child_list[i].seed = seed;
+    child_list[i].ratio = _zz_getratio();
     child_list[i].status = STATUS_RUNNING;
     if(md5)
         child_list[i].ctx = _zz_md5_init();
 
+    if(verbose)
+        fprintf(stderr, "zzuf[s=%i,r=%g]: launched %s\n",
+                child_list[i].seed, child_list[i].ratio, newargv[0]);
+
     lastlaunch = now;
     child_count++;
     seed++;
+
+    _zz_setseed(seed);
 }
 
 static void clean_children(void)
@@ -552,8 +559,9 @@ static void clean_children(void)
             && maxbytes >= 0 && child_list[i].bytes > maxbytes)
         {
             if(verbose)
-                fprintf(stderr, "zzuf[seed=%i]: data output exceeded,"
-                                " sending SIGTERM\n", child_list[i].seed);
+                fprintf(stderr, "zzuf[s=%i,r=%g]: "
+                        "data output exceeded, sending SIGTERM\n", 
+                        child_list[i].seed, child_list[i].ratio);
             kill(child_list[i].pid, SIGTERM);
             child_list[i].date = now;
             child_list[i].status = STATUS_SIGTERM;
@@ -564,8 +572,9 @@ static void clean_children(void)
             && now > child_list[i].date + maxtime)
         {
             if(verbose)
-                fprintf(stderr, "zzuf[seed=%i]: running time exceeded,"
-                                " sending SIGTERM\n", child_list[i].seed);
+                fprintf(stderr, "zzuf[s=%i,r=%g]: "
+                        "running time exceeded, sending SIGTERM\n", 
+                        child_list[i].seed, child_list[i].ratio);
             kill(child_list[i].pid, SIGTERM);
             child_list[i].date = now;
             child_list[i].status = STATUS_SIGTERM;
@@ -579,8 +588,9 @@ static void clean_children(void)
             && now > child_list[i].date + 2000000)
         {
             if(verbose)
-                fprintf(stderr, "zzuf[seed=%i]: not responding,"
-                                " sending SIGKILL\n", child_list[i].seed);
+                fprintf(stderr, "zzuf[s=%i,r=%g]: "
+                        "not responding, sending SIGKILL\n", 
+                        child_list[i].seed, child_list[i].ratio);
             kill(child_list[i].pid, SIGKILL);
             child_list[i].status = STATUS_SIGKILL;
         }
@@ -604,17 +614,18 @@ static void clean_children(void)
 
         if(checkexit && WIFEXITED(status) && WEXITSTATUS(status))
         {
-            fprintf(stderr, "zzuf[seed=%i]: exit %i\n",
-                    child_list[i].seed, WEXITSTATUS(status));
+            fprintf(stderr, "zzuf[s=%i,r=%g]: exit %i\n",
+                    child_list[i].seed, child_list[i].ratio,
+                    WEXITSTATUS(status));
             crashes++;
         }
         else if(WIFSIGNALED(status)
                  && !(WTERMSIG(status) == SIGTERM
                        && child_list[i].status == STATUS_SIGTERM))
         {
-            fprintf(stderr, "zzuf[seed=%i]: signal %i%s%s\n",
-                    child_list[i].seed, WTERMSIG(status),
-                    sig2str(WTERMSIG(status)),
+            fprintf(stderr, "zzuf[s=%i,r=%g]: signal %i%s%s\n",
+                    child_list[i].seed, child_list[i].ratio,
+                    WTERMSIG(status), sig2str(WTERMSIG(status)),
                       (WTERMSIG(status) == SIGKILL && maxmem >= 0) ?
                       " (memory exceeded?)" : "");
             crashes++;
@@ -627,12 +638,12 @@ static void clean_children(void)
         if(md5)
         {
             _zz_md5_fini(md5sum, child_list[i].ctx);
-            fprintf(stderr, "zzuf[seed=%i]: %.02x%.02x%.02x%.02x%.02x%.02x"
-                    "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
-                    child_list[i].seed, md5sum[0], md5sum[1], md5sum[2],
-                    md5sum[3], md5sum[4], md5sum[5], md5sum[6], md5sum[7],
-                    md5sum[8], md5sum[9], md5sum[10], md5sum[11], md5sum[12],
-                    md5sum[13], md5sum[14], md5sum[15]);
+            fprintf(stderr, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x"
+                    "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
+                    child_list[i].seed, child_list[i].ratio, md5sum[0],
+                    md5sum[1], md5sum[2], md5sum[3], md5sum[4], md5sum[5],
+                    md5sum[6], md5sum[7], md5sum[8], md5sum[9], md5sum[10],
+                    md5sum[11], md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
         }
         child_list[i].status = STATUS_FREE;
         child_count--;
@@ -794,31 +805,32 @@ static void usage(void)
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
 #   ifdef HAVE_GETOPT_LONG
-    printf("  -A, --autoinc            increment seed each time a new file is opened\n");
-    printf("  -B, --max-bytes <n>      kill children that output more than <n> bytes\n");
-    printf("  -c, --cmdline            only fuzz files specified in the command line\n");
-    printf("  -C, --max-crashes <n>    stop after <n> children have crashed (default 1)\n");
-    printf("  -d, --debug              print debug messages\n");
-    printf("  -D, --delay              delay between forks\n");
-    printf("  -E, --exclude <regex>    do not fuzz files matching <regex>\n");
-    printf("  -F, --max-forks <n>      number of concurrent children (default 1)\n");
-    printf("  -i, --stdin              fuzz standard input\n");
-    printf("  -I, --include <regex>    only fuzz files matching <regex>\n");
-    printf("  -m, --md5                compute the output's MD5 hash\n");
-    printf("  -M, --max-memory <n>     maximum child virtual memory size in MB\n");
-    printf("  -n, --network            fuzz network input\n");
-    printf("  -P, --protect <list>     protect bytes and characters in <list>\n");
-    printf("  -q, --quiet              do not print children's messages\n");
-    printf("  -r, --ratio <ratio>      bit fuzzing ratio (default 0.004)\n");
-    printf("  -R, --refuse <list>      refuse bytes and characters in <list>\n");
-    printf("  -s, --seed <seed>        random seed (default 0)\n");
-    printf("      --seed <start:stop>  specify a seed range\n");
-    printf("  -S, --signal             prevent children from diverting crashing signals\n");
-    printf("  -T, --max-time <n>       kill children that run for more than <n> seconds\n");
-    printf("  -v, --verbose            print information during the run\n");
-    printf("  -x, --check-exit         report processes that exit with a non-zero status\n");
-    printf("  -h, --help               display this help and exit\n");
-    printf("  -V, --version            output version information and exit\n");
+    printf("  -A, --autoinc             increment seed each time a new file is opened\n");
+    printf("  -B, --max-bytes <n>       kill children that output more than <n> bytes\n");
+    printf("  -c, --cmdline             only fuzz files specified in the command line\n");
+    printf("  -C, --max-crashes <n>     stop after <n> children have crashed (default 1)\n");
+    printf("  -d, --debug               print debug messages\n");
+    printf("  -D, --delay               delay between forks\n");
+    printf("  -E, --exclude <regex>     do not fuzz files matching <regex>\n");
+    printf("  -F, --max-forks <n>       number of concurrent children (default 1)\n");
+    printf("  -i, --stdin               fuzz standard input\n");
+    printf("  -I, --include <regex>     only fuzz files matching <regex>\n");
+    printf("  -m, --md5                 compute the output's MD5 hash\n");
+    printf("  -M, --max-memory <n>      maximum child virtual memory size in MB\n");
+    printf("  -n, --network             fuzz network input\n");
+    printf("  -P, --protect <list>      protect bytes and characters in <list>\n");
+    printf("  -q, --quiet               do not print children's messages\n");
+    printf("  -r, --ratio <ratio>       bit fuzzing ratio (default %g)\n", DEFAULT_RATIO);
+    printf("      --ratio <start:stop>  specify a ratio range\n");
+    printf("  -R, --refuse <list>       refuse bytes and characters in <list>\n");
+    printf("  -s, --seed <seed>         random seed (default %i)\n", DEFAULT_SEED);
+    printf("      --seed <start:stop>   specify a seed range\n");
+    printf("  -S, --signal              prevent children from diverting crashing signals\n");
+    printf("  -T, --max-time <n>        kill children that run for more than <n> seconds\n");
+    printf("  -v, --verbose             print information during the run\n");
+    printf("  -x, --check-exit          report processes that exit with a non-zero status\n");
+    printf("  -h, --help                display this help and exit\n");
+    printf("  -V, --version             output version information and exit\n");
 #   else
     printf("  -A               increment seed each time a new file is opened\n");
     printf("  -B <n>           kill children that output more than <n> bytes\n");
@@ -835,9 +847,10 @@ static void usage(void)
     printf("  -n               fuzz network input\n");
     printf("  -P <list>        protect bytes and characters in <list>\n");
     printf("  -q               do not print the fuzzed application's messages\n");
-    printf("  -r <ratio>       bit fuzzing ratio (default 0.004)\n");
+    printf("  -r <ratio>       bit fuzzing ratio (default %g)\n", DEFAULT_RATIO);
+    printf("     <start:stop>  specify a ratio range\n");
     printf("  -R <list>        refuse bytes and characters in <list>\n");
-    printf("  -s <seed>        random seed (default 0)\n");
+    printf("  -s <seed>        random seed (default %i)\n", DEFAULT_SEED);
     printf("     <start:stop>  specify a seed range\n");
     printf("  -S               prevent children from diverting crashing signals\n");
     printf("  -T <n>           kill children that run for more than <n> seconds\n");

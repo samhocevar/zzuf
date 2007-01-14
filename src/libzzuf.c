@@ -51,7 +51,7 @@ int   _zz_network  = 0;
 /* Library initialisation shit */
 void _zz_init(void)
 {
-    char *tmp;
+    char *tmp, *tmp2;
 
     _zz_load_mem();
     _zz_load_signal();
@@ -66,9 +66,10 @@ void _zz_init(void)
     if(tmp && *tmp)
         _zz_setseed(atol(tmp));
 
-    tmp = getenv("ZZUF_RATIO");
-    if(tmp && *tmp)
-        _zz_setratio(atof(tmp));
+    tmp = getenv("ZZUF_MINRATIO");
+    tmp2 = getenv("ZZUF_MAXRATIO");
+    if(tmp && *tmp && tmp2 && *tmp2)
+        _zz_setratio(atof(tmp), atof(tmp2));
 
     tmp = getenv("ZZUF_AUTOINC");
     if(tmp && *tmp == '1')

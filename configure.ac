@@ -32,6 +32,8 @@ AC_CHECK_FUNCS(getopt_long,
     GETOPT_LIBS="${GETOPT_LIBS} -lgnugetopt"])])
 AC_SUBST(GETOPT_LIBS)
 
+AC_CHECK_LIB(m, log, [MATH_LIBS="-lm"])
+AC_SUBST(MATH_LIBS)
 AC_CHECK_LIB(dl, dlopen, [DL_LIBS="-ldl"])
 AC_SUBST(DL_LIBS)
 

@@ -2,7 +2,7 @@
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-AcdiMnqSvx\fR] [\fB\-r\fR \fIratio\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR]
+\fBzzuf\fR [\fB\-AcdiMnqSvx\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR] [\fB\-r\fR \fIratio\fR|\fB\-r\fR \fIstart:stop\fR]
 .br
                    [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
 .br
@@ -40,8 +40,8 @@ if the \fBcat\fR utility had been called:
 .TP
 \fB\-A\fR, \fB\-\-autoinc\fR
 Increment random seed each time a new file is opened. This is only required
-if the same application is expected to open the same file several times and
-you want to test a different seed each time.
+if one instance of the application is expected to open the same file several
+times and you want to test a different seed each time.
 .TP
 \fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
 Automatically terminate child processes that output more than \fIn\fR bytes
@@ -165,11 +165,19 @@ is very verbose but only its exit code or signaled status is really useful to
 you.
 .TP
 \fB\-r\fR, \fB\-\-ratio\fR=\fIratio\fR
+.PD 0
+.TP
+\fB\-r\fR, \fB\-\-ratio\fR=\fIstart:stop\fR
+.PD
 Specify the proportion of bits that will be randomly fuzzed. A value of 0
 will not fuzz anything. A value of 0.05 will fuzz 5% of the open files'
 bits. A value of 1.0 or more will fuzz all the bytes, theoretically making
 the input files undiscernible from random data. The default fuzzing ratio
 is 0.004 (fuzz 0.4% of the files' bits).
+
+An interval can be specified. When doing so, \fBzzuf\fR will pick ratio
+values from the interval. This is only meaningful if an interval is also
+specified with the \fB\-s\fR flag.
 .TP
 \fB\-R\fR, \fB\-\-refuse\fR=\fIlist\fR
 Refuse a list of characters by not fuzzing bytes that would otherwise be
@@ -258,14 +266,15 @@ can be read by \fBVLC\fR to reproduce the same behaviour without using
 .br
 \fB    vlc fuzzy\-movie.avi\fR
 .PP
-Fuzz 2% of \fBMPlayer\fR's input bits (\fB\-r\ 0.02\fR) with seeds 0 to 9999
-(\fB\-s\ 0:10000\fR), disabling its standard output messages (\fB\-q\fR),
-launching up to five simultaneous child processes (\fB\-F\ 5\fR) but wait at
-least half a second between launches (\fB\-D\ 0.5\fR), killing \fBMPlayer\fR
-if it takes more than one minute to read the file (\fB\-T\ 60\fR) and
-disabling its \fBSIGSEGV\fR signal handler (\fB\-S\fR):
+Fuzz between 0.1% and 2% of \fBMPlayer\fR's input bits (\fB\-r\ 0.001:0.02\fR)
+with seeds 0 to 9999 (\fB\-s\ 0:10000\fR), disabling its standard output
+messages (\fB\-q\fR), launching up to five simultaneous child processes
+(\fB\-F\ 5\fR) but wait at least half a second between launches
+(\fB\-D\ 0.5\fR), killing \fBMPlayer\fR if it takes more than one minute to
+read the file (\fB\-T\ 60\fR) and disabling its \fBSIGSEGV\fR signal handler
+(\fB\-S\fR):
 .PP
-\fB    zzuf \-c \-r 0.02 \-q \-s 0:10000 \-F 5 \-D 0.5 \-T 60 \-S \\\fR
+\fB    zzuf \-c \-r 0.001:0.02 \-q \-s 0:10000 \-F 5 \-D 0.5 \-T 60 \-S \\\fR
 .br
 \fB      mplayer \-\- \-benchmark \-vo null \-fps 1000 movie.avi\fR
 .PP

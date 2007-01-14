@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <regex.h>
 #include <string.h>
+#include <math.h>
 
 #include "debug.h"
 #include "libzzuf.h"
@@ -54,7 +55,8 @@ static int *fds, static_fds[STATIC_FILES];
 static int maxfd, nfiles;
 
 static int32_t seed = DEFAULT_SEED;
-static double  ratio = DEFAULT_RATIO;
+static double  minratio = DEFAULT_RATIO;
+static double  maxratio = DEFAULT_RATIO;
 static int     autoinc = 0;
 
 void _zz_include(char const *regex)
@@ -74,13 +76,35 @@ void _zz_setseed(int32_t s)
     seed = s;
 }
 
-void _zz_setratio(double r)
+void _zz_setratio(double r0, double r1)
 {
-    if(r < MIN_RATIO)
-        r = MIN_RATIO;
-    else if(r > MAX_RATIO)
-        r = MAX_RATIO;
-    ratio = r;
+    minratio = r0 < MIN_RATIO ? MIN_RATIO : r0 > MAX_RATIO ? MAX_RATIO : r0;
+    maxratio = r1 < MIN_RATIO ? MIN_RATIO : r1 > MAX_RATIO ? MAX_RATIO : r1;
+    if(maxratio < minratio)
+        maxratio = minratio;
+}
+
+double _zz_getratio(void)
+{
+    uint8_t const shuffle[16] =
+    { 0, 12, 2, 10,
+      14, 8, 15, 7,
+      9, 13, 3, 6,
+      4, 1, 11, 5 };
+    uint16_t rate;
+    double min, max, cur;
+
+    rate = shuffle[seed & 0xf] << 12;
+    rate |= (seed & 0xf0) << 4;
+    rate |= (seed & 0xf00) >> 4;
+    rate |= (seed & 0xf000) >> 12;
+
+    min = log(minratio);
+    max = log(maxratio);
+
+    cur = min + (max - min) * rate / 0xffff;
+
+    return exp(cur);
 }
 
 void _zz_setautoinc(void)
@@ -188,7 +212,7 @@ void _zz_register(int fd)
     files[i].managed = 1;
     files[i].pos = 0;
     files[i].fuzz.seed = seed;
-    files[i].fuzz.ratio = ratio;
+    files[i].fuzz.ratio = _zz_getratio();
     files[i].fuzz.cur = -1;
 #ifdef HAVE_FGETLN
     files[i].fuzz.tmp = NULL;
