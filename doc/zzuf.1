@@ -281,9 +281,7 @@ read the file (\fB\-T\ 60\fR) and disabling its \fBSIGSEGV\fR signal handler
 Create an HTML-like file that loads 1000 times the same \fBhello.gif\fR image
 and open it in \fBFirefox\fR in auto-increment mode (\fB\-A\fR):
 .PP
-\fB    awk \(aqBEGIN { for(i=0; i<1000; i++) { print \\\fR
-.br
-\fB                   "<img src=\\"hello.gif#"i"\\">" }}\(aq > hello.html\fR
+\fB    seq -f \(aq<img src="hello.gif#%g">\(aq 1 1000 > hello.html\fR
 .br
 \fB    zzuf -A -I \(aqhello[.]gif\(aq -r 0.001 firefox hello.html\fR
 .SH RESTRICTIONS
