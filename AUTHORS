@@ -1,3 +1,8 @@
 $Id$
 
-zzuf was written by Sam Hocevar <sam@zoy.org>
+main zzuf author:
+ Sam Hocevar <sam@zoy.org>
+
+other contributors:
+ Rémi Denis-Courmont <rdenis#simphalempin:com> (readv support)
+

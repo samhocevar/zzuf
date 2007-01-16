@@ -317,8 +317,8 @@ allocations, \fBzzuf\fR diverts and reimplements the following functions,
 which can be private libc symbols, too:
 .TP
 Unix file descriptor handling:
-\fBopen\fR(), \fBlseek\fR(), \fBread\fR(), \fBaccept\fR(), \fBsocket\fR(),
-\fBclose\fR()
+\fBopen\fR(), \fBlseek\fR(), \fBread\fR(), \freadv\fR(), \fBaccept\fR(),
+\fBsocket\fR(), \fBclose\fR()
 .TP
 Standard IO streams:
 \fBfopen\fR(), \fBfreopen\fR(), \fBfseek\fR(), \fBfseeko\fR(), \fBrewind\fR(),

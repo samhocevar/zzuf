@@ -1,6 +1,7 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006, 2007 Sam Hocevar <sam@zoy.org>
+ *                2007 Rémi Denis-Courmont <rdenis#simphalempin:com>
  *                All Rights Reserved
  *
  *  $Id$
@@ -34,6 +35,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -59,6 +61,7 @@ static int     (*accept_orig)  (int sockfd, struct sockaddr *addr,
                                 SOCKLEN_T *addrlen);
 static int     (*socket_orig)  (int domain, int type, int protocol);
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
+static ssize_t (*readv_orig)   (int fd, const struct iovec *iov, int count);
 static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
 #ifdef HAVE_LSEEK64
 static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
@@ -162,6 +165,17 @@ int socket(int domain, int type, int protocol)
     return ret;
 }
 
+static void offset_check(int fd)
+{
+    /* Sanity check, can be OK though (for instance with a character device) */
+#ifdef HAVE_LSEEK64
+    if(lseek64_orig(fd, 0, SEEK_CUR) != _zz_getpos(fd))
+#else
+    if(lseek_orig(fd, 0, SEEK_CUR) != _zz_getpos(fd))
+#endif
+        debug("warning: offset inconsistency");
+}
+
 ssize_t read(int fd, void *buf, size_t count)
 {
     int ret;
@@ -188,14 +202,37 @@ ssize_t read(int fd, void *buf, size_t count)
     else
         debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
 
-    /* Sanity check, can be OK though (for instance with a character device) */
-#ifdef HAVE_LSEEK64
-    if(lseek64_orig(fd, 0, SEEK_CUR) != _zz_getpos(fd))
-#else
-    if(lseek_orig(fd, 0, SEEK_CUR) != _zz_getpos(fd))
-#endif
-        debug("warning: offset inconsistency");
+    offset_check(fd);
+    return ret;
+}
 
+ssize_t readv(int fd, const struct iovec *iov, int count)
+{
+    ssize_t ret;
+
+    LOADSYM(readv);
+    ret = readv_orig(fd, iov, count);
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+        return ret;
+
+    debug("readv(%i, %p, %i) = %li", fd, iov, count, (long int)ret);
+
+    while(ret > 0)
+    {
+        void *b = iov->iov_base;
+        size_t len = iov->iov_len;
+
+        if(len > (size_t)ret)
+            len = ret;
+
+        _zz_fuzz(fd, b, len);
+        _zz_addpos(fd, len);
+
+        iov++;
+        ret -= len;
+    }
+
+    offset_check(fd);
     return ret;
 }
 
