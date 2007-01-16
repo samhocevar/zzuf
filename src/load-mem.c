@@ -82,30 +82,6 @@ static kern_return_t (*map_fd_orig) (int fd, vm_offset_t offset,
                                      vm_size_t numbytes);
 #endif
 
-void _zz_load_mem(void)
-{
-    LOADSYM(calloc);
-    LOADSYM(malloc);
-    LOADSYM(free);
-    LOADSYM(realloc);
-    LOADSYM(valloc);
-#ifdef HAVE_MEMALIGN
-    LOADSYM(memalign);
-#endif
-#ifdef HAVE_POSIX_MEMALIGN
-    LOADSYM(posix_memalign);
-#endif
-
-    LOADSYM(mmap);
-#ifdef HAVE_MMAP64
-    LOADSYM(mmap64);
-#endif
-    LOADSYM(munmap);
-#ifdef HAVE_MAP_FD
-    LOADSYM(map_fd);
-#endif
-}
-
 /* We need a static memory buffer because some functions call memory
  * allocation routines before our library is loaded. Hell, even dlsym()
  * calls calloc(), so we need to do something about it */

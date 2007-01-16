@@ -52,12 +52,6 @@ static int   (*sigaction_orig) (int signum, const struct sigaction *act,
 /* Local functions */
 static int isfatal(int signum);
 
-void _zz_load_signal(void)
-{
-    LOADSYM(signal);
-    LOADSYM(sigaction);
-}
-
 static int isfatal(int signum)
 {
     switch(signum)

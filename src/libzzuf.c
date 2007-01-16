@@ -36,7 +36,6 @@
 
 #include "libzzuf.h"
 #include "debug.h"
-#include "load.h"
 #include "fd.h"
 #include "fuzz.h"
 
@@ -52,11 +51,6 @@ int   _zz_network  = 0;
 void _zz_init(void)
 {
     char *tmp, *tmp2;
-
-    _zz_load_mem();
-    _zz_load_signal();
-    _zz_load_fd();
-    _zz_load_stream();
 
     tmp = getenv("ZZUF_DEBUG");
     if(tmp && *tmp == '1')

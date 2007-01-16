@@ -70,25 +70,6 @@ static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
 #endif
 static int     (*close_orig)   (int fd);
 
-
-void _zz_load_fd(void)
-{
-    LOADSYM(open);
-#ifdef HAVE_OPEN64
-    LOADSYM(open64);
-#endif
-    LOADSYM(accept);
-    LOADSYM(socket);
-    LOADSYM(read);
-    LOADSYM(readv);
-    LOADSYM(pread);
-    LOADSYM(lseek);
-#ifdef HAVE_LSEEK64
-    LOADSYM(lseek64);
-#endif
-    LOADSYM(close);
-}
-
 #define OPEN(fn) \
     do \
     { \
@@ -173,9 +154,13 @@ static void offset_check(int fd)
 {
     /* Sanity check, can be OK though (for instance with a character device) */
 #ifdef HAVE_LSEEK64
-    off64_t ret = lseek64_orig(fd, 0, SEEK_CUR);
+    off64_t ret;
+    LOADSYM(lseek64);
+    ret = lseek64_orig(fd, 0, SEEK_CUR);
 #else
-    off_t ret = lseek_orig(fd, 0, SEEK_CUR);
+    off_t ret;
+    LOADSYM(lseek);
+    ret = lseek_orig(fd, 0, SEEK_CUR);
 #endif
     if(ret != -1 && ret != _zz_getpos(fd))
         debug("warning: offset inconsistency");
@@ -307,12 +292,11 @@ int close(int fd)
 {
     int ret;
 
-    LOADSYM(close);
-
     /* Hey, it’s our debug channel! Silently pretend we closed it. */
     if(fd == DEBUG_FILENO)
         return 0;
 
+    LOADSYM(close);
     ret = close_orig(fd);
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;

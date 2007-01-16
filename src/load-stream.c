@@ -88,45 +88,6 @@ static char *  (*fgetln_orig)    (FILE *stream, size_t *len);
 int            (*__srefill_orig) (FILE *fp);
 #endif
 
-
-void _zz_load_stream(void)
-{
-    LOADSYM(fopen);
-#ifdef HAVE_FOPEN64
-    LOADSYM(fopen64);
-#endif
-    LOADSYM(freopen);
-    LOADSYM(fseek);
-#ifdef HAVE_FSEEKO
-    LOADSYM(fseeko);
-#endif
-    LOADSYM(rewind);
-    LOADSYM(fread);
-    LOADSYM(getc);
-    LOADSYM(fgetc);
-#ifdef HAVE__IO_GETC
-    LOADSYM(_IO_getc);
-#endif
-    LOADSYM(fgets);
-    LOADSYM(ungetc);
-    LOADSYM(fclose);
-#ifdef HAVE_GETLINE
-    LOADSYM(getline);
-#endif
-#ifdef HAVE_GETDELIM
-    LOADSYM(getdelim);
-#endif
-#ifdef HAVE___GETDELIM
-    LOADSYM(__getdelim);
-#endif
-#ifdef HAVE_FGETLN
-    LOADSYM(fgetln);
-#endif
-#ifdef HAVE___SREFILL
-    LOADSYM(__srefill);
-#endif
-}
-
 /* Our function wrappers */
 #define FOPEN(fn) \
     do \
@@ -355,6 +316,7 @@ char *fgets(char *s, int size, FILE *stream)
     int fd;
 
     LOADSYM(fgets);
+    LOADSYM(fgetc);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
         return fgets_orig(s, size, stream);
@@ -461,6 +423,8 @@ int fclose(FILE *fp)
         ssize_t done, size; \
         int fd, finished = 0; \
         LOADSYM(fn); \
+        LOADSYM(getdelim); \
+        LOADSYM(fgetc); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd)) \
             return getdelim_orig(lineptr, n, delim, stream); \
@@ -542,6 +506,7 @@ char *fgetln(FILE *stream, size_t *len)
     int fd;
 
     LOADSYM(fgetln);
+    LOADSYM(fgetc);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
         return fgetln_orig(stream, len);
