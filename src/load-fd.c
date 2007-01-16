@@ -2,6 +2,7 @@
  *  zzuf - general purpose fuzzer
  *  Copyright (c) 2006, 2007 Sam Hocevar <sam@zoy.org>
  *                2007 Rémi Denis-Courmont <rdenis#simphalempin:com>
+ *                2007 Clément Stenac <zorglub#diwi:org>
  *                All Rights Reserved
  *
  *  $Id$
@@ -62,6 +63,7 @@ static int     (*accept_orig)  (int sockfd, struct sockaddr *addr,
 static int     (*socket_orig)  (int domain, int type, int protocol);
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
 static ssize_t (*readv_orig)   (int fd, const struct iovec *iov, int count);
+static ssize_t (*pread_orig)   (int fd, void *buf, size_t count, off_t offset);
 static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
 #ifdef HAVE_LSEEK64
 static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
@@ -78,6 +80,8 @@ void _zz_load_fd(void)
     LOADSYM(accept);
     LOADSYM(socket);
     LOADSYM(read);
+    LOADSYM(readv);
+    LOADSYM(pread);
     LOADSYM(lseek);
 #ifdef HAVE_LSEEK64
     LOADSYM(lseek64);
@@ -234,6 +238,39 @@ ssize_t readv(int fd, const struct iovec *iov, int count)
     }
 
     offset_check(fd);
+    return ret;
+}
+
+ssize_t pread(int fd, void *buf, size_t count, off_t offset)
+{
+    int ret;
+
+    LOADSYM(pread);
+    ret = pread_orig(fd, buf, count, offset);
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+        return ret;
+
+    if(ret > 0)
+    {
+        long int curoff = _zz_getpos(fd);
+        char *b = buf;
+
+        _zz_setpos(fd, offset);
+        _zz_fuzz(fd, buf, ret);
+        _zz_setpos(fd, curoff);
+
+        if(ret >= 4)
+            debug("pread(%i, %p, %li, %li) = %i \"%c%c%c%c...", fd, buf,
+                  (long int)count, (long int)offset, ret,
+                  b[0], b[1], b[2], b[3]);
+        else
+            debug("pread(%i, %p, %li, %li) = %i \"%c...", fd, buf,
+                  (long int)count, (long int)offset, ret, b[0]);
+    }
+    else
+        debug("pread(%i, %p, %li, %li) = %i", fd, buf,
+              (long int)count, (long int)offset, ret);
+
     return ret;
 }
 
