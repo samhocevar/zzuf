@@ -169,10 +169,11 @@ static void offset_check(int fd)
 {
     /* Sanity check, can be OK though (for instance with a character device) */
 #ifdef HAVE_LSEEK64
-    if(lseek64_orig(fd, 0, SEEK_CUR) != _zz_getpos(fd))
+    off64_t ret = lseek64_orig(fd, 0, SEEK_CUR);
 #else
-    if(lseek_orig(fd, 0, SEEK_CUR) != _zz_getpos(fd))
+    off_t ret = lseek_orig(fd, 0, SEEK_CUR);
 #endif
+    if(ret != -1 && ret != _zz_getpos(fd))
         debug("warning: offset inconsistency");
 }
 
