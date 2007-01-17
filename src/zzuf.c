@@ -381,12 +381,13 @@ static void loop_stdin(void)
     if(md5)
     {
         _zz_md5_fini(md5sum, ctx);
-        fprintf(stderr, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x"
+        fprintf(stdout, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x"
                 "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
                 seed, minratio, md5sum[0], md5sum[1], md5sum[2], md5sum[3],
                 md5sum[4], md5sum[5], md5sum[6], md5sum[7],
                 md5sum[8], md5sum[9], md5sum[10], md5sum[11],
                 md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
+        fflush(stdout);
     }
 
     _zz_unregister(0);
@@ -638,12 +639,13 @@ static void clean_children(void)
         if(md5)
         {
             _zz_md5_fini(md5sum, child_list[i].ctx);
-            fprintf(stderr, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x"
+            fprintf(stdout, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x"
                     "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
                     child_list[i].seed, child_list[i].ratio, md5sum[0],
                     md5sum[1], md5sum[2], md5sum[3], md5sum[4], md5sum[5],
                     md5sum[6], md5sum[7], md5sum[8], md5sum[9], md5sum[10],
                     md5sum[11], md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
+            fflush(stdout);
         }
         child_list[i].status = STATUS_FREE;
         child_count--;
