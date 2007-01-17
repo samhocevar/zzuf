@@ -54,6 +54,10 @@
 #   define SOCKLEN_T int
 #endif
 
+/* Local prototypes */
+static void fuzz_iovec   (int fd, const struct iovec *iov, ssize_t ret);
+static void offset_check (int fd);
+
 /* Library functions that we divert */
 static int     (*open_orig)    (const char *file, int oflag, ...);
 #ifdef HAVE_OPEN64
@@ -65,6 +69,7 @@ static int     (*socket_orig)  (int domain, int type, int protocol);
 static int     (*recv_orig)    (int s, void *buf, size_t len, int flags);
 static int     (*recvfrom_orig)(int s, void *buf, size_t len, int flags,
                                 struct sockaddr *from, SOCKLEN_T *fromlen);
+static int     (*recvmsg_orig) (int s,  struct msghdr *hdr, int flags);
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
 static ssize_t (*readv_orig)   (int fd, const struct iovec *iov, int count);
 static ssize_t (*pread_orig)   (int fd, void *buf, size_t count, off_t offset);
@@ -216,20 +221,19 @@ int recvfrom(int s, void *buf, size_t len, int flags,
     return ret;
 }
 
-static void offset_check(int fd)
+int recvmsg(int s, struct msghdr *hdr, int flags)
 {
-    /* Sanity check, can be OK though (for instance with a character device) */
-#ifdef HAVE_LSEEK64
-    off64_t ret;
-    LOADSYM(lseek64);
-    ret = lseek64_orig(fd, 0, SEEK_CUR);
-#else
-    off_t ret;
-    LOADSYM(lseek);
-    ret = lseek_orig(fd, 0, SEEK_CUR);
-#endif
-    if(ret != -1 && ret != _zz_getpos(fd))
-        debug("warning: offset inconsistency");
+    ssize_t ret;
+
+    LOADSYM(recvmsg);
+    ret = recvmsg_orig(s, hdr, flags);
+    if(!_zz_ready || !_zz_iswatched(s) || _zz_disabled)
+        return ret;
+
+    fuzz_iovec(s, hdr->msg_iov, ret);
+    debug("%s(%i, %p, %x) = %li", __func__, s, hdr, flags, (long int)ret);
+
+    return ret;
 }
 
 ssize_t read(int fd, void *buf, size_t count)
@@ -271,22 +275,8 @@ ssize_t readv(int fd, const struct iovec *iov, int count)
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;
 
+    fuzz_iovec(fd, iov, ret);
     debug("%s(%i, %p, %i) = %li", __func__, fd, iov, count, (long int)ret);
-
-    while(ret > 0)
-    {
-        void *b = iov->iov_base;
-        size_t len = iov->iov_len;
-
-        if(len > (size_t)ret)
-            len = ret;
-
-        _zz_fuzz(fd, b, len);
-        _zz_addpos(fd, len);
-
-        iov++;
-        ret -= len;
-    }
 
     offset_check(fd);
     return ret;
@@ -371,5 +361,42 @@ int close(int fd)
     _zz_unregister(fd);
 
     return ret;
+}
+
+/* XXX: the following functions are local */
+
+static void fuzz_iovec (int fd, const struct iovec *iov, ssize_t ret)
+{
+    /* NOTE: We assume that iov countains at least <ret> bytes. */
+    while(ret > 0)
+    {
+        void *b = iov->iov_base;
+        size_t len = iov->iov_len;
+
+        if(len > (size_t)ret)
+            len = ret;
+
+        _zz_fuzz(fd, b, len);
+        _zz_addpos(fd, len);
+
+        iov++;
+        ret -= len;
+    }
+}
+
+static void offset_check(int fd)
+{
+    /* Sanity check, can be OK though (for instance with a character device) */
+#ifdef HAVE_LSEEK64
+    off64_t ret;
+    LOADSYM(lseek64);
+    ret = lseek64_orig(fd, 0, SEEK_CUR);
+#else
+    off_t ret;
+    LOADSYM(lseek);
+    ret = lseek_orig(fd, 0, SEEK_CUR);
+#endif
+    if(ret != -1 && ret != _zz_getpos(fd))
+        debug("warning: offset inconsistency");
 }
 

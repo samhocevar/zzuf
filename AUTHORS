@@ -4,7 +4,7 @@ main zzuf author:
  Sam Hocevar <sam@zoy.org>
 
 other contributors:
- Rémi Denis-Courmont <rdenis#simphalempin:com> (readv support)
- Clément Stenac <zorglub#diwi:org> (pread support)
- Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de> (recvfrom support)
+ Rémi Denis-Courmont <rdenis#simphalempin:com> (readv, recvmsg)
+ Clément Stenac <zorglub#diwi:org> (pread)
+ Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de> (recvfrom)
 
