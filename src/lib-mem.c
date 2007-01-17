@@ -48,9 +48,9 @@
 #endif
 
 #include "libzzuf.h"
+#include "lib-load.h"
 #include "debug.h"
 #include "fuzz.h"
-#include "load.h"
 #include "fd.h"
 
 /* TODO: mremap, maybe brk/sbrk (haha) */

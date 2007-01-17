@@ -9,7 +9,7 @@ zzuf_LDFLAGS = @MATH_LIBS@
 
 pkglib_LTLIBRARIES = libzzuf.la
 libzzuf_la_SOURCES = libzzuf.c libzzuf.h $(COMMON) debug.c debug.h \
-                     load-fd.c load-mem.c load-signal.c load-stream.c load.h
+                     lib-fd.c lib-mem.c lib-signal.c lib-stream.c lib-load.h
 libzzuf_la_LDFLAGS = -avoid-version -no-undefined
 libzzuf_la_LIBADD = @GETOPT_LIBS@ @DL_LIBS@ @MATH_LIBS@
 

@@ -33,9 +33,9 @@
 #include <signal.h>
 
 #include "libzzuf.h"
+#include "lib-load.h"
 #include "debug.h"
 #include "fuzz.h"
-#include "load.h"
 
 #if defined HAVE_SIGHANDLER_T
 #   define SIG_T sighandler_t
