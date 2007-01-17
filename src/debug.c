@@ -101,6 +101,11 @@ void _zz_debug(char const *format, ...)
             int i = va_arg(args, int);
             WRITE_INT(fd, i, 10);
         }
+        else if(*f == 'x')
+        {
+            int i = va_arg(args, int);
+            WRITE_INT(fd, i, 16);
+        }
         else if(f[0] == 'l' && f[1] == 'i')
         {
             long int i = va_arg(args, long int);
