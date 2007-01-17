@@ -147,6 +147,7 @@ int main(int argc, char *argv[])
             { "check-exit",  0, NULL, 'x' },
             { "help",        0, NULL, 'h' },
             { "version",     0, NULL, 'V' },
+            { NULL,          0, NULL,  0  }
         };
         int c = getopt_long(argc, argv, OPTSTR, long_options, &option_index);
 #   else
