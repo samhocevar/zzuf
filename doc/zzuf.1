@@ -255,10 +255,10 @@ want \fBzzuf\fR to fuzz them):
 .PP
 \fB    zzuf \-E \(aq\\.xml$\(aq convert \-\- foo.jpeg \-format tga /dev/null\fR
 .PP
-Fuzz the input of \fBVLC\fR, using file \fBmovie.avi\fR as the original input
+Fuzz the input of VLC, using file \fBmovie.avi\fR as the original input
 and restricting fuzzing to filenames that appear on the command line
 (\fB\-c\fR), then generate \fBfuzzy\-movie.avi\fR which is a file that
-can be read by \fBVLC\fR to reproduce the same behaviour without using
+can be read by VLC to reproduce the same behaviour without using
 \fBzzuf\fR:
 .PP
 \fB    zzuf \-c \-s 87423 \-r 0.01 vlc movie.avi\fR
@@ -267,11 +267,11 @@ can be read by \fBVLC\fR to reproduce the same behaviour without using
 .br
 \fB    vlc fuzzy\-movie.avi\fR
 .PP
-Fuzz between 0.1% and 2% of \fBMPlayer\fR's input bits (\fB\-r\ 0.001:0.02\fR)
+Fuzz between 0.1% and 2% of MPlayer's input bits (\fB\-r\ 0.001:0.02\fR)
 with seeds 0 to 9999 (\fB\-s\ 0:10000\fR), disabling its standard output
 messages (\fB\-q\fR), launching up to five simultaneous child processes
 (\fB\-F\ 5\fR) but wait at least half a second between launches
-(\fB\-D\ 0.5\fR), killing \fBMPlayer\fR if it takes more than one minute to
+(\fB\-D\ 0.5\fR), killing MPlayer if it takes more than one minute to
 read the file (\fB\-T\ 60\fR) and disabling its \fBSIGSEGV\fR signal handler
 (\fB\-S\fR):
 .PP
@@ -279,12 +279,14 @@ read the file (\fB\-T\ 60\fR) and disabling its \fBSIGSEGV\fR signal handler
 .br
 \fB      mplayer \-\- \-benchmark \-vo null \-fps 1000 movie.avi\fR
 .PP
-Create an HTML-like file that loads 1000 times the same \fBhello.gif\fR image
-and open it in \fBFirefox\fR in auto-increment mode (\fB\-A\fR):
+Create an HTML-like file that loads 200 times the same \fBhello.jpg\fR image
+and open it in Firefox\(tm in auto-increment mode (\fB\-A\fR):
 .PP
-\fB    seq -f \(aq<img src="hello.gif#%g">\(aq 1 1000 > hello.html\fR
+\fB    seq -f \(aq<img src="hello.jpg#%g">\(aq 1 200 > hello.html\fR
 .br
-\fB    zzuf -A -I \(aqhello[.]gif\(aq -r 0.001 firefox hello.html\fR
+      (or: \fBjot -w \(aq<img src="hello.jpg#%d">\(aq 200 1 > hello.html\fR)
+.br
+\fB    zzuf -A -I \(aqhello[.]jpg\(aq -r 0.001 firefox hello.html\fR
 .SH RESTRICTIONS
 .PP
 Due to \fBzzuf\fR using shared object preloading (\fBLD_PRELOAD\fR,
@@ -356,7 +358,7 @@ functions will be added upon user request.
 .SH HISTORY
 .PP
 \fBzzuf\fR started its life in 2002 as the \fBstreamfucker\fR tool, a small
-multimedia stream corrupter used to find bugs in the \fBVLC\fR media player.
+multimedia stream corrupter used to find bugs in the VLC media player.
 .SH AUTHOR
 .PP
 Copyright \(co 2002, 2007 Sam Hocevar <sam@zoy.org>.
