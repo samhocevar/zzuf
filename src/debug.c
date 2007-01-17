@@ -83,6 +83,12 @@ void _zz_debug(char const *format, ...)
             char i = (char)(unsigned char)va_arg(args, int);
             if(i >= 0x20 && i < 0x7f)
                 write(fd, &i, 1);
+            else if(i == '\n')
+                write(fd, "\\n", 2);
+            else if(i == '\t')
+                write(fd, "\\t", 2);
+            else if(i == '\r')
+                write(fd, "\\r", 2);
             else
             {
                 write(fd, "\\x", 2);

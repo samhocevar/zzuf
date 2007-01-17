@@ -287,10 +287,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         ret = ORIG(fn)(stream); \
         _zz_disabled = 0; \
         FGETC_FUZZ \
-        if(ret >= 0x20 && ret <= 0x7f) \
-            debug("%s([%i]) = 0x%02x '%c'", __func__, fd, ret, (char)ret); \
-        else \
-            debug("%s([%i]) = 0x%02x", __func__, fd, ret); \
+        debug("%s([%i]) = '%c'", __func__, fd, ret); \
     } while(0)
 
 #undef getc /* can be a macro; we don’t want that */
@@ -393,10 +390,7 @@ int ungetc(int c, FILE *stream)
         _zz_addpos(fd, 1); /* revert what we did */
 #endif
 
-    if(ret >= 0x20 && ret <= 0x7f)
-        debug("%s(0x%02x, [%i]) = 0x%02x '%c'", __func__, c, fd, ret, ret);
-    else
-        debug("%s(0x%02x, [%i]) = 0x%02x", __func__, c, fd, ret);
+    debug("%s(0x%02x, [%i]) = '%c'", __func__, c, fd, ret);
     return ret;
 }
 
@@ -466,7 +460,7 @@ int fclose(FILE *fp)
             } \
         } \
         if(need_delim) \
-            debug("%s(%p, %p, 0x%02x, [%i]) = %li", __func__, \
+            debug("%s(%p, %p, '%c', [%i]) = %li", __func__, \
                   lineptr, n, delim, fd, (long int)ret); \
         else \
             debug("%s(%p, %p, [%i]) = %li", __func__, \
