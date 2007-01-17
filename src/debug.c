@@ -111,7 +111,7 @@ void _zz_debug(char const *format, ...)
         {
             uintptr_t i = va_arg(args, uintptr_t);
             if(!i)
-                write(fd, "(nil)", 5);
+                write(fd, "NULL", 5);
             else
             {
                 write(fd, "0x", 2);
