@@ -99,7 +99,7 @@ static int     (*close_orig)   (int fd);
         { \
             ret = ORIG(fn)(file, oflag); \
         } \
-        if(!_zz_ready || _zz_disabled) \
+        if(!_zz_ready || _zz_islocked(-1)) \
             return ret; \
         if(ret >= 0 \
             && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY) \
@@ -132,7 +132,7 @@ int accept(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 
     LOADSYM(accept);
     ret = accept_orig(sockfd, addr, addrlen);
-    if(!_zz_ready || _zz_disabled || !_zz_network)
+    if(!_zz_ready || _zz_islocked(-1) || !_zz_network)
         return ret;
 
     if(ret >= 0)
@@ -150,7 +150,7 @@ int socket(int domain, int type, int protocol)
 
     LOADSYM(socket);
     ret = socket_orig(domain, type, protocol);
-    if(!_zz_ready || _zz_disabled || !_zz_network)
+    if(!_zz_ready || _zz_islocked(-1) || !_zz_network)
         return ret;
 
     if(ret >= 0)
@@ -168,7 +168,7 @@ int recv(int s, void *buf, size_t len, int flags)
 
     LOADSYM(recv);
     ret = recv_orig(s, buf, len, flags);
-    if(!_zz_ready || _zz_disabled || !_zz_network)
+    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s))
         return ret;
 
     if(ret > 0) 
@@ -199,7 +199,7 @@ int recvfrom(int s, void *buf, size_t len, int flags,
 
     LOADSYM(recvfrom);
     ret = recvfrom_orig(s, buf, len, flags, from, fromlen);
-    if(!_zz_ready || _zz_disabled || !_zz_network)
+    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s))
         return ret;
 
     if(ret > 0) 
@@ -230,7 +230,7 @@ int recvmsg(int s, struct msghdr *hdr, int flags)
 
     LOADSYM(recvmsg);
     ret = recvmsg_orig(s, hdr, flags);
-    if(!_zz_ready || !_zz_iswatched(s) || _zz_disabled)
+    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s))
         return ret;
 
     fuzz_iovec(s, hdr->msg_iov, ret);
@@ -245,7 +245,7 @@ ssize_t read(int fd, void *buf, size_t count)
 
     LOADSYM(read);
     ret = read_orig(fd, buf, count);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
     if(ret > 0)
@@ -275,7 +275,7 @@ ssize_t readv(int fd, const struct iovec *iov, int count)
 
     LOADSYM(readv);
     ret = readv_orig(fd, iov, count);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
     fuzz_iovec(fd, iov, ret);
@@ -291,7 +291,7 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
 
     LOADSYM(pread);
     ret = pread_orig(fd, buf, count, offset);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
     if(ret > 0)
@@ -323,7 +323,7 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
     { \
         LOADSYM(fn); \
         ret = ORIG(fn)(fd, offset, whence); \
-        if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled) \
+        if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)) \
             return ret; \
         debug("%s(%i, %lli, %i) = %lli", __func__, fd, \
               (long long int)offset, whence, (long long int)ret); \
@@ -353,10 +353,10 @@ int aio_read(struct aiocb *aiocbp)
     int fd = aiocbp->aio_fildes;
 
     LOADSYM(aio_read);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+    if(!_zz_ready || !_zz_iswatched(fd))
         return aio_read_orig(aiocbp);
 
-    _zz_disabled = 1;
+    _zz_lock(fd);
     ret = aio_read_orig(aiocbp);
 
     debug("%s({%i, %i, %i, %p, %li, ..., %li}) = %i", __func__,
@@ -376,7 +376,7 @@ ssize_t aio_return(struct aiocb *aiocbp)
         return aio_return_orig(aiocbp);
 
     ret = aio_return_orig(aiocbp);
-    _zz_disabled = 0;
+    _zz_unlock(fd);
 
     /* FIXME: make sure we’re actually *reading* */
     if(ret > 0)
@@ -404,7 +404,7 @@ int close(int fd)
 
     LOADSYM(close);
     ret = close_orig(fd);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
     debug("%s(%i) = %i", __func__, fd, ret);

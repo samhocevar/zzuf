@@ -189,7 +189,7 @@ int nbmaps = 0;
     do { \
         LOADSYM(fn); \
         ret = ORIG(fn)(start, length, prot, flags, fd, offset); \
-        if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled) \
+        if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)) \
             return ret; \
         if(ret && length) \
         { \
@@ -269,7 +269,7 @@ kern_return_t map_fd(int fd, vm_offset_t offset, vm_offset_t *addr,
 
     LOADSYM(map_fd);
     ret = map_fd_orig(fd, offset, addr, find_space, numbytes);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
     if(ret == 0 && numbytes)

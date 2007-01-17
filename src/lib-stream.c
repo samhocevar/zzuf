@@ -95,9 +95,9 @@ int            (*__srefill_orig) (FILE *fp);
         LOADSYM(fn); \
         if(!_zz_ready) \
             return ORIG(fn)(path, mode); \
-        _zz_disabled = 1; \
+        _zz_lock(-1); \
         ret = ORIG(fn)(path, mode); \
-        _zz_disabled = 0; \
+        _zz_unlock(-1); \
         if(ret && _zz_mustwatch(path)) \
         { \
             int fd = fileno(ret); \
@@ -130,9 +130,9 @@ FILE *freopen(const char *path, const char *mode, FILE *stream)
         disp = 1;
     }
 
-    _zz_disabled = 1;
+    _zz_lock(-1);
     ret = freopen_orig(path, mode, stream);
-    _zz_disabled = 0;
+    _zz_unlock(-1);
 
     if(ret && _zz_mustwatch(path))
     {
@@ -178,9 +178,9 @@ FILE *freopen(const char *path, const char *mode, FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd)) \
             return ORIG(fn)(stream, offset, whence); \
-        _zz_disabled = 1; \
+        _zz_lock(fd); \
         ret = ORIG(fn)(stream, offset, whence); \
-        _zz_disabled = 0; \
+        _zz_unlock(fd); \
         debug("%s([%i], %lli, %i) = %i", __func__, \
               fd, (long long int)offset, whence, ret); \
         FSEEK_FUZZ(fn2) \
@@ -210,9 +210,9 @@ void rewind(FILE *stream)
         return;
     }
 
-    _zz_disabled = 1;
+    _zz_lock(fd);
     rewind_orig(stream);
-    _zz_disabled = 0;
+    _zz_unlock(fd);
     debug("%s([%i])", __func__, fd);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
@@ -238,9 +238,9 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         return fread_orig(ptr, size, nmemb, stream);
 
     pos = ftell(stream);
-    _zz_disabled = 1;
+    _zz_lock(fd);
     ret = fread_orig(ptr, size, nmemb, stream);
-    _zz_disabled = 0;
+    _zz_unlock(fd);
     debug("%s(%p, %li, %li, [%i]) = %li", __func__, ptr,
           (long int)size, (long int)nmemb, fd, (long int)ret);
 
@@ -283,9 +283,9 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd)) \
             return ORIG(fn)(stream); \
-        _zz_disabled = 1; \
+        _zz_lock(fd); \
         ret = ORIG(fn)(stream); \
-        _zz_disabled = 0; \
+        _zz_unlock(fd); \
         FGETC_FUZZ \
         debug("%s([%i]) = '%c'", __func__, fd, ret); \
     } while(0)
@@ -320,9 +320,9 @@ char *fgets(char *s, int size, FILE *stream)
         return fgets_orig(s, size, stream);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
-    _zz_disabled = 1;
+    _zz_lock(fd);
     ret = fgets_orig(s, size, stream);
-    _zz_disabled = 0;
+    _zz_unlock(fd);
 #else
     if(size <= 0)
         ret = NULL;
@@ -336,9 +336,9 @@ char *fgets(char *s, int size, FILE *stream)
         {
             int ch;
 
-            _zz_disabled = 1;
+            _zz_lock(fd);
             ch = fgetc_orig(stream);
-            _zz_disabled = 0;
+            _zz_unlock(fd);
 
             if(ch == EOF)
             {
@@ -378,9 +378,9 @@ int ungetc(int c, FILE *stream)
     _zz_addpos(fd, -1);
     _zz_fuzz(fd, &ch, 1);
 #endif
-    _zz_disabled = 1;
+    _zz_lock(fd);
     ret = ungetc_orig((int)ch, stream);
-    _zz_disabled = 0;
+    _zz_unlock(fd);
 
     if(ret >= 0)
         ret = c;
@@ -403,9 +403,9 @@ int fclose(FILE *fp)
     if(!_zz_ready || !_zz_iswatched(fd))
         return fclose_orig(fp);
 
-    _zz_disabled = 1;
+    _zz_lock(fd);
     ret = fclose_orig(fp);
-    _zz_disabled = 0;
+    _zz_unlock(fd);
     debug("%s([%i]) = %i", __func__, fd, ret);
     _zz_unregister(fd);
 
@@ -438,9 +438,9 @@ int fclose(FILE *fp)
                 *lineptr = line; \
                 break; \
             } \
-            _zz_disabled = 1; \
+            _zz_lock(fd); \
             ch = fgetc_orig(stream); \
-            _zz_disabled = 0; \
+            _zz_unlock(fd); \
             if(ch == EOF) \
             { \
                 finished = 1; \
@@ -507,9 +507,9 @@ char *fgetln(FILE *stream, size_t *len)
         return fgetln_orig(stream, len);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
-    _zz_disabled = 1;
+    _zz_lock(fd);
     ret = fgetln_orig(stream, len);
-    _zz_disabled = 0;
+    _zz_unlock(fd);
 #else
     fuzz = _zz_getfuzz(fd);
 
@@ -517,9 +517,9 @@ char *fgetln(FILE *stream, size_t *len)
     {
         int ch;
 
-        _zz_disabled = 1;
+        _zz_lock(fd);
         ch = fgetc_orig(stream);
-        _zz_disabled = 0;
+        _zz_unlock(fd);
 
         if(ch == EOF)
             break;
@@ -555,11 +555,12 @@ int __srefill(FILE *fp)
     if(!_zz_ready || !_zz_iswatched(fd))
         return __srefill_orig(fp);
 
-    tmp = _zz_disabled;
-    _zz_disabled = 1;
+    tmp = _zz_islocked(fd);
+    _zz_lock(fd);
     ret = __srefill_orig(fp);
     newpos = lseek(fd, 0, SEEK_CUR);
-    _zz_disabled = tmp;
+    if(!tmp)
+        _zz_unlock(fd);
     if(ret != EOF)
     {
         if(newpos != -1)
@@ -568,7 +569,7 @@ int __srefill(FILE *fp)
         _zz_addpos(fd, fp->_r);
     }
 
-    if(!_zz_disabled)
+    if(!_zz_islocked(fd))
         debug("%s([%i]) = %i", __func__, fd, ret);
 
     return ret;

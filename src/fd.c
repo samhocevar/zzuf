@@ -45,7 +45,7 @@ static int has_include = 0, has_exclude = 0;
 #define STATIC_FILES 32
 static struct files
 {
-    int managed;
+    int managed, locked;
     uint64_t pos;
     /* Public stuff */
     struct fuzz fuzz;
@@ -53,6 +53,11 @@ static struct files
 *files, static_files[STATIC_FILES];
 static int *fds, static_fds[STATIC_FILES];
 static int maxfd, nfiles;
+
+/* Create lock. This lock variable is used to disable file descriptor
+ * creation wrappers. For instance on Mac OS X, fopen() calls open()
+ * and we don’t want open() to do any zzuf-related stuff. */
+static int create_lock;
 
 static int32_t seed = DEFAULT_SEED;
 static double  minratio = DEFAULT_RATIO;
@@ -219,6 +224,7 @@ void _zz_register(int fd)
     }
 
     files[i].managed = 1;
+    files[i].locked = 0;
     files[i].pos = 0;
     files[i].fuzz.seed = seed;
     files[i].fuzz.ratio = _zz_getratio();
@@ -245,6 +251,39 @@ void _zz_unregister(int fd)
 #endif
 
     fds[fd] = -1;
+}
+
+void _zz_lock(int fd)
+{
+    if(fd < -1 || fd >= maxfd || fds[fd] == -1)
+        return;
+
+    if(fd == -1)
+        create_lock = 1;
+    else
+        files[fds[fd]].locked = 1;
+}
+
+void _zz_unlock(int fd)
+{
+    if(fd < -1 || fd >= maxfd || fds[fd] == -1)
+        return;
+
+    if(fd == -1)
+        create_lock = 0;
+    else
+        files[fds[fd]].locked = 0;
+}
+
+int _zz_islocked(int fd)
+{
+    if(fd < -1 || fd >= maxfd || fds[fd] == -1)
+        return 0;
+
+    if(fd == -1)
+        return create_lock;
+    else
+        return files[fds[fd]].locked;
 }
 
 long int _zz_getpos(int fd)

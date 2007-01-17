@@ -41,7 +41,6 @@
 
 /* Global variables */
 int   _zz_ready    = 0;
-int   _zz_disabled = 0;
 int   _zz_hasdebug = 0;
 int   _zz_signal   = 0;
 int   _zz_memory   = 0;
