@@ -52,11 +52,11 @@ void _zz_refuse(char const *list)
     readchars(refuse, list);
 }
 
-void _zz_fuzz(int fd, uint8_t *buf, uint64_t len)
+void _zz_fuzz(int fd, volatile uint8_t *buf, uint64_t len)
 {
     uint64_t start, stop;
     struct fuzz *fuzz;
-    uint8_t *aligned_buf;
+    volatile uint8_t *aligned_buf;
     unsigned long int pos = _zz_getpos(fd);
     unsigned int i, j, todo;
 

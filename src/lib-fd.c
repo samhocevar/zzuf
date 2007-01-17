@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <aio.h>
 
 #include "libzzuf.h"
 #include "lib-load.h"
@@ -73,6 +74,8 @@ static int     (*recvmsg_orig) (int s,  struct msghdr *hdr, int flags);
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
 static ssize_t (*readv_orig)   (int fd, const struct iovec *iov, int count);
 static ssize_t (*pread_orig)   (int fd, void *buf, size_t count, off_t offset);
+static int     (*aio_read_orig)   (struct aiocb *aiocbp);
+static ssize_t (*aio_return_orig) (struct aiocb *aiocbp);
 static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
 #ifdef HAVE_LSEEK64
 static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
@@ -344,6 +347,53 @@ off64_t lseek64(int fd, off64_t offset, int whence)
 }
 #endif
 
+int aio_read(struct aiocb *aiocbp)
+{
+    int ret;
+    int fd = aiocbp->aio_fildes;
+
+    LOADSYM(aio_read);
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
+        return aio_read_orig(aiocbp);
+
+    _zz_disabled = 1;
+    ret = aio_read_orig(aiocbp);
+
+    debug("%s({%i, %i, %i, %p, %li, ..., %li}) = %i", __func__,
+          fd, aiocbp->aio_lio_opcode, aiocbp->aio_reqprio, aiocbp->aio_buf,
+          (long int)aiocbp->aio_nbytes, (long int)aiocbp->aio_offset, ret);
+
+    return ret;
+}
+
+ssize_t aio_return(struct aiocb *aiocbp)
+{
+    ssize_t ret;
+    int fd = aiocbp->aio_fildes;
+
+    LOADSYM(aio_return);
+    if(!_zz_ready || !_zz_iswatched(fd))
+        return aio_return_orig(aiocbp);
+
+    ret = aio_return_orig(aiocbp);
+    _zz_disabled = 0;
+
+    /* FIXME: make sure we’re actually *reading* */
+    if(ret > 0)
+    {
+        _zz_setpos(fd, aiocbp->aio_offset);
+        _zz_fuzz(fd, aiocbp->aio_buf, ret);
+        _zz_addpos(fd, ret);
+    }
+
+    debug("%s({%i, %i, %i, %p, %li, ..., %li}) = %li", __func__,
+          fd, aiocbp->aio_lio_opcode, aiocbp->aio_reqprio, aiocbp->aio_buf,
+          (long int)aiocbp->aio_nbytes, (long int)aiocbp->aio_offset,
+          (long int)ret);
+
+    return ret;
+}
+
 int close(int fd)
 {
     int ret;
@@ -365,7 +415,7 @@ int close(int fd)
 
 /* XXX: the following functions are local */
 
-static void fuzz_iovec (int fd, const struct iovec *iov, ssize_t ret)
+static void fuzz_iovec(int fd, const struct iovec *iov, ssize_t ret)
 {
     /* NOTE: We assume that iov countains at least <ret> bytes. */
     while(ret > 0)
