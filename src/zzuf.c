@@ -38,17 +38,18 @@
 #include <sys/resource.h>
 
 #include "libzzuf.h"
+#include "opts.h"
 #include "random.h"
 #include "fd.h"
 #include "fuzz.h"
 #include "md5.h"
 #include "timer.h"
 
-static void loop_stdin(void);
+static void loop_stdin(struct opts *opts);
 
-static void spawn_children(void);
-static void clean_children(void);
-static void read_children(void);
+static void spawn_children(struct opts *opts);
+static void clean_children(struct opts *opts);
+static void read_children(struct opts *opts);
 
 static char const *sig2str(int);
 static char *merge_regex(char *, char *);
@@ -58,42 +59,6 @@ static void version(void);
 #if defined(HAVE_GETOPT_H)
 static void usage(void);
 #endif
-
-static struct child_list
-{
-    enum status
-    {
-        STATUS_FREE,
-        STATUS_RUNNING,
-        STATUS_SIGTERM,
-        STATUS_SIGKILL,
-        STATUS_EOF,
-    } status;
-
-    pid_t pid;
-    int fd[3]; /* 0 is debug, 1 is stderr, 2 is stdout */
-    int bytes, seed;
-    double ratio;
-    int64_t date;
-    struct md5 *ctx;
-} *child_list;
-static int maxforks = 1, child_count = 0, maxcrashes = 1, crashes = 0;
-
-static char **newargv;
-static char *protect = NULL, *refuse = NULL;
-static uint32_t seed = DEFAULT_SEED;
-static uint32_t endseed = DEFAULT_SEED + 1;
-static double minratio = DEFAULT_RATIO;
-static double maxratio = DEFAULT_RATIO;
-static int quiet = 0;
-static int maxbytes = -1;
-static int md5 = 0;
-static int checkexit = 0;
-static int verbose = 0;
-static int maxmem = -1;
-static int64_t maxtime = -1;
-static int64_t delay = 0;
-static int64_t lastlaunch = 0;
 
 #define ZZUF_FD_SET(fd, p_fdset, maxfd) \
     if(fd >= 0) \
@@ -108,10 +73,13 @@ static int64_t lastlaunch = 0;
 
 int main(int argc, char *argv[])
 {
-    char *parser, *include, *exclude;
+    struct opts _opts, *opts = &_opts;
+    char *tmp, *include, *exclude;
     int i, cmdline = 0;
 
     include = exclude = NULL;
+
+    _zz_opts_init(opts);
 
 #if defined(HAVE_GETOPT_H)
     for(;;)
@@ -163,32 +131,33 @@ int main(int argc, char *argv[])
             setenv("ZZUF_AUTOINC", "1", 1);
             break;
         case 'B': /* --max-bytes */
-            maxbytes = atoi(optarg);
+            opts->maxbytes = atoi(optarg);
             break;
         case 'c': /* --cmdline */
             cmdline = 1;
             break;
         case 'C': /* --max-crashes */
-            maxcrashes = atoi(optarg);
-            if(maxcrashes <= 0)
-                maxcrashes = 0;
+            opts->maxcrashes = atoi(optarg);
+            if(opts->maxcrashes <= 0)
+                opts->maxcrashes = 0;
             break;
         case 'd': /* --debug */
             setenv("ZZUF_DEBUG", "1", 1);
             break;
         case 'D': /* --delay */
-            delay = (int64_t)(atof(optarg) * 1000000.0);
+            opts->delay = (int64_t)(atof(optarg) * 1000000.0);
             break;
         case 'E': /* --exclude */
             exclude = merge_regex(exclude, optarg);
             if(!exclude)
             {
                 printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
+                _zz_opts_fini(opts);
                 return EXIT_FAILURE;
             }
             break;
         case 'F': /* --max-forks */
-            maxforks = atoi(optarg) > 1 ? atoi(optarg) : 1;
+            opts->maxchild = atoi(optarg) > 1 ? atoi(optarg) : 1;
             break;
         case 'i': /* --stdin */
             setenv("ZZUF_STDIN", "1", 1);
@@ -198,59 +167,63 @@ int main(int argc, char *argv[])
             if(!include)
             {
                 printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
+                _zz_opts_fini(opts);
                 return EXIT_FAILURE;
             }
             break;
         case 'm': /* --md5 */
-            md5 = 1;
+            opts->md5 = 1;
             break;
         case 'M': /* --max-memory */
             setenv("ZZUF_MEMORY", "1", 1);
-            maxmem = atoi(optarg);
+            opts->maxmem = atoi(optarg);
             break;
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
             break;
         case 'P': /* --protect */
-            protect = optarg;
+            opts->protect = optarg;
             break;
         case 'q': /* --quiet */
-            quiet = 1;
+            opts->quiet = 1;
             break;
         case 'r': /* --ratio */
-            parser = strchr(optarg, ':');
-            minratio = atof(optarg);
-            maxratio = parser ? atof(parser + 1) : minratio;
+            tmp = strchr(optarg, ':');
+            opts->minratio = atof(optarg);
+            opts->maxratio = tmp ? atof(tmp + 1) : opts->minratio;
             break;
         case 'R': /* --refuse */
-            refuse = optarg;
+            opts->refuse = optarg;
             break;
         case 's': /* --seed */
-            parser = strchr(optarg, ':');
-            seed = atol(optarg);
-            endseed = parser ? (uint32_t)atoi(parser + 1) : seed + 1;
+            tmp = strchr(optarg, ':');
+            opts->seed = atol(optarg);
+            opts->endseed = tmp ? (uint32_t)atoi(tmp + 1) : opts->seed + 1;
             break;
         case 'S': /* --signal */
             setenv("ZZUF_SIGNAL", "1", 1);
             break;
         case 'T': /* --max-time */
-            maxtime = (int64_t)(atof(optarg) * 1000000.0);
+            opts->maxtime = (int64_t)(atof(optarg) * 1000000.0);
             break;
         case 'x': /* --check-exit */
-            checkexit = 1;
+            opts->checkexit = 1;
             break;
         case 'v': /* --verbose */
-            verbose = 1;
+            opts->verbose = 1;
             break;
         case 'h': /* --help */
             usage();
+            _zz_opts_fini(opts);
             return 0;
         case 'V': /* --version */
             version();
+            _zz_opts_fini(opts);
             return 0;
         default:
             printf("%s: invalid option -- %c\n", argv[0], c);
             printf(MOREINFO, argv[0]);
+            _zz_opts_fini(opts);
             return EXIT_FAILURE;
         }
     }
@@ -259,22 +232,24 @@ int main(int argc, char *argv[])
     int optind = 1;
 #endif
 
-    _zz_setratio(minratio, maxratio);
-    _zz_setseed(seed);
+    _zz_setratio(opts->minratio, opts->maxratio);
+    _zz_setseed(opts->seed);
 
     /* If asked to read from the standard input */
     if(optind >= argc)
     {
-        if(endseed != seed + 1)
+        if(opts->endseed != opts->seed + 1)
         {
             printf("%s: seed ranges are incompatible with stdin fuzzing\n",
                    argv[0]);
             printf(MOREINFO, argv[0]);
+            _zz_opts_fini(opts);
             return EXIT_FAILURE;
         }
 
-        loop_stdin();
+        loop_stdin(opts);
 
+        _zz_opts_fini(opts);
         return EXIT_SUCCESS;
     }
 
@@ -298,60 +273,60 @@ int main(int argc, char *argv[])
         setenv("ZZUF_INCLUDE", include, 1);
     if(exclude)
         setenv("ZZUF_EXCLUDE", exclude, 1);
-    if(protect)
-        setenv("ZZUF_PROTECT", protect, 1);
-    if(refuse)
-        setenv("ZZUF_REFUSE", refuse, 1);
+    if(opts->protect)
+        setenv("ZZUF_PROTECT", opts->protect, 1);
+    if(opts->refuse)
+        setenv("ZZUF_REFUSE", opts->refuse, 1);
 
     /* Allocate memory for children handling */
-    child_list = malloc(maxforks * sizeof(struct child_list));
-    for(i = 0; i < maxforks; i++)
-        child_list[i].status = STATUS_FREE;
-    child_count = 0;
+    opts->child = malloc(opts->maxchild * sizeof(struct child));
+    for(i = 0; i < opts->maxchild; i++)
+        opts->child[i].status = STATUS_FREE;
+    opts->nchild = 0;
 
     /* Preload libzzuf.so */
     set_environment(argv[0]);
 
     /* Create new argv */
-    newargv = malloc((argc - optind + 1) * sizeof(char *));
-    memcpy(newargv, argv + optind, (argc - optind) * sizeof(char *));
-    newargv[argc - optind] = (char *)NULL;
+    opts->newargv = malloc((argc - optind + 1) * sizeof(char *));
+    memcpy(opts->newargv, argv + optind, (argc - optind) * sizeof(char *));
+    opts->newargv[argc - optind] = (char *)NULL;
 
     /* Main loop */
-    while(child_count || seed < endseed)
+    while(opts->nchild || opts->seed < opts->endseed)
     {
         /* Spawn new children, if necessary */
-        spawn_children();
+        spawn_children(opts);
 
         /* Cleanup dead or dying children */
-        clean_children();
+        clean_children(opts);
 
         /* Read data from children */
-        read_children();
+        read_children(opts);
 
-        if(maxcrashes && crashes >= maxcrashes && child_count == 0)
+        if(opts->maxcrashes && opts->crashes >= opts->maxcrashes
+            && opts->nchild == 0)
             break;
     }
 
     /* Clean up */
-    free(newargv);
-    free(child_list);
+    _zz_opts_fini(opts);
 
-    return crashes ? EXIT_FAILURE : EXIT_SUCCESS;    
+    return opts->crashes ? EXIT_FAILURE : EXIT_SUCCESS;    
 }
 
-static void loop_stdin(void)
+static void loop_stdin(struct opts *opts)
 {
     uint8_t md5sum[16];
     struct md5 *ctx = NULL;
 
-    if(md5)
+    if(opts->md5)
         ctx = _zz_md5_init();
 
-    if(protect)
-        _zz_protect(protect);
-    if(refuse)
-        _zz_refuse(refuse);
+    if(opts->protect)
+        _zz_protect(opts->protect);
+    if(opts->refuse)
+        _zz_refuse(opts->refuse);
 
     _zz_fd_init();
     _zz_register(0);
@@ -368,7 +343,7 @@ static void loop_stdin(void)
         _zz_fuzz(0, buf, ret);
         _zz_addpos(0, ret);
 
-        if(md5)
+        if(opts->md5)
             _zz_md5_add(ctx, buf, ret);
         else while(ret)
         {
@@ -379,15 +354,15 @@ static void loop_stdin(void)
         }
     }
 
-    if(md5)
+    if(opts->md5)
     {
         _zz_md5_fini(md5sum, ctx);
         fprintf(stdout, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x"
                 "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
-                seed, minratio, md5sum[0], md5sum[1], md5sum[2], md5sum[3],
-                md5sum[4], md5sum[5], md5sum[6], md5sum[7],
-                md5sum[8], md5sum[9], md5sum[10], md5sum[11],
-                md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
+                opts->seed, opts->minratio, md5sum[0], md5sum[1], md5sum[2],
+                md5sum[3], md5sum[4], md5sum[5], md5sum[6], md5sum[7],
+                md5sum[8], md5sum[9], md5sum[10], md5sum[11], md5sum[12],
+                md5sum[13], md5sum[14], md5sum[15]);
         fflush(stdout);
     }
 
@@ -443,7 +418,7 @@ static char *merge_regex(char *regex, char *string)
     return regex;
 }
 
-static void spawn_children(void)
+static void spawn_children(struct opts *opts)
 {
     static int const files[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
     char buf[64];
@@ -452,21 +427,21 @@ static void spawn_children(void)
     pid_t pid;
     int i, j;
 
-    if(child_count == maxforks)
+    if(opts->nchild == opts->maxchild)
         return; /* no slot */
 
-    if(seed == endseed)
+    if(opts->seed == opts->endseed)
         return; /* job finished */
 
-    if(maxcrashes && crashes >= maxcrashes)
+    if(opts->maxcrashes && opts->crashes >= opts->maxcrashes)
         return; /* all jobs crashed */
 
-    if(delay > 0 && lastlaunch + delay > now)
+    if(opts->delay > 0 && opts->lastlaunch + opts->delay > now)
         return; /* too early */
 
     /* Find the empty slot */
-    for(i = 0; i < maxforks; i++)
-        if(child_list[i].status == STATUS_FREE)
+    for(i = 0; i < opts->maxchild; i++)
+        if(opts->child[i].status == STATUS_FREE)
             break;
 
     /* Prepare communication pipe */
@@ -486,11 +461,11 @@ static void spawn_children(void)
             return;
         case 0:
             /* We’re the child */
-            if(maxmem >= 0)
+            if(opts->maxmem >= 0)
             {
                 struct rlimit rlim;
-                rlim.rlim_cur = maxmem * 1000000;
-                rlim.rlim_max = maxmem * 1000000;
+                rlim.rlim_cur = opts->maxmem * 1000000;
+                rlim.rlim_max = opts->maxmem * 1000000;
                 setrlimit(RLIMIT_AS, &rlim);
             }
 
@@ -507,153 +482,156 @@ static void spawn_children(void)
             }
 
             /* Set environment variables */
-            sprintf(buf, "%i", seed);
+            sprintf(buf, "%i", opts->seed);
             setenv("ZZUF_SEED", buf, 1);
-            sprintf(buf, "%g", minratio);
+            sprintf(buf, "%g", opts->minratio);
             setenv("ZZUF_MINRATIO", buf, 1);
-            sprintf(buf, "%g", maxratio);
+            sprintf(buf, "%g", opts->maxratio);
             setenv("ZZUF_MAXRATIO", buf, 1);
 
             /* Run our process */
-            if(execvp(newargv[0], newargv))
+            if(execvp(opts->newargv[0], opts->newargv))
             {
-                perror(newargv[0]);
+                perror(opts->newargv[0]);
                 exit(EXIT_FAILURE);
             }
             return;
     }
 
     /* We’re the parent, acknowledge spawn */
-    child_list[i].date = now;
-    child_list[i].pid = pid;
+    opts->child[i].date = now;
+    opts->child[i].pid = pid;
     for(j = 0; j < 3; j++)
     {
         close(fd[j][1]);
-        child_list[i].fd[j] = fd[j][0];
+        opts->child[i].fd[j] = fd[j][0];
     }
-    child_list[i].bytes = 0;
-    child_list[i].seed = seed;
-    child_list[i].ratio = _zz_getratio();
-    child_list[i].status = STATUS_RUNNING;
-    if(md5)
-        child_list[i].ctx = _zz_md5_init();
+    opts->child[i].bytes = 0;
+    opts->child[i].seed = opts->seed;
+    opts->child[i].ratio = _zz_getratio();
+    opts->child[i].status = STATUS_RUNNING;
+    if(opts->md5)
+        opts->child[i].ctx = _zz_md5_init();
 
-    if(verbose)
+    if(opts->verbose)
         fprintf(stderr, "zzuf[s=%i,r=%g]: launched %s\n",
-                child_list[i].seed, child_list[i].ratio, newargv[0]);
+                opts->child[i].seed, opts->child[i].ratio,
+                opts->newargv[0]);
 
-    lastlaunch = now;
-    child_count++;
-    seed++;
+    opts->lastlaunch = now;
+    opts->nchild++;
+    opts->seed++;
 
-    _zz_setseed(seed);
+    _zz_setseed(opts->seed);
 }
 
-static void clean_children(void)
+static void clean_children(struct opts *opts)
 {
     int64_t now = _zz_time();
     int i, j;
 
     /* Terminate children if necessary */
-    for(i = 0; i < maxforks; i++)
+    for(i = 0; i < opts->maxchild; i++)
     {
-        if(child_list[i].status == STATUS_RUNNING
-            && maxbytes >= 0 && child_list[i].bytes > maxbytes)
+        if(opts->child[i].status == STATUS_RUNNING
+            && opts->maxbytes >= 0
+            && opts->child[i].bytes > opts->maxbytes)
         {
-            if(verbose)
+            if(opts->verbose)
                 fprintf(stderr, "zzuf[s=%i,r=%g]: "
                         "data output exceeded, sending SIGTERM\n", 
-                        child_list[i].seed, child_list[i].ratio);
-            kill(child_list[i].pid, SIGTERM);
-            child_list[i].date = now;
-            child_list[i].status = STATUS_SIGTERM;
+                        opts->child[i].seed, opts->child[i].ratio);
+            kill(opts->child[i].pid, SIGTERM);
+            opts->child[i].date = now;
+            opts->child[i].status = STATUS_SIGTERM;
         }
 
-        if(child_list[i].status == STATUS_RUNNING
-            && maxtime >= 0
-            && now > child_list[i].date + maxtime)
+        if(opts->child[i].status == STATUS_RUNNING
+            && opts->maxtime >= 0
+            && now > opts->child[i].date + opts->maxtime)
         {
-            if(verbose)
+            if(opts->verbose)
                 fprintf(stderr, "zzuf[s=%i,r=%g]: "
                         "running time exceeded, sending SIGTERM\n", 
-                        child_list[i].seed, child_list[i].ratio);
-            kill(child_list[i].pid, SIGTERM);
-            child_list[i].date = now;
-            child_list[i].status = STATUS_SIGTERM;
+                        opts->child[i].seed, opts->child[i].ratio);
+            kill(opts->child[i].pid, SIGTERM);
+            opts->child[i].date = now;
+            opts->child[i].status = STATUS_SIGTERM;
         }
     }
 
     /* Kill children if necessary (still there after 2 seconds) */
-    for(i = 0; i < maxforks; i++)
+    for(i = 0; i < opts->maxchild; i++)
     {
-        if(child_list[i].status == STATUS_SIGTERM
-            && now > child_list[i].date + 2000000)
+        if(opts->child[i].status == STATUS_SIGTERM
+            && now > opts->child[i].date + 2000000)
         {
-            if(verbose)
+            if(opts->verbose)
                 fprintf(stderr, "zzuf[s=%i,r=%g]: "
                         "not responding, sending SIGKILL\n", 
-                        child_list[i].seed, child_list[i].ratio);
-            kill(child_list[i].pid, SIGKILL);
-            child_list[i].status = STATUS_SIGKILL;
+                        opts->child[i].seed, opts->child[i].ratio);
+            kill(opts->child[i].pid, SIGKILL);
+            opts->child[i].status = STATUS_SIGKILL;
         }
     }
 
     /* Collect dead children */
-    for(i = 0; i < maxforks; i++)
+    for(i = 0; i < opts->maxchild; i++)
     {
         uint8_t md5sum[16];
         int status;
         pid_t pid;
 
-        if(child_list[i].status != STATUS_SIGKILL
-            && child_list[i].status != STATUS_SIGTERM
-            && child_list[i].status != STATUS_EOF)
+        if(opts->child[i].status != STATUS_SIGKILL
+            && opts->child[i].status != STATUS_SIGTERM
+            && opts->child[i].status != STATUS_EOF)
             continue;
 
-        pid = waitpid(child_list[i].pid, &status, WNOHANG);
+        pid = waitpid(opts->child[i].pid, &status, WNOHANG);
         if(pid <= 0)
             continue;
 
-        if(checkexit && WIFEXITED(status) && WEXITSTATUS(status))
+        if(opts->checkexit && WIFEXITED(status) && WEXITSTATUS(status))
         {
             fprintf(stderr, "zzuf[s=%i,r=%g]: exit %i\n",
-                    child_list[i].seed, child_list[i].ratio,
+                    opts->child[i].seed, opts->child[i].ratio,
                     WEXITSTATUS(status));
-            crashes++;
+            opts->crashes++;
         }
         else if(WIFSIGNALED(status)
                  && !(WTERMSIG(status) == SIGTERM
-                       && child_list[i].status == STATUS_SIGTERM))
+                       && opts->child[i].status == STATUS_SIGTERM))
         {
             fprintf(stderr, "zzuf[s=%i,r=%g]: signal %i%s%s\n",
-                    child_list[i].seed, child_list[i].ratio,
+                    opts->child[i].seed, opts->child[i].ratio,
                     WTERMSIG(status), sig2str(WTERMSIG(status)),
-                      (WTERMSIG(status) == SIGKILL && maxmem >= 0) ?
+                      (WTERMSIG(status) == SIGKILL && opts->maxmem >= 0) ?
                       " (memory exceeded?)" : "");
-            crashes++;
+            opts->crashes++;
         }
 
         for(j = 0; j < 3; j++)
-            if(child_list[i].fd[j] >= 0)
-                close(child_list[i].fd[j]);
+            if(opts->child[i].fd[j] >= 0)
+                close(opts->child[i].fd[j]);
 
-        if(md5)
+        if(opts->md5)
         {
-            _zz_md5_fini(md5sum, child_list[i].ctx);
-            fprintf(stdout, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x"
-                    "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
-                    child_list[i].seed, child_list[i].ratio, md5sum[0],
-                    md5sum[1], md5sum[2], md5sum[3], md5sum[4], md5sum[5],
-                    md5sum[6], md5sum[7], md5sum[8], md5sum[9], md5sum[10],
-                    md5sum[11], md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
+            _zz_md5_fini(md5sum, opts->child[i].ctx);
+            fprintf(stdout, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x%.02x"
+                    "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
+                    opts->child[i].seed, opts->child[i].ratio,
+                    md5sum[0], md5sum[1], md5sum[2], md5sum[3], md5sum[4],
+                    md5sum[5], md5sum[6], md5sum[7], md5sum[8], md5sum[9],
+                    md5sum[10], md5sum[11], md5sum[12], md5sum[13],
+                    md5sum[14], md5sum[15]);
             fflush(stdout);
         }
-        child_list[i].status = STATUS_FREE;
-        child_count--;
+        opts->child[i].status = STATUS_FREE;
+        opts->nchild--;
     }
 }
 
-static void read_children(void)
+static void read_children(struct opts *opts)
 {
     struct timeval tv;
     fd_set fdset;
@@ -661,13 +639,13 @@ static void read_children(void)
 
     /* Read data from all sockets */
     FD_ZERO(&fdset);
-    for(i = 0; i < maxforks; i++)
+    for(i = 0; i < opts->maxchild; i++)
     {
-        if(child_list[i].status != STATUS_RUNNING)
+        if(opts->child[i].status != STATUS_RUNNING)
             continue;
 
         for(j = 0; j < 3; j++)
-            ZZUF_FD_SET(child_list[i].fd[j], &fdset, maxfd);
+            ZZUF_FD_SET(opts->child[i].fd[j], &fdset, maxfd);
     }
     tv.tv_sec = 0;
     tv.tv_usec = 1000;
@@ -679,37 +657,38 @@ static void read_children(void)
         return;
 
     /* XXX: cute (i, j) iterating hack */
-    for(i = 0, j = 0; i < maxforks; i += (j == 2), j = (j + 1) % 3)
+    for(i = 0, j = 0; i < opts->maxchild; i += (j == 2), j = (j + 1) % 3)
     {
         uint8_t buf[BUFSIZ];
 
-        if(child_list[i].status != STATUS_RUNNING)
+        if(opts->child[i].status != STATUS_RUNNING)
             continue;
 
-        if(!ZZUF_FD_ISSET(child_list[i].fd[j], &fdset))
+        if(!ZZUF_FD_ISSET(opts->child[i].fd[j], &fdset))
             continue;
 
-        ret = read(child_list[i].fd[j], buf, BUFSIZ - 1);
+        ret = read(opts->child[i].fd[j], buf, BUFSIZ - 1);
         if(ret > 0)
         {
             /* We got data */
             if(j != 0)
-                child_list[i].bytes += ret;
+                opts->child[i].bytes += ret;
 
-            if(md5 && j == 2)
-                _zz_md5_add(child_list[i].ctx, buf, ret);
-            else if(!quiet || j == 0)
+            if(opts->md5 && j == 2)
+                _zz_md5_add(opts->child[i].ctx, buf, ret);
+            else if(!opts->quiet || j == 0)
                 write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);
         }
         else if(ret == 0)
         {
             /* End of file reached */
-            close(child_list[i].fd[j]);
-            child_list[i].fd[j] = -1;
+            close(opts->child[i].fd[j]);
+            opts->child[i].fd[j] = -1;
 
-            if(child_list[i].fd[0] == -1 && child_list[i].fd[1] == -1
-               && child_list[i].fd[2] == -1)
-                child_list[i].status = STATUS_EOF;
+            if(opts->child[i].fd[0] == -1
+                && opts->child[i].fd[1] == -1
+                && opts->child[i].fd[2] == -1)
+                opts->child[i].status = STATUS_EOF;
         }
     }
 }
