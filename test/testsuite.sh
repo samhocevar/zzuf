@@ -18,8 +18,12 @@ check()
     ZZOPTS="$1"
     CMD="$2"
     ALIAS="$3"
+    CHECK="$4"
     echo -n " $(echo "$ALIAS .............." | cut -b1-18) "
     MD5="$(eval "$ZZUF -m $ZZOPTS $CMD" 2>/dev/null | cut -f2 -d' ')"
+    if [ -n "$CHECK" ]; then
+        REFMD5="$CHECK"
+    fi
     if [ -z "$REFMD5" ]; then
         REFMD5="$MD5"
         echo "$MD5"
@@ -73,14 +77,21 @@ create
 echo "*** using seed $seed ***"
 
 for r in 0.0 0.00001 0.001 0.1 10.0; do
-    for file in /tmp/zzuf-zero-$$ /tmp/zzuf-text-$$ /tmp/zzuf-random-$$; do
+    for type in zero text random; do
+        file=/tmp/zzuf-$type-$$
         ZZOPTS="-s $seed -r $r"
         case $file in
           *text*) ZZOPTS="$ZZOPTS -P '\n'" ;;
         esac
         echo "*** file $file, ratio $r ***"
         REFMD5=""
-        check "$ZZOPTS" "< $file" "zzuf"
+        if [ $r = 0.0 -a $type = zero ]; then
+            check="bb7df04e1b0a2570657527a7e108ae23"
+            echo "*** should be $check ***"
+            check "$ZZOPTS" "< $file" "zzuf" "$check"
+        else
+            check "$ZZOPTS" "< $file" "zzuf"
+        fi
         check "$ZZOPTS" "$FDCAT $file" "fdcat"
         check "$ZZOPTS" "$STREAMCAT $file" "streamcat"
         if [ "$STATIC_CAT" = "" ]; then

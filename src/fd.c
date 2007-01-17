@@ -78,6 +78,12 @@ void _zz_setseed(int32_t s)
 
 void _zz_setratio(double r0, double r1)
 {
+    if(r0 == 0.0 && r1 == 0.0)
+    {
+        maxratio = minratio = 0.0;
+        return;
+    }
+
     minratio = r0 < MIN_RATIO ? MIN_RATIO : r0 > MAX_RATIO ? MAX_RATIO : r0;
     maxratio = r1 < MIN_RATIO ? MIN_RATIO : r1 > MAX_RATIO ? MAX_RATIO : r1;
     if(maxratio < minratio)
@@ -93,6 +99,9 @@ double _zz_getratio(void)
       4, 1, 11, 5 };
     uint16_t rate;
     double min, max, cur;
+
+    if(minratio == maxratio)
+        return minratio; /* this also takes care of 0.0 */
 
     rate = shuffle[seed & 0xf] << 12;
     rate |= (seed & 0xf0) << 4;
