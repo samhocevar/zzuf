@@ -6,4 +6,5 @@ main zzuf author:
 other contributors:
  Rémi Denis-Courmont <rdenis#simphalempin:com> (readv support)
  Clément Stenac <zorglub#diwi:org> (pread support)
+ Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de> (recvfrom support)
 

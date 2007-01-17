@@ -3,6 +3,7 @@
  *  Copyright (c) 2006, 2007 Sam Hocevar <sam@zoy.org>
  *                2007 Rémi Denis-Courmont <rdenis#simphalempin:com>
  *                2007 Clément Stenac <zorglub#diwi:org>
+ *                2007 Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de>
  *                All Rights Reserved
  *
  *  $Id$
@@ -61,6 +62,8 @@ static int     (*open64_orig)  (const char *file, int oflag, ...);
 static int     (*accept_orig)  (int sockfd, struct sockaddr *addr,
                                 SOCKLEN_T *addrlen);
 static int     (*socket_orig)  (int domain, int type, int protocol);
+static int     (*recvfrom_orig)(int s,  void  *buf,  size_t len, int flags,
+                                struct sockaddr *from, SOCKLEN_T *fromlen);
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
 static ssize_t (*readv_orig)   (int fd, const struct iovec *iov, int count);
 static ssize_t (*pread_orig)   (int fd, void *buf, size_t count, off_t offset);
@@ -146,6 +149,36 @@ int socket(int domain, int type, int protocol)
         debug("socket(%i, %i, %i) = %i", domain, type, protocol, ret);
         _zz_register(ret);
     }
+
+    return ret;
+}
+
+int recvfrom(int s,  void  *buf,  size_t len, int flags,
+             struct sockaddr *from, SOCKLEN_T *fromlen) 
+{
+    int ret;
+
+    LOADSYM(recvfrom);
+    ret = recvfrom_orig(s, buf, len, flags, from, fromlen);
+    if(!_zz_ready || _zz_disabled || !_zz_network)
+        return ret;
+
+    if(ret > 0) 
+    {
+        char *b = buf;
+
+        _zz_fuzz(s, buf, ret);
+        _zz_addpos(s, ret);
+
+        if(ret >= 4)
+            debug("%s(%i, %p, %li) = %i \"%c%c%c%c...", __FUNCTION__, s, buf,
+                  (long int)len, ret, b[0], b[1], b[2], b[3]);
+        else
+            debug("%s(%i, %p, %li) = %i \"%c...", __FUNCTION__, s, buf,
+                  (long int)len, ret, b[0]);
+    }
+    else
+        debug("%s(%i, %p, %li) = %i", __FUNCTION__, s, buf, (long int)len, ret);
 
     return ret;
 }
