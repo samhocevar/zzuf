@@ -62,7 +62,8 @@ static int     (*open64_orig)  (const char *file, int oflag, ...);
 static int     (*accept_orig)  (int sockfd, struct sockaddr *addr,
                                 SOCKLEN_T *addrlen);
 static int     (*socket_orig)  (int domain, int type, int protocol);
-static int     (*recvfrom_orig)(int s,  void  *buf,  size_t len, int flags,
+static int     (*recv_orig)    (int s, void *buf, size_t len, int flags);
+static int     (*recvfrom_orig)(int s, void *buf, size_t len, int flags,
                                 struct sockaddr *from, SOCKLEN_T *fromlen);
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
 static ssize_t (*readv_orig)   (int fd, const struct iovec *iov, int count);
@@ -153,7 +154,37 @@ int socket(int domain, int type, int protocol)
     return ret;
 }
 
-int recvfrom(int s,  void  *buf,  size_t len, int flags,
+int recv(int s, void *buf, size_t len, int flags)
+{
+    int ret;
+
+    LOADSYM(recv);
+    ret = recv_orig(s, buf, len, flags);
+    if(!_zz_ready || _zz_disabled || !_zz_network)
+        return ret;
+
+    if(ret > 0) 
+    {
+        char *b = buf;
+
+        _zz_fuzz(s, buf, ret);
+        _zz_addpos(s, ret);
+
+        if(ret >= 4)
+            debug("%s(%i, %p, %li, 0x%x) = %i \"%c%c%c%c...", __func__,
+                  s, buf, (long int)len, flags, ret, b[0], b[1], b[2], b[3]);
+        else
+            debug("%s(%i, %p, %li, 0x%x) = %i \"%c...", __func__,
+                  s, buf, (long int)len, flags, ret, b[0]);
+    }
+    else
+        debug("%s(%i, %p, %li, 0x%x) = %i", __func__,
+              s, buf, (long int)len, flags, ret);
+
+    return ret;
+}
+
+int recvfrom(int s, void *buf, size_t len, int flags,
              struct sockaddr *from, SOCKLEN_T *fromlen) 
 {
     int ret;
@@ -171,14 +202,16 @@ int recvfrom(int s,  void  *buf,  size_t len, int flags,
         _zz_addpos(s, ret);
 
         if(ret >= 4)
-            debug("%s(%i, %p, %li) = %i \"%c%c%c%c...", __func__, s, buf,
-                  (long int)len, ret, b[0], b[1], b[2], b[3]);
+            debug("%s(%i, %p, %li, 0x%x, %p, %p) = %i \"%c%c%c%c...", __func__,
+                  s, buf, (long int)len, flags, from, fromlen, ret,
+                  b[0], b[1], b[2], b[3]);
         else
-            debug("%s(%i, %p, %li) = %i \"%c...", __func__, s, buf,
-                  (long int)len, ret, b[0]);
+            debug("%s(%i, %p, %li, 0x%x, %p, %p) = %i \"%c...", __func__,
+                  s, buf, (long int)len, flags, from, fromlen, ret, b[0]);
     }
     else
-        debug("%s(%i, %p, %li) = %i", __func__, s, buf, (long int)len, ret);
+        debug("%s(%i, %p, %li, 0x%x, %p, %p) = %i", __func__,
+              s, buf, (long int)len, flags, from, fromlen, ret);
 
     return ret;
 }
