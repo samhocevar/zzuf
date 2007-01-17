@@ -94,7 +94,7 @@ SIG_T signal(int signum, SIG_T handler)
 
     ret = signal_orig(signum, isfatal(signum) ? SIG_DFL : handler);
 
-    debug("signal(%i, %p) = %p", signum, handler, ret);
+    debug("%s(%i, %p) = %p", __func__, signum, handler, ret);
 
     return ret;
 }
@@ -118,7 +118,7 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
     else
         ret = sigaction_orig(signum, act, oldact);
 
-    debug("sigaction(%i, %p, %p) = %i", signum, act, oldact, ret);
+    debug("%s(%i, %p, %p) = %i", __func__, signum, act, oldact, ret);
 
     return ret;
 }

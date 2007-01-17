@@ -212,17 +212,17 @@ int nbmaps = 0;
             _zz_setpos(fd, oldpos); \
             ret = b; \
             if(length >= 4) \
-                debug(STR(fn)"(%p, %li, %i, %i, %i, %lli) = %p \"%c%c%c%c...", \
-                      start, (long int)length, prot, flags, fd, \
+                debug("%s(%p, %li, %i, %i, %i, %lli) = %p \"%c%c%c%c...", \
+                      __func__, start, (long int)length, prot, flags, fd, \
                       (long long int)offset, ret, b[0], b[1], b[2], b[3]); \
             else \
-                debug(STR(fn)"(%p, %li, %i, %i, %i, %lli) = %p \"%c...", \
-                      start, (long int)length, prot, flags, fd, \
+                debug("%s(%p, %li, %i, %i, %i, %lli) = %p \"%c...", \
+                      __func__, start, (long int)length, prot, flags, fd, \
                       (long long int)offset, ret, b[0]); \
         } \
         else \
-            debug(STR(fn)"(%p, %li, %i, %i, %i, %lli) = %p", \
-                  start, (long int)length, prot, flags, fd, \
+            debug("%s(%p, %li, %i, %i, %i, %lli) = %p", \
+                  __func__, start, (long int)length, prot, flags, fd, \
                   (long long int)offset, ret); \
     } while(0)
 
@@ -254,7 +254,7 @@ int munmap(void *start, size_t length)
         ret = munmap_orig(maps[i + 1], length);
         maps[i] = NULL;
         maps[i + 1] = NULL;
-        debug("munmap(%p, %li) = %i", start, (long int)length, ret);
+        debug("%s(%p, %li) = %i", __func__, start, (long int)length, ret);
         return ret;
     }
 
@@ -284,17 +284,18 @@ kern_return_t map_fd(int fd, vm_offset_t offset, vm_offset_t *addr,
          * closed (unlike mmap, which returns a persistent buffer). */
 
         if(numbytes >= 4)
-           debug("map_fd(%i, %lli, &%p, %i, %lli) = %i \"%c%c%c%c", fd,
-                 (long long int)offset, (void *)*addr, (int)find_space,
+           debug("%s(%i, %lli, &%p, %i, %lli) = %i \"%c%c%c%c", __func__,
+                 fd, (long long int)offset, (void *)*addr, (int)find_space,
                  (long long int)numbytes, ret, b[0], b[1], b[2], b[3]);
         else
-           debug("map_fd(%i, %lli, &%p, %i, %lli) = %i \"%c", fd,
+           debug("%s(%i, %lli, &%p, %i, %lli) = %i \"%c", __func__, fd,
                  (long long int)offset, (void *)*addr, (int)find_space,
                  (long long int)numbytes, ret, b[0]);
     }
     else
-        debug("map_fd(%i, %lli, &%p, %i, %lli) = %i", fd, (long long int)offset,
-              (void *)*addr, (int)find_space, (long long int)numbytes, ret);
+        debug("%s(%i, %lli, &%p, %i, %lli) = %i", __func__, fd,
+              (long long int)offset, (void *)*addr, (int)find_space,
+              (long long int)numbytes, ret);
 
     return ret;
 }

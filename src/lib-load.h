@@ -13,9 +13,19 @@
  */
 
 /*
- *  preload.h: preloaded library functions
+ *  lib-load.h: preloaded library functions
  */
 
+/* The __func__ macro to get the current function name */
+#if __STDC_VERSION__ < 199901L
+#   if __GNUC__ >= 2
+#       define __func__ __FUNCTION__
+#   else
+#       define __func__ "<?>"
+#   endif
+#endif
+
+/* Symbol loading stuff */
 #define STR(x) #x
 #define ORIG(x) x##_orig
 

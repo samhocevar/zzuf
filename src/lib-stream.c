@@ -102,7 +102,7 @@ int            (*__srefill_orig) (FILE *fp);
         { \
             int fd = fileno(ret); \
             _zz_register(fd); \
-            debug(STR(fn) "(\"%s\", \"%s\") = [%i]", path, mode, fd); \
+            debug("%s(\"%s\", \"%s\") = [%i]", __func__, path, mode, fd); \
         } \
     } while(0)
 
@@ -142,7 +142,8 @@ FILE *freopen(const char *path, const char *mode, FILE *stream)
     }
 
     if(disp)
-        debug("freopen(\"%s\", \"%s\", [%i]) = [%i]", path, mode, fd0, fd1);
+        debug("%s(\"%s\", \"%s\", [%i]) = [%i]", __func__,
+              path, mode, fd0, fd1);
 
     return ret;
 }
@@ -180,7 +181,7 @@ FILE *freopen(const char *path, const char *mode, FILE *stream)
         _zz_disabled = 1; \
         ret = ORIG(fn)(stream, offset, whence); \
         _zz_disabled = 0; \
-        debug(STR(fn)"([%i], %lli, %i) = %i", \
+        debug("%s([%i], %lli, %i) = %i", __func__, \
               fd, (long long int)offset, whence, ret); \
         FSEEK_FUZZ(fn2) \
     } while(0)
@@ -212,7 +213,7 @@ void rewind(FILE *stream)
     _zz_disabled = 1;
     rewind_orig(stream);
     _zz_disabled = 0;
-    debug("rewind([%i])", fd);
+    debug("%s([%i])", __func__, fd);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
 #else
@@ -240,8 +241,8 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     _zz_disabled = 1;
     ret = fread_orig(ptr, size, nmemb, stream);
     _zz_disabled = 0;
-    debug("fread(%p, %li, %li, [%i]) = %li",
-          ptr, (long int)size, (long int)nmemb, fd, (long int)ret);
+    debug("%s(%p, %li, %li, [%i]) = %li", __func__, ptr,
+          (long int)size, (long int)nmemb, fd, (long int)ret);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
 #else
@@ -287,9 +288,9 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         _zz_disabled = 0; \
         FGETC_FUZZ \
         if(ret >= 0x20 && ret <= 0x7f) \
-            debug(STR(fn)"([%i]) = 0x%02x '%c'", fd, ret, (char)ret); \
+            debug("%s([%i]) = 0x%02x '%c'", __func__, fd, ret, (char)ret); \
         else \
-            debug(STR(fn)"([%i]) = 0x%02x", fd, ret); \
+            debug("%s([%i]) = 0x%02x", __func__, fd, ret); \
     } while(0)
 
 #undef getc /* can be a macro; we don’t want that */
@@ -361,7 +362,7 @@ char *fgets(char *s, int size, FILE *stream)
     }
 #endif
 
-    debug("fgets(%p, %i, [%i]) = %p", s, size, fd, ret);
+    debug("%s(%p, %i, [%i]) = %p", __func__, s, size, fd, ret);
     return ret;
 }
 
@@ -393,9 +394,9 @@ int ungetc(int c, FILE *stream)
 #endif
 
     if(ret >= 0x20 && ret <= 0x7f)
-        debug("ungetc(0x%02x, [%i]) = 0x%02x '%c'", c, fd, ret, ret);
+        debug("%s(0x%02x, [%i]) = 0x%02x '%c'", __func__, c, fd, ret, ret);
     else
-        debug("ungetc(0x%02x, [%i]) = 0x%02x", c, fd, ret);
+        debug("%s(0x%02x, [%i]) = 0x%02x", __func__, c, fd, ret);
     return ret;
 }
 
@@ -411,7 +412,7 @@ int fclose(FILE *fp)
     _zz_disabled = 1;
     ret = fclose_orig(fp);
     _zz_disabled = 0;
-    debug("fclose([%i]) = %i", fd, ret);
+    debug("%s([%i]) = %i", __func__, fd, ret);
     _zz_unregister(fd);
 
     return ret;
@@ -465,10 +466,10 @@ int fclose(FILE *fp)
             } \
         } \
         if(need_delim) \
-            debug(STR(fn) "(%p, %p, 0x%02x, [%i]) = %li", \
+            debug("%s(%p, %p, 0x%02x, [%i]) = %li", __func__, \
                   lineptr, n, delim, fd, (long int)ret); \
         else \
-            debug(STR(fn) "(%p, %p, [%i]) = %li", \
+            debug("%s(%p, %p, [%i]) = %li", __func__, \
                   lineptr, n, fd, (long int)ret); \
         return ret; \
     } while(0)
@@ -544,7 +545,7 @@ char *fgetln(FILE *stream, size_t *len)
     ret = fuzz->tmp;
 #endif
 
-    debug("fgetln([%i], &%li) = %p", fd, (long int)*len, ret);
+    debug("%s([%i], &%li) = %p", __func__, fd, (long int)*len, ret);
     return ret;
 }
 #endif
@@ -574,7 +575,7 @@ int __srefill(FILE *fp)
     }
 
     if(!_zz_disabled)
-        debug("__srefill([%i]) = %i", fd, ret);
+        debug("%s([%i]) = %i", __func__, fd, ret);
 
     return ret;
 }

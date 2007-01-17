@@ -97,10 +97,10 @@ static int     (*close_orig)   (int fd);
             && _zz_mustwatch(file)) \
         { \
             if(oflag & O_CREAT) \
-                debug(STR(fn) "(\"%s\", %i, %i) = %i", \
-                      file, oflag, mode, ret); \
+                debug("%s(\"%s\", %i, %i) = %i", \
+                      __func__, file, oflag, mode, ret); \
             else \
-                debug(STR(fn) "(\"%s\", %i) = %i", file, oflag, ret); \
+                debug("%s(\"%s\", %i) = %i", __func__, file, oflag, ret); \
             _zz_register(ret); \
         } \
     } while(0)
@@ -128,7 +128,7 @@ int accept(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 
     if(ret >= 0)
     {
-        debug("accept(%i, %p, %p) = %i", sockfd, addr, addrlen, ret);
+        debug("%s(%i, %p, %p) = %i", __func__, sockfd, addr, addrlen, ret);
         _zz_register(ret);
     }
 
@@ -146,7 +146,7 @@ int socket(int domain, int type, int protocol)
 
     if(ret >= 0)
     {
-        debug("socket(%i, %i, %i) = %i", domain, type, protocol, ret);
+        debug("%s(%i, %i, %i) = %i", __func__, domain, type, protocol, ret);
         _zz_register(ret);
     }
 
@@ -171,14 +171,14 @@ int recvfrom(int s,  void  *buf,  size_t len, int flags,
         _zz_addpos(s, ret);
 
         if(ret >= 4)
-            debug("%s(%i, %p, %li) = %i \"%c%c%c%c...", __FUNCTION__, s, buf,
+            debug("%s(%i, %p, %li) = %i \"%c%c%c%c...", __func__, s, buf,
                   (long int)len, ret, b[0], b[1], b[2], b[3]);
         else
-            debug("%s(%i, %p, %li) = %i \"%c...", __FUNCTION__, s, buf,
+            debug("%s(%i, %p, %li) = %i \"%c...", __func__, s, buf,
                   (long int)len, ret, b[0]);
     }
     else
-        debug("%s(%i, %p, %li) = %i", __FUNCTION__, s, buf, (long int)len, ret);
+        debug("%s(%i, %p, %li) = %i", __func__, s, buf, (long int)len, ret);
 
     return ret;
 }
@@ -216,14 +216,14 @@ ssize_t read(int fd, void *buf, size_t count)
         _zz_addpos(fd, ret);
 
         if(ret >= 4)
-            debug("read(%i, %p, %li) = %i \"%c%c%c%c...", fd, buf,
+            debug("%s(%i, %p, %li) = %i \"%c%c%c%c...", __func__, fd, buf,
                   (long int)count, ret, b[0], b[1], b[2], b[3]);
         else
-            debug("read(%i, %p, %li) = %i \"%c...", fd, buf,
+            debug("%s(%i, %p, %li) = %i \"%c...", __func__, fd, buf,
                   (long int)count, ret, b[0]);
     }
     else
-        debug("read(%i, %p, %li) = %i", fd, buf, (long int)count, ret);
+        debug("%s(%i, %p, %li) = %i", __func__, fd, buf, (long int)count, ret);
 
     offset_check(fd);
     return ret;
@@ -238,7 +238,7 @@ ssize_t readv(int fd, const struct iovec *iov, int count)
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;
 
-    debug("readv(%i, %p, %i) = %li", fd, iov, count, (long int)ret);
+    debug("%s(%i, %p, %i) = %li", __func__, fd, iov, count, (long int)ret);
 
     while(ret > 0)
     {
@@ -278,15 +278,15 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
         _zz_setpos(fd, curoff);
 
         if(ret >= 4)
-            debug("pread(%i, %p, %li, %li) = %i \"%c%c%c%c...", fd, buf,
+            debug("%s(%i, %p, %li, %li) = %i \"%c%c%c%c...", __func__, fd, buf,
                   (long int)count, (long int)offset, ret,
                   b[0], b[1], b[2], b[3]);
         else
-            debug("pread(%i, %p, %li, %li) = %i \"%c...", fd, buf,
+            debug("%s(%i, %p, %li, %li) = %i \"%c...", __func__, fd, buf,
                   (long int)count, (long int)offset, ret, b[0]);
     }
     else
-        debug("pread(%i, %p, %li, %li) = %i", fd, buf,
+        debug("%s(%i, %p, %li, %li) = %i", __func__, fd, buf,
               (long int)count, (long int)offset, ret);
 
     return ret;
@@ -299,8 +299,8 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
         ret = ORIG(fn)(fd, offset, whence); \
         if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled) \
             return ret; \
-        debug(STR(fn)"(%i, %lli, %i) = %lli", \
-              fd, (long long int)offset, whence, (long long int)ret); \
+        debug("%s(%i, %lli, %i) = %lli", __func__, fd, \
+              (long long int)offset, whence, (long long int)ret); \
         if(ret != (off_t)-1) \
             _zz_setpos(fd, ret); \
     } while(0)
@@ -334,7 +334,7 @@ int close(int fd)
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_disabled)
         return ret;
 
-    debug("close(%i) = %i", fd, ret);
+    debug("%s(%i) = %i", __func__, fd, ret);
     _zz_unregister(fd);
 
     return ret;
