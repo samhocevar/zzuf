@@ -808,12 +808,12 @@ static void version(void)
 static void usage(void)
 {
 #if defined HAVE_REGEX_H
-    printf("Usage: zzuf [-AcdimnqSvx] [-r ratio] [-s seed | -s start:stop]\n");
+    printf("Usage: zzuf [-AcdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
     printf("                          [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
     printf("                          [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
     printf("                          [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
 #else
-    printf("Usage: zzuf [-AdimnqSvx] [-r ratio] [-s seed | -s start:stop]\n");
+    printf("Usage: zzuf [-AdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
     printf("                         [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
     printf("                         [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
     printf("                         [PROGRAM [--] [ARGS]...]\n");

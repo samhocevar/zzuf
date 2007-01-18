@@ -2,7 +2,7 @@
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-AcdiMnqSvx\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR] [\fB\-r\fR \fIratio\fR|\fB\-r\fR \fIstart:stop\fR]
+\fBzzuf\fR [\fB\-AcdiMnqSvx\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR] [\fB\-r\fR \fIratio\fR|\fB\-r\fR \fImin:max\fR]
 .br
                    [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
 .br
@@ -168,7 +168,7 @@ you.
 \fB\-r\fR, \fB\-\-ratio\fR=\fIratio\fR
 .PD 0
 .TP
-\fB\-r\fR, \fB\-\-ratio\fR=\fIstart:stop\fR
+\fB\-r\fR, \fB\-\-ratio\fR=\fImin:max\fR
 .PD
 Specify the proportion of bits that will be randomly fuzzed. A value of 0
 will not fuzz anything. A value of 0.05 will fuzz 5% of the open files'
@@ -177,8 +177,8 @@ the input files undiscernible from random data. The default fuzzing ratio
 is 0.004 (fuzz 0.4% of the files' bits).
 
 A range can also be specified. When doing so, \fBzzuf\fR will pick ratio
-values from the interval. This is only meaningful if the argument given to
-the \fB\-s\fR flag is also a range.
+values from the interval. The choice is deterministic and only depends on
+the interval bounds and the current seed.
 .TP
 \fB\-R\fR, \fB\-\-refuse\fR=\fIlist\fR
 Refuse a list of characters by not fuzzing bytes that would otherwise be
