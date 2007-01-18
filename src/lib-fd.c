@@ -80,14 +80,14 @@ static int     (*accept_orig)  (int sockfd, struct sockaddr *addr,
 static int     (*socket_orig)  (int domain, int type, int protocol);
 #endif
 #if defined HAVE_RECV
-static int     (*recv_orig)    (int s, void *buf, size_t len, int flags);
+static RECV_T  (*recv_orig)    (int s, void *buf, size_t len, int flags);
 #endif
 #if defined HAVE_RECVFROM
-static int     (*recvfrom_orig)(int s, void *buf, size_t len, int flags,
+static RECV_T  (*recvfrom_orig)(int s, void *buf, size_t len, int flags,
                                 struct sockaddr *from, SOCKLEN_T *fromlen);
 #endif
 #if defined HAVE_RECVMSG
-static int     (*recvmsg_orig) (int s,  struct msghdr *hdr, int flags);
+static RECV_T  (*recvmsg_orig) (int s,  struct msghdr *hdr, int flags);
 #endif
 #if defined READ_USES_SSIZE_T
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
@@ -195,7 +195,7 @@ int socket(int domain, int type, int protocol)
 #endif
 
 #if defined HAVE_RECV
-int recv(int s, void *buf, size_t len, int flags)
+RECV_T recv(int s, void *buf, size_t len, int flags)
 {
     int ret;
 
@@ -227,7 +227,7 @@ int recv(int s, void *buf, size_t len, int flags)
 #endif
 
 #if defined HAVE_RECVFROM
-int recvfrom(int s, void *buf, size_t len, int flags,
+RECV_T recvfrom(int s, void *buf, size_t len, int flags,
              struct sockaddr *from, SOCKLEN_T *fromlen) 
 {
     int ret;
@@ -261,7 +261,7 @@ int recvfrom(int s, void *buf, size_t len, int flags,
 #endif
 
 #if defined HAVE_RECVMSG
-int recvmsg(int s, struct msghdr *hdr, int flags)
+RECV_T recvmsg(int s, struct msghdr *hdr, int flags)
 {
     ssize_t ret;
 

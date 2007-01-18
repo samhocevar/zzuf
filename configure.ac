@@ -32,6 +32,15 @@ AC_TRY_COMPILE([#include <unistd.h>],
   AC_DEFINE(READ_USES_SSIZE_T, 1, [Define to 1 if read() uses ssize_t.])],
  [AC_MSG_RESULT(int read(... unsigned int);)])
 
+AC_MSG_CHECKING(for recv() return value)
+ac_v_recv_t="int"
+AC_TRY_COMPILE([#include <sys/types.h>
+  #include <sys/socket.h>],
+ [ssize_t recv(int s, void *buf, size_t len, int flags);],
+ [ac_v_recv_t="ssize_t"])
+AC_MSG_RESULT($ac_v_recv_t)
+AC_DEFINE_UNQUOTED(RECV_T, $ac_v_recv_t, [Define to the recv() return type])
+
 AC_CHECK_FUNCS(getopt_long,
  [AC_DEFINE(HAVE_GETOPT_LONG, 1, Define to 1 if you have the `getopt_long' function.)],
  [AC_CHECK_LIB(gnugetopt, getopt_long,
