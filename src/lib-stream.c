@@ -554,12 +554,10 @@ int __srefill(FILE *fp)
     if(!_zz_ready || !_zz_iswatched(fd))
         return __srefill_orig(fp);
 
-    tmp = _zz_islocked(fd);
     _zz_lock(fd);
     ret = __srefill_orig(fp);
     newpos = lseek(fd, 0, SEEK_CUR);
-    if(!tmp)
-        _zz_unlock(fd);
+    _zz_unlock(fd);
     if(ret != EOF)
     {
         if(newpos != -1)

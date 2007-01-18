@@ -60,8 +60,9 @@ static int maxfd, nfiles;
 
 /* Create lock. This lock variable is used to disable file descriptor
  * creation wrappers. For instance on Mac OS X, fopen() calls open()
- * and we don’t want open() to do any zzuf-related stuff. */
-static int create_lock;
+ * and we don’t want open() to do any zzuf-related stuff, fopen() takes
+ * care of everything. */
+static int create_lock = 0;
 
 static int32_t seed = DEFAULT_SEED;
 static double  minratio = DEFAULT_RATIO;
@@ -275,9 +276,9 @@ void _zz_lock(int fd)
         return;
 
     if(fd == -1)
-        create_lock = 1;
+        create_lock++;
     else
-        files[fds[fd]].locked = 1;
+        files[fds[fd]].locked++;
 }
 
 void _zz_unlock(int fd)
@@ -286,9 +287,9 @@ void _zz_unlock(int fd)
         return;
 
     if(fd == -1)
-        create_lock = 0;
+        create_lock--;
     else
-        files[fds[fd]].locked = 0;
+        files[fds[fd]].locked--;
 }
 
 int _zz_islocked(int fd)
