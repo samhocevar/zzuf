@@ -14,8 +14,8 @@ AM_PROG_CC_C_O
 AC_PROG_CPP
 AC_PROG_LIBTOOL
 
-AC_CHECK_HEADERS(inttypes.h stdint.h getopt.h libc.h malloc.h)
-AC_CHECK_FUNCS(open64 lseek64 mmap64 fopen64 fseeko _IO_getc getline getdelim __getdelim fgetln __srefill map_fd memalign posix_memalign)
+AC_CHECK_HEADERS(inttypes.h stdint.h getopt.h libc.h malloc.h dlfcn.h regex.h sys/socket.h sys/uio.h aio.h sys/mman.h sys/wait.h sys/resource.h)
+AC_CHECK_FUNCS(open64 lseek64 mmap64 fopen64 fseeko _IO_getc getline getdelim __getdelim fgetln __srefill map_fd memalign posix_memalign aio_read accept socket readv pread recv recvfrom recvmsg mmap valloc sigaction)
 AC_CHECK_TYPES(sighandler_t, [], [],
   [#define _GNU_SOURCE
    #include <signal.h>])
@@ -24,6 +24,13 @@ AC_CHECK_TYPES(sig_t, [], [],
 AC_CHECK_TYPES(socklen_t, [], [],
   [#include <sys/types.h>
    #include <sys/socket.h>])
+
+AC_MSG_CHECKING(for read() prototype)
+AC_TRY_COMPILE([#include <unistd.h>],
+ [ssize_t read(int fd, void *buf, size_t count);],
+ [AC_MSG_RESULT(ssize_t read(... size_t);)
+  AC_DEFINE(READ_USES_SSIZE_T, 1, [Define to 1 if read() uses ssize_t.])],
+ [AC_MSG_RESULT(int read(... unsigned int);)])
 
 AC_CHECK_FUNCS(getopt_long,
  [AC_DEFINE(HAVE_GETOPT_LONG, 1, Define to 1 if you have the `getopt_long' function.)],

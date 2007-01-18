@@ -23,19 +23,25 @@
 #elif defined HAVE_INTTYPES_H
 #   include <inttypes.h>
 #endif
-#if defined(HAVE_GETOPT_H)
+#if defined HAVE_GETOPT_H
 #   include <getopt.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <regex.h>
+#if defined HAVE_REGEX_H
+#   include <regex.h>
+#endif
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/wait.h>
+#if defined HAVE_SYS_WAIT_H
+#   include <sys/wait.h>
+#endif
 #include <sys/time.h>
-#include <sys/resource.h>
+#if defined HAVE_SYS_RESOURCE_H
+#   include <sys/resource.h>
+#endif
 
 #include "libzzuf.h"
 #include "opts.h"
@@ -45,6 +51,10 @@
 #include "md5.h"
 #include "timer.h"
 
+#if !defined SIGKILL
+#   define SIGKILL 9
+#endif
+
 static void loop_stdin(struct opts *opts);
 
 static void spawn_children(struct opts *opts);
@@ -52,11 +62,13 @@ static void clean_children(struct opts *opts);
 static void read_children(struct opts *opts);
 
 static char const *sig2str(int);
+#if defined HAVE_REGEX_H
 static char *merge_regex(char *, char *);
 static char *merge_file(char *, char *);
+#endif
 static void set_environment(char const *);
 static void version(void);
-#if defined(HAVE_GETOPT_H)
+#if defined HAVE_GETOPT_H
 static void usage(void);
 #endif
 
@@ -74,18 +86,24 @@ static void usage(void);
 int main(int argc, char *argv[])
 {
     struct opts _opts, *opts = &_opts;
-    char *tmp, *include, *exclude;
-    int i, cmdline = 0;
-
-    include = exclude = NULL;
+    char *tmp;
+#if defined HAVE_REGEX_H
+    char *include = NULL, *exclude = NULL;
+    int cmdline = 0;
+#endif
+    int i;
 
     _zz_opts_init(opts);
 
-#if defined(HAVE_GETOPT_H)
+#if defined HAVE_GETOPT_H
     for(;;)
     {
-#   define OPTSTR "AB:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:vxhV"
-#   ifdef HAVE_GETOPT_LONG
+#   if defined HAVE_REGEX_H
+#       define OPTSTR "AB:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:vxhV"
+#   else
+#       define OPTSTR "AB:C:dD:F:imM:nP:qr:R:s:ST:vxhV"
+#   endif
+#   if defined HAVE_GETOPT_LONG
 #       define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct option long_options[] =
@@ -93,14 +111,20 @@ int main(int argc, char *argv[])
             /* Long option, needs arg, flag, short option */
             { "autoinc",     0, NULL, 'A' },
             { "max-bytes",   1, NULL, 'B' },
+#if defined HAVE_REGEX_H
             { "cmdline",     0, NULL, 'c' },
+#endif
             { "max-crashes", 1, NULL, 'C' },
             { "debug",       0, NULL, 'd' },
             { "delay",       1, NULL, 'D' },
+#if defined HAVE_REGEX_H
             { "exclude",     1, NULL, 'E' },
+#endif
             { "max-forks",   1, NULL, 'F' },
             { "stdin",       0, NULL, 'i' },
+#if defined HAVE_REGEX_H
             { "include",     1, NULL, 'I' },
+#endif
             { "md5",         0, NULL, 'm' },
             { "max-memory",  1, NULL, 'M' },
             { "network",     0, NULL, 'n' },
@@ -133,9 +157,11 @@ int main(int argc, char *argv[])
         case 'B': /* --max-bytes */
             opts->maxbytes = atoi(optarg);
             break;
+#if defined HAVE_REGEX_H
         case 'c': /* --cmdline */
             cmdline = 1;
             break;
+#endif
         case 'C': /* --max-crashes */
             opts->maxcrashes = atoi(optarg);
             if(opts->maxcrashes <= 0)
@@ -147,6 +173,7 @@ int main(int argc, char *argv[])
         case 'D': /* --delay */
             opts->delay = (int64_t)(atof(optarg) * 1000000.0);
             break;
+#if defined HAVE_REGEX_H
         case 'E': /* --exclude */
             exclude = merge_regex(exclude, optarg);
             if(!exclude)
@@ -156,12 +183,14 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
             break;
+#endif
         case 'F': /* --max-forks */
             opts->maxchild = atoi(optarg) > 1 ? atoi(optarg) : 1;
             break;
         case 'i': /* --stdin */
             setenv("ZZUF_STDIN", "1", 1);
             break;
+#if defined HAVE_REGEX_H
         case 'I': /* --include */
             include = merge_regex(include, optarg);
             if(!include)
@@ -171,6 +200,7 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
             break;
+#endif
         case 'm': /* --md5 */
             opts->md5 = 1;
             break;
@@ -254,6 +284,7 @@ int main(int argc, char *argv[])
     }
 
     /* If asked to launch programs */
+#if defined HAVE_REGEX_H
     if(cmdline)
     {
         int dashdash = 0;
@@ -273,6 +304,8 @@ int main(int argc, char *argv[])
         setenv("ZZUF_INCLUDE", include, 1);
     if(exclude)
         setenv("ZZUF_EXCLUDE", exclude, 1);
+#endif
+
     if(opts->protect)
         setenv("ZZUF_PROTECT", opts->protect, 1);
     if(opts->refuse)
@@ -370,6 +403,7 @@ static void loop_stdin(struct opts *opts)
     _zz_fd_fini();
 }
 
+#if defined HAVE_REGEX_H
 static char *merge_file(char *regex, char *file)
 {
     char *newfile = malloc(5 + 2 * strlen(file) + 1 + 1), *tmp = newfile;
@@ -417,6 +451,7 @@ static char *merge_regex(char *regex, char *string)
 
     return regex;
 }
+#endif
 
 static void spawn_children(struct opts *opts)
 {
@@ -769,14 +804,21 @@ static void version(void)
     printf("Written by Sam Hocevar. Report bugs to <sam@zoy.org>.\n");
 }
 
-#if defined(HAVE_GETOPT_H)
+#if defined HAVE_GETOPT_H
 static void usage(void)
 {
+#if defined HAVE_REGEX_H
     printf("Usage: zzuf [-AcdimnqSvx] [-r ratio] [-s seed | -s start:stop]\n");
     printf("                          [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
     printf("                          [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
     printf("                          [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
-#   ifdef HAVE_GETOPT_LONG
+#else
+    printf("Usage: zzuf [-AdimnqSvx] [-r ratio] [-s seed | -s start:stop]\n");
+    printf("                         [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
+    printf("                         [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
+    printf("                         [PROGRAM [--] [ARGS]...]\n");
+#endif
+#   if defined HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
     printf("       zzuf -V | --version\n");
 #   else
@@ -786,17 +828,23 @@ static void usage(void)
     printf("Run PROGRAM with optional arguments ARGS and fuzz its input.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
-#   ifdef HAVE_GETOPT_LONG
+#   if defined HAVE_GETOPT_LONG
     printf("  -A, --autoinc             increment seed each time a new file is opened\n");
     printf("  -B, --max-bytes <n>       kill children that output more than <n> bytes\n");
+#if defined HAVE_REGEX_H
     printf("  -c, --cmdline             only fuzz files specified in the command line\n");
+#endif
     printf("  -C, --max-crashes <n>     stop after <n> children have crashed (default 1)\n");
     printf("  -d, --debug               print debug messages\n");
     printf("  -D, --delay               delay between forks\n");
+#if defined HAVE_REGEX_H
     printf("  -E, --exclude <regex>     do not fuzz files matching <regex>\n");
+#endif
     printf("  -F, --max-forks <n>       number of concurrent children (default 1)\n");
     printf("  -i, --stdin               fuzz standard input\n");
+#if defined HAVE_REGEX_H
     printf("  -I, --include <regex>     only fuzz files matching <regex>\n");
+#endif
     printf("  -m, --md5                 compute the output's MD5 hash\n");
     printf("  -M, --max-memory <n>      maximum child virtual memory size in MB\n");
     printf("  -n, --network             fuzz network input\n");
@@ -816,14 +864,20 @@ static void usage(void)
 #   else
     printf("  -A               increment seed each time a new file is opened\n");
     printf("  -B <n>           kill children that output more than <n> bytes\n");
+#if defined HAVE_REGEX_H
     printf("  -c               only fuzz files specified in the command line\n");
+#endif
     printf("  -C <n>           stop after <n> children have crashed (default 1)\n");
     printf("  -d               print debug messages\n");
     printf("  -D               delay between forks\n");
+#if defined HAVE_REGEX_H
     printf("  -E <regex>       do not fuzz files matching <regex>\n");
+#endif
     printf("  -F <n>           number of concurrent forks (default 1)\n");
     printf("  -i               fuzz standard input\n");
+#if defined HAVE_REGEX_H
     printf("  -I <regex>       only fuzz files matching <regex>\n");
+#endif
     printf("  -m               compute the output's MD5 hash\n");
     printf("  -M               maximum child virtual memory size in MB\n");
     printf("  -n               fuzz network input\n");

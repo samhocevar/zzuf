@@ -26,11 +26,10 @@
 #   include <inttypes.h>
 #endif
 #include <stdlib.h>
-#include <dlfcn.h>
 
 #include <stdio.h>
 #include <sys/types.h>
-#ifdef HAVE___SREFILL
+#if defined HAVE___SREFILL
 #   include <unistd.h> /* Needed for __srefill’s lseek() call */
 #endif
 
@@ -40,19 +39,19 @@
 #include "fuzz.h"
 #include "fd.h"
 
-#ifdef HAVE___SREFILL
+#if defined HAVE___SREFILL
 int __srefill(FILE *fp);
 #endif
 
 /* Library functions that we divert */
 static FILE *  (*fopen_orig)    (const char *path, const char *mode);
-#ifdef HAVE_FOPEN64
+#if defined HAVE_FOPEN64
 static FILE *  (*fopen64_orig)  (const char *path, const char *mode);
 #endif
 static FILE *  (*freopen_orig)  (const char *path, const char *mode,
                                  FILE *stream);
 static int     (*fseek_orig)    (FILE *stream, long offset, int whence);
-#ifdef HAVE_FSEEKO
+#if defined HAVE_FSEEKO
 static int     (*fseeko_orig)   (FILE *stream, off_t offset, int whence);
 #endif
 static void    (*rewind_orig)   (FILE *stream);
@@ -60,7 +59,7 @@ static size_t  (*fread_orig)    (void *ptr, size_t size, size_t nmemb,
                                  FILE *stream);
 static int     (*getc_orig)     (FILE *stream);
 static int     (*fgetc_orig)    (FILE *stream);
-#ifdef HAVE__IO_GETC
+#if defined HAVE__IO_GETC
 static int     (*_IO_getc_orig) (FILE *stream);
 #endif
 static char *  (*fgets_orig)    (char *s, int size, FILE *stream);
@@ -68,23 +67,23 @@ static int     (*ungetc_orig)   (int c, FILE *stream);
 static int     (*fclose_orig)   (FILE *fp);
 
 /* Additional GNUisms */
-#ifdef HAVE_GETLINE
+#if defined HAVE_GETLINE
 static ssize_t (*getline_orig)    (char **lineptr, size_t *n, FILE *stream);
 #endif
-#ifdef HAVE_GETDELIM
+#if defined HAVE_GETDELIM
 static ssize_t (*getdelim_orig)   (char **lineptr, size_t *n, int delim,
                                    FILE *stream);
 #endif
-#ifdef HAVE___GETDELIM
+#if defined HAVE___GETDELIM
 static ssize_t (*__getdelim_orig) (char **lineptr, size_t *n, int delim,
                                    FILE *stream);
 #endif
 
 /* Additional BSDisms */
-#ifdef HAVE_FGETLN
+#if defined HAVE_FGETLN
 static char *  (*fgetln_orig)    (FILE *stream, size_t *len);
 #endif
-#ifdef HAVE___SREFILL
+#if defined HAVE___SREFILL
 int            (*__srefill_orig) (FILE *fp);
 #endif
 
@@ -111,7 +110,7 @@ FILE *fopen(const char *path, const char *mode)
     FILE *ret; FOPEN(fopen); return ret;
 }
 
-#ifdef HAVE_FOPEN64
+#if defined HAVE_FOPEN64
 FILE *fopen64(const char *path, const char *mode)
 {
     FILE *ret; FOPEN(fopen64); return ret;
@@ -191,7 +190,7 @@ int fseek(FILE *stream, long offset, int whence)
     int ret; FSEEK(fseek, ftell); return ret;
 }
 
-#ifdef HAVE_FSEEKO
+#if defined HAVE_FSEEKO
 int fseeko(FILE *stream, off_t offset, int whence)
 {
     int ret; FSEEK(fseeko, ftello); return ret;
@@ -301,7 +300,7 @@ int fgetc(FILE *stream)
     int ret; FGETC(fgetc); return ret;
 }
 
-#ifdef HAVE__IO_GETC
+#if defined HAVE__IO_GETC
 int _IO_getc(FILE *stream)
 {
     int ret; FGETC(_IO_getc); return ret;
@@ -468,28 +467,28 @@ int fclose(FILE *fp)
         return ret; \
     } while(0)
 
-#ifdef HAVE_GETLINE
+#if defined HAVE_GETLINE
 ssize_t getline(char **lineptr, size_t *n, FILE *stream)
 {
     ssize_t ret; GETDELIM(getline, '\n', 0); return ret;
 }
 #endif
 
-#ifdef HAVE_GETDELIM
+#if defined HAVE_GETDELIM
 ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
 {
     ssize_t ret; GETDELIM(getdelim, delim, 1); return ret;
 }
 #endif
 
-#ifdef HAVE___GETDELIM
+#if defined HAVE___GETDELIM
 ssize_t __getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
 {
     ssize_t ret; GETDELIM(__getdelim, delim, 1); return ret;
 }
 #endif
 
-#ifdef HAVE_FGETLN
+#if defined HAVE_FGETLN
 char *fgetln(FILE *stream, size_t *len)
 {
     char *ret;
@@ -544,7 +543,7 @@ char *fgetln(FILE *stream, size_t *len)
 }
 #endif
 
-#ifdef HAVE___SREFILL
+#if defined HAVE___SREFILL
 int __srefill(FILE *fp)
 {
     off_t newpos;

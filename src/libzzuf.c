@@ -32,7 +32,6 @@
 #include <fcntl.h>
 
 #include <stdarg.h>
-#include <dlfcn.h>
 
 #include "libzzuf.h"
 #include "debug.h"

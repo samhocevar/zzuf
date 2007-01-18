@@ -27,7 +27,6 @@
 #   include <inttypes.h>
 #endif
 #include <stdlib.h>
-#include <dlfcn.h>
 
 #include <string.h>
 #include <signal.h>
@@ -47,8 +46,10 @@
 
 /* Library functions that we divert */
 static SIG_T (*signal_orig)    (int signum, SIG_T handler);
+#if defined HAVE_SIGACTION
 static int   (*sigaction_orig) (int signum, const struct sigaction *act,
                                 struct sigaction *oldact);
+#endif
 /* Local functions */
 static int isfatal(int signum);
 
@@ -59,22 +60,26 @@ static int isfatal(int signum)
         case SIGABRT:
         case SIGFPE:
         case SIGILL:
+#if defined SIGQUIT
         case SIGQUIT:
+#endif
         case SIGSEGV:
+#if defined SIGTRAP
         case SIGTRAP:
-#ifdef SIGSYS
+#endif
+#if defined SIGSYS
         case SIGSYS:
 #endif
-#ifdef SIGEMT
+#if defined SIGEMT
         case SIGEMT:
 #endif
-#ifdef SIGBUS
+#if defined SIGBUS
         case SIGBUS:
 #endif
-#ifdef SIGXCPU
+#if defined SIGXCPU
         case SIGXCPU:
 #endif
-#ifdef SIGXFSZ
+#if defined SIGXFSZ
         case SIGXFSZ:
 #endif
             return 1;
@@ -99,6 +104,7 @@ SIG_T signal(int signum, SIG_T handler)
     return ret;
 }
 
+#if defined HAVE_SIGACTION
 int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
 {
     int ret;
@@ -122,4 +128,5 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
 
     return ret;
 }
+#endif
 

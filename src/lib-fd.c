@@ -33,15 +33,21 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
-#include <dlfcn.h>
+#include <stdio.h>
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
+#if defined HAVE_SYS_SOCKET_H
+#   include <sys/socket.h>
+#endif
+#if defined HAVE_SYS_UIO_H
+#   include <sys/uio.h>
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
-#include <aio.h>
+#if defined HAVE_AIO_H
+#   include <aio.h>
+#endif
 
 #include "libzzuf.h"
 #include "lib-load.h"
@@ -49,35 +55,57 @@
 #include "fuzz.h"
 #include "fd.h"
 
-#ifdef HAVE_SOCKLEN_T
+#if defined HAVE_SOCKLEN_T
 #   define SOCKLEN_T socklen_t
 #else
 #   define SOCKLEN_T int
 #endif
 
 /* Local prototypes */
+#if defined HAVE_READV || defined HAVE_RECVMSG
 static void fuzz_iovec   (int fd, const struct iovec *iov, ssize_t ret);
+#endif
 static void offset_check (int fd);
 
 /* Library functions that we divert */
 static int     (*open_orig)    (const char *file, int oflag, ...);
-#ifdef HAVE_OPEN64
+#if defined HAVE_OPEN64
 static int     (*open64_orig)  (const char *file, int oflag, ...);
 #endif
+#if defined HAVE_ACCEPT
 static int     (*accept_orig)  (int sockfd, struct sockaddr *addr,
                                 SOCKLEN_T *addrlen);
+#endif
+#if defined HAVE_SOCKET
 static int     (*socket_orig)  (int domain, int type, int protocol);
+#endif
+#if defined HAVE_RECV
 static int     (*recv_orig)    (int s, void *buf, size_t len, int flags);
+#endif
+#if defined HAVE_RECVFROM
 static int     (*recvfrom_orig)(int s, void *buf, size_t len, int flags,
                                 struct sockaddr *from, SOCKLEN_T *fromlen);
+#endif
+#if defined HAVE_RECVMSG
 static int     (*recvmsg_orig) (int s,  struct msghdr *hdr, int flags);
+#endif
+#if defined READ_USES_SSIZE_T
 static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
+#else
+static int     (*read_orig)    (int fd, void *buf, unsigned int count);
+#endif
+#if defined HAVE_READV
 static ssize_t (*readv_orig)   (int fd, const struct iovec *iov, int count);
+#endif
+#if defined HAVE_PREAD
 static ssize_t (*pread_orig)   (int fd, void *buf, size_t count, off_t offset);
+#endif
+#if defined HAVE_AIO_READ
 static int     (*aio_read_orig)   (struct aiocb *aiocbp);
 static ssize_t (*aio_return_orig) (struct aiocb *aiocbp);
+#endif
 static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
-#ifdef HAVE_LSEEK64
+#if defined HAVE_LSEEK64
 static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
 #endif
 static int     (*close_orig)   (int fd);
@@ -119,13 +147,14 @@ int open(const char *file, int oflag, ...)
     int ret; OPEN(open); return ret;
 }
 
-#ifdef HAVE_OPEN64
+#if defined HAVE_OPEN64
 int open64(const char *file, int oflag, ...)
 {
     int ret; OPEN(open64); return ret;
 }
 #endif
 
+#if defined HAVE_ACCEPT
 int accept(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 {
     int ret;
@@ -143,7 +172,9 @@ int accept(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 
     return ret;
 }
+#endif
 
+#if defined HAVE_SOCKET
 int socket(int domain, int type, int protocol)
 {
     int ret;
@@ -161,7 +192,9 @@ int socket(int domain, int type, int protocol)
 
     return ret;
 }
+#endif
 
+#if defined HAVE_RECV
 int recv(int s, void *buf, size_t len, int flags)
 {
     int ret;
@@ -191,7 +224,9 @@ int recv(int s, void *buf, size_t len, int flags)
 
     return ret;
 }
+#endif
 
+#if defined HAVE_RECVFROM
 int recvfrom(int s, void *buf, size_t len, int flags,
              struct sockaddr *from, SOCKLEN_T *fromlen) 
 {
@@ -223,7 +258,9 @@ int recvfrom(int s, void *buf, size_t len, int flags,
 
     return ret;
 }
+#endif
 
+#if defined HAVE_RECVMSG
 int recvmsg(int s, struct msghdr *hdr, int flags)
 {
     ssize_t ret;
@@ -238,8 +275,13 @@ int recvmsg(int s, struct msghdr *hdr, int flags)
 
     return ret;
 }
+#endif
 
+#if defined READ_USES_SSIZE_T
 ssize_t read(int fd, void *buf, size_t count)
+#else
+int read(int fd, void *buf, unsigned int count)
+#endif
 {
     int ret;
 
@@ -269,6 +311,7 @@ ssize_t read(int fd, void *buf, size_t count)
     return ret;
 }
 
+#if defined HAVE_READV
 ssize_t readv(int fd, const struct iovec *iov, int count)
 {
     ssize_t ret;
@@ -284,7 +327,9 @@ ssize_t readv(int fd, const struct iovec *iov, int count)
     offset_check(fd);
     return ret;
 }
+#endif
 
+#if defined HAVE_PREAD
 ssize_t pread(int fd, void *buf, size_t count, off_t offset)
 {
     int ret;
@@ -317,6 +362,7 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
 
     return ret;
 }
+#endif
 
 #define LSEEK(fn, off_t) \
     do \
@@ -338,7 +384,7 @@ off_t lseek(int fd, off_t offset, int whence)
     return ret;
 }
 
-#ifdef HAVE_LSEEK64
+#if defined HAVE_LSEEK64
 off64_t lseek64(int fd, off64_t offset, int whence)
 {
     off64_t ret;
@@ -347,6 +393,7 @@ off64_t lseek64(int fd, off64_t offset, int whence)
 }
 #endif
 
+#if defined HAVE_AIO_READ
 int aio_read(struct aiocb *aiocbp)
 {
     int ret;
@@ -393,6 +440,7 @@ ssize_t aio_return(struct aiocb *aiocbp)
 
     return ret;
 }
+#endif
 
 int close(int fd)
 {
@@ -415,6 +463,7 @@ int close(int fd)
 
 /* XXX: the following functions are local */
 
+#if defined HAVE_READV || defined HAVE_RECVMSG
 static void fuzz_iovec(int fd, const struct iovec *iov, ssize_t ret)
 {
     /* NOTE: We assume that iov countains at least <ret> bytes. */
@@ -433,11 +482,12 @@ static void fuzz_iovec(int fd, const struct iovec *iov, ssize_t ret)
         ret -= len;
     }
 }
+#endif
 
 static void offset_check(int fd)
 {
     /* Sanity check, can be OK though (for instance with a character device) */
-#ifdef HAVE_LSEEK64
+#if defined HAVE_LSEEK64
     off64_t ret;
     LOADSYM(lseek64);
     ret = lseek64_orig(fd, 0, SEEK_CUR);

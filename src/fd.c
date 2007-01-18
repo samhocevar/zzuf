@@ -25,7 +25,9 @@
 #   include <inttypes.h>
 #endif
 #include <stdlib.h>
-#include <regex.h>
+#if defined HAVE_REGEX_H
+#   include <regex.h>
+#endif
 #include <string.h>
 #include <math.h>
 
@@ -34,8 +36,10 @@
 #include "fd.h"
 
 /* Regex stuff */
+#if defined HAVE_REGEX_H
 static regex_t re_include, re_exclude;
 static int has_include = 0, has_exclude = 0;
+#endif
 
 /* File descriptor stuff. When program is launched, we use the static array of
  * 32 structures, which ought to be enough for most programs. If it happens
@@ -66,14 +70,22 @@ static int     autoinc = 0;
 
 void _zz_include(char const *regex)
 {
+#if defined HAVE_REGEX_H
     if(regcomp(&re_include, regex, REG_EXTENDED) == 0)
         has_include = 1;
+#else
+    (void)regex;
+#endif
 }
 
 void _zz_exclude(char const *regex)
 {
+#if defined HAVE_REGEX_H
     if(regcomp(&re_exclude, regex, REG_EXTENDED) == 0)
         has_exclude = 1;
+#else
+    (void)regex;
+#endif
 }
 
 void _zz_setseed(int32_t s)
@@ -161,11 +173,15 @@ void _zz_fd_fini(void)
 
 int _zz_mustwatch(char const *file)
 {
+#if defined HAVE_REGEX_H
     if(has_include && regexec(&re_include, file, 0, NULL, 0) == REG_NOMATCH)
         return 0; /* not included: ignore */
 
     if(has_exclude && regexec(&re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
         return 0; /* excluded: ignore */
+#else
+    (void)file;
+#endif
 
     return 1; /* default */
 }
@@ -229,7 +245,7 @@ void _zz_register(int fd)
     files[i].fuzz.seed = seed;
     files[i].fuzz.ratio = _zz_getratio();
     files[i].fuzz.cur = -1;
-#ifdef HAVE_FGETLN
+#if defined HAVE_FGETLN
     files[i].fuzz.tmp = NULL;
 #endif
 
@@ -245,7 +261,7 @@ void _zz_unregister(int fd)
         return;
 
     files[fds[fd]].managed = 0;
-#ifdef HAVE_FGETLN
+#if defined HAVE_FGETLN
     if(files[fds[fd]].fuzz.tmp)
         free(files[fds[fd]].fuzz.tmp);
 #endif

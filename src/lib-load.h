@@ -29,11 +29,21 @@
 #define STR(x) #x
 #define ORIG(x) x##_orig
 
-#define LOADSYM(x) \
-    do { \
-        if(!ORIG(x)) \
-            ORIG(x) = dlsym(RTLD_NEXT, STR(x)); \
-        if(!ORIG(x)) \
-            abort(); \
-    } while(0)
+/* TODO: do the Win32 part */
+#ifdef HAVE_DLFCN_H
+#   include <dlfcn.h>
+#   define LOADSYM(x) \
+        do { \
+            if(!ORIG(x)) \
+                ORIG(x) = dlsym(RTLD_NEXT, STR(x)); \
+            if(!ORIG(x)) \
+                abort(); \
+        } while(0)
+#else
+#   define LOADSYM(x) \
+        do { \
+            if(!ORIG(x)) \
+                abort(); \
+        } while(0)
+#endif
 

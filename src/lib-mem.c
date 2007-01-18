@@ -34,7 +34,6 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
-#include <dlfcn.h>
 #include <errno.h>
 #include <signal.h>
 
@@ -42,7 +41,9 @@
 #   include <malloc.h>
 #endif
 #include <unistd.h>
-#include <sys/mman.h>
+#if defined HAVE_SYS_MMAN_H
+#   include <sys/mman.h>
+#endif
 #if defined HAVE_LIBC_H
 #   include <libc.h>
 #endif
@@ -53,30 +54,40 @@
 #include "fuzz.h"
 #include "fd.h"
 
+#if !defined SIGKILL
+#   define SIGKILL 9
+#endif
+
 /* TODO: mremap, maybe brk/sbrk (haha) */
 
 /* Library functions that we divert */
 static void *  (*calloc_orig)   (size_t nmemb, size_t size);
 static void *  (*malloc_orig)   (size_t size);
 static void    (*free_orig)     (void *ptr);
+#if defined HAVE_VALLOC
 static void *  (*valloc_orig)   (size_t size);
-#ifdef HAVE_MEMALIGN
+#endif
+#if defined HAVE_MEMALIGN
 static void *  (*memalign_orig) (size_t boundary, size_t size);
 #endif
-#ifdef HAVE_POSIX_MEMALIGN
+#if defined HAVE_POSIX_MEMALIGN
 static int     (*posix_memalign_orig) (void **memptr, size_t alignment,
                                        size_t size);
 #endif
 static void *  (*realloc_orig)  (void *ptr, size_t size);
 
+#if defined HAVE_MMAP
 static void *  (*mmap_orig)     (void *start, size_t length, int prot,
                                  int flags, int fd, off_t offset);
-#ifdef HAVE_MMAP64
+#endif
+#if defined HAVE_MMAP64
 static void *  (*mmap64_orig)   (void *start, size_t length, int prot,
                                  int flags, int fd, off64_t offset);
 #endif
+#if defined HAVE_MUNMAP
 static int     (*munmap_orig)   (void *start, size_t length);
-#ifdef HAVE_MAP_FD
+#endif
+#if defined HAVE_MAP_FD
 static kern_return_t (*map_fd_orig) (int fd, vm_offset_t offset,
                                      vm_offset_t *addr, boolean_t find_space,
                                      vm_size_t numbytes);
@@ -147,6 +158,7 @@ void *realloc(void *ptr, size_t size)
     return ret;
 }
 
+#if defined HAVE_VALLOC
 void *valloc(size_t size)
 {
     void *ret;
@@ -156,8 +168,9 @@ void *valloc(size_t size)
         raise(SIGKILL);
     return ret;
 }
+#endif
 
-#ifdef HAVE_MEMALIGN
+#if defined HAVE_MEMALIGN
 void *memalign(size_t boundary, size_t size)
 {
     void *ret;
@@ -169,7 +182,7 @@ void *memalign(size_t boundary, size_t size)
 }
 #endif
 
-#ifdef HAVE_POSIX_MEMALIGN
+#if defined HAVE_POSIX_MEMALIGN
 int posix_memalign(void **memptr, size_t alignment, size_t size)
 {
     int ret;
@@ -226,13 +239,15 @@ int nbmaps = 0;
                   (long long int)offset, ret); \
     } while(0)
 
+#if defined HAVE_MMAP
 void *mmap(void *start, size_t length, int prot, int flags,
            int fd, off_t offset)
 {
     void *ret; MMAP(mmap, off_t); return ret;
 }
+#endif
 
-#ifdef HAVE_MMAP64
+#if defined HAVE_MMAP64
 void *mmap64(void *start, size_t length, int prot, int flags,
              int fd, off64_t offset)
 {
@@ -240,6 +255,7 @@ void *mmap64(void *start, size_t length, int prot, int flags,
 }
 #endif
 
+#if defined HAVE_MUNMAP
 int munmap(void *start, size_t length)
 {
     int ret, i;
@@ -260,8 +276,9 @@ int munmap(void *start, size_t length)
 
     return munmap_orig(start, length);
 }
+#endif
 
-#ifdef HAVE_MAP_FD
+#if defined HAVE_MAP_FD
 kern_return_t map_fd(int fd, vm_offset_t offset, vm_offset_t *addr,
                      boolean_t find_space, vm_size_t numbytes)
 {
