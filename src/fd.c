@@ -166,6 +166,13 @@ void _zz_fd_fini(void)
          * closed properly, there's a leak, but it's not our problem. */
     }
 
+#if defined HAVE_REGEX_H
+    if(has_include)
+        regfree(&re_include);
+    if(has_exclude)
+        regfree(&re_exclude);
+#endif
+
     if(files != static_files)
        free(files);
     if(fds != static_fds)
