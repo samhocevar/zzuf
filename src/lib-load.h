@@ -13,7 +13,7 @@
  */
 
 /*
- *  lib-load.h: preloaded library functions
+ *  lib-load.h: preload library functions
  */
 
 /* The __func__ macro to get the current function name */
@@ -28,15 +28,10 @@
 /* Symbol loading stuff */
 #define STR(x) #x
 #define ORIG(x) x##_orig
-#ifdef HAVE_DLFCN_H
-#   define NEW(x) x
-#else
-#   define NEW(x) x##_new
-#endif
 
-/* TODO: do the Win32 part */
 #ifdef HAVE_DLFCN_H
 #   include <dlfcn.h>
+#   define NEW(x) x
 #   define LOADSYM(x) \
         do { \
             if(!ORIG(x)) \
@@ -45,10 +40,10 @@
                 abort(); \
         } while(0)
 #else
+#   define NEW(x) x##_new
 #   define LOADSYM(x) \
         do { \
-            if(!ORIG(x)) \
-                abort(); \
+            /* Nothing to do */ \
         } while(0)
 #endif
 

@@ -24,6 +24,9 @@
 #elif defined HAVE_INTTYPES_H
 #   include <inttypes.h>
 #endif
+#if defined HAVE_WINDOWS_H
+#   include <windows.h>
+#endif
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -36,7 +39,15 @@
 #include "libzzuf.h"
 #include "debug.h"
 #include "fd.h"
+#include "sys.h"
 #include "fuzz.h"
+
+/* Library initialisation shit */
+void _zz_init(void) __attribute__((constructor));
+void _zz_fini(void) __attribute__((destructor));
+#if defined HAVE_WINDOWS_H
+BOOL WINAPI DllMain(HINSTANCE, DWORD, PVOID);
+#endif
 
 /* Global variables */
 int   _zz_ready    = 0;
@@ -96,6 +107,7 @@ void _zz_init(void)
         _zz_network = 1;
 
     _zz_fd_init();
+    _zz_sys_init();
 
     tmp = getenv("ZZUF_STDIN");
     if(tmp && *tmp == '1')
@@ -112,3 +124,22 @@ void _zz_fini(void)
     _zz_fd_fini();
 }
 
+#if defined HAVE_WINDOWS_H
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, PVOID impLoad)
+{
+    (void)hinst;   /* unused */
+    (void)impLoad; /* unused */
+
+    switch(reason)
+    {
+        case DLL_PROCESS_ATTACH:
+            _zz_init();
+            break;
+        case DLL_PROCESS_DETACH:
+            _zz_fini();
+            break;
+    }
+
+    return TRUE;
+}
+#endif

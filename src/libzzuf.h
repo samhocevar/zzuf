@@ -53,7 +53,3 @@ extern int _zz_memory;
 extern int _zz_network;
 extern int _zz_autoinc;
 
-/* Library initialisation shit */
-extern void _zz_init(void) __attribute__((constructor));
-extern void _zz_fini(void) __attribute__((destructor));
-
