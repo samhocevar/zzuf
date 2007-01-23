@@ -45,10 +45,10 @@
 #endif
 
 /* Library functions that we divert */
-static SIG_T (*signal_orig)    (int signum, SIG_T handler);
+static SIG_T (*ORIG(signal))    (int signum, SIG_T handler);
 #if defined HAVE_SIGACTION
-static int   (*sigaction_orig) (int signum, const struct sigaction *act,
-                                struct sigaction *oldact);
+static int   (*ORIG(sigaction)) (int signum, const struct sigaction *act,
+                                 struct sigaction *oldact);
 #endif
 /* Local functions */
 static int isfatal(int signum);
@@ -88,16 +88,16 @@ static int isfatal(int signum)
     }
 }
 
-SIG_T signal(int signum, SIG_T handler)
+SIG_T NEW(signal)(int signum, SIG_T handler)
 {
     SIG_T ret;
 
     LOADSYM(signal);
 
     if(!_zz_signal)
-        return signal_orig(signum, handler);
+        return ORIG(signal)(signum, handler);
 
-    ret = signal_orig(signum, isfatal(signum) ? SIG_DFL : handler);
+    ret = ORIG(signal)(signum, isfatal(signum) ? SIG_DFL : handler);
 
     debug("%s(%i, %p) = %p", __func__, signum, handler, ret);
 
@@ -105,24 +105,25 @@ SIG_T signal(int signum, SIG_T handler)
 }
 
 #if defined HAVE_SIGACTION
-int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+int NEW(sigaction)(int signum, const struct sigaction *act,
+                   struct sigaction *oldact)
 {
     int ret;
 
     LOADSYM(sigaction);
 
     if(!_zz_signal)
-        return sigaction_orig(signum, act, oldact);
+        return ORIG(sigaction)(signum, act, oldact);
 
     if(act && isfatal(signum))
     {
         struct sigaction newact;
         memcpy(&newact, act, sizeof(struct sigaction));
         newact.sa_handler = SIG_DFL;
-        ret = sigaction_orig(signum, &newact, oldact);
+        ret = ORIG(sigaction)(signum, &newact, oldact);
     }
     else
-        ret = sigaction_orig(signum, act, oldact);
+        ret = ORIG(sigaction)(signum, act, oldact);
 
     debug("%s(%i, %p, %p) = %i", __func__, signum, act, oldact, ret);
 

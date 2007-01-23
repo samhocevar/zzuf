@@ -35,6 +35,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#if defined HAVE_WINSOCK2_H
+#   include <winsock2.h>
+#endif
 #include <sys/types.h>
 #if defined HAVE_SYS_SOCKET_H
 #   include <sys/socket.h>
@@ -68,47 +71,47 @@ static void fuzz_iovec   (int fd, const struct iovec *iov, ssize_t ret);
 static void offset_check (int fd);
 
 /* Library functions that we divert */
-static int     (*open_orig)    (const char *file, int oflag, ...);
+static int     (*ORIG(open))    (const char *file, int oflag, ...);
 #if defined HAVE_OPEN64
-static int     (*open64_orig)  (const char *file, int oflag, ...);
+static int     (*ORIG(open64))  (const char *file, int oflag, ...);
 #endif
 #if defined HAVE_ACCEPT
-static int     (*accept_orig)  (int sockfd, struct sockaddr *addr,
-                                SOCKLEN_T *addrlen);
+static int     (*ORIG(accept))  (int sockfd, struct sockaddr *addr,
+                                 SOCKLEN_T *addrlen);
 #endif
 #if defined HAVE_SOCKET
-static int     (*socket_orig)  (int domain, int type, int protocol);
+static int     (*ORIG(socket))  (int domain, int type, int protocol);
 #endif
 #if defined HAVE_RECV
-static RECV_T  (*recv_orig)    (int s, void *buf, size_t len, int flags);
+static RECV_T  (*ORIG(recv))    (int s, void *buf, size_t len, int flags);
 #endif
 #if defined HAVE_RECVFROM
-static RECV_T  (*recvfrom_orig)(int s, void *buf, size_t len, int flags,
-                                struct sockaddr *from, SOCKLEN_T *fromlen);
+static RECV_T  (*ORIG(recvfrom))(int s, void *buf, size_t len, int flags,
+                                 struct sockaddr *from, SOCKLEN_T *fromlen);
 #endif
 #if defined HAVE_RECVMSG
-static RECV_T  (*recvmsg_orig) (int s,  struct msghdr *hdr, int flags);
+static RECV_T  (*ORIG(recvmsg)) (int s,  struct msghdr *hdr, int flags);
 #endif
 #if defined READ_USES_SSIZE_T
-static ssize_t (*read_orig)    (int fd, void *buf, size_t count);
+static ssize_t (*ORIG(read))    (int fd, void *buf, size_t count);
 #else
-static int     (*read_orig)    (int fd, void *buf, unsigned int count);
+static int     (*ORIG(read))    (int fd, void *buf, unsigned int count);
 #endif
 #if defined HAVE_READV
-static ssize_t (*readv_orig)   (int fd, const struct iovec *iov, int count);
+static ssize_t (*ORIG(readv))   (int fd, const struct iovec *iov, int count);
 #endif
 #if defined HAVE_PREAD
-static ssize_t (*pread_orig)   (int fd, void *buf, size_t count, off_t offset);
+static ssize_t (*ORIG(pread))   (int fd, void *buf, size_t count, off_t offset);
 #endif
 #if defined HAVE_AIO_READ
-static int     (*aio_read_orig)   (struct aiocb *aiocbp);
-static ssize_t (*aio_return_orig) (struct aiocb *aiocbp);
+static int     (*ORIG(aio_read))   (struct aiocb *aiocbp);
+static ssize_t (*ORIG(aio_return)) (struct aiocb *aiocbp);
 #endif
-static off_t   (*lseek_orig)   (int fd, off_t offset, int whence);
+static off_t   (*ORIG(lseek))   (int fd, off_t offset, int whence);
 #if defined HAVE_LSEEK64
-static off64_t (*lseek64_orig) (int fd, off64_t offset, int whence);
+static off64_t (*ORIG(lseek64)) (int fd, off64_t offset, int whence);
 #endif
-static int     (*close_orig)   (int fd);
+static int     (*ORIG(close))   (int fd);
 
 #define OPEN(fn) \
     do \
@@ -142,25 +145,25 @@ static int     (*close_orig)   (int fd);
         } \
     } while(0)
 
-int open(const char *file, int oflag, ...)
+int NEW(open)(const char *file, int oflag, ...)
 {
     int ret; OPEN(open); return ret;
 }
 
 #if defined HAVE_OPEN64
-int open64(const char *file, int oflag, ...)
+int NEW(open64)(const char *file, int oflag, ...)
 {
     int ret; OPEN(open64); return ret;
 }
 #endif
 
 #if defined HAVE_ACCEPT
-int accept(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
+int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 {
     int ret;
 
     LOADSYM(accept);
-    ret = accept_orig(sockfd, addr, addrlen);
+    ret = ORIG(accept)(sockfd, addr, addrlen);
     if(!_zz_ready || _zz_islocked(-1) || !_zz_network)
         return ret;
 
@@ -175,12 +178,12 @@ int accept(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 #endif
 
 #if defined HAVE_SOCKET
-int socket(int domain, int type, int protocol)
+int NEW(socket)(int domain, int type, int protocol)
 {
     int ret;
 
     LOADSYM(socket);
-    ret = socket_orig(domain, type, protocol);
+    ret = ORIG(socket)(domain, type, protocol);
     if(!_zz_ready || _zz_islocked(-1) || !_zz_network)
         return ret;
 
@@ -195,12 +198,12 @@ int socket(int domain, int type, int protocol)
 #endif
 
 #if defined HAVE_RECV
-RECV_T recv(int s, void *buf, size_t len, int flags)
+RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
 {
     int ret;
 
     LOADSYM(recv);
-    ret = recv_orig(s, buf, len, flags);
+    ret = ORIG(recv)(s, buf, len, flags);
     if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s))
         return ret;
 
@@ -227,13 +230,13 @@ RECV_T recv(int s, void *buf, size_t len, int flags)
 #endif
 
 #if defined HAVE_RECVFROM
-RECV_T recvfrom(int s, void *buf, size_t len, int flags,
-             struct sockaddr *from, SOCKLEN_T *fromlen) 
+RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
+                     struct sockaddr *from, SOCKLEN_T *fromlen) 
 {
     int ret;
 
     LOADSYM(recvfrom);
-    ret = recvfrom_orig(s, buf, len, flags, from, fromlen);
+    ret = ORIG(recvfrom)(s, buf, len, flags, from, fromlen);
     if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s))
         return ret;
 
@@ -261,12 +264,12 @@ RECV_T recvfrom(int s, void *buf, size_t len, int flags,
 #endif
 
 #if defined HAVE_RECVMSG
-RECV_T recvmsg(int s, struct msghdr *hdr, int flags)
+RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
 {
     ssize_t ret;
 
     LOADSYM(recvmsg);
-    ret = recvmsg_orig(s, hdr, flags);
+    ret = ORIG(recvmsg)(s, hdr, flags);
     if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s))
         return ret;
 
@@ -278,15 +281,15 @@ RECV_T recvmsg(int s, struct msghdr *hdr, int flags)
 #endif
 
 #if defined READ_USES_SSIZE_T
-ssize_t read(int fd, void *buf, size_t count)
+ssize_t NEW(read)(int fd, void *buf, size_t count)
 #else
-int read(int fd, void *buf, unsigned int count)
+int NEW(read)(int fd, void *buf, unsigned int count)
 #endif
 {
     int ret;
 
     LOADSYM(read);
-    ret = read_orig(fd, buf, count);
+    ret = ORIG(read)(fd, buf, count);
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
@@ -312,12 +315,12 @@ int read(int fd, void *buf, unsigned int count)
 }
 
 #if defined HAVE_READV
-ssize_t readv(int fd, const struct iovec *iov, int count)
+ssize_t NEW(readv)(int fd, const struct iovec *iov, int count)
 {
     ssize_t ret;
 
     LOADSYM(readv);
-    ret = readv_orig(fd, iov, count);
+    ret = ORIG(readv)(fd, iov, count);
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
@@ -330,12 +333,12 @@ ssize_t readv(int fd, const struct iovec *iov, int count)
 #endif
 
 #if defined HAVE_PREAD
-ssize_t pread(int fd, void *buf, size_t count, off_t offset)
+ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
 {
     int ret;
 
     LOADSYM(pread);
-    ret = pread_orig(fd, buf, count, offset);
+    ret = ORIG(pread)(fd, buf, count, offset);
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
@@ -377,7 +380,7 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
             _zz_setpos(fd, ret); \
     } while(0)
 
-off_t lseek(int fd, off_t offset, int whence)
+off_t NEW(lseek)(int fd, off_t offset, int whence)
 {
     off_t ret;
     LSEEK(lseek, off_t);
@@ -385,7 +388,7 @@ off_t lseek(int fd, off_t offset, int whence)
 }
 
 #if defined HAVE_LSEEK64
-off64_t lseek64(int fd, off64_t offset, int whence)
+off64_t NEW(lseek64)(int fd, off64_t offset, int whence)
 {
     off64_t ret;
     LSEEK(lseek64, off64_t);
@@ -394,17 +397,17 @@ off64_t lseek64(int fd, off64_t offset, int whence)
 #endif
 
 #if defined HAVE_AIO_READ
-int aio_read(struct aiocb *aiocbp)
+int NEW(aio_read)(struct aiocb *aiocbp)
 {
     int ret;
     int fd = aiocbp->aio_fildes;
 
     LOADSYM(aio_read);
     if(!_zz_ready || !_zz_iswatched(fd))
-        return aio_read_orig(aiocbp);
+        return ORIG(aio_read)(aiocbp);
 
     _zz_lock(fd);
-    ret = aio_read_orig(aiocbp);
+    ret = ORIG(aio_read)(aiocbp);
 
     debug("%s({%i, %i, %i, %p, %li, ..., %li}) = %i", __func__,
           fd, aiocbp->aio_lio_opcode, aiocbp->aio_reqprio, aiocbp->aio_buf,
@@ -413,16 +416,16 @@ int aio_read(struct aiocb *aiocbp)
     return ret;
 }
 
-ssize_t aio_return(struct aiocb *aiocbp)
+ssize_t NEW(aio_return)(struct aiocb *aiocbp)
 {
     ssize_t ret;
     int fd = aiocbp->aio_fildes;
 
     LOADSYM(aio_return);
     if(!_zz_ready || !_zz_iswatched(fd))
-        return aio_return_orig(aiocbp);
+        return ORIG(aio_return)(aiocbp);
 
-    ret = aio_return_orig(aiocbp);
+    ret = ORIG(aio_return)(aiocbp);
     _zz_unlock(fd);
 
     /* FIXME: make sure we’re actually *reading* */
@@ -442,7 +445,7 @@ ssize_t aio_return(struct aiocb *aiocbp)
 }
 #endif
 
-int close(int fd)
+int NEW(close)(int fd)
 {
     int ret;
 
@@ -451,7 +454,7 @@ int close(int fd)
         return 0;
 
     LOADSYM(close);
-    ret = close_orig(fd);
+    ret = ORIG(close)(fd);
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
@@ -490,11 +493,11 @@ static void offset_check(int fd)
 #if defined HAVE_LSEEK64
     off64_t ret;
     LOADSYM(lseek64);
-    ret = lseek64_orig(fd, 0, SEEK_CUR);
+    ret = ORIG(lseek64)(fd, 0, SEEK_CUR);
 #else
     off_t ret;
     LOADSYM(lseek);
-    ret = lseek_orig(fd, 0, SEEK_CUR);
+    ret = ORIG(lseek)(fd, 0, SEEK_CUR);
 #endif
     if(ret != -1 && ret != _zz_getpos(fd))
         debug("warning: offset inconsistency");

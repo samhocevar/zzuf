@@ -32,6 +32,9 @@
 #if defined HAVE_REGEX_H
 #   include <regex.h>
 #endif
+#if defined HAVE_WINSOCK2_H
+#   include <winsock2.h>
+#endif
 #include <string.h>
 #include <errno.h>
 #include <signal.h>

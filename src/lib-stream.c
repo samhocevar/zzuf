@@ -40,51 +40,51 @@
 #include "fd.h"
 
 #if defined HAVE___SREFILL
-int __srefill(FILE *fp);
+int NEW(__srefill)(FILE *fp);
 #endif
 
 /* Library functions that we divert */
-static FILE *  (*fopen_orig)    (const char *path, const char *mode);
+static FILE *  (*ORIG(fopen))    (const char *path, const char *mode);
 #if defined HAVE_FOPEN64
-static FILE *  (*fopen64_orig)  (const char *path, const char *mode);
+static FILE *  (*ORIG(fopen64))  (const char *path, const char *mode);
 #endif
-static FILE *  (*freopen_orig)  (const char *path, const char *mode,
-                                 FILE *stream);
-static int     (*fseek_orig)    (FILE *stream, long offset, int whence);
+static FILE *  (*ORIG(freopen))  (const char *path, const char *mode,
+                                  FILE *stream);
+static int     (*ORIG(fseek))    (FILE *stream, long offset, int whence);
 #if defined HAVE_FSEEKO
-static int     (*fseeko_orig)   (FILE *stream, off_t offset, int whence);
+static int     (*ORIG(fseeko))   (FILE *stream, off_t offset, int whence);
 #endif
-static void    (*rewind_orig)   (FILE *stream);
-static size_t  (*fread_orig)    (void *ptr, size_t size, size_t nmemb,
-                                 FILE *stream);
-static int     (*getc_orig)     (FILE *stream);
-static int     (*fgetc_orig)    (FILE *stream);
+static void    (*ORIG(rewind))   (FILE *stream);
+static size_t  (*ORIG(fread))    (void *ptr, size_t size, size_t nmemb,
+                                  FILE *stream);
+static int     (*ORIG(getc))     (FILE *stream);
+static int     (*ORIG(fgetc))    (FILE *stream);
 #if defined HAVE__IO_GETC
-static int     (*_IO_getc_orig) (FILE *stream);
+static int     (*ORIG(_IO_getc)) (FILE *stream);
 #endif
-static char *  (*fgets_orig)    (char *s, int size, FILE *stream);
-static int     (*ungetc_orig)   (int c, FILE *stream);
-static int     (*fclose_orig)   (FILE *fp);
+static char *  (*ORIG(fgets))    (char *s, int size, FILE *stream);
+static int     (*ORIG(ungetc))   (int c, FILE *stream);
+static int     (*ORIG(fclose))   (FILE *fp);
 
 /* Additional GNUisms */
 #if defined HAVE_GETLINE
-static ssize_t (*getline_orig)    (char **lineptr, size_t *n, FILE *stream);
+static ssize_t (*ORIG(getline))    (char **lineptr, size_t *n, FILE *stream);
 #endif
 #if defined HAVE_GETDELIM
-static ssize_t (*getdelim_orig)   (char **lineptr, size_t *n, int delim,
-                                   FILE *stream);
+static ssize_t (*ORIG(getdelim))   (char **lineptr, size_t *n, int delim,
+                                    FILE *stream);
 #endif
 #if defined HAVE___GETDELIM
-static ssize_t (*__getdelim_orig) (char **lineptr, size_t *n, int delim,
-                                   FILE *stream);
+static ssize_t (*ORIG(__getdelim)) (char **lineptr, size_t *n, int delim,
+                                    FILE *stream);
 #endif
 
 /* Additional BSDisms */
 #if defined HAVE_FGETLN
-static char *  (*fgetln_orig)    (FILE *stream, size_t *len);
+static char *  (*ORIG(fgetln))    (FILE *stream, size_t *len);
 #endif
 #if defined HAVE___SREFILL
-int            (*__srefill_orig) (FILE *fp);
+int            (*ORIG(__srefill)) (FILE *fp);
 #endif
 
 /* Our function wrappers */
@@ -105,19 +105,19 @@ int            (*__srefill_orig) (FILE *fp);
         } \
     } while(0)
 
-FILE *fopen(const char *path, const char *mode)
+FILE *NEW(fopen)(const char *path, const char *mode)
 {
     FILE *ret; FOPEN(fopen); return ret;
 }
 
 #if defined HAVE_FOPEN64
-FILE *fopen64(const char *path, const char *mode)
+FILE *NEW(fopen64)(const char *path, const char *mode)
 {
     FILE *ret; FOPEN(fopen64); return ret;
 }
 #endif
 
-FILE *freopen(const char *path, const char *mode, FILE *stream)
+FILE *NEW(freopen)(const char *path, const char *mode, FILE *stream)
 {
     FILE *ret;
     int fd0 = -1, fd1 = -1, disp = 0;
@@ -130,7 +130,7 @@ FILE *freopen(const char *path, const char *mode, FILE *stream)
     }
 
     _zz_lock(-1);
-    ret = freopen_orig(path, mode, stream);
+    ret = ORIG(freopen)(path, mode, stream);
     _zz_unlock(-1);
 
     if(ret && _zz_mustwatch(path))
@@ -185,19 +185,19 @@ FILE *freopen(const char *path, const char *mode, FILE *stream)
         FSEEK_FUZZ(fn2) \
     } while(0)
 
-int fseek(FILE *stream, long offset, int whence)
+int NEW(fseek)(FILE *stream, long offset, int whence)
 {
     int ret; FSEEK(fseek, ftell); return ret;
 }
 
 #if defined HAVE_FSEEKO
-int fseeko(FILE *stream, off_t offset, int whence)
+int NEW(fseeko)(FILE *stream, off_t offset, int whence)
 {
     int ret; FSEEK(fseeko, ftello); return ret;
 }
 #endif
 
-void rewind(FILE *stream)
+void NEW(rewind)(FILE *stream)
 {
     int fd;
 
@@ -205,12 +205,12 @@ void rewind(FILE *stream)
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
     {
-        rewind_orig(stream);
+        ORIG(rewind)(stream);
         return;
     }
 
     _zz_lock(fd);
-    rewind_orig(stream);
+    ORIG(rewind)(stream);
     _zz_unlock(fd);
     debug("%s([%i])", __func__, fd);
 
@@ -221,7 +221,7 @@ void rewind(FILE *stream)
 #endif
 }
 
-size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
+size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     long int pos;
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
@@ -234,11 +234,11 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     LOADSYM(fread);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
-        return fread_orig(ptr, size, nmemb, stream);
+        return ORIG(fread)(ptr, size, nmemb, stream);
 
     pos = ftell(stream);
     _zz_lock(fd);
-    ret = fread_orig(ptr, size, nmemb, stream);
+    ret = ORIG(fread)(ptr, size, nmemb, stream);
     _zz_unlock(fd);
     debug("%s(%p, %li, %li, [%i]) = %li", __func__, ptr,
           (long int)size, (long int)nmemb, fd, (long int)ret);
@@ -290,24 +290,24 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     } while(0)
 
 #undef getc /* can be a macro; we don’t want that */
-int getc(FILE *stream)
+int NEW(getc)(FILE *stream)
 {
     int ret; FGETC(getc); return ret;
 }
 
-int fgetc(FILE *stream)
+int NEW(fgetc)(FILE *stream)
 {
     int ret; FGETC(fgetc); return ret;
 }
 
 #if defined HAVE__IO_GETC
-int _IO_getc(FILE *stream)
+int NEW(_IO_getc)(FILE *stream)
 {
     int ret; FGETC(_IO_getc); return ret;
 }
 #endif
 
-char *fgets(char *s, int size, FILE *stream)
+char *NEW(fgets)(char *s, int size, FILE *stream)
 {
     char *ret = s;
     int fd;
@@ -316,11 +316,11 @@ char *fgets(char *s, int size, FILE *stream)
     LOADSYM(fgetc);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
-        return fgets_orig(s, size, stream);
+        return ORIG(fgets)(s, size, stream);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
     _zz_lock(fd);
-    ret = fgets_orig(s, size, stream);
+    ret = ORIG(fgets)(s, size, stream);
     _zz_unlock(fd);
 #else
     if(size <= 0)
@@ -336,7 +336,7 @@ char *fgets(char *s, int size, FILE *stream)
             int ch;
 
             _zz_lock(fd);
-            ch = fgetc_orig(stream);
+            ch = ORIG(fgetc)(stream);
             _zz_unlock(fd);
 
             if(ch == EOF)
@@ -362,7 +362,7 @@ char *fgets(char *s, int size, FILE *stream)
     return ret;
 }
 
-int ungetc(int c, FILE *stream)
+int NEW(ungetc)(int c, FILE *stream)
 {
     unsigned char ch = c;
     int ret, fd;
@@ -370,7 +370,7 @@ int ungetc(int c, FILE *stream)
     LOADSYM(ungetc);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
-        return ungetc_orig(c, stream);
+        return ORIG(ungetc)(c, stream);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
 #else
@@ -378,7 +378,7 @@ int ungetc(int c, FILE *stream)
     _zz_fuzz(fd, &ch, 1);
 #endif
     _zz_lock(fd);
-    ret = ungetc_orig((int)ch, stream);
+    ret = ORIG(ungetc)((int)ch, stream);
     _zz_unlock(fd);
 
     if(ret >= 0)
@@ -393,17 +393,17 @@ int ungetc(int c, FILE *stream)
     return ret;
 }
 
-int fclose(FILE *fp)
+int NEW(fclose)(FILE *fp)
 {
     int ret, fd;
 
     LOADSYM(fclose);
     fd = fileno(fp);
     if(!_zz_ready || !_zz_iswatched(fd))
-        return fclose_orig(fp);
+        return ORIG(fclose)(fp);
 
     _zz_lock(fd);
-    ret = fclose_orig(fp);
+    ret = ORIG(fclose)(fp);
     _zz_unlock(fd);
     debug("%s([%i]) = %i", __func__, fd, ret);
     _zz_unregister(fd);
@@ -421,7 +421,7 @@ int fclose(FILE *fp)
         LOADSYM(fgetc); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd)) \
-            return getdelim_orig(lineptr, n, delim, stream); \
+            return ORIG(getdelim)(lineptr, n, delim, stream); \
         line = *lineptr; \
         size = line ? *n : 0; \
         ret = done = finished = 0; \
@@ -438,7 +438,7 @@ int fclose(FILE *fp)
                 break; \
             } \
             _zz_lock(fd); \
-            ch = fgetc_orig(stream); \
+            ch = ORIG(fgetc)(stream); \
             _zz_unlock(fd); \
             if(ch == EOF) \
             { \
@@ -468,28 +468,28 @@ int fclose(FILE *fp)
     } while(0)
 
 #if defined HAVE_GETLINE
-ssize_t getline(char **lineptr, size_t *n, FILE *stream)
+ssize_t NEW(getline)(char **lineptr, size_t *n, FILE *stream)
 {
     ssize_t ret; GETDELIM(getline, '\n', 0); return ret;
 }
 #endif
 
 #if defined HAVE_GETDELIM
-ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
+ssize_t NEW(getdelim)(char **lineptr, size_t *n, int delim, FILE *stream)
 {
     ssize_t ret; GETDELIM(getdelim, delim, 1); return ret;
 }
 #endif
 
 #if defined HAVE___GETDELIM
-ssize_t __getdelim(char **lineptr, size_t *n, int delim, FILE *stream)
+ssize_t NEW(__getdelim)(char **lineptr, size_t *n, int delim, FILE *stream)
 {
     ssize_t ret; GETDELIM(__getdelim, delim, 1); return ret;
 }
 #endif
 
 #if defined HAVE_FGETLN
-char *fgetln(FILE *stream, size_t *len)
+char *NEW(fgetln)(FILE *stream, size_t *len)
 {
     char *ret;
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
@@ -503,11 +503,11 @@ char *fgetln(FILE *stream, size_t *len)
     LOADSYM(fgetc);
     fd = fileno(stream);
     if(!_zz_ready || !_zz_iswatched(fd))
-        return fgetln_orig(stream, len);
+        return ORIG(fgetln)(stream, len);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
     _zz_lock(fd);
-    ret = fgetln_orig(stream, len);
+    ret = ORIG(fgetln)(stream, len);
     _zz_unlock(fd);
 #else
     fuzz = _zz_getfuzz(fd);
@@ -517,7 +517,7 @@ char *fgetln(FILE *stream, size_t *len)
         int ch;
 
         _zz_lock(fd);
-        ch = fgetc_orig(stream);
+        ch = ORIG(fgetc)(stream);
         _zz_unlock(fd);
 
         if(ch == EOF)
@@ -544,7 +544,7 @@ char *fgetln(FILE *stream, size_t *len)
 #endif
 
 #if defined HAVE___SREFILL
-int __srefill(FILE *fp)
+int NEW(__srefill)(FILE *fp)
 {
     off_t newpos;
     int ret, fd, tmp;
@@ -552,10 +552,10 @@ int __srefill(FILE *fp)
     LOADSYM(__srefill);
     fd = fileno(fp);
     if(!_zz_ready || !_zz_iswatched(fd))
-        return __srefill_orig(fp);
+        return ORIG(__srefill)(fp);
 
     _zz_lock(fd);
-    ret = __srefill_orig(fp);
+    ret = ORIG(__srefill)(fp);
     newpos = lseek(fd, 0, SEEK_CUR);
     _zz_unlock(fd);
     if(ret != EOF)

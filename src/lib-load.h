@@ -28,6 +28,11 @@
 /* Symbol loading stuff */
 #define STR(x) #x
 #define ORIG(x) x##_orig
+#ifdef HAVE_DLFCN_H
+#   define NEW(x) x
+#else
+#   define NEW(x) x##_new
+#endif
 
 /* TODO: do the Win32 part */
 #ifdef HAVE_DLFCN_H

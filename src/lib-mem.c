@@ -61,36 +61,36 @@
 /* TODO: mremap, maybe brk/sbrk (haha) */
 
 /* Library functions that we divert */
-static void *  (*calloc_orig)   (size_t nmemb, size_t size);
-static void *  (*malloc_orig)   (size_t size);
-static void    (*free_orig)     (void *ptr);
+static void *  (*ORIG(calloc))   (size_t nmemb, size_t size);
+static void *  (*ORIG(malloc))   (size_t size);
+static void    (*ORIG(free))     (void *ptr);
 #if defined HAVE_VALLOC
-static void *  (*valloc_orig)   (size_t size);
+static void *  (*ORIG(valloc))   (size_t size);
 #endif
 #if defined HAVE_MEMALIGN
-static void *  (*memalign_orig) (size_t boundary, size_t size);
+static void *  (*ORIG(memalign)) (size_t boundary, size_t size);
 #endif
 #if defined HAVE_POSIX_MEMALIGN
-static int     (*posix_memalign_orig) (void **memptr, size_t alignment,
-                                       size_t size);
+static int     (*ORIG(posix_memalign)) (void **memptr, size_t alignment,
+                                        size_t size);
 #endif
-static void *  (*realloc_orig)  (void *ptr, size_t size);
+static void *  (*ORIG(realloc))  (void *ptr, size_t size);
 
 #if defined HAVE_MMAP
-static void *  (*mmap_orig)     (void *start, size_t length, int prot,
-                                 int flags, int fd, off_t offset);
+static void *  (*ORIG(mmap))     (void *start, size_t length, int prot,
+                                  int flags, int fd, off_t offset);
 #endif
 #if defined HAVE_MMAP64
-static void *  (*mmap64_orig)   (void *start, size_t length, int prot,
-                                 int flags, int fd, off64_t offset);
+static void *  (*ORIG(mmap64))   (void *start, size_t length, int prot,
+                                  int flags, int fd, off64_t offset);
 #endif
 #if defined HAVE_MUNMAP
-static int     (*munmap_orig)   (void *start, size_t length);
+static int     (*ORIG(munmap))   (void *start, size_t length);
 #endif
 #if defined HAVE_MAP_FD
-static kern_return_t (*map_fd_orig) (int fd, vm_offset_t offset,
-                                     vm_offset_t *addr, boolean_t find_space,
-                                     vm_size_t numbytes);
+static kern_return_t (*ORIG(map_fd)) (int fd, vm_offset_t offset,
+                                      vm_offset_t *addr, boolean_t find_space,
+                                      vm_size_t numbytes);
 #endif
 
 /* We need a static memory buffer because some functions call memory
@@ -102,46 +102,46 @@ static int dummy_offset = 0;
 #define DUMMY_START ((uintptr_t)dummy_buffer)
 #define DUMMY_STOP ((uintptr_t)dummy_buffer + DUMMY_BYTES)
 
-void *calloc(size_t nmemb, size_t size)
+void *NEW(calloc)(size_t nmemb, size_t size)
 {
     void *ret;
-    if(!calloc_orig)
+    if(!ORIG(calloc))
     {
         ret = dummy_buffer + dummy_offset;
         memset(ret, 0, (nmemb * size + 7) / 8);
         dummy_offset += (nmemb * size + 7) / 8;
         return ret;
     }
-    ret = calloc_orig(nmemb, size);
+    ret = ORIG(calloc)(nmemb, size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
     return ret;
 }
 
-void *malloc(size_t size)
+void *NEW(malloc)(size_t size)
 {
     void *ret;
-    if(!malloc_orig)
+    if(!ORIG(malloc))
     {
         ret = dummy_buffer + dummy_offset;
         dummy_offset += (size + 7) / 8;
         return ret;
     }
-    ret = malloc_orig(size);
+    ret = ORIG(malloc)(size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
     return ret;
 }
 
-void free(void *ptr)
+void NEW(free)(void *ptr)
 {
     if((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
         return;
     LOADSYM(free);
-    free_orig(ptr);
+    ORIG(free)(ptr);
 }
 
-void *realloc(void *ptr, size_t size)
+void *NEW(realloc)(void *ptr, size_t size)
 {
     void *ret;
     if((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
@@ -152,18 +152,18 @@ void *realloc(void *ptr, size_t size)
         return ret;
     }
     LOADSYM(realloc);
-    ret = realloc_orig(ptr, size);
+    ret = ORIG(realloc)(ptr, size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
     return ret;
 }
 
 #if defined HAVE_VALLOC
-void *valloc(size_t size)
+void *NEW(valloc)(size_t size)
 {
     void *ret;
     LOADSYM(valloc);
-    ret = valloc_orig(size);
+    ret = ORIG(valloc)(size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
     return ret;
@@ -171,11 +171,11 @@ void *valloc(size_t size)
 #endif
 
 #if defined HAVE_MEMALIGN
-void *memalign(size_t boundary, size_t size)
+void *NEW(memalign)(size_t boundary, size_t size)
 {
     void *ret;
     LOADSYM(memalign);
-    ret = memalign_orig(boundary, size);
+    ret = ORIG(memalign)(boundary, size);
     if(ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
     return ret;
@@ -183,11 +183,11 @@ void *memalign(size_t boundary, size_t size)
 #endif
 
 #if defined HAVE_POSIX_MEMALIGN
-int posix_memalign(void **memptr, size_t alignment, size_t size)
+int NEW(posix_memalign)(void **memptr, size_t alignment, size_t size)
 {
     int ret;
     LOADSYM(posix_memalign);
-    ret = posix_memalign_orig(memptr, alignment, size);
+    ret = ORIG(posix_memalign)(memptr, alignment, size);
     if(ret == ENOMEM && _zz_memory)
         raise(SIGKILL);
     return ret;
@@ -240,23 +240,23 @@ int nbmaps = 0;
     } while(0)
 
 #if defined HAVE_MMAP
-void *mmap(void *start, size_t length, int prot, int flags,
-           int fd, off_t offset)
+void *NEW(mmap)(void *start, size_t length, int prot, int flags,
+                int fd, off_t offset)
 {
     void *ret; MMAP(mmap, off_t); return ret;
 }
 #endif
 
 #if defined HAVE_MMAP64
-void *mmap64(void *start, size_t length, int prot, int flags,
-             int fd, off64_t offset)
+void *NEW(mmap64)(void *start, size_t length, int prot, int flags,
+                  int fd, off64_t offset)
 {
     void *ret; MMAP(mmap64, off64_t); return ret;
 }
 #endif
 
 #if defined HAVE_MUNMAP
-int munmap(void *start, size_t length)
+int NEW(munmap)(void *start, size_t length)
 {
     int ret, i;
 
@@ -267,25 +267,25 @@ int munmap(void *start, size_t length)
             continue;
 
         free(start);
-        ret = munmap_orig(maps[i + 1], length);
+        ret = ORIG(munmap)(maps[i + 1], length);
         maps[i] = NULL;
         maps[i + 1] = NULL;
         debug("%s(%p, %li) = %i", __func__, start, (long int)length, ret);
         return ret;
     }
 
-    return munmap_orig(start, length);
+    return ORIG(munmap)(start, length);
 }
 #endif
 
 #if defined HAVE_MAP_FD
-kern_return_t map_fd(int fd, vm_offset_t offset, vm_offset_t *addr,
-                     boolean_t find_space, vm_size_t numbytes)
+kern_return_t NEW(map_fd)(int fd, vm_offset_t offset, vm_offset_t *addr,
+                          boolean_t find_space, vm_size_t numbytes)
 {
     kern_return_t ret;
 
     LOADSYM(map_fd);
-    ret = map_fd_orig(fd, offset, addr, find_space, numbytes);
+    ret = ORIG(map_fd)(fd, offset, addr, find_space, numbytes);
     if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
