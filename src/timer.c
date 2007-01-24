@@ -23,6 +23,9 @@
 #elif defined HAVE_INTTYPES_H
 #   include <inttypes.h>
 #endif
+#if defined HAVE_WINDOWS_H
+#   include <windows.h>
+#endif
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
@@ -31,8 +34,31 @@
 
 int64_t _zz_time(void)
 {
+#if defined HAVE_GETTIMEOFDAY
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (int64_t)tv.tv_sec * 1000000 + tv.tv_usec;
+#else
+    static CRITICAL_SECTION cs;
+    static unsigned long int prev;
+    static int64_t tv_base = 0;
+    unsigned long int tv_msec;
+
+    if(tv_base == 0)
+    {
+        tv_base = 1;
+        prev = 0;
+        InitializeCriticalSection(&cs);
+    }
+
+    EnterCriticalSection(&cs);
+    tv_msec = GetTickCount();
+    if(tv_msec < prev)
+        tv_base += 0x100000000LL; /* We wrapped */
+    prev = tv_msec;
+    LeaveCriticalSection(&cs);
+
+    return (tv_base + tv_msec) * 1000;
+#endif
 }
 

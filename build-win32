@@ -18,14 +18,15 @@ mkdir "${BUILDDIR}"
 
 cd "${BUILDDIR}"
 # Build for win32
-"${SRCDIR}/configure" --host=i586-mingw32msvc --program-suffix=.exe --prefix=/ --bindir=/bin --libdir=/lib
+"${SRCDIR}/configure" --host=i586-mingw32msvc --prefix=/ --bindir=/bin --libdir=/lib
 
 make pkglibdir=/lib pkgdatadir=/data bindir=/bin
 
 make install DESTDIR="${INSTALLDIR}" pkglibdir=/lib/ pkgdatadir=/ bindir=/bin/
-(cd "${SRCDIR}" && rm -Rf "${BUILDDIR}")
+rm -Rf "${BUILDDIR}"
 
 # Pack the directory
+cd "${SRCDIR}"
 zip "${DIRNAME}.zip" `find "${DIRNAME}"`
 rm -Rf "${INSTALLDIR}"
 

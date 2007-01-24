@@ -37,9 +37,12 @@
 #endif
 #if defined HAVE_WINSOCK2_H
 #   include <winsock2.h>
+#endif
+#if defined HAVE_IO_H
 #   include <io.h>
 #endif
 #include <string.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
 #if defined HAVE_SYS_WAIT_H
@@ -62,27 +65,43 @@
 #   define SIGKILL 9
 #endif
 
-static void loop_stdin(struct opts *opts);
+static void loop_stdin(struct opts *);
+static int run_process(char const *[]);
 
-static void spawn_children(struct opts *opts);
-static void clean_children(struct opts *opts);
-static void read_children(struct opts *opts);
+static void spawn_children(struct opts *);
+static void clean_children(struct opts *);
+static void read_children(struct opts *);
 
+#if !defined HAVE_GETENV
+static void setenv(char const *, char const *, int);
+#endif
+#if defined HAVE_WAITPID
 static char const *sig2str(int);
+#endif
+#if defined HAVE_WINDOWS_H
+static int dll_inject(void *, void *);
+static void *get_entry(char const *);
+#endif
 #if defined HAVE_REGEX_H
 static char *merge_regex(char *, char *);
 static char *merge_file(char *, char *);
 #endif
-static void set_environment(char const *);
 static void version(void);
 #if defined HAVE_GETOPT_H
 static void usage(void);
 #endif
 
+#if defined HAVE_WINDOWS_H
+static inline void addcpy(void *buf, void *x)
+{
+    memcpy(buf, &x, 4);
+}
+#endif
+
 #define ZZUF_FD_SET(fd, p_fdset, maxfd) \
     if(fd >= 0) \
     { \
-        FD_SET(fd, p_fdset); \
+        FD_SET((unsigned int)fd, p_fdset); \
         if(fd > maxfd) \
             maxfd = fd; \
     }
@@ -211,10 +230,12 @@ int main(int argc, char *argv[])
         case 'm': /* --md5 */
             opts->md5 = 1;
             break;
+#if defined HAVE_SETRLIMIT
         case 'M': /* --max-memory */
             setenv("ZZUF_MEMORY", "1", 1);
             opts->maxmem = atoi(optarg);
             break;
+#endif
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
             break;
@@ -323,9 +344,6 @@ int main(int argc, char *argv[])
     for(i = 0; i < opts->maxchild; i++)
         opts->child[i].status = STATUS_FREE;
     opts->nchild = 0;
-
-    /* Preload libzzuf.so */
-    set_environment(argv[0]);
 
     /* Create new argv */
     opts->newargv = malloc((argc - optind + 1) * sizeof(char *));
@@ -488,56 +506,74 @@ static void spawn_children(struct opts *opts)
 
     /* Prepare communication pipe */
     for(j = 0; j < 3; j++)
-        if(pipe(fd[j]) == -1)
+    {
+        int ret;
+#if defined HAVE_PIPE
+        ret = pipe(fd[j]);
+#elif defined HAVE__PIPE
+        ret = _pipe(fd[j], 256, _O_BINARY);
+#endif
+        if(ret < 0)
         {
             perror("pipe");
             return;
         }
+    }
 
+#if defined HAVE_FORK
     /* Fork and launch child */
     pid = fork();
-    switch(pid)
+    if(pid < -1)
     {
-        case -1:
-            perror("fork");
+        perror("fork");
+        return;
+    }
+#else
+    pid = 0;
+#endif
+
+    if(pid == 0)
+    {
+#if defined HAVE_SETRLIMIT
+        if(opts->maxmem >= 0)
+        {
+            struct rlimit rlim;
+            rlim.rlim_cur = opts->maxmem * 1000000;
+            rlim.rlim_max = opts->maxmem * 1000000;
+            setrlimit(RLIMIT_AS, &rlim);
+        }
+#endif
+
+#if defined HAVE_FORK
+        /* We loop in reverse order so that files[0] is done last,
+         * just in case one of the other dup2()ed fds had the value */
+        for(j = 3; j--; )
+        {
+            close(fd[j][0]);
+            if(fd[j][1] != files[j])
+            {
+                dup2(fd[j][1], files[j]);
+                close(fd[j][1]);
+            }
+        }
+#endif
+
+        /* Set environment variables */
+        sprintf(buf, "%i", opts->seed);
+        setenv("ZZUF_SEED", buf, 1);
+        sprintf(buf, "%g", opts->minratio);
+        setenv("ZZUF_MINRATIO", buf, 1);
+        sprintf(buf, "%g", opts->maxratio);
+        setenv("ZZUF_MAXRATIO", buf, 1);
+
+#if defined HAVE_FORK
+        if(run_process(opts->newargv) < 0)
+            exit(EXIT_FAILURE);
+        exit(EXIT_SUCCESS);
+#else
+        if(run_process(opts->newargv) < 0)
             return;
-        case 0:
-            /* We’re the child */
-            if(opts->maxmem >= 0)
-            {
-                struct rlimit rlim;
-                rlim.rlim_cur = opts->maxmem * 1000000;
-                rlim.rlim_max = opts->maxmem * 1000000;
-                setrlimit(RLIMIT_AS, &rlim);
-            }
-
-            /* We loop in reverse order so that files[0] is done last,
-             * just in case one of the other dup2()ed fds had the value */
-            for(j = 3; j--; )
-            {
-                close(fd[j][0]);
-                if(fd[j][1] != files[j])
-                {
-                    dup2(fd[j][1], files[j]);
-                    close(fd[j][1]);
-                }
-            }
-
-            /* Set environment variables */
-            sprintf(buf, "%i", opts->seed);
-            setenv("ZZUF_SEED", buf, 1);
-            sprintf(buf, "%g", opts->minratio);
-            setenv("ZZUF_MINRATIO", buf, 1);
-            sprintf(buf, "%g", opts->maxratio);
-            setenv("ZZUF_MAXRATIO", buf, 1);
-
-            /* Run our process */
-            if(execvp(opts->newargv[0], opts->newargv))
-            {
-                perror(opts->newargv[0]);
-                exit(EXIT_FAILURE);
-            }
-            return;
+#endif
     }
 
     /* We’re the parent, acknowledge spawn */
@@ -569,9 +605,12 @@ static void spawn_children(struct opts *opts)
 
 static void clean_children(struct opts *opts)
 {
+#if defined HAVE_KILL
     int64_t now = _zz_time();
+#endif
     int i, j;
 
+#if defined HAVE_KILL
     /* Terminate children if necessary */
     for(i = 0; i < opts->maxchild; i++)
     {
@@ -616,19 +655,23 @@ static void clean_children(struct opts *opts)
             opts->child[i].status = STATUS_SIGKILL;
         }
     }
+#endif
 
     /* Collect dead children */
     for(i = 0; i < opts->maxchild; i++)
     {
         uint8_t md5sum[16];
+#if defined HAVE_WAITPID
         int status;
         pid_t pid;
+#endif
 
         if(opts->child[i].status != STATUS_SIGKILL
             && opts->child[i].status != STATUS_SIGTERM
             && opts->child[i].status != STATUS_EOF)
             continue;
 
+#if defined HAVE_WAITPID
         pid = waitpid(opts->child[i].pid, &status, WNOHANG);
         if(pid <= 0)
             continue;
@@ -651,6 +694,7 @@ static void clean_children(struct opts *opts)
                       " (memory exceeded?)" : "");
             opts->crashes++;
         }
+#endif
 
         for(j = 0; j < 3; j++)
             if(opts->child[i].fd[j] >= 0)
@@ -693,7 +737,7 @@ static void read_children(struct opts *opts)
     tv.tv_usec = 1000;
 
     ret = select(maxfd + 1, &fdset, NULL, NULL, &tv);
-    if(ret < 0)
+    if(ret < 0 && errno)
         perror("select");
     if(ret <= 0)
         return;
@@ -735,6 +779,21 @@ static void read_children(struct opts *opts)
     }
 }
 
+#if !defined HAVE_GETENV
+static void setenv(char const *name, char const *value, int overwrite)
+{
+    char *str;
+
+    if(!overwrite && getenv(name))
+        return;
+
+    str = malloc(strlen(name) + 1 + strlen(value) + 1);
+    sprintf(str, "%s=%s", name, value);
+    putenv(str);
+}
+#endif
+
+#if defined HAVE_WAITPID
 static char const *sig2str(int signum)
 {
     switch(signum)
@@ -742,9 +801,13 @@ static char const *sig2str(int signum)
         case SIGABRT:  return " (SIGABRT)";
         case SIGFPE:   return " (SIGFPE)";
         case SIGILL:   return " (SIGILL)";
+#ifdef SIGQUIT
         case SIGQUIT:  return " (SIGQUIT)";
+#endif
         case SIGSEGV:  return " (SIGSEGV)";
+#ifdef SIGTRAP
         case SIGTRAP:  return " (SIGTRAP)";
+#endif
 #ifdef SIGSYS
         case SIGSYS:   return " (SIGSYS)";
 #endif
@@ -764,28 +827,30 @@ static char const *sig2str(int signum)
 
     return "";
 }
-
-static void set_environment(char const *progpath)
-{
-    char *libpath, *tmp;
-    int ret, len = strlen(progpath);
-#if defined __APPLE__
-#   define FILENAME "libzzuf.dylib"
-#   define EXTRAINFO ""
-#   define PRELOAD "DYLD_INSERT_LIBRARIES"
-    setenv("DYLD_FORCE_FLAT_NAMESPACE", "1", 1);
-#elif defined __osf__
-#   define FILENAME "libzzuf.so"
-#   define EXTRAINFO ":DEFAULT"
-#   define PRELOAD "_RLD_LIST"
-#else
-#   define FILENAME "libzzuf.so"
-#   define EXTRAINFO ""
-#   define PRELOAD "LD_PRELOAD"
 #endif
 
+static int run_process(char const *argv[])
+{
+#if defined HAVE_FORK
+    char *libpath, *tmp;
+    int ret, len = strlen(argv[0]);
+#   if defined __APPLE__
+#       define FILENAME "libzzuf.dylib"
+#       define EXTRAINFO ""
+#       define PRELOAD "DYLD_INSERT_LIBRARIES"
+    setenv("DYLD_FORCE_FLAT_NAMESPACE", "1", 1);
+#   elif defined __osf__
+#       define FILENAME "libzzuf.so"
+#       define EXTRAINFO ":DEFAULT"
+#       define PRELOAD "_RLD_LIST"
+#   else
+#       define FILENAME "libzzuf.so"
+#       define EXTRAINFO ""
+#       define PRELOAD "LD_PRELOAD"
+#   endif
+
     libpath = malloc(len + strlen("/.libs/" FILENAME EXTRAINFO) + 1);
-    strcpy(libpath, progpath);
+    strcpy(libpath, argv[0]);
 
     tmp = strrchr(libpath, '/');
     strcpy(tmp ? tmp + 1 : libpath, ".libs/" FILENAME);
@@ -797,7 +862,146 @@ static void set_environment(char const *progpath)
     else
         setenv(PRELOAD, LIBDIR "/" FILENAME EXTRAINFO, 1);
     free(libpath);
+
+    if(execvp(argv[0], argv))
+    {
+        perror(argv[0]);
+        return -1;
+    }
+
+    return 0;
+#elif HAVE_WINDOWS_H
+    PROCESS_INFORMATION pinfo;
+    STARTUPINFO sinfo;
+    void *epaddr;
+    int ret;
+
+    /* Get entry point */
+    epaddr = get_entry(argv[0]);
+    if(!epaddr)
+        return -1;
+    
+    memset(&sinfo, 0, sizeof(sinfo));
+    sinfo.cb = sizeof(sinfo);
+    ret = CreateProcess(NULL, argv[0], NULL, NULL, FALSE,
+                        CREATE_SUSPENDED, NULL, NULL, &sinfo, &pinfo);
+    if(!ret)
+        return -1;
+
+    /* Insert the replacement code */
+    ret = dll_inject(pinfo.hProcess, epaddr);
+    if(ret < 0)
+    {
+        TerminateProcess(pinfo.hProcess, -1);
+        return -1;
+    }
+
+    ret = ResumeThread(pinfo.hThread);
+    if(ret < 0)
+    {
+        TerminateProcess(pinfo.hProcess, -1);
+        return -1;
+    }
+
+    return 0;
+#else
+    return -1;
+#endif
 }
+
+#if defined HAVE_WINDOWS_H
+static int dll_inject(void *process, void *epaddr)
+{
+    uint8_t old_ep[7];
+    uint8_t new_ep[] = "\xb8<01>\xff\xe0";
+    uint8_t loader[] = "libzzuf.dll\0<0000c>\xb8<14>\x50\xb8<1a>\xff\xd0"
+                       "\xb8\0\0\0\0\x50\xb8\x07\x00\x00\x00\x50\xb8<2d>"
+                       "\x50\xb8<33>\x50\xb8<39>\xff\xd0\x50\xb8<41>\xff"
+                       "\xd0\xb8<48>\xff\xe0";
+    void *lib;
+    uint8_t *loaderaddr;
+    DWORD tmp;
+
+    /* Save the old entry-point code */
+    ReadProcessMemory(process, epaddr, old_ep, 7, &tmp);
+    if(tmp != 7)
+        return -1;
+
+    loaderaddr = VirtualAllocEx(process, NULL, 78, MEM_COMMIT,
+                                PAGE_EXECUTE_READWRITE);
+    if(!loaderaddr)
+        return -1;
+
+    addcpy(new_ep + 0x01, loaderaddr + 0x0c + 7);
+    WriteProcessMemory(process, epaddr, new_ep, 7, &tmp);
+    if(tmp != 7)
+        return -1;
+
+    lib = LoadLibrary("kernel32.dll");
+    if(!lib)
+        return -1;
+
+    memcpy(loader + 0x0c, old_ep, 7);
+    addcpy(loader + 0x14, loaderaddr + 0x00); /* offset for dll string */
+    addcpy(loader + 0x1a, GetProcAddress(lib, "LoadLibraryA"));
+    addcpy(loader + 0x2d, loaderaddr + 0x0c);
+    addcpy(loader + 0x33, epaddr);
+    addcpy(loader + 0x39, GetProcAddress(lib, "GetCurrentProcess"));
+    addcpy(loader + 0x41, GetProcAddress(lib, "WriteProcessMemory"));
+    addcpy(loader + 0x48, epaddr);
+    FreeLibrary(lib);
+
+    WriteProcessMemory(process, loaderaddr, loader, 78, &tmp);
+    if(tmp != 78)
+        return -1;
+
+    return 0;
+}
+
+static void *get_entry(char const *name)
+{
+    PIMAGE_DOS_HEADER dos;
+    PIMAGE_NT_HEADERS nt;
+    void *file, *map, *base;
+
+    file = CreateFile(name, GENERIC_READ, FILE_SHARE_READ,
+                      NULL, OPEN_EXISTING, 0, NULL);
+    if(file == INVALID_HANDLE_VALUE)
+        return NULL;
+
+    map = CreateFileMapping(file, NULL, PAGE_READONLY, 0, 0, NULL);
+    if(!map)
+    {
+        CloseHandle(file);
+        return NULL;
+    }
+
+    base = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 0);
+    if(!base)
+    {
+        CloseHandle(map);
+        CloseHandle(file);
+        return NULL;
+    }
+
+    /* Sanity checks */
+    dos = (PIMAGE_DOS_HEADER)base;
+    nt = (PIMAGE_NT_HEADERS)((char *)base + dos->e_lfanew);
+    if(dos->e_magic != IMAGE_DOS_SIGNATURE
+      || nt->Signature != IMAGE_NT_SIGNATURE
+      || nt->FileHeader.Machine != IMAGE_FILE_MACHINE_I386
+      || nt->OptionalHeader.Magic != 0x10b /* IMAGE_NT_OPTIONAL_HDR32_MAGIC */)
+    {
+        UnmapViewOfFile(base);
+        CloseHandle(map);
+        CloseHandle(file);
+        return NULL;
+    }
+
+    return (char *)nt->OptionalHeader.ImageBase +
+                           nt->OptionalHeader.AddressOfEntryPoint;
+}
+#endif
 
 static void version(void)
 {
@@ -853,7 +1057,9 @@ static void usage(void)
     printf("  -I, --include <regex>     only fuzz files matching <regex>\n");
 #endif
     printf("  -m, --md5                 compute the output's MD5 hash\n");
+#if defined HAVE_SETRLIMIT
     printf("  -M, --max-memory <n>      maximum child virtual memory size in MB\n");
+#endif
     printf("  -n, --network             fuzz network input\n");
     printf("  -P, --protect <list>      protect bytes and characters in <list>\n");
     printf("  -q, --quiet               do not print children's messages\n");
@@ -886,7 +1092,9 @@ static void usage(void)
     printf("  -I <regex>       only fuzz files matching <regex>\n");
 #endif
     printf("  -m               compute the output's MD5 hash\n");
+#if defined HAVE_SETRLIMIT
     printf("  -M               maximum child virtual memory size in MB\n");
+#endif
     printf("  -n               fuzz network input\n");
     printf("  -P <list>        protect bytes and characters in <list>\n");
     printf("  -q               do not print the fuzzed application's messages\n");

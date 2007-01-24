@@ -18,7 +18,7 @@
 
 struct opts
 {
-    char **newargv;
+    char const **newargv;
     char *protect, *refuse;
     uint32_t seed;
     uint32_t endseed;
