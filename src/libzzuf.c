@@ -61,6 +61,9 @@ void _zz_init(void)
 {
     char *tmp, *tmp2;
 
+    /* We need this as soon as possible */
+    _zz_mem_init();
+
     tmp = getenv("ZZUF_DEBUG");
     if(tmp && *tmp == '1')
         _zz_hasdebug = 1;
@@ -111,7 +114,6 @@ void _zz_init(void)
         _zz_network = 1;
 
     _zz_fd_init();
-    _zz_mem_init();
     _zz_sys_init();
 
     tmp = getenv("ZZUF_STDIN");
