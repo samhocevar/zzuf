@@ -65,6 +65,10 @@
 #   define SIGKILL 9
 #endif
 
+/* We use file descriptor 17 as the debug channel */
+#define DEBUG_FILENO 17
+#define DEBUG_FILENO_STR "17"
+
 static void loop_stdin(struct opts *);
 static int run_process(char const *, char *[]);
 
@@ -199,7 +203,7 @@ int main(int argc, char *argv[])
                 opts->maxcrashes = 0;
             break;
         case 'd': /* --debug */
-            setenv("ZZUF_DEBUG", "1", 1);
+            setenv("ZZUF_DEBUG", DEBUG_FILENO_STR, 1);
             break;
         case 'D': /* --delay */
             opts->delay = (int64_t)(atof(optarg) * 1000000.0);

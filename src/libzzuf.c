@@ -51,7 +51,7 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD, PVOID);
 
 /* Global variables */
 int   _zz_ready    = 0;
-int   _zz_hasdebug = 0;
+int   _zz_debugfd  = -1;
 int   _zz_signal   = 0;
 int   _zz_memory   = 0;
 int   _zz_network  = 0;
@@ -65,8 +65,8 @@ void _zz_init(void)
     _zz_mem_init();
 
     tmp = getenv("ZZUF_DEBUG");
-    if(tmp && *tmp == '1')
-        _zz_hasdebug = 1;
+    if(tmp)
+        _zz_debugfd = atoi(tmp);
 
     tmp = getenv("ZZUF_SEED");
     if(tmp && *tmp)

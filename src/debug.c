@@ -34,7 +34,7 @@
 #include "debug.h"
 #include "libzzuf.h"
 
-extern int _zz_hasdebug;
+extern int _zz_debugfd;
 
 #define WRITE_INT(fd, i, base) \
     do \
@@ -57,20 +57,20 @@ void _zz_debug(char const *format, ...)
     char const *f;
 #endif
     va_list args;
-    int saved_errno, fd = DEBUG_FILENO;
+    int saved_errno;
 
-    if(!_zz_hasdebug)
+    if(_zz_debugfd < 0)
         return;
 
     saved_errno = errno;
     va_start(args, format);
 #ifdef SAFE_FUNCTION
-    write(fd, "** zzuf debug ** ", 17);
+    write(_zz_debugfd, "** zzuf debug ** ", 17);
     for(f = format; *f; f++)
     {
         if(*f != '%')
         {
-            write(fd, f, 1);
+            write(_zz_debugfd, f, 1);
             continue;
         }
 
@@ -82,79 +82,79 @@ void _zz_debug(char const *format, ...)
         {
             char i = (char)(unsigned char)va_arg(args, int);
             if(i >= 0x20 && i < 0x7f)
-                write(fd, &i, 1);
+                write(_zz_debugfd, &i, 1);
             else if(i == '\n')
-                write(fd, "\\n", 2);
+                write(_zz_debugfd, "\\n", 2);
             else if(i == '\t')
-                write(fd, "\\t", 2);
+                write(_zz_debugfd, "\\t", 2);
             else if(i == '\r')
-                write(fd, "\\r", 2);
+                write(_zz_debugfd, "\\r", 2);
             else
             {
-                write(fd, "\\x", 2);
-                write(fd, hex2char + ((i & 0xf0) >> 4), 1);
-                write(fd, hex2char + (i & 0x0f), 1);
+                write(_zz_debugfd, "\\x", 2);
+                write(_zz_debugfd, hex2char + ((i & 0xf0) >> 4), 1);
+                write(_zz_debugfd, hex2char + (i & 0x0f), 1);
             }
         }
         else if(*f == 'i')
         {
             int i = va_arg(args, int);
-            WRITE_INT(fd, i, 10);
+            WRITE_INT(_zz_debugfd, i, 10);
         }
         else if(*f == 'x')
         {
             int i = va_arg(args, int);
-            WRITE_INT(fd, i, 16);
+            WRITE_INT(_zz_debugfd, i, 16);
         }
         else if(f[0] == 'l' && f[1] == 'i')
         {
             long int i = va_arg(args, long int);
-            WRITE_INT(fd, i, 10);
+            WRITE_INT(_zz_debugfd, i, 10);
             f++;
         }
         else if(f[0] == 'l' && f[1] == 'l' && f[2] == 'i')
         {
             long long int i = va_arg(args, long long int);
-            WRITE_INT(fd, i, 10);
+            WRITE_INT(_zz_debugfd, i, 10);
             f += 2;
         }
         else if(f[0] == 'p')
         {
             uintptr_t i = va_arg(args, uintptr_t);
             if(!i)
-                write(fd, "NULL", 5);
+                write(_zz_debugfd, "NULL", 5);
             else
             {
-                write(fd, "0x", 2);
-                WRITE_INT(fd, i, 16);
+                write(_zz_debugfd, "0x", 2);
+                WRITE_INT(_zz_debugfd, i, 16);
             }
         }
         else if(f[0] == 's')
         {
             char *s = va_arg(args, char *);
             if(!s)
-                write(fd, "(nil)", 5);
+                write(_zz_debugfd, "(nil)", 5);
             else
             {
                 int l = 0;
                 while(s[l])
                     l++;
-                write(fd, s, l);
+                write(_zz_debugfd, s, l);
             }
         }
         else if(f[0] == '0' && f[1] == '2' && f[2] == 'x')
         {
             int i = va_arg(args, int);
-            write(fd, hex2char + ((i & 0xf0) >> 4), 1);
-            write(fd, hex2char + (i & 0x0f), 1);
+            write(_zz_debugfd, hex2char + ((i & 0xf0) >> 4), 1);
+            write(_zz_debugfd, hex2char + (i & 0x0f), 1);
             f += 2;
         }
         else
         {
-            write(fd, f - 1, 2);
+            write(_zz_debugfd, f - 1, 2);
         }
     }
-    write(fd, "\n", 1);
+    write(_zz_debugfd, "\n", 1);
 #else
     fprintf(stderr, "** zzuf debug ** ");
     vfprintf(stderr, format, args);

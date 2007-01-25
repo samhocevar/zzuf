@@ -450,7 +450,7 @@ int NEW(close)(int fd)
     int ret;
 
     /* Hey, it’s our debug channel! Silently pretend we closed it. */
-    if(fd == DEBUG_FILENO)
+    if(fd == _zz_debugfd)
         return 0;
 
     LOADSYM(close);

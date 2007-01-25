@@ -16,9 +16,6 @@
  *  libzzuf.h: preloaded wrapper library
  */
 
-/* We use file descriptor 17 as the debug channel */
-#define DEBUG_FILENO 17
-
 /* We arbitrarily split files into 1024-byte chunks. Each chunk has an
  * associated seed that can be computed from the zzuf seed, the chunk
  * index and the fuzziness density. This allows us to predictably fuzz
@@ -47,7 +44,7 @@ struct fuzz
 /* Internal variables */
 extern int _zz_ready;
 extern int _zz_disabled;
-extern int _zz_hasdebug;
+extern int _zz_debugfd;
 extern int _zz_signal;
 extern int _zz_memory;
 extern int _zz_network;
