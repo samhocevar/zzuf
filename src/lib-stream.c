@@ -240,8 +240,6 @@ size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
     _zz_lock(fd);
     ret = ORIG(fread)(ptr, size, nmemb, stream);
     _zz_unlock(fd);
-    debug("%s(%p, %li, %li, [%i]) = %li", __func__, ptr,
-          (long int)size, (long int)nmemb, fd, (long int)ret);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
 #else
@@ -257,10 +255,23 @@ size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
     }
     if(newpos != pos)
     {
+        char *b = ptr;
+
         _zz_fuzz(fd, ptr, newpos - pos);
         _zz_setpos(fd, newpos);
+
+        if(newpos >= pos + 4)
+            debug("%s(%p, %li, %li, [%i]) = %li \"%c%c%c%c...", __func__, ptr,
+                  (long int)size, (long int)nmemb, fd, (long int)ret,
+                  b[0], b[1], b[2], b[3]);
+        else
+            debug("%s(%p, %li, %li, [%i]) = %li \"%c...", __func__, ptr,
+                  (long int)size, (long int)nmemb, fd, (long int)ret, b[0]);
     }
+    else
 #endif
+        debug("%s(%p, %li, %li, [%i]) = %li", __func__, ptr,
+              (long int)size, (long int)nmemb, fd, (long int)ret);
 
     return ret;
 }
