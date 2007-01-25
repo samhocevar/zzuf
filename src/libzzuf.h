@@ -53,3 +53,6 @@ extern int _zz_memory;
 extern int _zz_network;
 extern int _zz_autoinc;
 
+/* This function is needed to initialise memory functions */
+extern void _zz_mem_init(void);
+

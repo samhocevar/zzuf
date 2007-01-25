@@ -111,6 +111,7 @@ void _zz_init(void)
         _zz_network = 1;
 
     _zz_fd_init();
+    _zz_mem_init();
     _zz_sys_init();
 
     tmp = getenv("ZZUF_STDIN");

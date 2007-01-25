@@ -102,6 +102,13 @@ static int dummy_offset = 0;
 #define DUMMY_START ((uintptr_t)dummy_buffer)
 #define DUMMY_STOP ((uintptr_t)dummy_buffer + DUMMY_BYTES)
 
+void _zz_mem_init(void)
+{
+    LOADSYM(calloc);
+    LOADSYM(malloc);
+    LOADSYM(realloc);
+}
+
 void *NEW(calloc)(size_t nmemb, size_t size)
 {
     void *ret;
@@ -144,7 +151,8 @@ void NEW(free)(void *ptr)
 void *NEW(realloc)(void *ptr, size_t size)
 {
     void *ret;
-    if((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
+    if(!ORIG(realloc)
+        || ((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP))
     {
         ret = dummy_buffer + dummy_offset;
         memcpy(ret, ptr, size);
