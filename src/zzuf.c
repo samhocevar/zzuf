@@ -82,7 +82,7 @@ static char const *sig2str(int);
 static int dll_inject(void *, void *);
 static void *get_entry(char const *);
 #endif
-static void finfo(FILE *, struct opts *);
+static void finfo(FILE *, struct opts *, uint32_t);
 #if defined HAVE_REGEX_H
 static char *merge_regex(char *, char *);
 static char *merge_file(char *, char *);
@@ -425,7 +425,7 @@ static void loop_stdin(struct opts *opts)
     if(opts->md5)
     {
         _zz_md5_fini(md5sum, ctx);
-        finfo(stdout, opts);
+        finfo(stdout, opts, opts->seed);
         fprintf(stdout, "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x"
                 "%.02x%.02x%.02x%.02x%.02x%.02x\n", md5sum[0], md5sum[1],
                 md5sum[2], md5sum[3], md5sum[4], md5sum[5], md5sum[6],
@@ -438,12 +438,12 @@ static void loop_stdin(struct opts *opts)
     _zz_fd_fini();
 }
 
-static void finfo(FILE *fp, struct opts *opts)
+static void finfo(FILE *fp, struct opts *opts, uint32_t seed)
 {
     if(opts->minratio == opts->maxratio)
-        fprintf(fp, "zzuf[s=%i,r=%g]: ", opts->seed, opts->minratio);
+        fprintf(fp, "zzuf[s=%i,r=%g]: ", seed, opts->minratio);
     else
-        fprintf(fp, "zzuf[s=%i,r=%g:%g]: ", opts->seed,
+        fprintf(fp, "zzuf[s=%i,r=%g:%g]: ", seed,
                 opts->minratio, opts->maxratio);
 }
 
@@ -612,7 +612,7 @@ static void spawn_children(struct opts *opts)
 
     if(opts->verbose)
     {
-        finfo(stderr, opts);
+        finfo(stderr, opts, opts->child[i].seed);
         fprintf(stderr, "launched %s\n", opts->newargv[0]);
     }
 
@@ -640,7 +640,7 @@ static void clean_children(struct opts *opts)
         {
             if(opts->verbose)
             {
-                finfo(stderr, opts);
+                finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "data output exceeded, sending SIGTERM\n");
             }
             kill(opts->child[i].pid, SIGTERM);
@@ -654,7 +654,7 @@ static void clean_children(struct opts *opts)
         {
             if(opts->verbose)
             {
-                finfo(stderr, opts);
+                finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "running time exceeded, sending SIGTERM\n");
             }
             kill(opts->child[i].pid, SIGTERM);
@@ -671,7 +671,7 @@ static void clean_children(struct opts *opts)
         {
             if(opts->verbose)
             {
-                finfo(stderr, opts);
+                finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "not responding, sending SIGKILL\n");
             }
             kill(opts->child[i].pid, SIGKILL);
@@ -701,7 +701,7 @@ static void clean_children(struct opts *opts)
 
         if(opts->checkexit && WIFEXITED(status) && WEXITSTATUS(status))
         {
-            finfo(stderr, opts);
+            finfo(stderr, opts, opts->child[i].seed);
             fprintf(stderr, "exit %i\n", WEXITSTATUS(status));
             opts->crashes++;
         }
@@ -709,7 +709,7 @@ static void clean_children(struct opts *opts)
                  && !(WTERMSIG(status) == SIGTERM
                        && opts->child[i].status == STATUS_SIGTERM))
         {
-            finfo(stderr, opts);
+            finfo(stderr, opts, opts->child[i].seed);
             fprintf(stderr, "signal %i%s%s\n",
                     WTERMSIG(status), sig2str(WTERMSIG(status)),
                       (WTERMSIG(status) == SIGKILL && opts->maxmem >= 0) ?
@@ -725,7 +725,7 @@ static void clean_children(struct opts *opts)
         if(opts->md5)
         {
             _zz_md5_fini(md5sum, opts->child[i].ctx);
-            finfo(stdout, opts);
+            finfo(stdout, opts, opts->child[i].seed);
             fprintf(stdout, "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x"
                     "%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n", md5sum[0],
                     md5sum[1], md5sum[2], md5sum[3], md5sum[4], md5sum[5],
