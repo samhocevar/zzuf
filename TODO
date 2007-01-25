@@ -14,3 +14,8 @@
 
   * ASCII support (more or less done), UTF-8 support
 
+  * Finish the Win32 port:
+    + pipe inheritance
+    + signal handling
+    + exported functions
+    + memory limits
