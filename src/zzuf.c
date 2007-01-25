@@ -66,7 +66,7 @@
 #endif
 
 static void loop_stdin(struct opts *);
-static int run_process(char const *[]);
+static int run_process(char const *, char *[]);
 
 static void spawn_children(struct opts *);
 static void clean_children(struct opts *);
@@ -352,6 +352,7 @@ int main(int argc, char *argv[])
     opts->nchild = 0;
 
     /* Create new argv */
+    opts->oldargv = argv;
     opts->newargv = malloc((argc - optind + 1) * sizeof(char *));
     memcpy(opts->newargv, argv + optind, (argc - optind) * sizeof(char *));
     opts->newargv[argc - optind] = (char *)NULL;
@@ -575,11 +576,11 @@ static void spawn_children(struct opts *opts)
         setenv("ZZUF_MAXRATIO", buf, 1);
 
 #if defined HAVE_FORK
-        if(run_process(opts->newargv) < 0)
+        if(run_process(opts->oldargv[0], opts->newargv) < 0)
             exit(EXIT_FAILURE);
         exit(EXIT_SUCCESS);
 #else
-        if(run_process(opts->newargv) < 0)
+        if(run_process(opts->oldargv[0], opts->newargv) < 0)
             return;
 #endif
     }
@@ -837,11 +838,11 @@ static char const *sig2str(int signum)
 }
 #endif
 
-static int run_process(char const *argv[])
+static int run_process(char const *zzuf_exe, char *argv[])
 {
 #if defined HAVE_FORK
     char *libpath, *tmp;
-    int ret, len = strlen(argv[0]);
+    int ret, len = strlen(zzuf_exe);
 #   if defined __APPLE__
 #       define FILENAME "libzzuf.dylib"
 #       define EXTRAINFO ""
@@ -858,7 +859,7 @@ static int run_process(char const *argv[])
 #   endif
 
     libpath = malloc(len + strlen("/.libs/" FILENAME EXTRAINFO) + 1);
-    strcpy(libpath, argv[0]);
+    strcpy(libpath, zzuf_exe);
 
     tmp = strrchr(libpath, '/');
     strcpy(tmp ? tmp + 1 : libpath, ".libs/" FILENAME);
