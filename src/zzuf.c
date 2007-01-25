@@ -300,11 +300,6 @@ int main(int argc, char *argv[])
     /* If asked to read from the standard input */
     if(optind >= argc)
     {
-        if(opts->bytes)
-            _zz_bytes(opts->bytes);
-
-        /* FIXME: protect and refuse are ignored */
-
         if(opts->endseed != opts->seed + 1)
         {
             printf("%s: seed ranges are incompatible with stdin fuzzing\n",
@@ -392,6 +387,8 @@ static void loop_stdin(struct opts *opts)
     if(opts->md5)
         ctx = _zz_md5_init();
 
+    if(opts->bytes)
+        _zz_bytes(opts->bytes);
     if(opts->protect)
         _zz_protect(opts->protect);
     if(opts->refuse)
