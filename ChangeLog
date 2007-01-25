@@ -1,4 +1,36 @@
 ------------------------------------------------------------------------
+r247 | sam | 2007-01-25 16:33:22 +0100 (Thu, 25 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/lib-stream.c
+
+  * More verbosity in fread().
+
+------------------------------------------------------------------------
+r246 | sam | 2007-01-25 16:28:24 +0100 (Thu, 25 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/lib-stream.c
+
+  * Fixed an index inconsistency bug in fread().
+
+------------------------------------------------------------------------
+r245 | sam | 2007-01-25 15:56:18 +0100 (Thu, 25 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Grrr, fixed a bug in finfo() that corrupted the display.
+
+------------------------------------------------------------------------
+r244 | sam | 2007-01-25 14:28:40 +0100 (Thu, 25 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+   M /trunk/configure.ac
+   M /trunk/src/zzuf.c
+
+  * Version 0.6.
+  * Updated NEWS and ChangeLog.
+
+------------------------------------------------------------------------
 r243 | sam | 2007-01-25 13:15:47 +0100 (Thu, 25 Jan 2007) | 2 lines
 Changed paths:
    M /trunk/doc/zzuf.1

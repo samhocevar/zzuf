@@ -1,5 +1,9 @@
 $Id$
 
+Changes from 0.6 to 0.6.1
+
+ * fixed bad seed offset
+
 Changes from 0.5 to 0.6
 
  * allow to fuzz only parts of the input
