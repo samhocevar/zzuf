@@ -72,7 +72,7 @@ static void spawn_children(struct opts *);
 static void clean_children(struct opts *);
 static void read_children(struct opts *);
 
-#if !defined HAVE_GETENV
+#if !defined HAVE_SETENV
 static void setenv(char const *, char const *, int);
 #endif
 #if defined HAVE_WAITPID
@@ -779,7 +779,7 @@ static void read_children(struct opts *opts)
     }
 }
 
-#if !defined HAVE_GETENV
+#if !defined HAVE_SETENV
 static void setenv(char const *name, char const *value, int overwrite)
 {
     char *str;
