@@ -251,7 +251,10 @@ size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
      * when reading from a pipe ftell() will return 0, and ret * size
      * is then better than nothing. */
     if(newpos <= 0)
-        newpos = ret * size;
+    {
+        pos = _zz_getpos(fd);
+        newpos = pos + ret * size;
+    }
     if(newpos != pos)
     {
         _zz_fuzz(fd, ptr, newpos - pos);
