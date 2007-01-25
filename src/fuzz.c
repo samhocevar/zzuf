@@ -24,6 +24,7 @@
 #   include <inttypes.h>
 #endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "libzzuf.h"
@@ -35,12 +36,51 @@
 #define MAGIC1 0x33ea84f7
 #define MAGIC2 0x783bc31f
 
-/* Fuzzing variables */
+/* Per-offset byte protection */
+static unsigned int *ranges = NULL;
+static unsigned int ranges_static[512];
+
+/* Per-value byte protection */
 static int protect[256];
 static int refuse[256];
 
 /* Local prototypes */
 static void readchars(int *, char const *);
+
+void _zz_bytes(char const *list)
+{
+    char const *parser;
+    unsigned int i, chunks;
+
+    /* Count commas */
+    for(parser = list, chunks = 1; *parser; parser++)
+        if(*parser == ',')
+            chunks++;
+
+    /* TODO: free(ranges) if ranges != ranges_static */
+    if(chunks >= 256)
+        ranges = malloc((chunks + 1) * 2 * sizeof(unsigned int));
+    else
+        ranges = ranges_static;
+
+    /* Fill ranges list */
+    for(parser = list, i = 0; i < chunks; i++)
+    {
+        char const *comma = strchr(parser, ',');
+        char const *dash = strchr(parser, '-');
+
+        ranges[i * 2] = (dash == parser) ? 0 : atoi(parser);
+        if(dash && (dash + 1 == comma || dash[1] == '\0'))
+            ranges[i * 2 + 1] = ranges[i * 2]; /* special case */
+        else if(dash && (!comma || dash < comma))
+            ranges[i * 2 + 1] = atoi(dash + 1) + 1;
+        else
+            ranges[i * 2 + 1] = ranges[i * 2] + 1;
+        parser = comma + 1;
+    }
+
+    ranges[i * 2] = ranges[i * 2 + 1] = 0;
+}
 
 void _zz_protect(char const *list)
 {
@@ -65,8 +105,8 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, uint64_t len)
           (unsigned long int)pos);
 #endif
 
-    fuzz = _zz_getfuzz(fd);
     aligned_buf = buf - pos;
+    fuzz = _zz_getfuzz(fd);
 
     for(i = pos / CHUNKBYTES;
         i < (pos + len + CHUNKBYTES - 1) / CHUNKBYTES;
@@ -102,7 +142,20 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, uint64_t len)
 
         for(j = start; j < stop; j++)
         {
-            uint8_t byte = aligned_buf[j];
+            unsigned int *r;
+            uint8_t byte;
+
+            if(!ranges)
+                goto range_ok;
+
+            for(r = ranges; r[1]; r += 2)
+                if(j >= r[0] && (r[0] == r[1] || j < r[1]))
+                    goto range_ok;
+
+            continue; /* Not in a range */
+
+        range_ok:
+            byte = aligned_buf[j];
 
             if(protect[byte])
                 continue;

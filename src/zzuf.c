@@ -125,9 +125,9 @@ int main(int argc, char *argv[])
     for(;;)
     {
 #   if defined HAVE_REGEX_H
-#       define OPTSTR "AB:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:vxhV"
+#       define OPTSTR "Ab:B:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:vxhV"
 #   else
-#       define OPTSTR "AB:C:dD:F:imM:nP:qr:R:s:ST:vxhV"
+#       define OPTSTR "Ab:B:C:dD:F:imM:nP:qr:R:s:ST:vxhV"
 #   endif
 #   if defined HAVE_GETOPT_LONG
 #       define MOREINFO "Try `%s --help' for more information.\n"
@@ -136,6 +136,7 @@ int main(int argc, char *argv[])
         {
             /* Long option, needs arg, flag, short option */
             { "autoinc",     0, NULL, 'A' },
+            { "bytes",       1, NULL, 'b' },
             { "max-bytes",   1, NULL, 'B' },
 #if defined HAVE_REGEX_H
             { "cmdline",     0, NULL, 'c' },
@@ -179,6 +180,9 @@ int main(int argc, char *argv[])
         {
         case 'A': /* --autoinc */
             setenv("ZZUF_AUTOINC", "1", 1);
+            break;
+        case 'b': /* --bytes */
+            opts->bytes = optarg;
             break;
         case 'B': /* --max-bytes */
             opts->maxbytes = atoi(optarg);
@@ -296,6 +300,11 @@ int main(int argc, char *argv[])
     /* If asked to read from the standard input */
     if(optind >= argc)
     {
+        if(opts->bytes)
+            _zz_bytes(opts->bytes);
+
+        /* FIXME: protect and refuse are ignored */
+
         if(opts->endseed != opts->seed + 1)
         {
             printf("%s: seed ranges are incompatible with stdin fuzzing\n",
@@ -334,6 +343,8 @@ int main(int argc, char *argv[])
         setenv("ZZUF_EXCLUDE", exclude, 1);
 #endif
 
+    if(opts->bytes)
+        setenv("ZZUF_BYTES", opts->bytes, 1);
     if(opts->protect)
         setenv("ZZUF_PROTECT", opts->protect, 1);
     if(opts->refuse)
@@ -1020,14 +1031,15 @@ static void usage(void)
 {
 #if defined HAVE_REGEX_H
     printf("Usage: zzuf [-AcdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
-    printf("                          [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
-    printf("                          [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
-    printf("                          [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
 #else
     printf("Usage: zzuf [-AdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
-    printf("                         [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
-    printf("                         [-T seconds] [-M bytes] [-P protect] [-R refuse]\n");
-    printf("                         [PROGRAM [--] [ARGS]...]\n");
+#endif
+    printf("                  [-D delay] [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
+    printf("                  [-M bytes] [-b ranges] [-P protect] [-R refuse]\n");
+#if defined HAVE_REGEX_H
+    printf("                  [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
+#else
+    printf("                  [PROGRAM [--] [ARGS]...]\n");
 #endif
 #   if defined HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
@@ -1041,6 +1053,7 @@ static void usage(void)
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
 #   if defined HAVE_GETOPT_LONG
     printf("  -A, --autoinc             increment seed each time a new file is opened\n");
+    printf("  -b, --bytes <ranges>      only fuzz bytes at offsets within <ranges>\n");
     printf("  -B, --max-bytes <n>       kill children that output more than <n> bytes\n");
 #if defined HAVE_REGEX_H
     printf("  -c, --cmdline             only fuzz files specified in the command line\n");
@@ -1076,6 +1089,7 @@ static void usage(void)
     printf("  -V, --version             output version information and exit\n");
 #   else
     printf("  -A               increment seed each time a new file is opened\n");
+    printf("  -b <ranges>      only fuzz bytes at offsets within <ranges>\n");
     printf("  -B <n>           kill children that output more than <n> bytes\n");
 #if defined HAVE_REGEX_H
     printf("  -c               only fuzz files specified in the command line\n");

@@ -78,6 +78,10 @@ void _zz_init(void)
     if(tmp && *tmp == '1')
         _zz_setautoinc();
 
+    tmp = getenv("ZZUF_BYTES");
+    if(tmp && *tmp)
+        _zz_bytes(tmp);
+
     tmp = getenv("ZZUF_PROTECT");
     if(tmp && *tmp)
         _zz_protect(tmp);

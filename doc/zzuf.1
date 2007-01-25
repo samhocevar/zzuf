@@ -2,13 +2,13 @@
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-AcdiMnqSvx\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR] [\fB\-r\fR \fIratio\fR|\fB\-r\fR \fImin:max\fR]
+\fBzzuf\fR [\fB\-AcdimnqSvx\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR] [\fB\-r\fR \fIratio\fR|\fB\-r\fR \fImin:max\fR]
 .br
-                   [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
+           [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-T\fR \fIseconds\fR]
 .br
-                   [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
+           [\fB\-M\fR \fImegabytes\fR] [\fB\-b\fR \fIranges\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
 .br
-                   [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
+           [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
 .br
@@ -42,6 +42,17 @@ if the \fBcat\fR utility had been called:
 Increment random seed each time a new file is opened. This is only required
 if one instance of the application is expected to open the same file several
 times and you want to test a different seed each time.
+.TP
+\fB\-b\fR, \fB\-\-bytes\fR=\fIranges\fR
+Restrict fuzzing to bytes whose offsets in the file are within \fIranges\fR.
+
+Range values start at zero and are inclusive. Use dashes between range values
+and commas between ranges. If the right-hand part of a range is ommited, it
+means end of file. For instance, to restrict fuzzing to bytes 0, 3, 4, 5 and
+all bytes after offset 31, use \(oq\fB\-r0,3-5,31-\fR\(cq.
+
+This option is useful to preserve file headers or corrupt only a specific
+portion of a file.
 .TP
 \fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
 Automatically terminate child processes that output more than \fIn\fR bytes
@@ -149,12 +160,12 @@ backslash (\(oq\\\(cq)
 .RE
 .IP
 You can use \(oq\fB\-\fR\(cq to specify ranges. For instance, to protect all
-bytes from \(oq\\001\(cq to \(oq/\(cq, use \(oq\fB\-P\ \(dq\\001\-/\(dq\fR\(cq.
+bytes from \(oq\\001\(cq to \(oq/\(cq, use \(oq\fB\-P\ \(aq\\001\-/\(aq\fR\(cq.
 
 The statistical outcome of this option should not be overlooked: if characters
 are protected, the effect of the \(oq\fB\-r\fR\(cq flag will vary depending
 on the data being fuzzed. For instance, asking to fuzz 1% of input bits
-(\fB\-r\ 0.01\fR) and to protect lowercase characters (\fB\-P\ a\-z\fR) will
+(\fB\-r0.01\fR) and to protect lowercase characters (\fB\-P\ a\-z\fR) will
 result in an actual average fuzzing ratio of 0.9% with truly random data,
 0.3% with random ASCII data and 0.2% with standard English text.
 
@@ -241,7 +252,7 @@ Fuzz the input of the \fBcat\fR program using default settings:
 .PP
 Fuzz 1% of the input bits of the \fBcat\fR program using seed 94324:
 .PP
-\fB    zzuf \-s 94324 \-r 0.01 cat /etc/motd\fR
+\fB    zzuf \-s94324 \-r0.01 cat /etc/motd\fR
 .PP
 Fuzz the input of the \fBcat\fR program but do not fuzz newline characters
 and prevent non-ASCII characters from appearing in the output:
@@ -261,21 +272,22 @@ and restricting fuzzing to filenames that appear on the command line
 can be read by VLC to reproduce the same behaviour without using
 \fBzzuf\fR:
 .PP
-\fB    zzuf \-c \-s 87423 \-r 0.01 vlc movie.avi\fR
+\fB    zzuf \-c \-s87423 \-r0.01 vlc movie.avi\fR
 .br
-\fB    zzuf \-c \-s 87423 \-r 0.01 <movie.avi >fuzzy\-movie.avi\fR
+\fB    zzuf \-c \-s87423 \-r0.01 <movie.avi >fuzzy\-movie.avi\fR
 .br
 \fB    vlc fuzzy\-movie.avi\fR
 .PP
-Fuzz between 0.1% and 2% of MPlayer's input bits (\fB\-r\ 0.001:0.02\fR)
-with seeds 0 to 9999 (\fB\-s\ 0:10000\fR), disabling its standard output
-messages (\fB\-q\fR), launching up to five simultaneous child processes
-(\fB\-F\ 5\fR) but wait at least half a second between launches
-(\fB\-D\ 0.5\fR), killing MPlayer if it takes more than one minute to
-read the file (\fB\-T\ 60\fR) and disabling its \fBSIGSEGV\fR signal handler
+Fuzz between 0.1% and 2% of MPlayer's input bits (\fB\-r0.001:0.02\fR)
+with seeds 0 to 9999 (\fB\-s0:10000\fR), preserving the AVI 4-byte header
+by restricting fuzzing to offsets after 4 (\fB\-b4\-\fR), disabling its
+standard output messages (\fB\-q\fR), launching up to five simultaneous child
+processes (\fB\-F5\fR) but waiting at least half a second between launches
+(\fB\-D0.5\fR), killing MPlayer if it takes more than one minute to
+read the file (\fB\-T60\fR) and disabling its \fBSIGSEGV\fR signal handler
 (\fB\-S\fR):
 .PP
-\fB    zzuf \-c \-r 0.001:0.02 \-q \-s 0:10000 \-F 5 \-D 0.5 \-T 60 \-S \\\fR
+\fB    zzuf \-c \-r0.001:0.02 \-s0:10000 \-b4\- \-q \-F5 \-D0.5 \-T60 \-S \\\fR
 .br
 \fB      mplayer \-\- \-benchmark \-vo null \-fps 1000 movie.avi\fR
 .PP
@@ -286,7 +298,7 @@ and open it in Firefox\(tm in auto-increment mode (\fB\-A\fR):
 .br
       (or: \fBjot -w \(aq<img src="hello.jpg#%d">\(aq 200 1 > hello.html\fR)
 .br
-\fB    zzuf -A -I \(aqhello[.]jpg\(aq -r 0.001 firefox hello.html\fR
+\fB    zzuf -A -I \(aqhello[.]jpg\(aq -r0.001 firefox hello.html\fR
 .SH RESTRICTIONS
 .PP
 Due to \fBzzuf\fR using shared object preloading (\fBLD_PRELOAD\fR,
