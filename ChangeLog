@@ -1,4 +1,338 @@
 ------------------------------------------------------------------------
+r243 | sam | 2007-01-25 13:15:47 +0100 (Thu, 25 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Added a networking example using socat.
+
+------------------------------------------------------------------------
+r242 | sam | 2007-01-25 12:59:33 +0100 (Thu, 25 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/opts.h
+   M /trunk/src/zzuf.c
+
+  * Oops, fix in-tree preloading!
+
+------------------------------------------------------------------------
+r241 | sam | 2007-01-25 12:47:44 +0100 (Thu, 25 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Put opts->bytes handling in the right place.
+
+------------------------------------------------------------------------
+r240 | sam | 2007-01-25 12:40:27 +0100 (Thu, 25 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/fuzz.c
+   M /trunk/src/fuzz.h
+   M /trunk/src/libzzuf.c
+   M /trunk/src/opts.c
+   M /trunk/src/opts.h
+   M /trunk/src/zzuf.c
+
+  * Implemented -b/--bytes to restrict fuzzing to specific offsets.
+
+------------------------------------------------------------------------
+r239 | sam | 2007-01-25 03:16:00 +0100 (Thu, 25 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Fixed ifdef typo.
+
+------------------------------------------------------------------------
+r238 | sam | 2007-01-25 02:10:10 +0100 (Thu, 25 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/TODO
+
+  * Updated TODO list.
+
+------------------------------------------------------------------------
+r237 | sam | 2007-01-24 16:06:17 +0100 (Wed, 24 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/build-win32
+   M /trunk/configure.ac
+   M /trunk/src/Makefile.am
+   M /trunk/src/opts.h
+   M /trunk/src/timer.c
+   M /trunk/src/zzuf.c
+
+  * Added DLL injection to the Win32 port attempt.
+
+------------------------------------------------------------------------
+r236 | sam | 2007-01-23 16:38:18 +0100 (Tue, 23 Jan 2007) | 2 lines
+Changed paths:
+   A /trunk/build-win32
+   M /trunk/configure.ac
+   M /trunk/src/Makefile.am
+   M /trunk/src/lib-load.h
+   M /trunk/src/libzzuf.c
+   M /trunk/src/libzzuf.h
+   A /trunk/src/sys.c
+   A /trunk/src/sys.h
+   M /trunk/src/zzuf.c
+
+  * Added DLL initialisation code for Win32.
+
+------------------------------------------------------------------------
+r235 | sam | 2007-01-23 13:16:50 +0100 (Tue, 23 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/fd.c
+
+  * Fix minor memory leak.
+
+------------------------------------------------------------------------
+r234 | sam | 2007-01-23 09:45:47 +0100 (Tue, 23 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/src/lib-fd.c
+   M /trunk/src/lib-load.h
+   M /trunk/src/lib-mem.c
+   M /trunk/src/lib-signal.c
+   M /trunk/src/lib-stream.c
+   M /trunk/src/zzuf.c
+
+  * Put either ORIG() or NEW(() around functions, because the naming scheme is
+    likely to change for the Win32 port.
+
+------------------------------------------------------------------------
+r233 | sam | 2007-01-18 22:04:34 +0100 (Thu, 18 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Minor documentation updates.
+
+------------------------------------------------------------------------
+r232 | sam | 2007-01-18 19:45:58 +0100 (Thu, 18 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/src/lib-stream.c
+
+  * Minor improvement in the locking mechanism.
+
+------------------------------------------------------------------------
+r231 | sam | 2007-01-18 13:32:31 +0100 (Thu, 18 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/lib-fd.c
+
+  * Check recv() return type: int on Linux, ssize_t on OS X.
+
+------------------------------------------------------------------------
+r230 | sam | 2007-01-18 01:21:07 +0100 (Thu, 18 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/fd.c
+   M /trunk/src/lib-fd.c
+   M /trunk/src/lib-load.h
+   M /trunk/src/lib-mem.c
+   M /trunk/src/lib-signal.c
+   M /trunk/src/lib-stream.c
+   M /trunk/src/libzzuf.c
+   M /trunk/src/zzuf.c
+
+  * Added enough autoconf checks and #ifdefs so that libzzuf builds on Win32.
+    zzuf itself doesn't build yet, though.
+
+------------------------------------------------------------------------
+r229 | sam | 2007-01-17 22:52:44 +0100 (Wed, 17 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/src/fd.h
+   M /trunk/src/lib-fd.c
+   M /trunk/src/lib-mem.c
+   M /trunk/src/lib-stream.c
+   M /trunk/src/libzzuf.c
+
+  * Replaced _zz_disabled with a less stinky API. Still not thread safe, does
+    not recover very well from errors, but why care?
+
+------------------------------------------------------------------------
+r228 | sam | 2007-01-17 22:12:27 +0100 (Wed, 17 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/fuzz.c
+   M /trunk/src/fuzz.h
+   M /trunk/src/lib-fd.c
+
+  * Added aio_read() and aio_return(). They don’t work well yet, I’ll need
+    to fix the _zz_disabled mess first.
+
+------------------------------------------------------------------------
+r227 | sam | 2007-01-17 20:48:23 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   A /trunk/src/opts.c
+   A /trunk/src/opts.h
+   M /trunk/src/zzuf.c
+
+  * Reorganised code, got rid of global variables.
+
+------------------------------------------------------------------------
+r226 | sam | 2007-01-17 18:14:22 +0100 (Wed, 17 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/AUTHORS
+   M /trunk/doc/zzuf.1
+   M /trunk/src/lib-fd.c
+
+  * recvmsg() support by Rémi Denis-Courmont.
+  * Minor code reorganisation.
+
+------------------------------------------------------------------------
+r225 | sam | 2007-01-17 17:32:45 +0100 (Wed, 17 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/src/lib-fd.c
+
+  * Improved recvfrom() debug information.
+  * Implemented recv().
+
+------------------------------------------------------------------------
+r224 | sam | 2007-01-17 17:26:40 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/debug.c
+
+  * Add %x to the format string parameters supported by debug().
+
+------------------------------------------------------------------------
+r223 | sam | 2007-01-17 16:31:40 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/debug.c
+   M /trunk/src/lib-stream.c
+
+  * Improved %c usage in our custom fprintf() implementation.
+
+------------------------------------------------------------------------
+r222 | sam | 2007-01-17 16:21:09 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/lib-fd.c
+   M /trunk/src/lib-load.h
+   M /trunk/src/lib-mem.c
+   M /trunk/src/lib-signal.c
+   M /trunk/src/lib-stream.c
+
+  * Use __func__ wherever possible.
+
+------------------------------------------------------------------------
+r221 | sam | 2007-01-17 16:07:35 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/AUTHORS
+   M /trunk/doc/zzuf.1
+   M /trunk/src/lib-fd.c
+
+  * recvfrom() support from Dominik Kuhlen.
+
+------------------------------------------------------------------------
+r220 | sam | 2007-01-17 16:02:05 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/debug.c
+
+  * Print "NULL" instead of "(nil)" when printing null pointers.
+
+------------------------------------------------------------------------
+r219 | sam | 2007-01-17 15:35:12 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/test/testsuite.sh
+
+  * Allow -r 0.0 again. Fixed the testsuite accordingly.
+
+------------------------------------------------------------------------
+r218 | sam | 2007-01-17 14:46:38 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   A /trunk/src/lib-fd.c (from /trunk/src/load-fd.c:214)
+   A /trunk/src/lib-load.h (from /trunk/src/load.h:214)
+   A /trunk/src/lib-mem.c (from /trunk/src/load-mem.c:214)
+   A /trunk/src/lib-signal.c (from /trunk/src/load-signal.c:214)
+   A /trunk/src/lib-stream.c (from /trunk/src/load-stream.c:214)
+   D /trunk/src/load-fd.c
+   D /trunk/src/load-mem.c
+   D /trunk/src/load-signal.c
+   D /trunk/src/load-stream.c
+   D /trunk/src/load.h
+
+  * Moved files around.
+
+------------------------------------------------------------------------
+r217 | sam | 2007-01-17 14:42:18 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Suggest jot instead of seq in the examples.
+
+------------------------------------------------------------------------
+r216 | sam | 2007-01-17 08:22:10 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Fix a longopt parsing crash, thanks to Matti Hämäläinen.
+
+------------------------------------------------------------------------
+r215 | sam | 2007-01-17 08:21:40 +0100 (Wed, 17 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Fix testsuite by printing MD5 hashes to stdout.
+
+------------------------------------------------------------------------
+r214 | sam | 2007-01-16 15:36:33 +0100 (Tue, 16 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/src/libzzuf.c
+   M /trunk/src/load-fd.c
+   M /trunk/src/load-mem.c
+   M /trunk/src/load-signal.c
+   M /trunk/src/load-stream.c
+   M /trunk/src/load.h
+
+  * Got rid of the *_load() functions. Now each diverted function is supposed
+    to check that the *_orig() functions it calls are properly loaded.
+
+------------------------------------------------------------------------
+r213 | sam | 2007-01-16 15:21:28 +0100 (Tue, 16 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/AUTHORS
+   M /trunk/doc/zzuf.1
+   M /trunk/src/load-fd.c
+
+  * pread() implementation, thanks to Clément Stenac.
+
+------------------------------------------------------------------------
+r212 | sam | 2007-01-16 15:06:57 +0100 (Tue, 16 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/load-fd.c
+
+  * Don't do the offset sanity check on non-seekable devices.
+
+------------------------------------------------------------------------
+r211 | sam | 2007-01-16 14:54:34 +0100 (Tue, 16 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/AUTHORS
+   M /trunk/doc/zzuf.1
+   M /trunk/src/load-fd.c
+
+  * readv() implementation, thanks to Rémi Denis-Courmont.
+
+------------------------------------------------------------------------
+r210 | sam | 2007-01-15 14:28:19 +0100 (Mon, 15 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Use seq instead of awk in the example, to make shorter code. I know it
+    won't work on BSD systems, but should I care?
+
+------------------------------------------------------------------------
+r209 | sam | 2007-01-15 00:56:39 +0100 (Mon, 15 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+   M /trunk/TODO
+   M /trunk/configure.ac
+
+  * Version 0.5.
+  * Updated NEWS and ChangeLog.
+
+------------------------------------------------------------------------
 r208 | sam | 2007-01-15 00:42:34 +0100 (Mon, 15 Jan 2007) | 2 lines
 Changed paths:
    M /trunk/doc/zzuf.1

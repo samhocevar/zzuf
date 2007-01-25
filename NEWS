@@ -1,5 +1,12 @@
 $Id$
 
+Changes from 0.5 to 0.6
+
+ * allow to fuzz only parts of the input
+ * support for readv(), pread(), recv(), recvfrom(), recvmsg()
+ * support for asynchronous IO
+ * minor fixes for crashes and memory leaks
+
 Changes from 0.4 to 0.5
 
  * ratio range support

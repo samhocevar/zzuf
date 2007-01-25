@@ -82,6 +82,7 @@ static char const *sig2str(int);
 static int dll_inject(void *, void *);
 static void *get_entry(char const *);
 #endif
+static void finfo(FILE *, struct opts *);
 #if defined HAVE_REGEX_H
 static char *merge_regex(char *, char *);
 static char *merge_file(char *, char *);
@@ -424,17 +425,26 @@ static void loop_stdin(struct opts *opts)
     if(opts->md5)
     {
         _zz_md5_fini(md5sum, ctx);
-        fprintf(stdout, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x"
-                "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
-                opts->seed, opts->minratio, md5sum[0], md5sum[1], md5sum[2],
-                md5sum[3], md5sum[4], md5sum[5], md5sum[6], md5sum[7],
-                md5sum[8], md5sum[9], md5sum[10], md5sum[11], md5sum[12],
-                md5sum[13], md5sum[14], md5sum[15]);
+        finfo(stdout, opts);
+        fprintf(stdout, "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x"
+                "%.02x%.02x%.02x%.02x%.02x%.02x\n", md5sum[0], md5sum[1],
+                md5sum[2], md5sum[3], md5sum[4], md5sum[5], md5sum[6],
+                md5sum[7], md5sum[8], md5sum[9], md5sum[10], md5sum[11],
+                md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
         fflush(stdout);
     }
 
     _zz_unregister(0);
     _zz_fd_fini();
+}
+
+static void finfo(FILE *fp, struct opts *opts)
+{
+    if(opts->minratio == opts->maxratio)
+        fprintf(fp, "zzuf[s=%i,r=%g]: ", opts->seed, opts->minratio);
+    else
+        fprintf(fp, "zzuf[s=%i,r=%g:%g]: ", opts->seed,
+                opts->minratio, opts->maxratio);
 }
 
 #if defined HAVE_REGEX_H
@@ -601,9 +611,10 @@ static void spawn_children(struct opts *opts)
         opts->child[i].ctx = _zz_md5_init();
 
     if(opts->verbose)
-        fprintf(stderr, "zzuf[s=%i,r=%g]: launched %s\n",
-                opts->child[i].seed, opts->child[i].ratio,
-                opts->newargv[0]);
+    {
+        finfo(stderr, opts);
+        fprintf(stderr, "launched %s\n", opts->newargv[0]);
+    }
 
     opts->lastlaunch = now;
     opts->nchild++;
@@ -628,9 +639,10 @@ static void clean_children(struct opts *opts)
             && opts->child[i].bytes > opts->maxbytes)
         {
             if(opts->verbose)
-                fprintf(stderr, "zzuf[s=%i,r=%g]: "
-                        "data output exceeded, sending SIGTERM\n", 
-                        opts->child[i].seed, opts->child[i].ratio);
+            {
+                finfo(stderr, opts);
+                fprintf(stderr, "data output exceeded, sending SIGTERM\n");
+            }
             kill(opts->child[i].pid, SIGTERM);
             opts->child[i].date = now;
             opts->child[i].status = STATUS_SIGTERM;
@@ -641,9 +653,10 @@ static void clean_children(struct opts *opts)
             && now > opts->child[i].date + opts->maxtime)
         {
             if(opts->verbose)
-                fprintf(stderr, "zzuf[s=%i,r=%g]: "
-                        "running time exceeded, sending SIGTERM\n", 
-                        opts->child[i].seed, opts->child[i].ratio);
+            {
+                finfo(stderr, opts);
+                fprintf(stderr, "running time exceeded, sending SIGTERM\n");
+            }
             kill(opts->child[i].pid, SIGTERM);
             opts->child[i].date = now;
             opts->child[i].status = STATUS_SIGTERM;
@@ -657,9 +670,10 @@ static void clean_children(struct opts *opts)
             && now > opts->child[i].date + 2000000)
         {
             if(opts->verbose)
-                fprintf(stderr, "zzuf[s=%i,r=%g]: "
-                        "not responding, sending SIGKILL\n", 
-                        opts->child[i].seed, opts->child[i].ratio);
+            {
+                finfo(stderr, opts);
+                fprintf(stderr, "not responding, sending SIGKILL\n");
+            }
             kill(opts->child[i].pid, SIGKILL);
             opts->child[i].status = STATUS_SIGKILL;
         }
@@ -687,17 +701,16 @@ static void clean_children(struct opts *opts)
 
         if(opts->checkexit && WIFEXITED(status) && WEXITSTATUS(status))
         {
-            fprintf(stderr, "zzuf[s=%i,r=%g]: exit %i\n",
-                    opts->child[i].seed, opts->child[i].ratio,
-                    WEXITSTATUS(status));
+            finfo(stderr, opts);
+            fprintf(stderr, "exit %i\n", WEXITSTATUS(status));
             opts->crashes++;
         }
         else if(WIFSIGNALED(status)
                  && !(WTERMSIG(status) == SIGTERM
                        && opts->child[i].status == STATUS_SIGTERM))
         {
-            fprintf(stderr, "zzuf[s=%i,r=%g]: signal %i%s%s\n",
-                    opts->child[i].seed, opts->child[i].ratio,
+            finfo(stderr, opts);
+            fprintf(stderr, "signal %i%s%s\n",
                     WTERMSIG(status), sig2str(WTERMSIG(status)),
                       (WTERMSIG(status) == SIGKILL && opts->maxmem >= 0) ?
                       " (memory exceeded?)" : "");
@@ -712,13 +725,12 @@ static void clean_children(struct opts *opts)
         if(opts->md5)
         {
             _zz_md5_fini(md5sum, opts->child[i].ctx);
-            fprintf(stdout, "zzuf[s=%i,r=%g]: %.02x%.02x%.02x%.02x%.02x%.02x"
-                    "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n",
-                    opts->child[i].seed, opts->child[i].ratio,
-                    md5sum[0], md5sum[1], md5sum[2], md5sum[3], md5sum[4],
-                    md5sum[5], md5sum[6], md5sum[7], md5sum[8], md5sum[9],
-                    md5sum[10], md5sum[11], md5sum[12], md5sum[13],
-                    md5sum[14], md5sum[15]);
+            finfo(stdout, opts);
+            fprintf(stdout, "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x"
+                    "%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n", md5sum[0],
+                    md5sum[1], md5sum[2], md5sum[3], md5sum[4], md5sum[5],
+                    md5sum[6], md5sum[7], md5sum[8], md5sum[9], md5sum[10],
+                    md5sum[11], md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
             fflush(stdout);
         }
         opts->child[i].status = STATUS_FREE;
