@@ -299,6 +299,13 @@ and open it in Firefox\(tm in auto-increment mode (\fB\-A\fR):
       (or: \fBjot -w \(aq<img src="hello.jpg#%d">\(aq 200 1 > hello.html\fR)
 .br
 \fB    zzuf -A -I \(aqhello[.]jpg\(aq -r0.001 firefox hello.html\fR
+.PP
+Run a simple HTTP redirector on the local host using \fBsocat\fR and
+corrupt each network connection (\fB\-n\fR) in a different way (\fB\-A\fR)
+after one megabyte of data was received on it (\fB\-b1000000\-\fR):
+.PP
+\fB     zzuf \-n \-A \-b1000000\- \\\fR
+\fB       socat TCP4-LISTEN:8080,reuseaddr,fork TCP4:192.168.1.42:80\fR
 .SH RESTRICTIONS
 .PP
 Due to \fBzzuf\fR using shared object preloading (\fBLD_PRELOAD\fR,
