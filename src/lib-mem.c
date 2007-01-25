@@ -117,6 +117,8 @@ void *NEW(calloc)(size_t nmemb, size_t size)
         ret = dummy_buffer + dummy_offset;
         memset(ret, 0, (nmemb * size + 7) / 8);
         dummy_offset += (nmemb * size + 7) / 8;
+        debug("%s(%li, %li) = %p", __func__,
+              (long int)nmemb, (long int)size, ret);
         return ret;
     }
     ret = ORIG(calloc)(nmemb, size);
@@ -132,6 +134,7 @@ void *NEW(malloc)(size_t size)
     {
         ret = dummy_buffer + dummy_offset;
         dummy_offset += (size + 7) / 8;
+        debug("%s(%li) = %p", __func__, (long int)size, ret);
         return ret;
     }
     ret = ORIG(malloc)(size);
@@ -143,7 +146,10 @@ void *NEW(malloc)(size_t size)
 void NEW(free)(void *ptr)
 {
     if((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
+    {
+        debug("%s(%p)", __func__, ptr);
         return;
+    }
     LOADSYM(free);
     ORIG(free)(ptr);
 }
@@ -157,6 +163,7 @@ void *NEW(realloc)(void *ptr, size_t size)
         ret = dummy_buffer + dummy_offset;
         memcpy(ret, ptr, size);
         dummy_offset += (size + 7) * 8;
+        debug("%s(%p, %li) = %p", __func__, ptr, (long int)size, ret);
         return ret;
     }
     LOADSYM(realloc);
