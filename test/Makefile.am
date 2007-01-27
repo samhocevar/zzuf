@@ -1,5 +1,5 @@
 
-EXTRA_DIST = testsuite.sh
+EXTRA_DIST = testsuite.sh file-00 file-ff file-random file-text
 
 noinst_PROGRAMS = fdcat streamcat
 

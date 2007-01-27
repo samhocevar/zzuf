@@ -2,17 +2,6 @@
 
 set -e
 
-create()
-{
-    rm -f /tmp/zzuf-zero-$$
-    dd if=/dev/zero of=/tmp/zzuf-zero-$$ bs=1024 count=32 2>/dev/null
-    rm -f /tmp/zzuf-random-$$
-    dd if=/dev/urandom of=/tmp/zzuf-random-$$ bs=1024 count=32 2>/dev/null
-    rm -f /tmp/zzuf-text-$$
-    strings </dev/urandom | dd bs=1024 count=32 of=/tmp/zzuf-text-$$ 2>/dev/null
-    echo "" >> /tmp/zzuf-text-$$ # Make sure we have a newline at EOF
-}
-
 check()
 {
     ZZOPTS="$1"
@@ -38,26 +27,11 @@ check()
     fi
 }
 
-cleanup() {
-    if [ "$FAILED" = 0 ]; then
-        rm -f /tmp/zzuf-zero-$$
-        rm -f /tmp/zzuf-random-$$
-        rm -f /tmp/zzuf-text-$$
-        echo "*** temporary files removed ***"
-    else
-        echo "*** files preserved ***"
-        echo " /tmp/zzuf-zero-$$"
-        echo " /tmp/zzuf-random-$$"
-        echo " /tmp/zzuf-text-$$"
-    fi
-}
-
-trap "echo ''; echo '*** ABORTED ***'; cleanup; exit 0" 1 2 15
-
 seed=$((0+0$1))
-ZZUF="$(dirname "$0")/../src/zzuf"
-FDCAT="$(dirname "$0")/fdcat"
-STREAMCAT="$(dirname "$0")/streamcat"
+DIR="$(dirname "$0")"
+ZZUF="$DIR/../src/zzuf"
+FDCAT="$DIR/fdcat"
+STREAMCAT="$DIR/streamcat"
 if [ ! -f "$FDCAT" -o ! -f "$STREAMCAT" ]; then
   echo "error: test/fdcat or test/streamcat are missing"
   exit 1
@@ -72,20 +46,18 @@ FAILED=0
 TESTED=0
 
 echo "*** running zzuf test suite ***"
-echo "*** creating test files ***"
-create
 echo "*** using seed $seed ***"
 
 for r in 0.0 0.00001 0.001 0.1 10.0; do
-    for type in zero text random; do
-        file=/tmp/zzuf-$type-$$
+    for type in 00 ff text random; do
+        file="$DIR/file-$type"
         ZZOPTS="-s $seed -r $r"
         case $file in
           *text*) ZZOPTS="$ZZOPTS -P '\n'" ;;
         esac
         echo "*** file $file, ratio $r ***"
         REFMD5=""
-        if [ $r = 0.0 -a $type = zero ]; then
+        if [ $r = 0.0 -a $type = 00 ]; then
             check="bb7df04e1b0a2570657527a7e108ae23"
             echo "*** should be $check ***"
             check "$ZZOPTS" "< $file" "zzuf" "$check"
@@ -128,11 +100,9 @@ done
 
 if [ "$FAILED" != 0 ]; then
     echo "*** $FAILED tests failed out of $TESTED ***"
-    cleanup
     exit 1
 fi
 echo "*** all $TESTED tests OK ***"
 
-cleanup
 exit 0
 
