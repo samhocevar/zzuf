@@ -256,6 +256,7 @@ void _zz_register(int fd)
 #if defined HAVE_FGETLN
     files[i].fuzz.tmp = NULL;
 #endif
+    files[i].fuzz.uflag = 0;
 
     if(autoinc)
         seed++;

@@ -38,6 +38,7 @@ struct fuzz
 #ifdef HAVE_FGETLN
     char *tmp;
 #endif
+    int uflag; uint64_t upos; uint8_t uchar; /* ungetc stuff */
     uint8_t data[CHUNKBYTES];
 };
 

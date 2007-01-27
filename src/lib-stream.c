@@ -378,7 +378,6 @@ char *NEW(fgets)(char *s, int size, FILE *stream)
 
 int NEW(ungetc)(int c, FILE *stream)
 {
-    unsigned char ch = c;
     int ret, fd;
 
     LOADSYM(ungetc);
@@ -386,22 +385,21 @@ int NEW(ungetc)(int c, FILE *stream)
     if(!_zz_ready || !_zz_iswatched(fd))
         return ORIG(ungetc)(c, stream);
 
-#if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
-#else
-    _zz_addpos(fd, -1);
-    _zz_fuzz(fd, &ch, 1);
-#endif
     _zz_lock(fd);
-    ret = ORIG(ungetc)((int)ch, stream);
+    ret = ORIG(ungetc)(c, stream);
     _zz_unlock(fd);
 
-    if(ret >= 0)
-        ret = c;
+    if(ret != EOF)
+    {
+        struct fuzz *fuzz = _zz_getfuzz(fd);
+        fuzz->uflag = 1;
+        fuzz->upos = _zz_getpos(fd) - 1;
+        fuzz->uchar = c;
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
 #else
-    else
-        _zz_addpos(fd, 1); /* revert what we did */
+        _zz_addpos(fd, -1);
 #endif
+    }
 
     debug("%s(0x%02x, [%i]) = '%c'", __func__, c, fd, ret);
     return ret;

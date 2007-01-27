@@ -152,7 +152,7 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, uint64_t len)
                 if(j >= r[0] && (r[0] == r[1] || j < r[1]))
                     goto range_ok;
 
-            continue; /* Not in a range */
+            continue; /* Not in one of the ranges, skip byte */
 
         range_ok:
             byte = aligned_buf[j];
@@ -167,6 +167,14 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, uint64_t len)
 
             aligned_buf[j] = byte;
         }
+    }
+
+    /* Handle ungetc() */
+    if(fuzz->uflag)
+    {
+        fuzz->uflag = 0;
+        if(fuzz->upos == pos)
+            buf[0] = fuzz->uchar;
     }
 }
 
