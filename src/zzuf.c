@@ -130,9 +130,9 @@ int main(int argc, char *argv[])
     for(;;)
     {
 #   if defined HAVE_REGEX_H
-#       define OPTSTR "Ab:B:cC:dD:E:F:iI:mM:nP:qr:R:s:ST:vxhV"
+#       define OPTSTR "Ab:B:cC:dD:E:f:F:iI:mM:nP:qr:R:s:ST:vxhV"
 #   else
-#       define OPTSTR "Ab:B:C:dD:F:imM:nP:qr:R:s:ST:vxhV"
+#       define OPTSTR "Ab:B:C:dD:f:F:imM:nP:qr:R:s:ST:vxhV"
 #   endif
 #   if defined HAVE_GETOPT_LONG
 #       define MOREINFO "Try `%s --help' for more information.\n"
@@ -152,6 +152,7 @@ int main(int argc, char *argv[])
 #if defined HAVE_REGEX_H
             { "exclude",     1, NULL, 'E' },
 #endif
+            { "fuzzing",     1, NULL, 'f' },
             { "max-forks",   1, NULL, 'F' },
             { "stdin",       0, NULL, 'i' },
 #if defined HAVE_REGEX_H
@@ -219,6 +220,9 @@ int main(int argc, char *argv[])
             }
             break;
 #endif
+        case 'f': /* --fuzzing */
+            opts->fuzzing = optarg;
+            break;
         case 'F': /* --max-forks */
             opts->maxchild = atoi(optarg) > 1 ? atoi(optarg) : 1;
             break;
@@ -343,6 +347,8 @@ int main(int argc, char *argv[])
         setenv("ZZUF_EXCLUDE", exclude, 1);
 #endif
 
+    if(opts->fuzzing)
+        setenv("ZZUF_FUZZING", opts->fuzzing, 1);
     if(opts->bytes)
         setenv("ZZUF_BYTES", opts->bytes, 1);
     if(opts->protect)
@@ -393,6 +399,8 @@ static void loop_stdin(struct opts *opts)
     if(opts->md5)
         ctx = _zz_md5_init();
 
+    if(opts->fuzzing)
+        _zz_fuzzing(opts->fuzzing);
     if(opts->bytes)
         _zz_bytes(opts->bytes);
     if(opts->protect)
@@ -1048,12 +1056,12 @@ static void usage(void)
 #else
     printf("Usage: zzuf [-AdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
 #endif
-    printf("                  [-D delay] [-F forks] [-C crashes] [-B bytes] [-T seconds]\n");
-    printf("                  [-M bytes] [-b ranges] [-P protect] [-R refuse]\n");
+    printf("              [-f fuzzing] [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
+    printf("              [-T seconds] [-M bytes] [-b ranges] [-P protect] [-R refuse]\n");
 #if defined HAVE_REGEX_H
-    printf("                  [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
+    printf("              [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
 #else
-    printf("                  [PROGRAM [--] [ARGS]...]\n");
+    printf("              [PROGRAM [--] [ARGS]...]\n");
 #endif
 #   if defined HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
@@ -1078,6 +1086,7 @@ static void usage(void)
 #if defined HAVE_REGEX_H
     printf("  -E, --exclude <regex>     do not fuzz files matching <regex>\n");
 #endif
+    printf("  -f, --fuzzing <mode>      use fuzzing mode <mode> ([xor] set unset)\n");
     printf("  -F, --max-forks <n>       number of concurrent children (default 1)\n");
     printf("  -i, --stdin               fuzz standard input\n");
 #if defined HAVE_REGEX_H
@@ -1114,6 +1123,7 @@ static void usage(void)
 #if defined HAVE_REGEX_H
     printf("  -E <regex>       do not fuzz files matching <regex>\n");
 #endif
+    printf("  -f <mode>        use fuzzing mode <mode>\n");
     printf("  -F <n>           number of concurrent forks (default 1)\n");
     printf("  -i               fuzz standard input\n");
 #if defined HAVE_REGEX_H

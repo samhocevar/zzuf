@@ -36,6 +36,13 @@
 #define MAGIC1 0x33ea84f7
 #define MAGIC2 0x783bc31f
 
+/* Fuzzing mode */
+static enum fuzzing
+{
+    FUZZING_XOR = 0, FUZZING_SET, FUZZING_UNSET
+}
+fuzzing;
+
 /* Per-offset byte protection */
 static unsigned int *ranges = NULL;
 static unsigned int ranges_static[512];
@@ -46,6 +53,16 @@ static int refuse[256];
 
 /* Local prototypes */
 static void readchars(int *, char const *);
+
+extern void _zz_fuzzing(char const *mode)
+{
+    if(!strcmp(mode, "xor"))
+        fuzzing = FUZZING_XOR;
+    else if(!strcmp(mode, "set"))
+        fuzzing = FUZZING_SET;
+    else if(!strcmp(mode, "unset"))
+        fuzzing = FUZZING_UNSET;
+}
 
 void _zz_bytes(char const *list)
 {
@@ -143,7 +160,7 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, uint64_t len)
         for(j = start; j < stop; j++)
         {
             unsigned int *r;
-            uint8_t byte;
+            uint8_t byte, fuzzbyte;
 
             if(!ranges)
                 goto range_ok;
@@ -160,7 +177,23 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, uint64_t len)
             if(protect[byte])
                 continue;
 
-            byte ^= fuzz->data[j % CHUNKBYTES];
+            fuzzbyte = fuzz->data[j % CHUNKBYTES];
+
+            if(!fuzzbyte)
+                continue;
+
+            switch(fuzzing)
+            {
+            case FUZZING_XOR:
+                byte ^= fuzzbyte;
+                break;
+            case FUZZING_SET:
+                byte |= fuzzbyte;
+                break;
+            case FUZZING_UNSET:
+                byte &= ~fuzzbyte;
+                break;
+            }
 
             if(refuse[byte])
                 continue;

@@ -33,7 +33,7 @@
 
 void _zz_opts_init(struct opts *opts)
 {
-    opts->bytes = opts->protect = opts->refuse = NULL;
+    opts->fuzzing = opts->bytes = opts->protect = opts->refuse = NULL;
     opts->seed = DEFAULT_SEED;
     opts->endseed = DEFAULT_SEED + 1;
     opts->minratio = opts->maxratio = DEFAULT_RATIO;
