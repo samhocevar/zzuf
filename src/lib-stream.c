@@ -300,9 +300,9 @@ size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
         ret = ORIG(fn)(stream); \
         _zz_unlock(fd); \
         FGETC_FUZZ \
-        if(ret < 0)
+        if(ret < 0) \
             debug("%s([%i]) = %i", __func__, fd, ret); \
-        else
+        else \
             debug("%s([%i]) = '%c'", __func__, fd, ret); \
     } while(0)
 
