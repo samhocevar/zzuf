@@ -1,5 +1,11 @@
 $Id$
 
+Changes from 0.6.1 to 0.7
+
+ * added new fuzzing modes
+ * fixed crash in regex handlers
+ * improved debug messages
+
 Changes from 0.6 to 0.6.1
 
  * fixed bad seed offset
