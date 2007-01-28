@@ -300,7 +300,10 @@ size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
         ret = ORIG(fn)(stream); \
         _zz_unlock(fd); \
         FGETC_FUZZ \
-        debug("%s([%i]) = '%c'", __func__, fd, ret); \
+        if(ret < 0)
+            debug("%s([%i]) = %i", __func__, fd, ret); \
+        else
+            debug("%s([%i]) = '%c'", __func__, fd, ret); \
     } while(0)
 
 #undef getc /* can be a macro; we don’t want that */
@@ -401,7 +404,11 @@ int NEW(ungetc)(int c, FILE *stream)
 #endif
     }
 
-    debug("%s(0x%02x, [%i]) = '%c'", __func__, c, fd, ret);
+    if(ret < 0)
+        debug("%s(0x%02x, [%i]) = %i", __func__, c, fd, ret);
+    else
+        debug("%s(0x%02x, [%i]) = '%c'", __func__, c, fd, ret);
+
     return ret;
 }
 
