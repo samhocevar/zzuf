@@ -30,10 +30,9 @@ check()
 seed=$((0+0$1))
 DIR="$(dirname "$0")"
 ZZUF="$DIR/../src/zzuf"
-FDCAT="$DIR/fdcat"
-STREAMCAT="$DIR/streamcat"
-if [ ! -f "$FDCAT" -o ! -f "$STREAMCAT" ]; then
-  echo "error: test/fdcat or test/streamcat are missing"
+ZZCAT="$DIR/zzcat"
+if [ ! -f "$ZZCAT" ]; then
+  echo "error: test/zzcat is missing"
   exit 1
 fi
 if file /bin/cat | grep -q 'statically linked'; then
@@ -64,8 +63,8 @@ for r in 0.0 0.00001 0.001 0.1 10.0; do
         else
             check "$ZZOPTS" "< $file" "zzuf"
         fi
-        check "$ZZOPTS" "$FDCAT $file" "fdcat"
-        check "$ZZOPTS" "$STREAMCAT $file" "streamcat"
+        check "$ZZOPTS" "$ZZCAT 1 $file" "zzcat 1"
+        check "$ZZOPTS" "$ZZCAT 2 $file" "zzcat 2"
         if [ "$STATIC_CAT" = "" ]; then
             check "$ZZOPTS" "cat $file" "cat"
             check "$ZZOPTS" "-i cat < $file" "|cat"
