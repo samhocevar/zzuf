@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zzuf", "zzuf.vcproj", "{2E5723ED-A886-45A9-AAAC-3D02F2EFC358}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libzzuf", "libzzuf.vcproj", "{E658DCE5-E1E5-41C8-910B-1CC2D73C435C}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{2E5723ED-A886-45A9-AAAC-3D02F2EFC358}.Debug.ActiveCfg = Debug|Win32
+		{2E5723ED-A886-45A9-AAAC-3D02F2EFC358}.Debug.Build.0 = Debug|Win32
+		{2E5723ED-A886-45A9-AAAC-3D02F2EFC358}.Release.ActiveCfg = Release|Win32
+		{2E5723ED-A886-45A9-AAAC-3D02F2EFC358}.Release.Build.0 = Release|Win32
+		{E658DCE5-E1E5-41C8-910B-1CC2D73C435C}.Debug.ActiveCfg = Debug|Win32
+		{E658DCE5-E1E5-41C8-910B-1CC2D73C435C}.Debug.Build.0 = Debug|Win32
+		{E658DCE5-E1E5-41C8-910B-1CC2D73C435C}.Release.ActiveCfg = Release|Win32
+		{E658DCE5-E1E5-41C8-910B-1CC2D73C435C}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

@@ -34,11 +34,11 @@
 #if defined HAVE_REGEX_H
 #   include <regex.h>
 #endif
-#if defined HAVE_WINDOWS_H
-#   include <windows.h>
-#endif
 #if defined HAVE_WINSOCK2_H
 #   include <winsock2.h>
+#endif
+#if defined HAVE_WINDOWS_H
+#   include <windows.h>
 #endif
 #if defined HAVE_IO_H
 #   include <io.h>
@@ -124,6 +124,10 @@ int main(int argc, char *argv[])
     int cmdline = 0;
 #endif
     int i;
+#if !defined HAVE_GETOPT_H
+#   define MOREINFO "Usage: %s message...\n"
+    int optind = 1;
+#endif
 
     _zz_opts_init(opts);
 
@@ -299,9 +303,6 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
-#else
-#   define MOREINFO "Usage: %s message...\n"
-    int optind = 1;
 #endif
 
     _zz_setratio(opts->minratio, opts->maxratio);
