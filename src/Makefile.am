@@ -1,9 +1,13 @@
 # $Id$
 
 COMMON = random.c random.h fd.c fd.h fuzz.c fuzz.h
+if NEED_GETOPT_LONG
+GETOPT = mygetopt.c mygetopt.h
+endif
 
 bin_PROGRAMS = zzuf
-zzuf_SOURCES = zzuf.c $(COMMON) opts.c opts.h md5.c md5.h timer.c timer.h
+zzuf_SOURCES = zzuf.c $(COMMON) $(GETOPT) \
+               opts.c opts.h md5.c md5.h timer.c timer.h
 zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\"
 zzuf_LDFLAGS = $(MATH_LIBS) $(WINSOCK2_LIBS)
 

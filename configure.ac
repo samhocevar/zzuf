@@ -57,11 +57,16 @@ AC_TRY_COMPILE([#include <sys/types.h>
 AC_MSG_RESULT($ac_v_recv_t)
 AC_DEFINE_UNQUOTED(RECV_T, $ac_v_recv_t, [Define to the recv() return type])
 
+ac_cv_have_getopt_long="no"
 AC_CHECK_FUNCS(getopt_long,
- [AC_DEFINE(HAVE_GETOPT_LONG, 1, Define to 1 if you have the `getopt_long' function.)],
+ [ac_cv_have_getopt_long="yes"],
  [AC_CHECK_LIB(gnugetopt, getopt_long,
-   [AC_DEFINE(HAVE_GETOPT_LONG, 1, Define to 1 if you have the `getopt_long' function.)
+   [ac_cv_have_getopt_long="yes"
     GETOPT_LIBS="${GETOPT_LIBS} -lgnugetopt"])])
+if test "$ac_cv_have_getopt_long" != "no"; then
+  AC_DEFINE(HAVE_GETOPT_LONG, 1, Define to 1 if you have the `getopt_long' function.)
+fi
+AM_CONDITIONAL(NEED_GETOPT_LONG, test "$ac_cv_have_getopt_long" = "no")
 AC_SUBST(GETOPT_LIBS)
 
 AC_CHECK_LIB(m, log, [MATH_LIBS="-lm"])

@@ -23,7 +23,9 @@
 #elif defined HAVE_INTTYPES_H
 #   include <inttypes.h>
 #endif
-#if defined HAVE_GETOPT_H
+#if !defined HAVE_GETOPT_LONG
+#   include "mygetopt.h"
+#elif defined HAVE_GETOPT_H
 #   include <getopt.h>
 #endif
 #include <stdio.h>
@@ -62,6 +64,13 @@
 #include "md5.h"
 #include "timer.h"
 
+#if defined HAVE_GETOPT_LONG
+#   define mygetopt getopt_long
+#   define myoptind optind
+#   define myoptarg optarg
+#   define myoption option
+#endif
+
 #if !defined SIGKILL
 #   define SIGKILL 9
 #endif
@@ -93,9 +102,7 @@ static char *merge_regex(char *, char *);
 static char *merge_file(char *, char *);
 #endif
 static void version(void);
-#if defined HAVE_GETOPT_H
 static void usage(void);
-#endif
 
 #if defined HAVE_WINDOWS_H
 static inline void addcpy(void *buf, void *x)
@@ -124,25 +131,19 @@ int main(int argc, char *argv[])
     int cmdline = 0;
 #endif
     int i;
-#if !defined HAVE_GETOPT_H
-#   define MOREINFO "Usage: %s message...\n"
-    int optind = 1;
-#endif
 
     _zz_opts_init(opts);
 
-#if defined HAVE_GETOPT_H
     for(;;)
     {
-#   if defined HAVE_REGEX_H
-#       define OPTSTR "Ab:B:cC:dD:E:f:F:iI:mM:nP:qr:R:s:ST:vxhV"
-#   else
-#       define OPTSTR "Ab:B:C:dD:f:F:imM:nP:qr:R:s:ST:vxhV"
-#   endif
-#   if defined HAVE_GETOPT_LONG
-#       define MOREINFO "Try `%s --help' for more information.\n"
+#if defined HAVE_REGEX_H
+#   define OPTSTR "Ab:B:cC:dD:E:f:F:iI:mM:nP:qr:R:s:ST:vxhV"
+#else
+#   define OPTSTR "Ab:B:C:dD:f:F:imM:nP:qr:R:s:ST:vxhV"
+#endif
+#define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
-        static struct option long_options[] =
+        static struct myoption long_options[] =
         {
             /* Long option, needs arg, flag, short option */
             { "autoinc",     0, NULL, 'A' },
@@ -179,11 +180,8 @@ int main(int argc, char *argv[])
             { "version",     0, NULL, 'V' },
             { NULL,          0, NULL,  0  }
         };
-        int c = getopt_long(argc, argv, OPTSTR, long_options, &option_index);
-#   else
-#       define MOREINFO "Try `%s -h' for more information.\n"
-        int c = getopt(argc, argv, OPTSTR);
-#   endif
+        int c = mygetopt(argc, argv, OPTSTR, long_options, &option_index);
+
         if(c == -1)
             break;
 
@@ -193,10 +191,10 @@ int main(int argc, char *argv[])
             setenv("ZZUF_AUTOINC", "1", 1);
             break;
         case 'b': /* --bytes */
-            opts->bytes = optarg;
+            opts->bytes = myoptarg;
             break;
         case 'B': /* --max-bytes */
-            opts->maxbytes = atoi(optarg);
+            opts->maxbytes = atoi(myoptarg);
             break;
 #if defined HAVE_REGEX_H
         case 'c': /* --cmdline */
@@ -204,7 +202,7 @@ int main(int argc, char *argv[])
             break;
 #endif
         case 'C': /* --max-crashes */
-            opts->maxcrashes = atoi(optarg);
+            opts->maxcrashes = atoi(myoptarg);
             if(opts->maxcrashes <= 0)
                 opts->maxcrashes = 0;
             break;
@@ -212,34 +210,36 @@ int main(int argc, char *argv[])
             setenv("ZZUF_DEBUG", DEBUG_FILENO_STR, 1);
             break;
         case 'D': /* --delay */
-            opts->delay = (int64_t)(atof(optarg) * 1000000.0);
+            opts->delay = (int64_t)(atof(myoptarg) * 1000000.0);
             break;
 #if defined HAVE_REGEX_H
         case 'E': /* --exclude */
-            exclude = merge_regex(exclude, optarg);
+            exclude = merge_regex(exclude, myoptarg);
             if(!exclude)
             {
-                printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
+                fprintf(stderr, "%s: invalid regex -- `%s'\n",
+                        argv[0], myoptarg);
                 _zz_opts_fini(opts);
                 return EXIT_FAILURE;
             }
             break;
 #endif
         case 'f': /* --fuzzing */
-            opts->fuzzing = optarg;
+            opts->fuzzing = myoptarg;
             break;
         case 'F': /* --max-forks */
-            opts->maxchild = atoi(optarg) > 1 ? atoi(optarg) : 1;
+            opts->maxchild = atoi(myoptarg) > 1 ? atoi(myoptarg) : 1;
             break;
         case 'i': /* --stdin */
             setenv("ZZUF_STDIN", "1", 1);
             break;
 #if defined HAVE_REGEX_H
         case 'I': /* --include */
-            include = merge_regex(include, optarg);
+            include = merge_regex(include, myoptarg);
             if(!include)
             {
-                printf("%s: invalid regex -- `%s'\n", argv[0], optarg);
+                fprintf(stderr, "%s: invalid regex -- `%s'\n",
+                        argv[0], myoptarg);
                 _zz_opts_fini(opts);
                 return EXIT_FAILURE;
             }
@@ -251,36 +251,36 @@ int main(int argc, char *argv[])
 #if defined HAVE_SETRLIMIT
         case 'M': /* --max-memory */
             setenv("ZZUF_MEMORY", "1", 1);
-            opts->maxmem = atoi(optarg);
+            opts->maxmem = atoi(myoptarg);
             break;
 #endif
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
             break;
         case 'P': /* --protect */
-            opts->protect = optarg;
+            opts->protect = myoptarg;
             break;
         case 'q': /* --quiet */
             opts->quiet = 1;
             break;
         case 'r': /* --ratio */
-            tmp = strchr(optarg, ':');
-            opts->minratio = atof(optarg);
+            tmp = strchr(myoptarg, ':');
+            opts->minratio = atof(myoptarg);
             opts->maxratio = tmp ? atof(tmp + 1) : opts->minratio;
             break;
         case 'R': /* --refuse */
-            opts->refuse = optarg;
+            opts->refuse = myoptarg;
             break;
         case 's': /* --seed */
-            tmp = strchr(optarg, ':');
-            opts->seed = atol(optarg);
+            tmp = strchr(myoptarg, ':');
+            opts->seed = atol(myoptarg);
             opts->endseed = tmp ? (uint32_t)atoi(tmp + 1) : opts->seed + 1;
             break;
         case 'S': /* --signal */
             setenv("ZZUF_SIGNAL", "1", 1);
             break;
         case 'T': /* --max-time */
-            opts->maxtime = (int64_t)(atof(optarg) * 1000000.0);
+            opts->maxtime = (int64_t)(atof(myoptarg) * 1000000.0);
             break;
         case 'x': /* --check-exit */
             opts->checkexit = 1;
@@ -297,24 +297,23 @@ int main(int argc, char *argv[])
             _zz_opts_fini(opts);
             return 0;
         default:
-            printf("%s: invalid option -- %c\n", argv[0], c);
+            fprintf(stderr, "%s: invalid option -- %c\n", argv[0], c);
             printf(MOREINFO, argv[0]);
             _zz_opts_fini(opts);
             return EXIT_FAILURE;
         }
     }
-#endif
 
     _zz_setratio(opts->minratio, opts->maxratio);
     _zz_setseed(opts->seed);
 
     /* If asked to read from the standard input */
-    if(optind >= argc)
+    if(myoptind >= argc)
     {
         if(opts->endseed != opts->seed + 1)
         {
-            printf("%s: seed ranges are incompatible with stdin fuzzing\n",
-                   argv[0]);
+            fprintf(stderr, "%s: seed ranges are incompatible with "
+                            "stdin fuzzing\n", argv[0]);
             printf(MOREINFO, argv[0]);
             _zz_opts_fini(opts);
             return EXIT_FAILURE;
@@ -332,7 +331,7 @@ int main(int argc, char *argv[])
     {
         int dashdash = 0;
 
-        for(i = optind + 1; i < argc; i++)
+        for(i = myoptind + 1; i < argc; i++)
         {
             if(dashdash)
                 include = merge_file(include, argv[i]);
@@ -366,9 +365,9 @@ int main(int argc, char *argv[])
 
     /* Create new argv */
     opts->oldargv = argv;
-    opts->newargv = malloc((argc - optind + 1) * sizeof(char *));
-    memcpy(opts->newargv, argv + optind, (argc - optind) * sizeof(char *));
-    opts->newargv[argc - optind] = (char *)NULL;
+    opts->newargv = malloc((argc - myoptind + 1) * sizeof(char *));
+    memcpy(opts->newargv, argv + myoptind, (argc - myoptind) * sizeof(char *));
+    opts->newargv[argc - myoptind] = (char *)NULL;
 
     /* Main loop */
     while(opts->nchild || opts->seed < opts->endseed)
@@ -1050,7 +1049,6 @@ static void version(void)
     printf("Written by Sam Hocevar. Report bugs to <sam@zoy.org>.\n");
 }
 
-#if defined HAVE_GETOPT_H
 static void usage(void)
 {
 #if defined HAVE_REGEX_H
@@ -1065,17 +1063,11 @@ static void usage(void)
 #else
     printf("              [PROGRAM [--] [ARGS]...]\n");
 #endif
-#   if defined HAVE_GETOPT_LONG
     printf("       zzuf -h | --help\n");
     printf("       zzuf -V | --version\n");
-#   else
-    printf("       zzuf -h\n");
-    printf("       zzuf -V\n");
-#   endif
     printf("Run PROGRAM with optional arguments ARGS and fuzz its input.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
-#   if defined HAVE_GETOPT_LONG
     printf("  -A, --autoinc             increment seed each time a new file is opened\n");
     printf("  -b, --bytes <ranges>      only fuzz bytes at offsets within <ranges>\n");
     printf("  -B, --max-bytes <n>       kill children that output more than <n> bytes\n");
@@ -1112,46 +1104,7 @@ static void usage(void)
     printf("  -x, --check-exit          report processes that exit with a non-zero status\n");
     printf("  -h, --help                display this help and exit\n");
     printf("  -V, --version             output version information and exit\n");
-#   else
-    printf("  -A               increment seed each time a new file is opened\n");
-    printf("  -b <ranges>      only fuzz bytes at offsets within <ranges>\n");
-    printf("  -B <n>           kill children that output more than <n> bytes\n");
-#if defined HAVE_REGEX_H
-    printf("  -c               only fuzz files specified in the command line\n");
-#endif
-    printf("  -C <n>           stop after <n> children have crashed (default 1)\n");
-    printf("  -d               print debug messages\n");
-    printf("  -D               delay between forks\n");
-#if defined HAVE_REGEX_H
-    printf("  -E <regex>       do not fuzz files matching <regex>\n");
-#endif
-    printf("  -f <mode>        use fuzzing mode <mode>\n");
-    printf("  -F <n>           number of concurrent forks (default 1)\n");
-    printf("  -i               fuzz standard input\n");
-#if defined HAVE_REGEX_H
-    printf("  -I <regex>       only fuzz files matching <regex>\n");
-#endif
-    printf("  -m               compute the output's MD5 hash\n");
-#if defined HAVE_SETRLIMIT
-    printf("  -M               maximum child virtual memory size in MB\n");
-#endif
-    printf("  -n               fuzz network input\n");
-    printf("  -P <list>        protect bytes and characters in <list>\n");
-    printf("  -q               do not print the fuzzed application's messages\n");
-    printf("  -r <ratio>       bit fuzzing ratio (default %g)\n", DEFAULT_RATIO);
-    printf("     <start:stop>  specify a ratio range\n");
-    printf("  -R <list>        refuse bytes and characters in <list>\n");
-    printf("  -s <seed>        random seed (default %i)\n", DEFAULT_SEED);
-    printf("     <start:stop>  specify a seed range\n");
-    printf("  -S               prevent children from diverting crashing signals\n");
-    printf("  -T <n>           kill children that run for more than <n> seconds\n");
-    printf("  -v               print information during the run\n");
-    printf("  -x               report processes that exit with a non-zero status\n");
-    printf("  -h               display this help and exit\n");
-    printf("  -V               output version information and exit\n");
-#   endif
     printf("\n");
     printf("Written by Sam Hocevar. Report bugs to <sam@zoy.org>.\n");
 }
-#endif
 
