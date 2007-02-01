@@ -126,6 +126,9 @@
 				RelativePath="..\src\md5.c">
 			</File>
 			<File
+				RelativePath="..\src\mygetopt.c">
+			</File>
+			<File
 				RelativePath="..\src\opts.c">
 			</File>
 			<File
@@ -165,6 +168,9 @@
 			</File>
 			<File
 				RelativePath="..\src\md5.h">
+			</File>
+			<File
+				RelativePath="..\src\mygetopt.h">
 			</File>
 			<File
 				RelativePath="..\src\opts.h">
