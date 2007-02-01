@@ -44,8 +44,8 @@ static enum fuzzing
 fuzzing;
 
 /* Per-offset byte protection */
-static unsigned int *ranges = NULL;
-static unsigned int ranges_static[512];
+static int *ranges = NULL;
+static int ranges_static[512];
 
 /* Per-value byte protection */
 static int protect[256];
@@ -109,7 +109,7 @@ void _zz_refuse(char const *list)
     readchars(refuse, list);
 }
 
-void _zz_fuzz(int fd, volatile uint8_t *buf, uint64_t len)
+void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
 {
     int64_t start, stop;
     int64_t pos = _zz_getpos(fd);
