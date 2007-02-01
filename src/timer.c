@@ -26,8 +26,10 @@
 #if defined HAVE_WINDOWS_H
 #   include <windows.h>
 #endif
+#if defined HAVE_SYS_TIME_H
+#   include <sys/time.h>
+#endif
 #include <stdio.h>
-#include <sys/time.h>
 #include <time.h>
 
 #include "timer.h"

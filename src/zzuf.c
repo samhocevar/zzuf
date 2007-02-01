@@ -48,7 +48,6 @@
 #if defined HAVE_SYS_WAIT_H
 #   include <sys/wait.h>
 #endif
-#include <sys/time.h>
 #if defined HAVE_SYS_RESOURCE_H
 #   include <sys/resource.h>
 #endif
