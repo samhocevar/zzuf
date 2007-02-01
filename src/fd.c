@@ -50,7 +50,7 @@ static int has_include = 0, has_exclude = 0;
 static struct files
 {
     int managed, locked;
-    uint64_t pos;
+    int64_t pos;
     /* Public stuff */
     struct fuzz fuzz;
 }
@@ -311,7 +311,7 @@ int _zz_islocked(int fd)
         return files[fds[fd]].locked;
 }
 
-long int _zz_getpos(int fd)
+int64_t _zz_getpos(int fd)
 {
     if(fd < 0 || fd >= maxfd || fds[fd] == -1)
         return 0;
@@ -319,7 +319,7 @@ long int _zz_getpos(int fd)
     return files[fds[fd]].pos;
 }
 
-void _zz_setpos(int fd, long int pos)
+void _zz_setpos(int fd, int64_t pos)
 {
     if(fd < 0 || fd >= maxfd || fds[fd] == -1)
         return;
@@ -327,7 +327,7 @@ void _zz_setpos(int fd, long int pos)
     files[fds[fd]].pos = pos;
 }
 
-void _zz_addpos(int fd, long int off)
+void _zz_addpos(int fd, int64_t off)
 {
     if(fd < 0 || fd >= maxfd || fds[fd] == -1)
         return;

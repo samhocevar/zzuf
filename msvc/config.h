@@ -21,6 +21,9 @@
 #define HAVE_WINDOWS_H 1
 #define HAVE_WINSOCK2_H 1
 #define HAVE_IO_H 1
+#define HAVE_PROCESS_H 1
+
+#define HAVE__PIPE
 
 /* Win32-specific, of course. */
 typedef signed long long int int64_t;
@@ -33,7 +36,6 @@ typedef signed char int8_t;
 typedef unsigned char uint8_t;
 
 typedef unsigned long int uintptr_t;
-typedef long int intptr_t;
 typedef int pid_t;
 
 #define inline /* undefined */

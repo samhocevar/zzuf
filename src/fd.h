@@ -32,8 +32,8 @@ extern void _zz_unregister(int);
 extern void _zz_lock(int);
 extern void _zz_unlock(int);
 extern int _zz_islocked(int);
-extern long int _zz_getpos(int);
-extern void _zz_setpos(int, long int);
-extern void _zz_addpos(int, long int);
+extern int64_t _zz_getpos(int);
+extern void _zz_setpos(int, int64_t);
+extern void _zz_addpos(int, int64_t);
 extern struct fuzz *_zz_getfuzz(int);
 

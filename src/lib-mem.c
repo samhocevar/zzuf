@@ -100,7 +100,7 @@ static kern_return_t (*ORIG(map_fd)) (int fd, vm_offset_t offset,
  * calls calloc(), so we need to do something about it */
 #define DUMMY_BYTES 655360 /* 640 kB ought to be enough for anybody */
 static uint64_t dummy_buffer[DUMMY_BYTES / 8];
-static int dummy_offset = 0;
+static int64_t dummy_offset = 0;
 #define DUMMY_START ((uintptr_t)dummy_buffer)
 #define DUMMY_STOP ((uintptr_t)dummy_buffer + DUMMY_BYTES)
 

@@ -223,10 +223,10 @@ void NEW(rewind)(FILE *stream)
 
 size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-    long int pos;
+    int64_t pos;
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
 #else
-    long int newpos;
+    int64_t newpos;
 #endif
     size_t ret;
     int fd;

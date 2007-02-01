@@ -27,6 +27,9 @@
 #if defined HAVE_WINDOWS_H
 #   include <windows.h>
 #endif
+#if defined HAVE_PROCESS_H
+#   include <process.h>
+#endif
 #include <stdio.h>
 #include <sys/types.h>
 #if defined HAVE_UNISTD_H

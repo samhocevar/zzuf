@@ -111,15 +111,15 @@ void _zz_refuse(char const *list)
 
 void _zz_fuzz(int fd, volatile uint8_t *buf, uint64_t len)
 {
-    uint64_t start, stop;
+    int64_t start, stop;
+    int64_t pos = _zz_getpos(fd);
     struct fuzz *fuzz;
     volatile uint8_t *aligned_buf;
-    unsigned long int pos = _zz_getpos(fd);
-    unsigned int i, j, todo;
+    int i, j, todo;
 
 #if 0
-    debug("fuzz(%i, %lli@%li)", fd, (unsigned long long int)len,
-          (unsigned long int)pos);
+    debug("fuzz(%i, %lli@%lli)", fd, (long long int)len,
+          (long long int)pos);
 #endif
 
     aligned_buf = buf - pos;
@@ -159,7 +159,7 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, uint64_t len)
 
         for(j = start; j < stop; j++)
         {
-            unsigned int *r;
+            int *r;
             uint8_t byte, fuzzbyte;
 
             if(!ranges)
