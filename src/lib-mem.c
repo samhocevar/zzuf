@@ -40,7 +40,9 @@
 #if defined HAVE_MALLOC_H
 #   include <malloc.h>
 #endif
-#include <unistd.h>
+#if defined HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
 #if defined HAVE_SYS_MMAN_H
 #   include <sys/mman.h>
 #endif

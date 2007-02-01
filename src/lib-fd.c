@@ -45,7 +45,9 @@
 #if defined HAVE_SYS_UIO_H
 #   include <sys/uio.h>
 #endif
-#include <unistd.h>
+#if defined HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <stdarg.h>
 #if defined HAVE_AIO_H

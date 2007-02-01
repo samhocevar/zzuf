@@ -29,7 +29,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#if defined HAVE___SREFILL
+#if defined HAVE___SREFILL && defined HAVE_UNISTD_H
 #   include <unistd.h> /* Needed for __srefill’s lseek() call */
 #endif
 

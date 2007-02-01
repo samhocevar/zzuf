@@ -28,7 +28,9 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#if defined HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
 #if defined HAVE_REGEX_H
 #   include <regex.h>
 #endif

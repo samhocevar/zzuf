@@ -29,7 +29,9 @@
 #endif
 #include <stdio.h>
 #include <sys/types.h>
-#include <unistd.h>
+#if defined HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>

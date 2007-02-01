@@ -19,7 +19,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+#if defined HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
