@@ -34,7 +34,7 @@ struct fuzz
 {
     uint32_t seed;
     double ratio;
-    int cur;
+    int64_t cur;
 #ifdef HAVE_FGETLN
     char *tmp;
 #endif

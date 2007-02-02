@@ -428,7 +428,7 @@ static void loop_stdin(struct opts *opts)
             _zz_md5_add(ctx, buf, ret);
         else while(ret)
         {
-            if((nw = write(1, buf + off, (size_t)ret)) < 0)
+            if((nw = write(1, buf + off, (unsigned int)ret)) < 0)
                 break;
             ret -= nw;
             off += nw;
@@ -1032,8 +1032,8 @@ static void *get_entry(char const *name)
         return NULL;
     }
 
-    return (char *)nt->OptionalHeader.ImageBase +
-                           nt->OptionalHeader.AddressOfEntryPoint;
+    return (void *)(uintptr_t)(nt->OptionalHeader.ImageBase +
+                                 nt->OptionalHeader.AddressOfEntryPoint);
 }
 #endif
 

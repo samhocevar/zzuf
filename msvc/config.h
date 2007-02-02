@@ -35,7 +35,7 @@ typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
 
-typedef unsigned long int uintptr_t;
+#include <stddef.h> /* Has uintptr_t etc. */
 typedef int pid_t;
 
 #define inline /* undefined */

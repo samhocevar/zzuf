@@ -115,7 +115,8 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
     int64_t pos = _zz_getpos(fd);
     struct fuzz *fuzz;
     volatile uint8_t *aligned_buf;
-    int i, j, todo;
+    int64_t i, j;
+    int todo;
 
 #if 0
     debug("fuzz(%i, %lli@%lli)", fd, (long long int)len,
@@ -132,7 +133,7 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
         /* Cache bitmask array */
         if(fuzz->cur != (int)i)
         {
-            uint32_t chunkseed = (i + (int)(fuzz->ratio * MAGIC1)) ^ MAGIC2;
+            uint32_t chunkseed = ((int)i + (int)(fuzz->ratio * MAGIC1)) ^ MAGIC2;
             _zz_srand(fuzz->seed ^ chunkseed);
 
             memset(fuzz->data, 0, CHUNKBYTES);
@@ -246,8 +247,8 @@ static void readchars(int *table, char const *list)
                      && tmp[1] && strchr(hex, tmp[1])
                      && tmp[2] && strchr(hex, tmp[2]))
             {
-                new = ((strchr(hex, tmp[1]) - hex) & 0xf) << 4;
-                new |= (strchr(hex, tmp[2]) - hex) & 0xf;
+                new = ((int)(strchr(hex, tmp[1]) - hex) & 0xf) << 4;
+                new |= (int)(strchr(hex, tmp[2]) - hex) & 0xf;
                 tmp += 2;
             }
             else

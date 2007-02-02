@@ -86,7 +86,7 @@ int mygetopt(int argc, char * const _argv[], const char *optstring,
 
         for(i = 0; longopts[i].name; i++)
         {
-            int l = strlen(longopts[i].name);
+            size_t l = strlen(longopts[i].name);
 
             if(strncmp(flag + 2, longopts[i].name, l))
                 continue;
