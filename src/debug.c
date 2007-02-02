@@ -18,9 +18,6 @@
 
 #include "config.h"
 
-/* Do we want our debug() call to be safe wrt. signals? */
-#define SAFE_FUNCTION
-
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
 #elif defined HAVE_INTTYPES_H
@@ -52,15 +49,13 @@ extern int _zz_debugfd;
             *b-- = hex2char[i % base]; \
             i /= base; \
         } \
-        write(fd, b + 1, buf + 127 - b); \
+        write(fd, b + 1, (int)(buf + 127 - b)); \
     } while(0)
 
 void _zz_debug(char const *format, ...)
 {
-#ifdef SAFE_FUNCTION
     static char const *hex2char = "0123456789abcdef";
     char const *f;
-#endif
     va_list args;
     int saved_errno;
 
@@ -69,7 +64,15 @@ void _zz_debug(char const *format, ...)
 
     saved_errno = errno;
     va_start(args, format);
-#ifdef SAFE_FUNCTION
+
+#if 0
+    /* This function's code is equivalent to the following *printf calls,
+     * except it only uses signal-safe functions */
+    fprintf(stderr, "** zzuf debug ** ");
+    vfprintf(stderr, format, args);
+    fprintf(stderr, "\n");
+#endif
+
     write(_zz_debugfd, "** zzuf debug ** ", 17);
     for(f = format; *f; f++)
     {
@@ -160,12 +163,6 @@ void _zz_debug(char const *format, ...)
         }
     }
     write(_zz_debugfd, "\n", 1);
-#else
-    fprintf(stderr, "** zzuf debug ** ");
-    vfprintf(stderr, format, args);
-    fprintf(stderr, "\n");
-#endif
     va_end(args);
     errno = saved_errno;
 }
-
