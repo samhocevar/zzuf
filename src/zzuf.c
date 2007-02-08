@@ -75,6 +75,14 @@
 #   define SIGKILL 9
 #endif
 
+#if defined RLIMIT_AS
+#   define ZZUF_RLIMIT_CONST RLIMIT_AS
+#elif defined RLIMIT_VMEM
+#   define ZZUF_RLIMIT_CONST RLIMIT_VMEM
+#else
+#   undef HAVE_SETRLIMIT
+#endif
+
 /* We use file descriptor 17 as the debug channel */
 #define DEBUG_FILENO 17
 #define DEBUG_FILENO_STR "17"
@@ -572,7 +580,7 @@ static void spawn_children(struct opts *opts)
             struct rlimit rlim;
             rlim.rlim_cur = opts->maxmem * 1000000;
             rlim.rlim_max = opts->maxmem * 1000000;
-            setrlimit(RLIMIT_AS, &rlim);
+            setrlimit(ZZUF_RLIMIT_CONST, &rlim);
         }
 #endif
 

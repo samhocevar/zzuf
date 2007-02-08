@@ -143,7 +143,8 @@ memory. The value should set reasonably high so as not to interfer with normal
 program operation.
 
 \fBzzuf\fR uses the \fBsetrlimit\fR() call to set memory usage limitations and
-relies on the operating system's ability to enforce such limitations.
+relies on the operating system's ability to enforce such limitations. This
+option is not available on the OpenBSD system.
 .TP
 \fB\-n\fR, \fB\-\-network\fR
 Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
