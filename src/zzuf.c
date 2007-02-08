@@ -79,6 +79,8 @@
 #   define ZZUF_RLIMIT_CONST RLIMIT_AS
 #elif defined RLIMIT_VMEM
 #   define ZZUF_RLIMIT_CONST RLIMIT_VMEM
+#elif defined RLIMIT_DATA
+#   define ZZUF_RLIMIT_CONST RLIMIT_DATA
 #else
 #   undef HAVE_SETRLIMIT
 #endif
