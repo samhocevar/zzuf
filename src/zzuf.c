@@ -147,10 +147,17 @@ int main(int argc, char *argv[])
     for(;;)
     {
 #if defined HAVE_REGEX_H
-#   define OPTSTR "Ab:B:cC:dD:E:f:F:iI:mM:nP:qr:R:s:ST:vxhV"
+#   define OPTSTR_REGEX "cE:I:"
 #else
-#   define OPTSTR "Ab:B:C:dD:f:F:imM:nP:qr:R:s:ST:vxhV"
+#   define OPTSTR_REGEX ""
 #endif
+#if defined HAVE_SETRLIMIT
+#   define OPTSTR_RLIMIT "M:"
+#else
+#   define OPTSTR_RLIMIT ""
+#endif
+#define OPTSTR OPTSTR_REGEX OPTSTR_RLIMIT \
+            "Ab:B:C:dD:f:F:imnP:qr:R:s:ST:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
@@ -1067,7 +1074,11 @@ static void usage(void)
     printf("Usage: zzuf [-AdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
 #endif
     printf("              [-f fuzzing] [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
+#if defined HAVE_SETRLIMIT
     printf("              [-T seconds] [-M bytes] [-b ranges] [-P protect] [-R refuse]\n");
+#else
+    printf("              [-T seconds] [-b ranges] [-P protect] [-R refuse]\n");
+#endif
 #if defined HAVE_REGEX_H
     printf("              [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
 #else
