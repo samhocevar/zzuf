@@ -26,9 +26,9 @@
 #define DEFAULT_SEED 0
 
 /* The default fuzzing ratio is, arbitrarily, 0.4% */
-#define DEFAULT_RATIO 0.004f
-#define MIN_RATIO 0.00001f
-#define MAX_RATIO 5.0f
+#define DEFAULT_RATIO 0.004
+#define MIN_RATIO 0.00001
+#define MAX_RATIO 5.0
 
 struct fuzz
 {

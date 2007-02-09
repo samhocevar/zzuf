@@ -90,7 +90,7 @@
 #define DEBUG_FILENO_STR "17"
 
 static void loop_stdin(struct opts *);
-static int run_process(char const *, char *[]);
+static int run_process(struct opts *, int[][2]);
 
 static void spawn_children(struct opts *);
 static void clean_children(struct opts *);
@@ -327,6 +327,12 @@ int main(int argc, char *argv[])
     /* If asked to read from the standard input */
     if(myoptind >= argc)
     {
+        if(opts->verbose)
+        {
+            finfo(stderr, opts, opts->seed);
+            fprintf(stderr, "reading from stdin\n");
+        }
+
         if(opts->endseed != opts->seed + 1)
         {
             fprintf(stderr, "%s: seed ranges are incompatible with "
@@ -529,8 +535,6 @@ static char *merge_regex(char *regex, char *string)
 
 static void spawn_children(struct opts *opts)
 {
-    static int const files[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
-    char buf[64];
     int fd[3][2];
     int64_t now = _zz_time();
     pid_t pid;
@@ -569,61 +573,9 @@ static void spawn_children(struct opts *opts)
         }
     }
 
-#if defined HAVE_FORK
-    /* Fork and launch child */
-    pid = fork();
-    if(pid < -1)
-    {
-        perror("fork");
+    pid = run_process(opts, fd);
+    if(pid < 0)
         return;
-    }
-#else
-    pid = 0;
-#endif
-
-    if(pid == 0)
-    {
-#if defined HAVE_SETRLIMIT
-        if(opts->maxmem >= 0)
-        {
-            struct rlimit rlim;
-            rlim.rlim_cur = opts->maxmem * 1000000;
-            rlim.rlim_max = opts->maxmem * 1000000;
-            setrlimit(ZZUF_RLIMIT_CONST, &rlim);
-        }
-#endif
-
-#if defined HAVE_FORK
-        /* We loop in reverse order so that files[0] is done last,
-         * just in case one of the other dup2()ed fds had the value */
-        for(j = 3; j--; )
-        {
-            close(fd[j][0]);
-            if(fd[j][1] != files[j])
-            {
-                dup2(fd[j][1], files[j]);
-                close(fd[j][1]);
-            }
-        }
-#endif
-
-        /* Set environment variables */
-        sprintf(buf, "%i", opts->seed);
-        setenv("ZZUF_SEED", buf, 1);
-        sprintf(buf, "%g", opts->minratio);
-        setenv("ZZUF_MINRATIO", buf, 1);
-        sprintf(buf, "%g", opts->maxratio);
-        setenv("ZZUF_MAXRATIO", buf, 1);
-
-#if defined HAVE_FORK
-        if(run_process(opts->oldargv[0], opts->newargv) < 0)
-            exit(EXIT_FAILURE);
-        exit(EXIT_SUCCESS);
-#else
-        if(run_process(opts->oldargv[0], opts->newargv) < 0)
-            return;
-#endif
-    }
 
     /* We’re the parent, acknowledge spawn */
     opts->child[i].date = now;
@@ -880,11 +832,13 @@ static char const *sig2str(int signum)
 }
 #endif
 
-static int run_process(char const *zzuf_exe, char *argv[])
+static int run_process(struct opts *opts, int fd[][2])
 {
+    char buf[64];
 #if defined HAVE_FORK
+    static int const files[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
     char *libpath, *tmp;
-    int ret, len = strlen(zzuf_exe);
+    int pid, j, len = strlen(opts->oldargv[0]);
 #   if defined __APPLE__
 #       define FILENAME "libzzuf.dylib"
 #       define EXTRAINFO ""
@@ -899,9 +853,56 @@ static int run_process(char const *zzuf_exe, char *argv[])
 #       define EXTRAINFO ""
 #       define PRELOAD "LD_PRELOAD"
 #   endif
+#elif HAVE_WINDOWS_H
+    PROCESS_INFORMATION pinfo;
+    STARTUPINFO sinfo;
+    HANDLE pid;
+    void *epaddr;
+#endif
+    int ret;
 
+#if defined HAVE_FORK
+    /* Fork and launch child */
+    pid = fork();
+    if(pid < -1)
+        perror("fork");
+    if(pid != 0)
+        return pid;
+
+    /* We loop in reverse order so that files[0] is done last,
+     * just in case one of the other dup2()ed fds had the value */
+    for(j = 3; j--; )
+    {
+        close(fd[j][0]);
+        if(fd[j][1] != files[j])
+        {
+            dup2(fd[j][1], files[j]);
+            close(fd[j][1]);
+        }
+    }
+#endif
+
+#if defined HAVE_SETRLIMIT
+    if(opts->maxmem >= 0)
+    {
+        struct rlimit rlim;
+        rlim.rlim_cur = opts->maxmem * 1000000;
+        rlim.rlim_max = opts->maxmem * 1000000;
+        setrlimit(ZZUF_RLIMIT_CONST, &rlim);
+    }
+#endif
+
+    /* Set environment variables */
+    sprintf(buf, "%i", opts->seed);
+    setenv("ZZUF_SEED", buf, 1);
+    sprintf(buf, "%g", opts->minratio);
+    setenv("ZZUF_MINRATIO", buf, 1);
+    sprintf(buf, "%g", opts->maxratio);
+    setenv("ZZUF_MAXRATIO", buf, 1);
+
+#if defined HAVE_FORK
     libpath = malloc(len + strlen("/.libs/" FILENAME EXTRAINFO) + 1);
-    strcpy(libpath, zzuf_exe);
+    strcpy(libpath, opts->oldargv[0]);
 
     tmp = strrchr(libpath, '/');
     strcpy(tmp ? tmp + 1 : libpath, ".libs/" FILENAME);
@@ -914,27 +915,32 @@ static int run_process(char const *zzuf_exe, char *argv[])
         setenv(PRELOAD, LIBDIR "/" FILENAME EXTRAINFO, 1);
     free(libpath);
 
-    if(execvp(argv[0], argv))
+    if(execvp(opts->newargv[0], opts->newargv))
     {
-        perror(argv[0]);
-        return -1;
+        perror(opts->newargv[0]);
+        exit(EXIT_FAILURE);
     }
 
+    exit(EXIT_SUCCESS);
+    /* no return */
     return 0;
 #elif HAVE_WINDOWS_H
-    PROCESS_INFORMATION pinfo;
-    STARTUPINFO sinfo;
-    void *epaddr;
-    int ret;
+    pid = GetCurrentProcess();
 
     /* Get entry point */
-    epaddr = get_entry(argv[0]);
+    epaddr = get_entry(opts->newargv[0]);
     if(!epaddr)
         return -1;
     
     memset(&sinfo, 0, sizeof(sinfo));
     sinfo.cb = sizeof(sinfo);
-    ret = CreateProcess(NULL, argv[0], NULL, NULL, FALSE,
+    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[j][0]), pid,
+        /* FIXME */ &sinfo.hStdInput, 0, TRUE, DUPLICATE_SAME_ACCESS);
+    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[j][1]), pid,
+                    &sinfo.hStdError, 0, TRUE, DUPLICATE_SAME_ACCESS);
+    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[j][2]), pid,
+                    &sinfo.hStdOutput, 0, TRUE, DUPLICATE_SAME_ACCESS);
+    ret = CreateProcess(NULL, opts->newargv[0], NULL, NULL, FALSE,
                         CREATE_SUSPENDED, NULL, NULL, &sinfo, &pinfo);
     if(!ret)
         return -1;
@@ -954,9 +960,7 @@ static int run_process(char const *zzuf_exe, char *argv[])
         return -1;
     }
 
-    return 0;
-#else
-    return -1;
+    return (long int)pinfo.hProcess;
 #endif
 }
 
