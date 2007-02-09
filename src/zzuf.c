@@ -934,12 +934,13 @@ static int run_process(struct opts *opts, int fd[][2])
     
     memset(&sinfo, 0, sizeof(sinfo));
     sinfo.cb = sizeof(sinfo);
-    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[j][0]), pid,
+    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[0][1]), pid,
         /* FIXME */ &sinfo.hStdInput, 0, TRUE, DUPLICATE_SAME_ACCESS);
-    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[j][1]), pid,
+    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[1][1]), pid,
                     &sinfo.hStdError, 0, TRUE, DUPLICATE_SAME_ACCESS);
-    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[j][2]), pid,
+    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[2][1]), pid,
                     &sinfo.hStdOutput, 0, TRUE, DUPLICATE_SAME_ACCESS);
+    sinfo.dwFlags = STARTF_USESTDHANDLES;
     ret = CreateProcess(NULL, opts->newargv[0], NULL, NULL, FALSE,
                         CREATE_SUSPENDED, NULL, NULL, &sinfo, &pinfo);
     if(!ret)
