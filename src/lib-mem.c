@@ -217,13 +217,23 @@ int nbmaps = 0;
 
 #define MMAP(fn, off_t) \
     do { \
+        char *b = MAP_FAILED; \
         LOADSYM(fn); \
-        ret = ORIG(fn)(start, length, prot, flags, fd, offset); \
         if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)) \
-            return ret; \
-        if(ret && length) \
+            return ORIG(fn)(start, length, prot, flags, fd, offset); \
+        ret = ORIG(fn)(NULL, length, prot, flags, fd, offset); \
+        if(ret != MAP_FAILED && length) \
         { \
-            char *b = malloc(length); \
+            b = ORIG(fn)(start, length, PROT_READ | PROT_WRITE, \
+                         MAP_PRIVATE | MAP_ANONYMOUS, -1, 0); \
+            if(b == MAP_FAILED) \
+            { \
+                munmap(ret, length); \
+                ret = MAP_FAILED; \
+            } \
+        } \
+        if(b != MAP_FAILED) \
+        { \
             int i, oldpos; \
             for(i = 0; i < nbmaps; i += 2) \
                 if(maps[i] == NULL) \
@@ -283,7 +293,7 @@ int NEW(munmap)(void *start, size_t length)
         if(maps[i] != start)
             continue;
 
-        free(start);
+        ORIG(munmap)(start, length);
         ret = ORIG(munmap)(maps[i + 1], length);
         maps[i] = NULL;
         maps[i + 1] = NULL;
