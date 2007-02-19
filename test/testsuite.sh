@@ -63,8 +63,9 @@ for r in 0.0 0.00001 0.001 0.1 10.0; do
         else
             check "$ZZOPTS" "< $file" "zzuf"
         fi
-        check "$ZZOPTS" "$ZZCAT 1 $file" "zzcat 1"
-        check "$ZZOPTS" "$ZZCAT 2 $file" "zzcat 2"
+        for n in 1 2 3; do
+            check "$ZZOPTS" "$ZZCAT $n $file" "zzcat $n"
+        done
         if [ "$STATIC_CAT" = "" ]; then
             check "$ZZOPTS" "cat $file" "cat"
             check "$ZZOPTS" "-i cat < $file" "|cat"

@@ -22,6 +22,9 @@
 #if defined HAVE_UNISTD_H
 #   include <unistd.h>
 #endif
+#if defined HAVE_SYS_MMAN_H
+#   include <sys/mman.h>
+#endif
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -102,6 +105,25 @@ int main(int argc, char *argv[])
         }
         fclose(stream);
         break;
+    case 3: /* mmap() */
+        fd = open(name, O_RDONLY);
+        if(fd < 0)
+            return EXIT_FAILURE;
+#ifdef HAVE_MMAP
+        for(i = 0; i < 128; i++)
+        {
+            int moff = myrand() % len;
+            int mlen = myrand() % (len - moff);
+            char *map = mmap(NULL, mlen, PROT_READ, MAP_PRIVATE, fd, moff);
+            for(j = 0; j < 128; j++)
+            {
+                int x = myrand() % mlen;
+                data[moff + x] = data[x];
+            }
+            munmap(map);
+        }
+#endif
+        close(fd);
     }
 
     /* Write what we have read */
