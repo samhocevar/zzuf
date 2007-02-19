@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
                 int x = myrand() % mlen;
                 data[moff + x] = data[x];
             }
-            munmap(map);
+            munmap(map, mlen);
         }
 #endif
         close(fd);
