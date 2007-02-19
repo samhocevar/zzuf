@@ -112,18 +112,28 @@ int main(int argc, char *argv[])
 #ifdef HAVE_MMAP
         for(i = 0; i < 128; i++)
         {
-            int moff = myrand() % len;
-            int mlen = myrand() % (len - moff);
-            char *map = mmap(NULL, mlen, PROT_READ, MAP_PRIVATE, fd, moff);
+            char *map;
+            int moff, mlen, pgsz = len + 1;
+#ifdef HAVE_GETPAGESIZE
+            pgsz = getpagesize();
+#endif
+            moff = len < pgsz ? 0 : (myrand() % (len / pgsz)) * pgsz;
+            mlen = 1 + (myrand() % (len - moff));
+            map = mmap(NULL, mlen, PROT_READ, MAP_PRIVATE, fd, moff);
+            if(map == MAP_FAILED)
+                return EXIT_FAILURE;
             for(j = 0; j < 128; j++)
             {
                 int x = myrand() % mlen;
-                data[moff + x] = data[x];
+                data[moff + x] = map[x];
             }
             munmap(map, mlen);
         }
 #endif
         close(fd);
+        break;
+    default:
+        return EXIT_FAILURE;
     }
 
     /* Write what we have read */
