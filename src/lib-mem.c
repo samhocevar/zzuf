@@ -60,6 +60,10 @@
 #   define SIGKILL 9
 #endif
 
+#if !defined MAP_ANONYMOUS
+#   define MAP_ANONYMOUS MAP_ANON
+#endif
+
 /* TODO: mremap, maybe brk/sbrk (haha) */
 
 /* Library functions that we divert */
