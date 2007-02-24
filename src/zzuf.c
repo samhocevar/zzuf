@@ -535,7 +535,7 @@ static char *merge_regex(char *regex, char *string)
 
 static void spawn_children(struct opts *opts)
 {
-    int fd[3][2];
+    int pipes[3][2];
     int64_t now = _zz_time();
     pid_t pid;
     int i, j;
@@ -562,9 +562,9 @@ static void spawn_children(struct opts *opts)
     {
         int ret;
 #if defined HAVE_PIPE
-        ret = pipe(fd[j]);
+        ret = pipe(pipes[j]);
 #elif defined HAVE__PIPE
-        ret = _pipe(fd[j], 256, _O_BINARY);
+        ret = _pipe(pipes[j], 512, _O_BINARY | O_NOINHERIT);
 #endif
         if(ret < 0)
         {
@@ -573,7 +573,7 @@ static void spawn_children(struct opts *opts)
         }
     }
 
-    pid = run_process(opts, fd);
+    pid = run_process(opts, pipes);
     if(pid < 0)
         return;
 
@@ -582,8 +582,8 @@ static void spawn_children(struct opts *opts)
     opts->child[i].pid = pid;
     for(j = 0; j < 3; j++)
     {
-        close(fd[j][1]);
-        opts->child[i].fd[j] = fd[j][0];
+        close(pipes[j][1]);
+        opts->child[i].fd[j] = pipes[j][0];
     }
     opts->child[i].bytes = 0;
     opts->child[i].seed = opts->seed;
@@ -755,6 +755,7 @@ static void read_children(struct opts *opts)
 
         if(!ZZUF_FD_ISSET(opts->child[i].fd[j], &fdset))
             continue;
+fprintf(stderr, "data on fd %i for process %i\n", j, i);
 
         ret = read(opts->child[i].fd[j], buf, BUFSIZ - 1);
         if(ret > 0)
@@ -832,7 +833,7 @@ static char const *sig2str(int signum)
 }
 #endif
 
-static int run_process(struct opts *opts, int fd[][2])
+static int run_process(struct opts *opts, int pipes[][2])
 {
     char buf[64];
 #if defined HAVE_FORK
@@ -873,11 +874,11 @@ static int run_process(struct opts *opts, int fd[][2])
      * just in case one of the other dup2()ed fds had the value */
     for(j = 3; j--; )
     {
-        close(fd[j][0]);
-        if(fd[j][1] != files[j])
+        close(pipes[j][0]);
+        if(pipes[j][1] != files[j])
         {
-            dup2(fd[j][1], files[j]);
-            close(fd[j][1]);
+            dup2(pipes[j][1], files[j]);
+            close(pipes[j][1]);
         }
     }
 #endif
@@ -934,11 +935,11 @@ static int run_process(struct opts *opts, int fd[][2])
     
     memset(&sinfo, 0, sizeof(sinfo));
     sinfo.cb = sizeof(sinfo);
-    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[0][1]), pid,
+    DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[0][1]), pid,
         /* FIXME */ &sinfo.hStdInput, 0, TRUE, DUPLICATE_SAME_ACCESS);
-    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[1][1]), pid,
+    DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[1][1]), pid,
                     &sinfo.hStdError, 0, TRUE, DUPLICATE_SAME_ACCESS);
-    DuplicateHandle(pid, (HANDLE)_get_osfhandle(fd[2][1]), pid,
+    DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[2][1]), pid,
                     &sinfo.hStdOutput, 0, TRUE, DUPLICATE_SAME_ACCESS);
     sinfo.dwFlags = STARTF_USESTDHANDLES;
     ret = CreateProcess(NULL, opts->newargv[0], NULL, NULL, FALSE,
