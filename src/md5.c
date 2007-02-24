@@ -24,43 +24,23 @@
 #elif defined HAVE_INTTYPES_H
 #   include <inttypes.h>
 #endif
+#if defined HAVE_ENDIAN_H
+#   include <endian.h>
+#endif
 #include <string.h>
 #include <stdlib.h>
 
 #include "md5.h"
 
-struct md5 {
-        uint32_t buf[4];
-        uint32_t bits[2];
-        uint8_t in[64];
+struct md5
+{
+    uint32_t buf[4];
+    uint32_t bits[2];
+    uint32_t in[64];
 };
 
+static void swapwords(uint32_t *buf, unsigned words);
 static void transform(uint32_t buf[4], uint32_t in[16]);
-
-#define HIGHFIRST
-#ifdef __i386__
-#undef HIGHFIRST
-#endif
-
-#ifndef HIGHFIRST
-#define swapbytes(buf, len)	/* Nothing */
-#else
-/*
- * Note: this code is harmless on little-endian machines.
- */
-void swapbytes(uint8_t *buf, unsigned bytes)
-{
-    uint32_t t;
-    do
-    {
-	t = (uint32_t) ((unsigned) buf[3] << 8 | buf[2]) << 16 |
-	                ((unsigned) buf[1] << 8 | buf[0]);
-	*(uint32_t *) buf = t;
-	buf += 4;
-        bytes -= 4;
-    } while(bytes > 0);
-}
-#endif
 
 struct md5 *_zz_md5_init(void)
 {
@@ -83,35 +63,35 @@ void _zz_md5_add(struct md5 *ctx, uint8_t *buf, unsigned len)
 
     t = ctx->bits[0];
     if((ctx->bits[0] = t + ((uint32_t)len << 3)) < t)
-	ctx->bits[1]++;
+        ctx->bits[1]++;
     ctx->bits[1] += len >> 29;
 
     t = (t >> 3) & 0x3f;
 
     if(t)
     {
-	uint8_t *p = (uint8_t *)ctx->in + t;
+        uint8_t *p = (uint8_t *)ctx->in + t;
 
-	t = 64 - t;
-	if(len < t)
+        t = 64 - t;
+        if(len < t)
         {
-	    memcpy(p, buf, len);
-	    return;
-	}
-	memcpy(p, buf, t);
-	swapbytes(ctx->in, 64);
-	transform(ctx->buf, (uint32_t *)ctx->in);
-	buf += t;
-	len -= t;
+            memcpy(p, buf, len);
+            return;
+        }
+        memcpy(p, buf, t);
+        swapwords(ctx->in, 64 / 4);
+        transform(ctx->buf, ctx->in);
+        buf += t;
+        len -= t;
     }
 
-    while (len >= 64)
+    while(len >= 64)
     {
-	memcpy(ctx->in, buf, 64);
-	swapbytes(ctx->in, 64);
-	transform(ctx->buf, (uint32_t *)ctx->in);
-	buf += 64;
-	len -= 64;
+        memcpy(ctx->in, buf, 64);
+        swapwords(ctx->in, 64 / 4);
+        transform(ctx->buf, ctx->in);
+        buf += 64;
+        len -= 64;
     }
 
     memcpy(ctx->in, buf, len);
@@ -123,26 +103,48 @@ void _zz_md5_fini(uint8_t *digest, struct md5 *ctx)
     uint8_t *p;
 
     count = (ctx->bits[0] >> 3) & 0x3F;
-    p = ctx->in + count;
+    p = (uint8_t *)ctx->in + count;
     *p++ = 0x80;
 
     count = 64 - 1 - count;
     if(count < 8)
     {
-	memset(p, 0, count);
-	swapbytes(ctx->in, 64);
-	transform(ctx->buf, (uint32_t *) ctx->in);
-	memset(ctx->in, 0, 56);
+        memset(p, 0, count);
+        swapwords(ctx->in, 64 / 4);
+        transform(ctx->buf, ctx->in);
+        memset(ctx->in, 0, 56);
     }
     else
-	memset(p, 0, count - 8);
+        memset(p, 0, count - 8);
 
-    swapbytes(ctx->in, 56);
-    memcpy(ctx->in + 56, ctx->bits, 8);
-    transform(ctx->buf, (uint32_t *)ctx->in);
-    swapbytes((uint8_t *)ctx->buf, 16);
+    swapwords(ctx->in, 56 / 4);
+    memcpy(ctx->in + 56 / 4, ctx->bits, 8);
+    transform(ctx->buf, ctx->in);
+    swapwords(ctx->buf, 16 / 4);
     memcpy(digest, ctx->buf, 16);
     free(ctx);
+}
+
+static void swapwords(uint32_t *buf, unsigned words)
+{
+    /* XXX: no need to swap words on little endian machines */
+#if defined HAVE_ENDIAN_H
+    if(__BYTE_ORDER == __LITTLE_ENDIAN)
+        return;
+#else
+    /* This is compile-time optimised with at least -O1 or -Os */
+    uint32_t const tmp = 0x12345678;
+    if(*(uint8_t const *)&tmp == 0x78)
+        return;
+#endif
+
+    while(words > 0)
+    {
+        uint8_t *b = (uint8_t *)buf;
+        *buf++ = (uint32_t)((unsigned) b[3] << 8 | b[2]) << 16 |
+                            ((unsigned) b[1] << 8 | b[0]);
+        words--;
+    }
 }
 
 /* #define F1(x, y, z) (x & y | ~x & z) */
@@ -152,7 +154,7 @@ void _zz_md5_fini(uint8_t *digest, struct md5 *ctx)
 #define F4(x, y, z) (y ^ (x | ~z))
 
 #define MD5STEP(f, w, x, y, z, data, s) \
-	( w += f(x, y, z) + data,  w = w<<s | w>>(32-s),  w += x )
+    (w += f(x, y, z) + data, w = w << s | w >> (32 - s), w += x)
 
 static void transform(uint32_t buf[4], uint32_t in[16])
 {
