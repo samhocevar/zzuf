@@ -1,4 +1,202 @@
 ------------------------------------------------------------------------
+r283 | sam | 2007-02-24 17:20:42 +0100 (Sat, 24 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Minor win32 cosmetic updates.
+
+------------------------------------------------------------------------
+r282 | sam | 2007-02-20 19:18:27 +0100 (Tue, 20 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/src/lib-mem.c
+
+  * OS X doesn’t have MAP_ANONYMOUS, alias it to MAP_ANON.
+
+------------------------------------------------------------------------
+r281 | sam | 2007-02-19 11:28:16 +0100 (Mon, 19 Feb 2007) | 3 lines
+Changed paths:
+   M /trunk/src/lib-mem.c
+
+  * Use mmap() instead of malloc() in the mmap() reimplementation so that
+    returned values are not in the heap.
+
+------------------------------------------------------------------------
+r280 | sam | 2007-02-19 11:26:41 +0100 (Mon, 19 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+  * Check for getpagesize() at configure time.
+
+------------------------------------------------------------------------
+r279 | sam | 2007-02-19 11:25:54 +0100 (Mon, 19 Feb 2007) | 3 lines
+Changed paths:
+   M /trunk/test/zzcat.c
+
+  * Check mmap() return value.
+  * Don't pass offsets to mmap() that are not page aligned.
+
+------------------------------------------------------------------------
+r278 | sam | 2007-02-19 10:28:52 +0100 (Mon, 19 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/test/zzcat.c
+
+  * Oops, fix compilation warning.
+
+------------------------------------------------------------------------
+r277 | sam | 2007-02-19 10:16:10 +0100 (Mon, 19 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/test/testsuite.sh
+   M /trunk/test/zzcat.c
+
+  * Added mmap() to the testsuite.
+
+------------------------------------------------------------------------
+r276 | sam | 2007-02-09 02:52:59 +0100 (Fri, 09 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Improved win32 pipes.
+
+------------------------------------------------------------------------
+r275 | sam | 2007-02-09 02:33:02 +0100 (Fri, 09 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/src/libzzuf.h
+   M /trunk/src/zzuf.c
+
+  * Use doubles, not float. Fixes an issue when using the default ratio value.
+
+------------------------------------------------------------------------
+r274 | sam | 2007-02-09 00:08:38 +0100 (Fri, 09 Feb 2007) | 1 line
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Disable -M when setrlimit isn't available.
+------------------------------------------------------------------------
+r273 | sam | 2007-02-08 22:51:37 +0100 (Thu, 08 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * OpenBSD support for setrlimit().
+
+------------------------------------------------------------------------
+r272 | sam | 2007-02-08 18:23:48 +0100 (Thu, 08 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Handle architectures that don't have RLIMIT_AS (like OpenBSD).
+
+------------------------------------------------------------------------
+r271 | sam | 2007-02-02 12:58:06 +0100 (Fri, 02 Feb 2007) | 1 line
+Changed paths:
+   M /trunk/msvc/config.h
+   M /trunk/src/fuzz.c
+   M /trunk/src/libzzuf.h
+   M /trunk/src/mygetopt.c
+   M /trunk/src/zzuf.c
+
+  * Fixed more MSVC compilation warnings.
+------------------------------------------------------------------------
+r270 | sam | 2007-02-02 12:29:27 +0100 (Fri, 02 Feb 2007) | 1 line
+Changed paths:
+   M /trunk/src/debug.c
+
+  * Fixed a minor warning and commented our printf-like function.
+------------------------------------------------------------------------
+r269 | sam | 2007-02-01 23:50:34 +0100 (Thu, 01 Feb 2007) | 1 line
+Changed paths:
+   M /trunk/msvc/zzuf.vcproj
+
+  * Added mygetopt files to the MSVC project.
+------------------------------------------------------------------------
+r268 | sam | 2007-02-01 23:33:07 +0100 (Thu, 01 Feb 2007) | 3 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/Makefile.am
+   A /trunk/src/mygetopt.c
+   A /trunk/src/mygetopt.h
+   M /trunk/src/zzuf.c
+
+  * Reimplemented getopt_long. We use our replacement even if simple getopt
+    is available on the operating system.
+
+------------------------------------------------------------------------
+r267 | sam | 2007-02-01 23:20:48 +0100 (Thu, 01 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/src/fuzz.c
+   M /trunk/src/fuzz.h
+   M /trunk/src/libzzuf.h
+
+  * Fixed a few signed/unsigned confusions.
+
+------------------------------------------------------------------------
+r266 | sam | 2007-02-01 20:27:21 +0100 (Thu, 01 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+  * Fuck notepad and its fucking CRLFs.
+
+------------------------------------------------------------------------
+r265 | sam | 2007-02-01 19:19:03 +0100 (Thu, 01 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/msvc/config.h
+   M /trunk/src/debug.c
+   M /trunk/src/fd.c
+   M /trunk/src/fd.h
+   M /trunk/src/fuzz.c
+   M /trunk/src/lib-mem.c
+   M /trunk/src/lib-stream.c
+   M /trunk/src/libzzuf.c
+
+  * Fixed a few 64-bit issues reported by MSVC.
+  * More Win32 portability fixes.
+------------------------------------------------------------------------
+r264 | sam | 2007-02-01 17:41:54 +0100 (Thu, 01 Feb 2007) | 1 line
+Changed paths:
+   A /trunk/msvc
+   A /trunk/msvc/config.h
+   A /trunk/msvc/libzzuf.vcproj
+   A /trunk/msvc/zzuf.sln
+   A /trunk/msvc/zzuf.vcproj
+   M /trunk/src/zzuf.c
+
+  * Added an MSVC project.
+------------------------------------------------------------------------
+r263 | sam | 2007-02-01 17:08:33 +0100 (Thu, 01 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/debug.c
+   M /trunk/src/lib-fd.c
+   M /trunk/src/lib-mem.c
+   M /trunk/src/lib-stream.c
+   M /trunk/src/libzzuf.c
+   M /trunk/src/zzuf.c
+   M /trunk/test/zzcat.c
+
+  * Check for <unistd.h>, too. MSVC doesn't have it.
+
+------------------------------------------------------------------------
+r262 | sam | 2007-02-01 16:57:10 +0100 (Thu, 01 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/timer.c
+   M /trunk/src/zzuf.c
+
+  * Only include <sys/time.h> conditionally.
+
+------------------------------------------------------------------------
+r261 | sam | 2007-01-28 02:17:49 +0100 (Sun, 28 Jan 2007) | 3 lines
+Changed paths:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+   M /trunk/configure.ac
+
+  * Version 0.7.
+  * Updated NEWS and ChangeLog.
+
+------------------------------------------------------------------------
 r260 | sam | 2007-01-28 01:53:19 +0100 (Sun, 28 Jan 2007) | 2 lines
 Changed paths:
    M /trunk/test

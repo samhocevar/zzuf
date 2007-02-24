@@ -1,5 +1,12 @@
 $Id$
 
+Changes from 0.7 to 0.8
+
+ * getopt_long() reimplementation
+ * fix for 64bit issues
+ * -M works on OpenBSD
+ * mmap reimplementation does not use the heap
+
 Changes from 0.6.1 to 0.7
 
  * added new fuzzing modes
