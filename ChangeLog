@@ -1,4 +1,45 @@
 ------------------------------------------------------------------------
+r288 | sam | 2007-03-02 00:53:51 +0100 (Fri, 02 Mar 2007) | 2 lines
+Changed paths:
+   M /trunk/src/lib-fd.c
+
+  * Save errno in offset_check, thanks to Sami Liedes.
+
+------------------------------------------------------------------------
+r287 | sam | 2007-03-02 00:52:00 +0100 (Fri, 02 Mar 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Removed spurious verbosity, thanks to Sami Liedes.
+
+------------------------------------------------------------------------
+r286 | sam | 2007-02-24 18:37:46 +0100 (Sat, 24 Feb 2007) | 4 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/md5.c
+
+  * Cleaned up md5.c.
+  * Do not convert words to little endian if the architecture is already
+    little endian.
+
+------------------------------------------------------------------------
+r285 | sam | 2007-02-24 17:37:12 +0100 (Sat, 24 Feb 2007) | 3 lines
+Changed paths:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+   M /trunk/configure.ac
+
+  * Version 0.8.
+  * Updated NEWS and ChangeLog.
+
+------------------------------------------------------------------------
+r284 | sam | 2007-02-24 17:32:54 +0100 (Sat, 24 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/COPYING
+
+  * Fix WTFPL address.
+
+------------------------------------------------------------------------
 r283 | sam | 2007-02-24 17:20:42 +0100 (Sat, 24 Feb 2007) | 2 lines
 Changed paths:
    M /trunk/src/zzuf.c

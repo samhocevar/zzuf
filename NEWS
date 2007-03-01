@@ -1,5 +1,10 @@
 $Id$
 
+Changes from 0.8 to 0.8.1
+
+ * remove spurious debug message
+ * fix an unsaved errno issue
+
 Changes from 0.7 to 0.8
 
  * getopt_long() reimplementation
