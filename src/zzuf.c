@@ -755,7 +755,6 @@ static void read_children(struct opts *opts)
 
         if(!ZZUF_FD_ISSET(opts->child[i].fd[j], &fdset))
             continue;
-fprintf(stderr, "data on fd %i for process %i\n", j, i);
 
         ret = read(opts->child[i].fd[j], buf, BUFSIZ - 1);
         if(ret > 0)
