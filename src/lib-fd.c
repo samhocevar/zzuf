@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 
 #if defined HAVE_WINSOCK2_H
 #   include <winsock2.h>
@@ -489,9 +490,10 @@ static void fuzz_iovec(int fd, const struct iovec *iov, ssize_t ret)
 }
 #endif
 
+/* Sanity check, can be OK though (for instance with a character device) */
 static void offset_check(int fd)
 {
-    /* Sanity check, can be OK though (for instance with a character device) */
+    int orig_errno = errno;
 #if defined HAVE_LSEEK64
     off64_t ret;
     LOADSYM(lseek64);
@@ -503,5 +505,6 @@ static void offset_check(int fd)
 #endif
     if(ret != -1 && ret != _zz_getpos(fd))
         debug("warning: offset inconsistency");
+    errno = orig_errno;
 }
 
