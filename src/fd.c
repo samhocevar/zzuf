@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2007 Sam Hocevar <sam@zoy.org>
  *                All Rights Reserved
  *
  *  $Id$
@@ -35,6 +35,7 @@
 #include "libzzuf.h"
 #include "fd.h"
 #include "fuzz.h"
+#include "ranges.h"
 
 /* Regex stuff */
 #if defined HAVE_REGEX_H
@@ -97,37 +98,8 @@ void _zz_exclude(char const *regex)
 /* This function is the same as _zz_bytes() */
 void _zz_pick(char const *list)
 {   
-    char const *parser;
-    unsigned int i, chunks;
-
-    /* Count commas */ 
-    for(parser = list, chunks = 1; *parser; parser++)
-        if(*parser == ',')
-            chunks++;
-
     /* TODO: free(ranges) if ranges != ranges_static */
-    if(chunks >= 256)
-        ranges = malloc((chunks + 1) * 2 * sizeof(unsigned int));
-    else
-        ranges = ranges_static;
-
-    /* Fill ranges list */ 
-    for(parser = list, i = 0; i < chunks; i++)
-    {
-        char const *comma = strchr(parser, ',');
-        char const *dash = strchr(parser, '-');
-
-        ranges[i * 2] = (dash == parser) ? 0 : atoi(parser);
-        if(dash && (dash + 1 == comma || dash[1] == '\0'))
-            ranges[i * 2 + 1] = ranges[i * 2]; /* special case */
-        else if(dash && (!comma || dash < comma))
-            ranges[i * 2 + 1] = atoi(dash + 1) + 1;
-        else
-            ranges[i * 2 + 1] = ranges[i * 2] + 1;
-        parser = comma + 1;
-    }
-
-    ranges[i * 2] = ranges[i * 2 + 1] = 0;
+    ranges = _zz_allocrange(list, ranges_static);
 }
 
 void _zz_setseed(int32_t s)
@@ -303,21 +275,11 @@ void _zz_register(int fd)
     if(ranges)
     {
         static int idx = 0;
-        int *r;
 
-        idx++;
-
-        for(r = ranges; r[1]; r += 2)
-            if(idx >= r[0] && (r[0] == r[1] || idx < r[1]))
-                goto range_ok;
-
-        files[i].active = 0;
+        files[i].active = _zz_isinrange(++idx, ranges);
     }
     else
-    {
-    range_ok:
         files[i].active = 1;
-    }
 
     if(autoinc)
         seed++;

@@ -1,6 +1,6 @@
 # $Id$
 
-COMMON = random.c random.h fd.c fd.h fuzz.c fuzz.h
+COMMON = random.c random.h ranges.c ranges.h fd.c fd.h fuzz.c fuzz.h
 if NEED_GETOPT_LONG
 GETOPT = mygetopt.c mygetopt.h
 endif

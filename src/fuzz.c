@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2007 Sam Hocevar <sam@zoy.org>
  *                All Rights Reserved
  *
  *  $Id$
@@ -32,6 +32,7 @@
 #include "random.h"
 #include "fuzz.h"
 #include "fd.h"
+#include "ranges.h"
 
 #define MAGIC1 0x33ea84f7
 #define MAGIC2 0x783bc31f
@@ -67,37 +68,8 @@ extern void _zz_fuzzing(char const *mode)
 /* This function is the same as _zz_pick() */
 void _zz_bytes(char const *list)
 {
-    char const *parser;
-    unsigned int i, chunks;
-
-    /* Count commas */
-    for(parser = list, chunks = 1; *parser; parser++)
-        if(*parser == ',')
-            chunks++;
-
     /* TODO: free(ranges) if ranges != ranges_static */
-    if(chunks >= 256)
-        ranges = malloc((chunks + 1) * 2 * sizeof(unsigned int));
-    else
-        ranges = ranges_static;
-
-    /* Fill ranges list */
-    for(parser = list, i = 0; i < chunks; i++)
-    {
-        char const *comma = strchr(parser, ',');
-        char const *dash = strchr(parser, '-');
-
-        ranges[i * 2] = (dash == parser) ? 0 : atoi(parser);
-        if(dash && (dash + 1 == comma || dash[1] == '\0'))
-            ranges[i * 2 + 1] = ranges[i * 2]; /* special case */
-        else if(dash && (!comma || dash < comma))
-            ranges[i * 2 + 1] = atoi(dash + 1) + 1;
-        else
-            ranges[i * 2 + 1] = ranges[i * 2] + 1;
-        parser = comma + 1;
-    }
-
-    ranges[i * 2] = ranges[i * 2 + 1] = 0;
+    ranges = _zz_allocrange(list, ranges_static);
 }
 
 void _zz_protect(char const *list)
@@ -161,19 +133,11 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
 
         for(j = start; j < stop; j++)
         {
-            int *r;
             uint8_t byte, fuzzbyte;
 
-            if(!ranges)
-                goto range_ok;
+            if(ranges && !_zz_isinrange(j, ranges))
+                continue; /* Not in one of the ranges, skip byte */
 
-            for(r = ranges; r[1]; r += 2)
-                if(j >= r[0] && (r[0] == r[1] || j < r[1]))
-                    goto range_ok;
-
-            continue; /* Not in one of the ranges, skip byte */
-
-        range_ok:
             byte = aligned_buf[j];
 
             if(protect[byte])
