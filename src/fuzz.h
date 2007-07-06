@@ -18,6 +18,7 @@
 
 extern void _zz_fuzzing(char const *);
 extern void _zz_bytes(char const *);
+extern void _zz_pick(char const *);
 extern void _zz_protect(char const *);
 extern void _zz_refuse(char const *);
 

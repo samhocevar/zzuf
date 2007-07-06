@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 #   define OPTSTR_RLIMIT ""
 #endif
 #define OPTSTR OPTSTR_REGEX OPTSTR_RLIMIT \
-            "Ab:B:C:dD:f:F:imnP:qr:R:s:ST:vxhV"
+            "Ab:B:C:dD:f:F:imnp:P:qr:R:s:ST:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
@@ -184,6 +184,7 @@ int main(int argc, char *argv[])
             { "md5",         0, NULL, 'm' },
             { "max-memory",  1, NULL, 'M' },
             { "network",     0, NULL, 'n' },
+            { "pick",        1, NULL, 'p' },
             { "protect",     1, NULL, 'P' },
             { "quiet",       0, NULL, 'q' },
             { "ratio",       1, NULL, 'r' },
@@ -273,6 +274,9 @@ int main(int argc, char *argv[])
 #endif
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
+            break;
+        case 'p': /* --pick */
+            opts->pick = myoptarg;
             break;
         case 'P': /* --protect */
             opts->protect = myoptarg;
@@ -375,6 +379,8 @@ int main(int argc, char *argv[])
         setenv("ZZUF_FUZZING", opts->fuzzing, 1);
     if(opts->bytes)
         setenv("ZZUF_BYTES", opts->bytes, 1);
+    if(opts->pick)
+        setenv("ZZUF_PICK", opts->pick, 1);
     if(opts->protect)
         setenv("ZZUF_PROTECT", opts->protect, 1);
     if(opts->refuse)
@@ -427,6 +433,8 @@ static void loop_stdin(struct opts *opts)
         _zz_fuzzing(opts->fuzzing);
     if(opts->bytes)
         _zz_bytes(opts->bytes);
+    if(opts->pick)
+        _zz_pick(opts->pick);
     if(opts->protect)
         _zz_protect(opts->protect);
     if(opts->refuse)
@@ -1085,9 +1093,10 @@ static void usage(void)
     printf("              [-T seconds] [-b ranges] [-P protect] [-R refuse]\n");
 #endif
 #if defined HAVE_REGEX_H
-    printf("              [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
-#else
+    printf("              [-p descriptors] [-I include] [-E exclude]\n");
     printf("              [PROGRAM [--] [ARGS]...]\n");
+#else
+    printf("              [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
 #endif
     printf("       zzuf -h | --help\n");
     printf("       zzuf -V | --version\n");
@@ -1117,6 +1126,7 @@ static void usage(void)
     printf("  -M, --max-memory <n>      maximum child virtual memory size in MB\n");
 #endif
     printf("  -n, --network             fuzz network input\n");
+    printf("  -p, --pick <list>         only fuzz Nth descriptor with N in <list>\n");
     printf("  -P, --protect <list>      protect bytes and characters in <list>\n");
     printf("  -q, --quiet               do not print children's messages\n");
     printf("  -r, --ratio <ratio>       bit fuzzing ratio (default %g)\n", DEFAULT_RATIO);

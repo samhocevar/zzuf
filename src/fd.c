@@ -34,12 +34,17 @@
 #include "debug.h"
 #include "libzzuf.h"
 #include "fd.h"
+#include "fuzz.h"
 
 /* Regex stuff */
 #if defined HAVE_REGEX_H
 static regex_t re_include, re_exclude;
 static int has_include = 0, has_exclude = 0;
 #endif
+
+/* File descriptor cherry picking */
+static int *ranges = NULL;
+static int ranges_static[512];
 
 /* File descriptor stuff. When program is launched, we use the static array of
  * 32 structures, which ought to be enough for most programs. If it happens
@@ -49,7 +54,7 @@ static int has_include = 0, has_exclude = 0;
 #define STATIC_FILES 32
 static struct files
 {
-    int managed, locked;
+    int managed, locked, active;
     int64_t pos;
     /* Public stuff */
     struct fuzz fuzz;
@@ -87,6 +92,42 @@ void _zz_exclude(char const *regex)
 #else
     (void)regex;
 #endif
+}
+
+/* This function is the same as _zz_bytes() */
+void _zz_pick(char const *list)
+{   
+    char const *parser;
+    unsigned int i, chunks;
+
+    /* Count commas */ 
+    for(parser = list, chunks = 1; *parser; parser++)
+        if(*parser == ',')
+            chunks++;
+
+    /* TODO: free(ranges) if ranges != ranges_static */
+    if(chunks >= 256)
+        ranges = malloc((chunks + 1) * 2 * sizeof(unsigned int));
+    else
+        ranges = ranges_static;
+
+    /* Fill ranges list */ 
+    for(parser = list, i = 0; i < chunks; i++)
+    {
+        char const *comma = strchr(parser, ',');
+        char const *dash = strchr(parser, '-');
+
+        ranges[i * 2] = (dash == parser) ? 0 : atoi(parser);
+        if(dash && (dash + 1 == comma || dash[1] == '\0'))
+            ranges[i * 2 + 1] = ranges[i * 2]; /* special case */
+        else if(dash && (!comma || dash < comma))
+            ranges[i * 2 + 1] = atoi(dash + 1) + 1;
+        else
+            ranges[i * 2 + 1] = ranges[i * 2] + 1;
+        parser = comma + 1;
+    }
+
+    ranges[i * 2] = ranges[i * 2 + 1] = 0;
 }
 
 void _zz_setseed(int32_t s)
@@ -258,6 +299,26 @@ void _zz_register(int fd)
 #endif
     files[i].fuzz.uflag = 0;
 
+    /* Check whether we should ignore the fd */
+    if(ranges)
+    {
+        static int idx = 0;
+        int *r;
+
+        idx++;
+
+        for(r = ranges; r[1]; r += 2)
+            if(idx >= r[0] && (r[0] == r[1] || idx < r[1]))
+                goto range_ok;
+
+        files[i].active = 0;
+    }
+    else
+    {
+    range_ok:
+        files[i].active = 1;
+    }
+
     if(autoinc)
         seed++;
 
@@ -309,6 +370,14 @@ int _zz_islocked(int fd)
         return create_lock;
     else
         return files[fds[fd]].locked;
+}
+
+int _zz_isactive(int fd)
+{
+    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
+        return 1;
+
+    return files[fds[fd]].active;
 }
 
 int64_t _zz_getpos(int fd)

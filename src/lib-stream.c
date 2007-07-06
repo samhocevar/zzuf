@@ -175,7 +175,7 @@ FILE *NEW(freopen)(const char *path, const char *mode, FILE *stream)
         int fd; \
         LOADSYM(fn); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_iswatched(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(fn)(stream, offset, whence); \
         _zz_lock(fd); \
         ret = ORIG(fn)(stream, offset, whence); \
@@ -203,7 +203,7 @@ void NEW(rewind)(FILE *stream)
 
     LOADSYM(rewind);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
     {
         ORIG(rewind)(stream);
         return;
@@ -233,7 +233,7 @@ size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
     LOADSYM(fread);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(fread)(ptr, size, nmemb, stream);
 
     pos = ftell(stream);
@@ -294,7 +294,7 @@ size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
         int fd; \
         LOADSYM(fn); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_iswatched(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(fn)(stream); \
         _zz_lock(fd); \
         ret = ORIG(fn)(stream); \
@@ -332,7 +332,7 @@ char *NEW(fgets)(char *s, int size, FILE *stream)
     LOADSYM(fgets);
     LOADSYM(fgetc);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(fgets)(s, size, stream);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
@@ -385,7 +385,7 @@ int NEW(ungetc)(int c, FILE *stream)
 
     LOADSYM(ungetc);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(ungetc)(c, stream);
 
     _zz_lock(fd);
@@ -439,7 +439,7 @@ int NEW(fclose)(FILE *fp)
         LOADSYM(getdelim); \
         LOADSYM(fgetc); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_iswatched(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(getdelim)(lineptr, n, delim, stream); \
         line = *lineptr; \
         size = line ? *n : 0; \
@@ -521,7 +521,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     LOADSYM(fgetln);
     LOADSYM(fgetc);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(fgetln)(stream, len);
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
@@ -570,7 +570,7 @@ int NEW(__srefill)(FILE *fp)
 
     LOADSYM(__srefill);
     fd = fileno(fp);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(__srefill)(fp);
 
     _zz_lock(fd);

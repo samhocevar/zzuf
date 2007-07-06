@@ -90,6 +90,10 @@ void _zz_init(void)
     if(tmp && *tmp)
         _zz_bytes(tmp);
 
+    tmp = getenv("ZZUF_PICK");
+    if(tmp && *tmp)
+        _zz_pick(tmp);
+
     tmp = getenv("ZZUF_PROTECT");
     if(tmp && *tmp)
         _zz_protect(tmp);

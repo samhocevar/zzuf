@@ -64,6 +64,7 @@ extern void _zz_fuzzing(char const *mode)
         fuzzing = FUZZING_UNSET;
 }
 
+/* This function is the same as _zz_pick() */
 void _zz_bytes(char const *list)
 {
     char const *parser;

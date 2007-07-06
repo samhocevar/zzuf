@@ -207,7 +207,7 @@ RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
 
     LOADSYM(recv);
     ret = ORIG(recv)(s, buf, len, flags);
-    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s))
+    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s) || !_zz_isactive(s))
         return ret;
 
     if(ret > 0) 
@@ -240,7 +240,7 @@ RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
 
     LOADSYM(recvfrom);
     ret = ORIG(recvfrom)(s, buf, len, flags, from, fromlen);
-    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s))
+    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s) || !_zz_isactive(s))
         return ret;
 
     if(ret > 0) 
@@ -273,7 +273,7 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
 
     LOADSYM(recvmsg);
     ret = ORIG(recvmsg)(s, hdr, flags);
-    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s))
+    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s) || !_zz_isactive(s))
         return ret;
 
     fuzz_iovec(s, hdr->msg_iov, ret);
@@ -293,7 +293,8 @@ int NEW(read)(int fd, void *buf, unsigned int count)
 
     LOADSYM(read);
     ret = ORIG(read)(fd, buf, count);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
+         || !_zz_isactive(fd))
         return ret;
 
     if(ret > 0)
@@ -324,7 +325,8 @@ ssize_t NEW(readv)(int fd, const struct iovec *iov, int count)
 
     LOADSYM(readv);
     ret = ORIG(readv)(fd, iov, count);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
+         || !_zz_isactive(fd))
         return ret;
 
     fuzz_iovec(fd, iov, ret);
@@ -342,7 +344,8 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
 
     LOADSYM(pread);
     ret = ORIG(pread)(fd, buf, count, offset);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
+         || !_zz_isactive(fd))
         return ret;
 
     if(ret > 0)
@@ -375,7 +378,8 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
     { \
         LOADSYM(fn); \
         ret = ORIG(fn)(fd, offset, whence); \
-        if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
+             || !_zz_isactive(fd)) \
             return ret; \
         debug("%s(%i, %lli, %i) = %lli", __func__, fd, \
               (long long int)offset, whence, (long long int)ret); \
@@ -406,7 +410,7 @@ int NEW(aio_read)(struct aiocb *aiocbp)
     int fd = aiocbp->aio_fildes;
 
     LOADSYM(aio_read);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(aio_read)(aiocbp);
 
     _zz_lock(fd);
@@ -425,7 +429,7 @@ ssize_t NEW(aio_return)(struct aiocb *aiocbp)
     int fd = aiocbp->aio_fildes;
 
     LOADSYM(aio_return);
-    if(!_zz_ready || !_zz_iswatched(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(aio_return)(aiocbp);
 
     ret = ORIG(aio_return)(aiocbp);
