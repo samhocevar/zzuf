@@ -14,6 +14,7 @@ zzuf_LDFLAGS = $(MATH_LIBS) $(WINSOCK2_LIBS)
 pkglib_LTLIBRARIES = libzzuf.la
 libzzuf_la_SOURCES = libzzuf.c libzzuf.h $(COMMON) debug.c debug.h sys.c sys.h \
                      lib-fd.c lib-mem.c lib-signal.c lib-stream.c lib-load.h
+libzzuf_la_CFLAGS = -DLIBZZUF
 libzzuf_la_LDFLAGS = -avoid-version -no-undefined $(DLL_LDFLAGS)
 libzzuf_la_LIBADD = $(GETOPT_LIBS) $(DL_LIBS) $(MATH_LIBS)
 
