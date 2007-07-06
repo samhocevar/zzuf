@@ -8,7 +8,9 @@ zzuf \- multiple purpose fuzzer
 .br
        [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
 .br
-       [\fB\-b\fR \fIranges\fR] [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
+       [\fB\-p\fR \fIpick\fR] [\fB\-b\fR \fIranges\fR] [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR]
+.br
+       [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
 .br
@@ -147,6 +149,20 @@ relies on the operating system's ability to enforce such limitations.
 .TP
 \fB\-n\fR, \fB\-\-network\fR
 Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
+.TP
+\fB\-p\fR, \fB\-\-pick\fR=\fIlist\fR
+Cherry-pick the file descriptors that get fuzzed. The Nth descriptor will
+really be fuzzed only if N is in \fIlist\fR.
+
+Values start at one and ranges are inclusive. Use dashes between values and
+commas between ranges. If the right-hand part of a range is ommited, it means
+all subsequent file descriptors. For instance, to restrict fuzzing to the
+first opened descriptor and all descriptors starting from the 10th, use
+\(oq\fB\-p1,10-\fR\(cq.
+
+Note that this option only affects file descriptors that would otherwise be
+fuzzed. Even if 10 read-only descriptors are opened at the beginning of the
+program, the next write-only descriptor will be the first one.
 .TP
 \fB\-P\fR, \fB\-\-protect\fR=\fIlist\fR
 Protect a list of characters so that if they appear in input data that would
