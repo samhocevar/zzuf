@@ -32,9 +32,9 @@
 /* This function converts a string containing a list of ranges in the format
  * understood by cut(1) such as "1-5,8,10-" into a C array for lookup.
  * If more than 256 slots are required, new memory is allocated, otherwise
- * the static array ranges_static is used. It is the caller's duty to call
- * free() if the returned value is not ranges_static. */
-int *_zz_allocrange(char const *list, int *ranges_static)
+ * the static array static_ranges is used. It is the caller's duty to call
+ * free() if the returned value is not static_ranges. */
+int *_zz_allocrange(char const *list, int *static_ranges)
 {
     char const *parser;
     int *ranges;
@@ -48,7 +48,7 @@ int *_zz_allocrange(char const *list, int *ranges_static)
     if(chunks >= 256)
         ranges = malloc((chunks + 1) * 2 * sizeof(unsigned int));
     else
-        ranges = ranges_static;
+        ranges = static_ranges;
 
     /* Fill ranges list */
     for(parser = list, i = 0; i < chunks; i++)

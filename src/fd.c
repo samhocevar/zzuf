@@ -45,7 +45,7 @@ static int has_include = 0, has_exclude = 0;
 
 /* File descriptor cherry picking */
 static int *ranges = NULL;
-static int ranges_static[512];
+static int static_ranges[512];
 
 /* File descriptor stuff. When program is launched, we use the static array of
  * 32 structures, which ought to be enough for most programs. If it happens
@@ -98,8 +98,7 @@ void _zz_exclude(char const *regex)
 /* This function is the same as _zz_bytes() */
 void _zz_pick(char const *list)
 {   
-    /* TODO: free(ranges) if ranges != ranges_static */
-    ranges = _zz_allocrange(list, ranges_static);
+    ranges = _zz_allocrange(list, static_ranges);
 }
 
 void _zz_setseed(int32_t s)
@@ -190,6 +189,8 @@ void _zz_fd_fini(void)
        free(files);
     if(fds != static_fds)
         free(fds);
+    if(ranges != static_ranges)
+        free(ranges);
 }
 
 int _zz_mustwatch(char const *file)

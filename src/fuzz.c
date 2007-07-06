@@ -46,7 +46,7 @@ fuzzing;
 
 /* Per-offset byte protection */
 static int *ranges = NULL;
-static int ranges_static[512];
+static int static_ranges[512];
 
 /* Per-value byte protection */
 static int protect[256];
@@ -68,8 +68,8 @@ extern void _zz_fuzzing(char const *mode)
 /* This function is the same as _zz_pick() */
 void _zz_bytes(char const *list)
 {
-    /* TODO: free(ranges) if ranges != ranges_static */
-    ranges = _zz_allocrange(list, ranges_static);
+    /* TODO: free(ranges) if ranges != static_ranges */
+    ranges = _zz_allocrange(list, static_ranges);
 }
 
 void _zz_protect(char const *list)
