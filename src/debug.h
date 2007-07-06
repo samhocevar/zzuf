@@ -19,5 +19,9 @@
 extern void _zz_debug(const char *format, ...)
        __attribute__((__format__(__printf__, 1, 2)));
 
-#define debug _zz_debug
+#ifdef LIBZZUF
+#   define debug _zz_debug
+#else
+#   define debug(...)
+#endif
 
