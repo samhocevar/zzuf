@@ -909,18 +909,34 @@ static int run_process(struct opts *opts, int pipes[][2])
     setenv("ZZUF_MAXRATIO", buf, 1);
 
 #if defined HAVE_FORK
-    libpath = malloc(len + strlen("/.libs/" FILENAME EXTRAINFO) + 1);
+    /* Meaningless but makes sure there is space for everything */
+    libpath = malloc(len + strlen(LIBDIR "/.libs/" FILENAME EXTRAINFO) + 1);
     strcpy(libpath, opts->oldargv[0]);
 
+    /* Replace "/path/binaryname" with "/path/.libs/libzzuf.$(EXT)"
+     *     and "binaryname" with ".libs/libzzuf.$(EXT)"
+     * Write the result in libpath. */
     tmp = strrchr(libpath, '/');
     strcpy(tmp ? tmp + 1 : libpath, ".libs/" FILENAME);
-    ret = access(libpath, R_OK);
 
-    strcpy(tmp ? tmp + 1 : libpath, ".libs/" FILENAME EXTRAINFO);
-    if(ret == 0)
-        setenv(PRELOAD, libpath, 1);
-    else
-        setenv(PRELOAD, LIBDIR "/" FILENAME EXTRAINFO, 1);
+    ret = access(libpath, R_OK);
+    if(ret < 0)
+        strcpy(libpath, LIBDIR "/" FILENAME);
+
+    /* OSF1 only */
+    strcat(libpath, EXTRAINFO);
+
+    /* Do not clobber previous LD_PRELOAD values */
+    tmp = getenv(PRELOAD);
+    if(tmp && *tmp)
+    {
+        char *bigbuf = malloc(strlen(tmp) + strlen(libpath) + 2);
+        sprintf(bigbuf, "%s:%s", tmp, libpath);
+        free(libpath);
+        libpath = bigbuf;
+    }
+
+    setenv(PRELOAD, libpath, 1);
     free(libpath);
 
     if(execvp(opts->newargv[0], opts->newargv))
