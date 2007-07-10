@@ -6,7 +6,7 @@ zzuf \- multiple purpose fuzzer
 .br
        [\fB\-f\fR \fIfuzzing\fR] [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
 .br
-       [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
+       [\fB\-t\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
 .br
        [\fB\-p\fR \fIpick\fR] [\fB\-b\fR \fIranges\fR] [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR]
 .br
@@ -59,7 +59,7 @@ portion of a file.
 \fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
 Automatically terminate child processes that output more than \fIn\fR bytes
 on the standard output and standard error channels. This is useful to detect
-infinite loops. See also the \fB\-T\fR flag.
+infinite loops. See also the \fB\-t\fR flag.
 .TP
 \fB\-c\fR, \fB\-\-cmdline\fR
 Only fuzz files whose name is specified in the target application's command
@@ -255,7 +255,7 @@ simply crash. If you do not want core dumps, you should set appropriate limits
 with the \fBlimit coredumpsize\fR command. See your shell's documentation on
 how to set such limits.
 .TP
-\fB\-T\fR, \fB\-\-max\-time\fR=\fIn\fR
+\fB\-t\fR, \fB\-\-max\-time\fR=\fIn\fR
 Automatically terminate child processes that run for more than \fIn\fR
 seconds. This is useful to detect infinite loops or processes stuck in other
 situations. See also the \fB\-B\fR flag.

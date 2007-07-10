@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 #   define OPTSTR_RLIMIT_MEM ""
 #endif
 #define OPTSTR OPTSTR_REGEX OPTSTR_RLIMIT_MEM \
-            "Ab:B:C:dD:f:F:imnp:P:qr:R:s:ST:vxhV"
+            "Ab:B:C:dD:f:F:imnp:P:qr:R:s:St:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
             { "refuse",      1, NULL, 'R' },
             { "seed",        1, NULL, 's' },
             { "signal",      0, NULL, 'S' },
-            { "max-time",    1, NULL, 'T' },
+            { "max-time",    1, NULL, 't' },
             { "verbose",     0, NULL, 'v' },
             { "check-exit",  0, NULL, 'x' },
             { "help",        0, NULL, 'h' },
@@ -306,7 +306,7 @@ int main(int argc, char *argv[])
         case 'S': /* --signal */
             setenv("ZZUF_SIGNAL", "1", 1);
             break;
-        case 'T': /* --max-time */
+        case 't': /* --max-time */
             opts->maxtime = (int64_t)(atof(myoptarg) * 1000000.0);
             break;
         case 'x': /* --check-exit */
@@ -1110,9 +1110,9 @@ static void usage(void)
 #endif
     printf("              [-f fuzzing] [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
-    printf("              [-T seconds] [-M bytes] [-b ranges] [-P protect] [-R refuse]\n");
+    printf("              [-t seconds] [-M bytes] [-b ranges] [-P protect] [-R refuse]\n");
 #else
-    printf("              [-T seconds] [-b ranges] [-P protect] [-R refuse]\n");
+    printf("              [-t seconds] [-b ranges] [-P protect] [-R refuse]\n");
 #endif
 #if defined HAVE_REGEX_H
     printf("              [-p descriptors] [-I include] [-E exclude]\n");
@@ -1157,7 +1157,7 @@ static void usage(void)
     printf("  -s, --seed <seed>         random seed (default %i)\n", DEFAULT_SEED);
     printf("      --seed <start:stop>   specify a seed range\n");
     printf("  -S, --signal              prevent children from diverting crashing signals\n");
-    printf("  -T, --max-time <n>        kill children that run for more than <n> seconds\n");
+    printf("  -t, --max-time <n>        kill children that run for more than <n> seconds\n");
     printf("  -v, --verbose             print information during the run\n");
     printf("  -x, --check-exit          report processes that exit with a non-zero status\n");
     printf("  -h, --help                display this help and exit\n");
