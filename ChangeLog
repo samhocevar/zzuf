@@ -1,4 +1,81 @@
 ------------------------------------------------------------------------
+r296 | sam | 2007-07-10 01:51:49 +0200 (Tue, 10 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/AUTHORS
+   M /trunk/src/zzuf.c
+
+  * Do not clobber LD_PRELOAD, patch by Sami Liedes. Heavily rewritten.
+
+------------------------------------------------------------------------
+r295 | sam | 2007-07-06 22:47:51 +0200 (Fri, 06 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/src/fuzz.c
+   M /trunk/src/ranges.c
+
+  * Renamed ranges_static into static_ranges.
+
+------------------------------------------------------------------------
+r294 | sam | 2007-07-06 22:47:38 +0200 (Fri, 06 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Documented -p/--pick in the man page.
+
+------------------------------------------------------------------------
+r293 | sam | 2007-07-06 16:39:39 +0200 (Fri, 06 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   M /trunk/src/fd.c
+   M /trunk/src/fuzz.c
+   A /trunk/src/ranges.c
+   A /trunk/src/ranges.h
+
+  * Factored common range-parsing code.
+
+------------------------------------------------------------------------
+r292 | sam | 2007-07-06 15:40:55 +0200 (Fri, 06 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/src/fd.h
+   M /trunk/src/fuzz.c
+   M /trunk/src/fuzz.h
+   M /trunk/src/lib-fd.c
+   M /trunk/src/lib-mem.c
+   M /trunk/src/lib-stream.c
+   M /trunk/src/libzzuf.c
+   M /trunk/src/opts.c
+   M /trunk/src/opts.h
+   M /trunk/src/zzuf.c
+
+  * Added -p flag to cherry pick file descriptors that get fuzzed.
+
+------------------------------------------------------------------------
+r291 | sam | 2007-07-06 15:34:38 +0200 (Fri, 06 Jul 2007) | 3 lines
+Changed paths:
+   M /trunk/src/debug.h
+
+  * Allow to use debug() everywhere in the code; it'll just do nothing in
+    zzuf itself, and will only output stuff in the library.
+
+------------------------------------------------------------------------
+r290 | sam | 2007-07-06 15:31:23 +0200 (Fri, 06 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+  * Add -DLIBZZUF to the libzzuf build.
+
+------------------------------------------------------------------------
+r289 | sam | 2007-03-02 00:57:14 +0100 (Fri, 02 Mar 2007) | 3 lines
+Changed paths:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+   M /trunk/configure.ac
+
+  * Version 0.8.1.
+  * Updated NEWS and ChangeLog.
+
+------------------------------------------------------------------------
 r288 | sam | 2007-03-02 00:53:51 +0100 (Fri, 02 Mar 2007) | 2 lines
 Changed paths:
    M /trunk/src/lib-fd.c
