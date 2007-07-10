@@ -76,13 +76,19 @@
 #endif
 
 #if defined RLIMIT_AS
-#   define ZZUF_RLIMIT_CONST RLIMIT_AS
+#   define ZZUF_RLIMIT_MEM RLIMIT_AS
 #elif defined RLIMIT_VMEM
-#   define ZZUF_RLIMIT_CONST RLIMIT_VMEM
+#   define ZZUF_RLIMIT_MEM RLIMIT_VMEM
 #elif defined RLIMIT_DATA
-#   define ZZUF_RLIMIT_CONST RLIMIT_DATA
+#   define ZZUF_RLIMIT_MEM RLIMIT_DATA
 #else
-#   undef HAVE_SETRLIMIT
+#   undef ZZUF_RLIMIT_MEM
+#endif
+
+#if defined RLIMIT_CPU
+#   define ZZUF_RLIMIT_CPU RLIMIT_CPU
+#else
+#   undef ZZUF_RLIMIT_CPU
 #endif
 
 /* We use file descriptor 17 as the debug channel */
@@ -151,12 +157,12 @@ int main(int argc, char *argv[])
 #else
 #   define OPTSTR_REGEX ""
 #endif
-#if defined HAVE_SETRLIMIT
-#   define OPTSTR_RLIMIT "M:"
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
+#   define OPTSTR_RLIMIT_MEM "M:"
 #else
-#   define OPTSTR_RLIMIT ""
+#   define OPTSTR_RLIMIT_MEM ""
 #endif
-#define OPTSTR OPTSTR_REGEX OPTSTR_RLIMIT \
+#define OPTSTR OPTSTR_REGEX OPTSTR_RLIMIT_MEM \
             "Ab:B:C:dD:f:F:imnp:P:qr:R:s:ST:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
@@ -266,7 +272,7 @@ int main(int argc, char *argv[])
         case 'm': /* --md5 */
             opts->md5 = 1;
             break;
-#if defined HAVE_SETRLIMIT
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
         case 'M': /* --max-memory */
             setenv("ZZUF_MEMORY", "1", 1);
             opts->maxmem = atoi(myoptarg);
@@ -890,13 +896,13 @@ static int run_process(struct opts *opts, int pipes[][2])
     }
 #endif
 
-#if defined HAVE_SETRLIMIT
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
     if(opts->maxmem >= 0)
     {
         struct rlimit rlim;
         rlim.rlim_cur = opts->maxmem * 1000000;
         rlim.rlim_max = opts->maxmem * 1000000;
-        setrlimit(ZZUF_RLIMIT_CONST, &rlim);
+        setrlimit(ZZUF_RLIMIT_MEM, &rlim);
     }
 #endif
 
@@ -1103,7 +1109,7 @@ static void usage(void)
     printf("Usage: zzuf [-AdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
 #endif
     printf("              [-f fuzzing] [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
-#if defined HAVE_SETRLIMIT
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
     printf("              [-T seconds] [-M bytes] [-b ranges] [-P protect] [-R refuse]\n");
 #else
     printf("              [-T seconds] [-b ranges] [-P protect] [-R refuse]\n");
@@ -1138,7 +1144,7 @@ static void usage(void)
     printf("  -I, --include <regex>     only fuzz files matching <regex>\n");
 #endif
     printf("  -m, --md5                 compute the output's MD5 hash\n");
-#if defined HAVE_SETRLIMIT
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
     printf("  -M, --max-memory <n>      maximum child virtual memory size in MB\n");
 #endif
     printf("  -n, --network             fuzz network input\n");
