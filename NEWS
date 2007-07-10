@@ -3,6 +3,7 @@ $Id$
 Changes from 0.8.1 to 0.9
 
  * support for cherry-picking fuzzed descriptors
+ * support for CPU time limits
  * do not interfere with LD_PRELOAD mechanisms
 
 Changes from 0.8 to 0.8.1

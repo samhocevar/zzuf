@@ -1,4 +1,60 @@
 ------------------------------------------------------------------------
+r303 | sam | 2007-07-10 17:42:37 +0200 (Tue, 10 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Documented the new -T / --max-cpu flag.
+
+------------------------------------------------------------------------
+r302 | sam | 2007-07-10 17:31:40 +0200 (Tue, 10 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * -M is megabytes, not bytes. Fixed --help output.
+
+------------------------------------------------------------------------
+r301 | sam | 2007-07-10 17:23:18 +0200 (Tue, 10 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/src/opts.c
+   M /trunk/src/opts.h
+   M /trunk/src/zzuf.c
+
+  * Implemented -T / --max-cpu for max CPU time limits.
+
+------------------------------------------------------------------------
+r300 | sam | 2007-07-10 16:30:13 +0200 (Tue, 10 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+   M /trunk/src/zzuf.c
+
+  * Rename -T to -t. -T will be the CPU time limit.
+
+------------------------------------------------------------------------
+r299 | sam | 2007-07-10 16:26:08 +0200 (Tue, 10 Jul 2007) | 3 lines
+Changed paths:
+   M /trunk/src/zzuf.c
+
+  * Rename ZZUF_RLIMIT_CONST into ZZUF_RLIMIT_MEM because we're going to have
+    the _CPU one as well.
+
+------------------------------------------------------------------------
+r298 | sam | 2007-07-10 11:01:12 +0200 (Tue, 10 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Correct thinko in manpage.
+
+------------------------------------------------------------------------
+r297 | sam | 2007-07-10 02:24:35 +0200 (Tue, 10 Jul 2007) | 3 lines
+Changed paths:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+   M /trunk/configure.ac
+
+  * Version 0.9.
+  * Updated NEWS and ChangeLog.
+
+------------------------------------------------------------------------
 r296 | sam | 2007-07-10 01:51:49 +0200 (Tue, 10 Jul 2007) | 2 lines
 Changed paths:
    M /trunk/AUTHORS
