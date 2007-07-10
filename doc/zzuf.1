@@ -6,9 +6,9 @@ zzuf \- multiple purpose fuzzer
 .br
        [\fB\-f\fR \fIfuzzing\fR] [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
 .br
-       [\fB\-t\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR]
+       [\fB\-t\fR \fIseconds\fR] [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-b\fR \fIranges\fR]
 .br
-       [\fB\-p\fR \fIpick\fR] [\fB\-b\fR \fIranges\fR] [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR]
+       [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR] [\fB\-p\fR \fIpick\fR] [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR]
 .br
        [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
 .br
@@ -59,7 +59,7 @@ portion of a file.
 \fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
 Automatically terminate child processes that output more than \fIn\fR bytes
 on the standard output and standard error channels. This is useful to detect
-infinite loops. See also the \fB\-t\fR flag.
+infinite loops. See also the \fB\-t\fR and \fB\-T\fR flags.
 .TP
 \fB\-c\fR, \fB\-\-cmdline\fR
 Only fuzz files whose name is specified in the target application's command
@@ -258,7 +258,21 @@ how to set such limits.
 \fB\-t\fR, \fB\-\-max\-time\fR=\fIn\fR
 Automatically terminate child processes that run for more than \fIn\fR
 seconds. This is useful to detect infinite loops or processes stuck in other
-situations. See also the \fB\-B\fR flag.
+situations. See also the \fB\-B\fR and \fB\-T\fR flags.
+.TP
+\fB\-T\fR, \fB\-\-max\-cpu\fR=\fIn\fR
+Automatically terminate child processes that use more than \fIn\fR seconds
+of CPU time.
+
+\fBzzuf\fR uses the \fBsetrlimit\fR() call to set CPU usage limitations and
+relies on the operating system's ability to enforce such limitations. If the
+system sends \fBSIGXCPU\fR signals and the application catches that signal,
+it will receive a \fBSIGKILL\fR signal after 5 seconds.
+
+This is more accurate than \fB\-t\fR because the behaviour should be
+independent from the system load, but it does not detect processes stuck into
+infinite \fBselect\fR() calls because they use very little CPU time. See also
+the \fB\-B\fR and \fB\-t\fR flags.
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR
 Print information during the run, such as the current seed, what processes
