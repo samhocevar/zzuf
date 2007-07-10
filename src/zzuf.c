@@ -1144,15 +1144,15 @@ static void usage(void)
     printf(                           "[-T seconds] ");
 #endif
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
-    printf(                                        "[-M bytes] ");
+    printf(                                        "[-M megabytes] ");
 #endif
-    printf(                                                   "[-b ranges] [-P protect]\n");
-    printf("              [-R refuse] [-p descriptors] ");
+    printf(                                                       "[-b ranges]\n");
+    printf("              [-P protect] [-R refuse] [-p pick]");
 #if defined HAVE_REGEX_H
-    printf(                                           "[-I include] [-E exclude]\n");
-    printf("              ");
+    printf(                                                " [-I include] [-E exclude]");
 #endif
-    printf(              "[PROGRAM [--] [ARGS]...]\n");
+    printf("\n");
+    printf("              [PROGRAM [--] [ARGS]...]\n");
     printf("       zzuf -h | --help\n");
     printf("       zzuf -V | --version\n");
     printf("Run PROGRAM with optional arguments ARGS and fuzz its input.\n");
