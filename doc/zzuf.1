@@ -161,8 +161,9 @@ first opened descriptor and all descriptors starting from the 10th, use
 \(oq\fB\-p1,10-\fR\(cq.
 
 Note that this option only affects file descriptors that would otherwise be
-fuzzed. Even if 10 read-only descriptors are opened at the beginning of the
-program, the next write-only descriptor will be the first one.
+fuzzed. Even if 10 write-only descriptors are opened at the beginning of the
+program, the next read-write or read-only descriptor will be the first one
+considered by the \fB\-p\fR flag.
 .TP
 \fB\-P\fR, \fB\-\-protect\fR=\fIlist\fR
 Protect a list of characters so that if they appear in input data that would
