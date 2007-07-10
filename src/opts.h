@@ -27,6 +27,7 @@ struct opts
     double maxratio;
     int quiet;
     int maxbytes;
+    int maxcpu;
     int md5;
     int checkexit;
     int verbose;

@@ -162,8 +162,13 @@ int main(int argc, char *argv[])
 #else
 #   define OPTSTR_RLIMIT_MEM ""
 #endif
-#define OPTSTR OPTSTR_REGEX OPTSTR_RLIMIT_MEM \
-            "Ab:B:C:dD:f:F:imnp:P:qr:R:s:St:vxhV"
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
+#   define OPTSTR_RLIMIT_CPU "T:"
+#else
+#   define OPTSTR_RLIMIT_CPU ""
+#endif
+#define OPTSTR OPTSTR_REGEX OPTSTR_RLIMIT_MEM OPTSTR_RLIMIT_CPU \
+                "Ab:B:C:dD:f:F:imnp:P:qr:R:s:St:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
@@ -198,6 +203,7 @@ int main(int argc, char *argv[])
             { "seed",        1, NULL, 's' },
             { "signal",      0, NULL, 'S' },
             { "max-time",    1, NULL, 't' },
+            { "max-cpu",     1, NULL, 'T' },
             { "verbose",     0, NULL, 'v' },
             { "check-exit",  0, NULL, 'x' },
             { "help",        0, NULL, 'h' },
@@ -309,6 +315,11 @@ int main(int argc, char *argv[])
         case 't': /* --max-time */
             opts->maxtime = (int64_t)(atof(myoptarg) * 1000000.0);
             break;
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
+        case 'T': /* --max-cpu */
+            opts->maxcpu = (int)(atof(myoptarg) + 0.5);
+            break;
+#endif
         case 'x': /* --check-exit */
             opts->checkexit = 1;
             break;
@@ -705,11 +716,20 @@ static void clean_children(struct opts *opts)
                  && !(WTERMSIG(status) == SIGTERM
                        && opts->child[i].status == STATUS_SIGTERM))
         {
+            char const *message = "";
+
+            if(WTERMSIG(status) == SIGKILL && opts->maxmem >= 0)
+                message = " (memory exceeded?)";
+#   if defined SIGXCPU
+            else if(WTERMSIG(status) == SIGXCPU && opts->maxcpu >= 0)
+                message = " (CPU time exceeded?)";
+#   endif
+            else if(WTERMSIG(status) == SIGKILL && opts->maxcpu >= 0)
+                message = " (CPU time exceeded?)";
+
             finfo(stderr, opts, opts->child[i].seed);
             fprintf(stderr, "signal %i%s%s\n",
-                    WTERMSIG(status), sig2str(WTERMSIG(status)),
-                      (WTERMSIG(status) == SIGKILL && opts->maxmem >= 0) ?
-                      " (memory exceeded?)" : "");
+                    WTERMSIG(status), sig2str(WTERMSIG(status)), message);
             opts->crashes++;
         }
 #endif
@@ -903,6 +923,16 @@ static int run_process(struct opts *opts, int pipes[][2])
         rlim.rlim_cur = opts->maxmem * 1000000;
         rlim.rlim_max = opts->maxmem * 1000000;
         setrlimit(ZZUF_RLIMIT_MEM, &rlim);
+    }
+#endif
+
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
+    if(opts->maxcpu >= 0)
+    {
+        struct rlimit rlim;
+        rlim.rlim_cur = opts->maxcpu;
+        rlim.rlim_max = opts->maxcpu + 5;
+        setrlimit(ZZUF_RLIMIT_CPU, &rlim);
     }
 #endif
 
@@ -1109,17 +1139,20 @@ static void usage(void)
     printf("Usage: zzuf [-AdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
 #endif
     printf("              [-f fuzzing] [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
+    printf("              [-t seconds] ");
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
+    printf(                           "[-T seconds] ");
+#endif
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
-    printf("              [-t seconds] [-M bytes] [-b ranges] [-P protect] [-R refuse]\n");
-#else
-    printf("              [-t seconds] [-b ranges] [-P protect] [-R refuse]\n");
+    printf(                                        "[-M bytes] ");
 #endif
+    printf(                                                   "[-b ranges] [-P protect]\n");
+    printf("              [-R refuse] [-p descriptors] ");
 #if defined HAVE_REGEX_H
-    printf("              [-p descriptors] [-I include] [-E exclude]\n");
-    printf("              [PROGRAM [--] [ARGS]...]\n");
-#else
-    printf("              [-I include] [-E exclude] [PROGRAM [--] [ARGS]...]\n");
+    printf(                                           "[-I include] [-E exclude]\n");
+    printf("              ");
 #endif
+    printf(              "[PROGRAM [--] [ARGS]...]\n");
     printf("       zzuf -h | --help\n");
     printf("       zzuf -V | --version\n");
     printf("Run PROGRAM with optional arguments ARGS and fuzz its input.\n");
@@ -1158,6 +1191,7 @@ static void usage(void)
     printf("      --seed <start:stop>   specify a seed range\n");
     printf("  -S, --signal              prevent children from diverting crashing signals\n");
     printf("  -t, --max-time <n>        kill children that run for more than <n> seconds\n");
+    printf("  -T, --max-cpu <n>         kill children that use more than <n> CPU seconds\n");
     printf("  -v, --verbose             print information during the run\n");
     printf("  -x, --check-exit          report processes that exit with a non-zero status\n");
     printf("  -h, --help                display this help and exit\n");

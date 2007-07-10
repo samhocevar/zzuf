@@ -45,6 +45,7 @@ void _zz_opts_init(struct opts *opts)
     opts->verbose = 0;
     opts->maxmem = -1;
     opts->maxtime = -1;
+    opts->maxcpu = -1;
     opts->delay = 0;
     opts->lastlaunch = 0;
 
