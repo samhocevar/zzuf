@@ -82,6 +82,10 @@ static int     (*ORIG(open64))  (const char *file, int oflag, ...);
 static int     (*ORIG(accept))  (int sockfd, struct sockaddr *addr,
                                  SOCKLEN_T *addrlen);
 #endif
+#if defined HAVE_BIND
+static int     (*ORIG(bind))    (int sockfd, const struct sockaddr *my_addr,
+                                 SOCKLEN_T addrlen);
+#endif
 #if defined HAVE_SOCKET
 static int     (*ORIG(socket))  (int domain, int type, int protocol);
 #endif
@@ -172,7 +176,29 @@ int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 
     if(ret >= 0)
     {
-        debug("%s(%i, %p, %p) = %i", __func__, sockfd, addr, addrlen, ret);
+        debug("%s(%i, %p, &%i) = %i", __func__,
+              sockfd, addr, (int)*addrlen, ret);
+        _zz_register(ret);
+    }
+
+    return ret;
+}
+#endif
+
+#if defined HAVE_BIND
+int NEW(bind)(int sockfd, const struct sockaddr *my_addr, SOCKLEN_T addrlen)
+{
+    int ret;
+
+    LOADSYM(bind);
+    ret = ORIG(bind)(sockfd, my_addr, addrlen);
+    if(!_zz_ready || _zz_islocked(-1) || !_zz_network)
+        return ret;
+
+    if(ret >= 0)
+    {
+        debug("%s(%i, %p, %i) = %i", __func__,
+              sockfd, my_addr, (int)addrlen, ret);
         _zz_register(ret);
     }
 
@@ -251,12 +277,13 @@ RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
         _zz_addpos(s, ret);
 
         if(ret >= 4)
-            debug("%s(%i, %p, %li, 0x%x, %p, %p) = %i \"%c%c%c%c...", __func__,
-                  s, buf, (long int)len, flags, from, fromlen, ret,
-                  b[0], b[1], b[2], b[3]);
+            debug("%s(%i, %p, %li, 0x%x, %p, &%i) = %i \"%c%c%c%c...",
+                  __func__, s, buf, (long int)len, flags, from, (int)*fromlen,
+                  ret, b[0], b[1], b[2], b[3]);
         else
-            debug("%s(%i, %p, %li, 0x%x, %p, %p) = %i \"%c...", __func__,
-                  s, buf, (long int)len, flags, from, fromlen, ret, b[0]);
+            debug("%s(%i, %p, %li, 0x%x, %p, &%i) = %i \"%c...",
+                  __func__, s, buf, (long int)len, flags, from, (int)*fromlen,
+                  ret, b[0]);
     }
     else
         debug("%s(%i, %p, %li, 0x%x, %p, %p) = %i", __func__,
