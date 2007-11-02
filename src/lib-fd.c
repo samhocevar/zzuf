@@ -89,6 +89,10 @@ static int     (*ORIG(accept))  (int sockfd, struct sockaddr *addr,
 static int     (*ORIG(bind))    (int sockfd, const struct sockaddr *my_addr,
                                  SOCKLEN_T addrlen);
 #endif
+#if defined HAVE_CONNECT
+static int     (*ORIG(connect)) (int sockfd, const struct sockaddr *serv_addr,
+                                 SOCKLEN_T addrlen);
+#endif
 #if defined HAVE_SOCKET
 static int     (*ORIG(socket))  (int domain, int type, int protocol);
 #endif
@@ -224,6 +228,48 @@ int NEW(bind)(int sockfd, const struct sockaddr *my_addr, SOCKLEN_T addrlen)
 
         debug("%s(%i, %p, %i) = %i", __func__,
               sockfd, my_addr, (int)addrlen, ret);
+    }
+
+    return ret;
+}
+#endif
+
+#if defined HAVE_CONNECT
+int NEW(connect)(int sockfd, const struct sockaddr *serv_addr,
+                 SOCKLEN_T addrlen)
+{
+    int ret;
+
+    LOADSYM(connect);
+    ret = ORIG(connect)(sockfd, serv_addr, addrlen);
+    if(!_zz_ready || _zz_islocked(-1) || !_zz_network)
+        return ret;
+
+    if(ret >= 0)
+    {
+        const struct sockaddr_in* in = (const struct sockaddr_in *)serv_addr;
+        long int port;
+
+        switch(serv_addr->sa_family)
+        {
+        case AF_INET:
+#if defined AF_INET6
+        case AF_INET6:
+#endif
+        case AF_UNSPEC:
+            port = ntohs(in->sin_port);
+            if(!_zz_portwatched(port))
+            {
+                _zz_unregister(sockfd);
+                return ret;
+            }
+            break;
+        default:
+            break;
+        }
+
+        debug("%s(%i, %p, %i) = %i", __func__,
+              sockfd, serv_addr, (int)addrlen, ret);
     }
 
     return ret;
