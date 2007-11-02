@@ -23,6 +23,7 @@ case "${host_os}" in
     ac_cv_func_socket=yes
     ac_cv_func_accept=yes
     ac_cv_func_bind=yes
+    ac_cv_func_connect=yes
     ;;
 esac
 AC_SUBST(WINSOCK2_LIBS)
@@ -31,7 +32,7 @@ AC_SUBST(DLL_LDFLAGS)
 AC_CHECK_HEADERS(windows.h winsock2.h io.h process.h unistd.h inttypes.h stdint.h getopt.h libc.h malloc.h dlfcn.h regex.h sys/socket.h netinet/in.h sys/uio.h aio.h sys/mman.h sys/wait.h sys/resource.h sys/time.h endian.h)
 
 AC_CHECK_FUNCS(setenv waitpid setrlimit gettimeofday fork kill pipe _pipe)
-AC_CHECK_FUNCS(open64 lseek64 mmap64 fopen64 fseeko _IO_getc getline getdelim __getdelim fgetln __srefill map_fd memalign posix_memalign aio_read accept bind socket readv pread recv recvfrom recvmsg mmap valloc sigaction getpagesize)
+AC_CHECK_FUNCS(open64 lseek64 mmap64 fopen64 fseeko _IO_getc getline getdelim __getdelim fgetln __srefill map_fd memalign posix_memalign aio_read accept bind connect socket readv pread recv recvfrom recvmsg mmap valloc sigaction getpagesize)
 
 AC_CHECK_TYPES(sighandler_t, [], [],
   [#define _GNU_SOURCE
