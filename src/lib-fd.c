@@ -43,6 +43,9 @@
 #if defined HAVE_SYS_SOCKET_H
 #   include <sys/socket.h>
 #endif
+#if defined HAVE_NETINET_IN_H
+#   include <netinet/in.h>
+#endif
 #if defined HAVE_SYS_UIO_H
 #   include <sys/uio.h>
 #endif
@@ -171,7 +174,8 @@ int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 
     LOADSYM(accept);
     ret = ORIG(accept)(sockfd, addr, addrlen);
-    if(!_zz_ready || _zz_islocked(-1) || !_zz_network)
+    if(!_zz_ready || _zz_islocked(-1) || !_zz_network
+         || !_zz_iswatched(sockfd) || !_zz_isactive(sockfd))
         return ret;
 
     if(ret >= 0)
@@ -197,9 +201,32 @@ int NEW(bind)(int sockfd, const struct sockaddr *my_addr, SOCKLEN_T addrlen)
 
     if(ret >= 0)
     {
+        const struct sockaddr_in* in = (const struct sockaddr_in *)my_addr;
+        long int port;
+
+        switch(my_addr->sa_family)
+        {
+        case AF_INET:
+#if defined AF_INET6
+        case AF_INET6:
+#endif
+#if defined AF_UNIX
+        case AF_UNIX:
+#endif
+        case AF_UNSPEC:
+            port = ntohs(in->sin_port);
+            if(!_zz_portwatched(port))
+            {
+                _zz_unregister(sockfd);
+                return ret;
+            }
+            break;
+        default:
+            break;
+        }
+
         debug("%s(%i, %p, %i) = %i", __func__,
               sockfd, my_addr, (int)addrlen, ret);
-        _zz_register(ret);
     }
 
     return ret;

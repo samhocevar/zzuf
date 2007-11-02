@@ -43,9 +43,13 @@ static regex_t re_include, re_exclude;
 static int has_include = 0, has_exclude = 0;
 #endif
 
+/* Network port cherry picking */
+static int *ports = NULL;
+static int static_ports[512];
+
 /* File descriptor cherry picking */
-static int *ranges = NULL;
-static int static_ranges[512];
+static int *list = NULL;
+static int static_list[512];
 
 /* File descriptor stuff. When program is launched, we use the static array of
  * 32 structures, which ought to be enough for most programs. If it happens
@@ -95,10 +99,14 @@ void _zz_exclude(char const *regex)
 #endif
 }
 
-/* This function is the same as _zz_bytes() */
-void _zz_pick(char const *list)
+void _zz_ports(char const *list)
 {   
-    ranges = _zz_allocrange(list, static_ranges);
+    ports = _zz_allocrange(list, static_ports);
+}
+
+void _zz_list(char const *list)
+{   
+    list = _zz_allocrange(list, static_list);
 }
 
 void _zz_setseed(int32_t s)
@@ -189,8 +197,10 @@ void _zz_fd_fini(void)
        free(files);
     if(fds != static_fds)
         free(fds);
-    if(ranges != static_ranges)
-        free(ranges);
+    if(list != static_list)
+        free(list);
+    if(ports != static_ports)
+        free(ports);
 }
 
 int _zz_mustwatch(char const *file)
@@ -214,6 +224,11 @@ int _zz_iswatched(int fd)
         return 0;
 
     return 1;
+}
+
+int _zz_portwatched(int port)
+{
+    return _zz_isinrange(port, ports);
 }
 
 void _zz_register(int fd)
@@ -273,11 +288,11 @@ void _zz_register(int fd)
     files[i].fuzz.uflag = 0;
 
     /* Check whether we should ignore the fd */
-    if(ranges)
+    if(list)
     {
         static int idx = 0;
 
-        files[i].active = _zz_isinrange(++idx, ranges);
+        files[i].active = _zz_isinrange(++idx, list);
     }
     else
         files[i].active = 1;

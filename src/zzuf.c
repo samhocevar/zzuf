@@ -146,6 +146,7 @@ int main(int argc, char *argv[])
     char *include = NULL, *exclude = NULL;
     int cmdline = 0;
 #endif
+    int network = 0;
     int i;
 
     _zz_opts_init(opts);
@@ -168,7 +169,7 @@ int main(int argc, char *argv[])
 #   define OPTSTR_RLIMIT_CPU ""
 #endif
 #define OPTSTR OPTSTR_REGEX OPTSTR_RLIMIT_MEM OPTSTR_RLIMIT_CPU \
-                "Ab:B:C:dD:f:F:imnp:P:qr:R:s:St:vxhV"
+                "Ab:B:C:dD:f:F:il:mnp:P:qr:R:s:St:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
@@ -192,10 +193,11 @@ int main(int argc, char *argv[])
 #if defined HAVE_REGEX_H
             { "include",     1, NULL, 'I' },
 #endif
+            { "list",        1, NULL, 'l' },
             { "md5",         0, NULL, 'm' },
             { "max-memory",  1, NULL, 'M' },
             { "network",     0, NULL, 'n' },
-            { "pick",        1, NULL, 'p' },
+            { "ports",       1, NULL, 'p' },
             { "protect",     1, NULL, 'P' },
             { "quiet",       0, NULL, 'q' },
             { "ratio",       1, NULL, 'r' },
@@ -275,6 +277,9 @@ int main(int argc, char *argv[])
             }
             break;
 #endif
+        case 'l': /* --list */
+            opts->list = myoptarg;
+            break;
         case 'm': /* --md5 */
             opts->md5 = 1;
             break;
@@ -286,9 +291,10 @@ int main(int argc, char *argv[])
 #endif
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
+            network = 1;
             break;
-        case 'p': /* --pick */
-            opts->pick = myoptarg;
+        case 'p': /* --ports */
+            opts->ports = myoptarg;
             break;
         case 'P': /* --protect */
             opts->protect = myoptarg;
@@ -340,6 +346,15 @@ int main(int argc, char *argv[])
             _zz_opts_fini(opts);
             return EXIT_FAILURE;
         }
+    }
+
+    if(opts->ports && !network)
+    {
+        fprintf(stderr, "%s: port option (-p) requires network fuzzing (-n)\n",
+                argv[0]);
+        printf(MOREINFO, argv[0]);
+        _zz_opts_fini(opts);
+        return EXIT_FAILURE;
     }
 
     _zz_setratio(opts->minratio, opts->maxratio);
@@ -396,8 +411,10 @@ int main(int argc, char *argv[])
         setenv("ZZUF_FUZZING", opts->fuzzing, 1);
     if(opts->bytes)
         setenv("ZZUF_BYTES", opts->bytes, 1);
-    if(opts->pick)
-        setenv("ZZUF_PICK", opts->pick, 1);
+    if(opts->list)
+        setenv("ZZUF_LIST", opts->list, 1);
+    if(opts->ports)
+        setenv("ZZUF_PORTS", opts->ports, 1);
     if(opts->protect)
         setenv("ZZUF_PROTECT", opts->protect, 1);
     if(opts->refuse)
@@ -450,8 +467,10 @@ static void loop_stdin(struct opts *opts)
         _zz_fuzzing(opts->fuzzing);
     if(opts->bytes)
         _zz_bytes(opts->bytes);
-    if(opts->pick)
-        _zz_pick(opts->pick);
+    if(opts->list)
+        _zz_list(opts->list);
+    if(opts->ports)
+        _zz_ports(opts->ports);
     if(opts->protect)
         _zz_protect(opts->protect);
     if(opts->refuse)
@@ -1146,8 +1165,8 @@ static void usage(void)
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
     printf(                                        "[-M megabytes] ");
 #endif
-    printf(                                                       "[-b ranges]\n");
-    printf("              [-P protect] [-R refuse] [-p pick]");
+    printf(                                                       "[-b ranges] [-p ports]\n");
+    printf("              [-P protect] [-R refuse] [-l list]");
 #if defined HAVE_REGEX_H
     printf(                                                " [-I include] [-E exclude]");
 #endif
@@ -1176,12 +1195,13 @@ static void usage(void)
 #if defined HAVE_REGEX_H
     printf("  -I, --include <regex>     only fuzz files matching <regex>\n");
 #endif
+    printf("  -l, --list <list>         only fuzz Nth descriptor with N in <list>\n");
     printf("  -m, --md5                 compute the output's MD5 hash\n");
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
     printf("  -M, --max-memory <n>      maximum child virtual memory size in MB\n");
 #endif
     printf("  -n, --network             fuzz network input\n");
-    printf("  -p, --pick <list>         only fuzz Nth descriptor with N in <list>\n");
+    printf("  -p, --ports <list>        only fuzz network destination ports in <list>\n");
     printf("  -P, --protect <list>      protect bytes and characters in <list>\n");
     printf("  -q, --quiet               do not print children's messages\n");
     printf("  -r, --ratio <ratio>       bit fuzzing ratio (default %g)\n", DEFAULT_RATIO);

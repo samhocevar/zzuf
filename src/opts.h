@@ -20,7 +20,7 @@ struct opts
 {
     char **oldargv;
     char **newargv;
-    char *fuzzing, *bytes, *pick, *protect, *refuse;
+    char *fuzzing, *bytes, *list, *ports, *protect, *refuse;
     uint32_t seed;
     uint32_t endseed;
     double minratio;
