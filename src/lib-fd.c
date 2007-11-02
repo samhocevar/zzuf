@@ -210,9 +210,6 @@ int NEW(bind)(int sockfd, const struct sockaddr *my_addr, SOCKLEN_T addrlen)
 #if defined AF_INET6
         case AF_INET6:
 #endif
-#if defined AF_UNIX
-        case AF_UNIX:
-#endif
         case AF_UNSPEC:
             port = ntohs(in->sin_port);
             if(!_zz_portwatched(port))

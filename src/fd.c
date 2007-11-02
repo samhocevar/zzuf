@@ -99,14 +99,14 @@ void _zz_exclude(char const *regex)
 #endif
 }
 
-void _zz_ports(char const *list)
+void _zz_ports(char const *portlist)
 {   
-    ports = _zz_allocrange(list, static_ports);
+    ports = _zz_allocrange(portlist, static_ports);
 }
 
-void _zz_list(char const *list)
+void _zz_list(char const *fdlist)
 {   
-    list = _zz_allocrange(list, static_list);
+    list = _zz_allocrange(fdlist, static_list);
 }
 
 void _zz_setseed(int32_t s)
@@ -228,6 +228,9 @@ int _zz_iswatched(int fd)
 
 int _zz_portwatched(int port)
 {
+    if(!ports)
+        return 1;
+
     return _zz_isinrange(port, ports);
 }
 
