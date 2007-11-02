@@ -104,7 +104,7 @@ void _zz_debug(char const *format, ...)
                 write(_zz_debugfd, hex2char + (i & 0x0f), 1);
             }
         }
-        else if(*f == 'i')
+        else if(*f == 'i' || *f == 'd')
         {
             int i = va_arg(args, int);
             WRITE_INT(_zz_debugfd, i, 10);
@@ -114,13 +114,13 @@ void _zz_debug(char const *format, ...)
             int i = va_arg(args, int);
             WRITE_INT(_zz_debugfd, i, 16);
         }
-        else if(f[0] == 'l' && f[1] == 'i')
+        else if(f[0] == 'l' && (f[1] == 'i' || f[1] == 'd'))
         {
             long int i = va_arg(args, long int);
             WRITE_INT(_zz_debugfd, i, 10);
             f++;
         }
-        else if(f[0] == 'l' && f[1] == 'l' && f[2] == 'i')
+        else if(f[0] == 'l' && f[1] == 'l' && (f[2] == 'i' || f[1] == 'd'))
         {
             long long int i = va_arg(args, long long int);
             WRITE_INT(_zz_debugfd, i, 10);
