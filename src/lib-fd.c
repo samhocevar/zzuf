@@ -193,44 +193,50 @@ int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 }
 #endif
 
+#if defined AF_INET6
+#   define case_AF_INET6 case AF_INET6:
+#else
+#   define case_AF_INET6
+#endif
+
+#define CONNECTION(fn, addr) \
+    do \
+    { \
+        LOADSYM(fn); \
+        ret = ORIG(fn)(sockfd, addr, addrlen); \
+        if(!_zz_ready || _zz_islocked(-1) || !_zz_network) \
+            return ret; \
+        if(ret >= 0) \
+        { \
+            const struct sockaddr_in* in = (const struct sockaddr_in *)addr; \
+            long int port; \
+            switch(addr->sa_family) \
+            { \
+            case AF_UNSPEC: \
+                if(addrlen < sizeof(struct sockaddr_in)) \
+                    break; \
+                /* Fall through */ \
+            case AF_INET: \
+            case_AF_INET6 \
+                port = ntohs(in->sin_port); \
+                if(!_zz_portwatched(port)) \
+                { \
+                    _zz_unregister(sockfd); \
+                    return ret; \
+                } \
+                break; \
+            default: \
+                break; \
+            } \
+            debug("%s(%i, %p, %i) = %i", __func__, \
+                  sockfd, addr, (int)addrlen, ret); \
+        } \
+    } while(0);
+
 #if defined HAVE_BIND
 int NEW(bind)(int sockfd, const struct sockaddr *my_addr, SOCKLEN_T addrlen)
 {
-    int ret;
-
-    LOADSYM(bind);
-    ret = ORIG(bind)(sockfd, my_addr, addrlen);
-    if(!_zz_ready || _zz_islocked(-1) || !_zz_network)
-        return ret;
-
-    if(ret >= 0)
-    {
-        const struct sockaddr_in* in = (const struct sockaddr_in *)my_addr;
-        long int port;
-
-        switch(my_addr->sa_family)
-        {
-        case AF_INET:
-#if defined AF_INET6
-        case AF_INET6:
-#endif
-        case AF_UNSPEC:
-            port = ntohs(in->sin_port);
-            if(!_zz_portwatched(port))
-            {
-                _zz_unregister(sockfd);
-                return ret;
-            }
-            break;
-        default:
-            break;
-        }
-
-        debug("%s(%i, %p, %i) = %i", __func__,
-              sockfd, my_addr, (int)addrlen, ret);
-    }
-
-    return ret;
+    int ret; CONNECTION(bind, my_addr); return ret;
 }
 #endif
 
@@ -238,41 +244,7 @@ int NEW(bind)(int sockfd, const struct sockaddr *my_addr, SOCKLEN_T addrlen)
 int NEW(connect)(int sockfd, const struct sockaddr *serv_addr,
                  SOCKLEN_T addrlen)
 {
-    int ret;
-
-    LOADSYM(connect);
-    ret = ORIG(connect)(sockfd, serv_addr, addrlen);
-    if(!_zz_ready || _zz_islocked(-1) || !_zz_network)
-        return ret;
-
-    if(ret >= 0)
-    {
-        const struct sockaddr_in* in = (const struct sockaddr_in *)serv_addr;
-        long int port;
-
-        switch(serv_addr->sa_family)
-        {
-        case AF_INET:
-#if defined AF_INET6
-        case AF_INET6:
-#endif
-        case AF_UNSPEC:
-            port = ntohs(in->sin_port);
-            if(!_zz_portwatched(port))
-            {
-                _zz_unregister(sockfd);
-                return ret;
-            }
-            break;
-        default:
-            break;
-        }
-
-        debug("%s(%i, %p, %i) = %i", __func__,
-              sockfd, serv_addr, (int)addrlen, ret);
-    }
-
-    return ret;
+    int ret; CONNECTION(connect, serv_addr); return ret;
 }
 #endif
 
