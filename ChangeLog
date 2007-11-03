@@ -1,4 +1,110 @@
 ------------------------------------------------------------------------
+r316 | sam | 2007-11-03 01:14:40 +0100 (Sat, 03 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Documentation updates.
+
+------------------------------------------------------------------------
+r315 | sam | 2007-11-03 01:08:43 +0100 (Sat, 03 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/src/lib-fd.c
+
+  * Do not fuzz non-IP network protocols. They’re too painful to fine-tune.
+
+------------------------------------------------------------------------
+r314 | sam | 2007-11-03 00:34:22 +0100 (Sat, 03 Nov 2007) | 4 lines
+Changed paths:
+   M /trunk/src/lib-fd.c
+
+  * Merged the bind() and connect() diversions using macros. They were almost
+    identical.
+  * Check the addrlen value to avoid crashing with weird protocols.
+
+------------------------------------------------------------------------
+r313 | sam | 2007-11-03 00:23:25 +0100 (Sat, 03 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/src/lib-fd.c
+
+  * Divert connect() so that -p/--ports now works with outbound connections.
+
+------------------------------------------------------------------------
+r312 | sam | 2007-11-03 00:22:11 +0100 (Sat, 03 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+  * Look for connect().
+
+------------------------------------------------------------------------
+r311 | sam | 2007-11-03 00:07:41 +0100 (Sat, 03 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/zzuf.1
+
+  * Updated documentation.
+
+------------------------------------------------------------------------
+r310 | sam | 2007-11-03 00:01:09 +0100 (Sat, 03 Nov 2007) | 3 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/src/lib-fd.c
+
+  * Fix a bug in the -p handling that made it opt-out instead of opt-in.
+  * Don’t bother using AF_UNIX, it doesn’t have ports.
+
+------------------------------------------------------------------------
+r309 | sam | 2007-11-02 23:45:54 +0100 (Fri, 02 Nov 2007) | 3 lines
+Changed paths:
+   M /trunk/src/fd.c
+   M /trunk/src/fd.h
+   M /trunk/src/fuzz.c
+   M /trunk/src/fuzz.h
+   M /trunk/src/lib-fd.c
+   M /trunk/src/libzzuf.c
+   M /trunk/src/opts.c
+   M /trunk/src/opts.h
+   M /trunk/src/zzuf.c
+
+  * Network destination port choosing with -p/--ports.
+  * Renamed -p/--pick into -l/--list to avoid conflicts.
+
+------------------------------------------------------------------------
+r308 | sam | 2007-11-02 22:50:08 +0100 (Fri, 02 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+  * Check for <netinet/in.h>, it’s needed for struct sockaddr_in.
+
+------------------------------------------------------------------------
+r307 | sam | 2007-11-02 22:40:38 +0100 (Fri, 02 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/src/debug.c
+
+  * Support %d, %ld and %lld in addition to %i etc. in debug().
+
+------------------------------------------------------------------------
+r306 | sam | 2007-11-02 22:32:18 +0100 (Fri, 02 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/src/lib-fd.c
+
+  * Log and divert bind() calls.
+
+------------------------------------------------------------------------
+r305 | sam | 2007-11-02 22:16:57 +0100 (Fri, 02 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+  * Check for bind in the configure step.
+
+------------------------------------------------------------------------
+r304 | sam | 2007-07-10 17:55:35 +0200 (Tue, 10 Jul 2007) | 3 lines
+Changed paths:
+   M /trunk/ChangeLog
+   M /trunk/NEWS
+
+  * Version 0.9. For real, this time.
+  * Updated NEWS and ChangeLog.
+
+------------------------------------------------------------------------
 r303 | sam | 2007-07-10 17:42:37 +0200 (Tue, 10 Jul 2007) | 2 lines
 Changed paths:
    M /trunk/doc/zzuf.1

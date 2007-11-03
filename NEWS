@@ -1,5 +1,9 @@
 $Id$
 
+Changes from 0.9 to 0.10
+
+ * network port selection for targeted fuzzing
+
 Changes from 0.8.1 to 0.9
 
  * support for cherry-picking fuzzed descriptors
