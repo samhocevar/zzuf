@@ -212,21 +212,15 @@ int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
             long int port; \
             switch(addr->sa_family) \
             { \
-            case AF_UNSPEC: \
-                if(addrlen < sizeof(struct sockaddr_in)) \
-                    break; \
-                /* Fall through */ \
             case AF_INET: \
             case_AF_INET6 \
                 port = ntohs(in->sin_port); \
-                if(!_zz_portwatched(port)) \
-                { \
-                    _zz_unregister(sockfd); \
-                    return ret; \
-                } \
-                break; \
+                if(_zz_portwatched(port)) \
+                    break; \
+                /* Fall through */ \
             default: \
-                break; \
+                _zz_unregister(sockfd); \
+                return ret; \
             } \
             debug("%s(%i, %p, %i) = %i", __func__, \
                   sockfd, addr, (int)addrlen, ret); \
