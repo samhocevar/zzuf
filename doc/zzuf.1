@@ -51,7 +51,7 @@ Restrict fuzzing to bytes whose offsets in the file are within \fIranges\fR.
 Range values start at zero and are inclusive. Use dashes between range values
 and commas between ranges. If the right-hand part of a range is ommited, it
 means end of file. For instance, to restrict fuzzing to bytes 0, 3, 4, 5 and
-all bytes after offset 31, use \(oq\fB\-r0,3-5,31-\fR\(cq.
+all bytes after offset 31, use \(oq\fB\-r0,3\-5,31\-\fR\(cq.
 
 This option is useful to preserve file headers or corrupt only a specific
 portion of a file.
@@ -141,19 +141,19 @@ Values start at one and ranges are inclusive. Use dashes between values and
 commas between ranges. If the right-hand part of a range is ommited, it means
 all subsequent file descriptors. For instance, to restrict fuzzing to the
 first opened descriptor and all descriptors starting from the 10th, use
-\(oq\fB\-p1,10-\fR\(cq.
+\(oq\fB\-l1,10\-\fR\(cq.
 
 Note that this option only affects file descriptors that would otherwise be
 fuzzed. Even if 10 write-only descriptors are opened at the beginning of the
 program, only the next descriptor with a read flag will be the first one
-considered by the \fB\-p\fR flag.
+considered by the \fB\-l\fR flag.
 .TP
 \fB\-m\fR, \fB\-\-md5\fR
 Instead of displaying the program's \fIstandard output\fR, just print its MD5
 digest to \fBzzuf\fR's standard output. The standard error channel is left
 untouched.
 .TP
-\fB\-M\fR, \fB\-\-max-memory\fR=\fImegabytes\fR
+\fB\-M\fR, \fB\-\-max\-memory\fR=\fImegabytes\fR
 Specify the maximum amount of memory, in megabytes, that children are allowed
 to allocate. This is useful to detect infinite loops that eat up a lot of
 memory. The value should set reasonably high so as not to interfer with normal
@@ -164,6 +164,9 @@ relies on the operating system's ability to enforce such limitations.
 .TP
 \fB\-n\fR, \fB\-\-network\fR
 Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
+
+Only INET (IPv4) and INET6 (IPv6) connections are fuzzed. Other protocol
+families are not yet supported.
 .TP
 \fB\-p\fR, \fB\-\-ports\fR=\fIranges\fR
 Only fuzz network ports that are in \fIranges\fR. By default \fBzzuf\fR
@@ -174,7 +177,7 @@ most of the time the source port cannot be predicted.
 Range values start at zero and are inclusive. Use dashes between range values
 and commas between ranges. If the right-hand part of a range is ommited, it
 means end of file. For instance, to restrict fuzzing to the HTTP and HTTPS
-ports and to all unprivileged ports, use \(oq\fB\-p80,443,1024-\fR\(cq.
+ports and to all unprivileged ports, use \(oq\fB\-p80,443,1024\-\fR\(cq.
 
 This option requires network fuzzing to be activated using \fB\-n\fR.
 .TP
@@ -239,8 +242,8 @@ the interval bounds and the current seed.
 .TP
 \fB\-R\fR, \fB\-\-refuse\fR=\fIlist\fR
 Refuse a list of characters by not fuzzing bytes that would otherwise be
-changed to a character that is in \fIlist\fR. If the original byte is already
-in \fIlist\fR, it is left unchanged.
+changed to a character that is in \fIlist\fR. This does not prevent characters
+from appearing in the output if the original byte was already in \fIlist\fR.
 
 See the \fB\-P\fR option for a description of \fIlist\fR.
 .TP
@@ -354,18 +357,25 @@ read the file (\fB\-T60\fR) and disabling its \fBSIGSEGV\fR signal handler
 Create an HTML-like file that loads 200 times the same \fBhello.jpg\fR image
 and open it in Firefox\(tm in auto-increment mode (\fB\-A\fR):
 .PP
-\fB    seq -f \(aq<img src="hello.jpg#%g">\(aq 1 200 > hello.html\fR
+\fB    seq \-f \(aq<img src="hello.jpg#%g">\(aq 1 200 > hello.html\fR
 .br
-      (or: \fBjot -w \(aq<img src="hello.jpg#%d">\(aq 200 1 > hello.html\fR)
+      (or: \fBjot \-w \(aq<img src="hello.jpg#%d">\(aq 200 1 > hello.html\fR)
 .br
-\fB    zzuf -A -I \(aqhello[.]jpg\(aq -r0.001 firefox hello.html\fR
+\fB    zzuf \-A \-I \(aqhello[.]jpg\(aq \-r0.001 firefox hello.html\fR
 .PP
 Run a simple HTTP redirector on the local host using \fBsocat\fR and
 corrupt each network connection (\fB\-n\fR) in a different way (\fB\-A\fR)
 after one megabyte of data was received on it (\fB\-b1000000\-\fR):
 .PP
 \fB     zzuf \-n \-A \-b1000000\- \\\fR
-\fB       socat TCP4-LISTEN:8080,reuseaddr,fork TCP4:192.168.1.42:80\fR
+\fB       socat TCP4\-LISTEN:8080,reuseaddr,fork TCP4:192.168.1.42:80\fR
+.PP
+Browse the intarweb (\fB\-n\fR) using Firefox\(tm without fuzzing local files
+(\fB\-E.\fR) or non-HTTP connections (\fB\-p80,8010,8080\fR), preserving
+the beginning of the data sent with each HTTP response (\fB\-b4000\-\fR)
+and using another seed on each connection (\fB\-A\fR):
+.PP
+\fB    zzuf \-r 0.0001 \-n \-E. \-p80,8010,8080 \-b4000\- \-A firefox\fR
 .SH RESTRICTIONS
 .PP
 Due to \fBzzuf\fR using shared object preloading (\fBLD_PRELOAD\fR,
