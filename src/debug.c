@@ -126,6 +126,22 @@ void _zz_debug(char const *format, ...)
             WRITE_INT(_zz_debugfd, i, 10);
             f += 2;
         }
+        else if(f[0] == 'g')
+        {
+            double g = va_arg(args, double), h = 0.0000001;
+            int i = g;
+            WRITE_INT(_zz_debugfd, i, 10);
+            for(i = 0; i < 7; i++)
+            {
+                g = (g - (int)g) * 10;
+                h *= 10;
+                if(g < h)
+                    break;
+                if(i == 0)
+                    write(_zz_debugfd, ".", 1);
+                write(_zz_debugfd, hex2char + (int)g, 1); 
+            }
+        }
         else if(f[0] == 'p')
         {
             uintptr_t i = va_arg(args, uintptr_t);
