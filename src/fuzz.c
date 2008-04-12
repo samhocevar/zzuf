@@ -111,8 +111,8 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
             memset(fuzz->data, 0, CHUNKBYTES);
 
             /* Add some random dithering to handle ratio < 1.0/CHUNKBYTES */
-            todo = (int)((fuzz->ratio * (8 * CHUNKBYTES * 1000)
-                                             + _zz_rand(1000)) / 1000.0);
+            todo = (int)((fuzz->ratio * (8 * CHUNKBYTES) * 1000000.0
+                                + _zz_rand(1000000)) / 1000000.0);
             while(todo--)
             {
                 unsigned int idx = _zz_rand(CHUNKBYTES);

@@ -25,9 +25,10 @@
 /* Default seed is 0. Why not? */
 #define DEFAULT_SEED 0
 
-/* The default fuzzing ratio is, arbitrarily, 0.4% */
+/* The default fuzzing ratio is, arbitrarily, 0.4%. The minimal fuzzing
+ * ratio is 0.000000001% (less than one bit changed on a whole DVD). */
 #define DEFAULT_RATIO 0.004
-#define MIN_RATIO 0.00001
+#define MIN_RATIO 0.00000000001
 #define MAX_RATIO 5.0
 
 struct fuzz
