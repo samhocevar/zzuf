@@ -18,3 +18,5 @@ configure
 libtool
 stamp-*
 *-stamp
+src/zzuf
+test/zzcat

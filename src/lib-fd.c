@@ -81,6 +81,12 @@ static int     (*ORIG(open))    (const char *file, int oflag, ...);
 #if defined HAVE_OPEN64
 static int     (*ORIG(open64))  (const char *file, int oflag, ...);
 #endif
+#if defined HAVE_DUP
+static int     (*ORIG(dup))     (int oldfd);
+#endif
+#if defined HAVE_DUP2
+static int     (*ORIG(dup2))    (int oldfd, int newfd);
+#endif
 #if defined HAVE_ACCEPT
 static int     (*ORIG(accept))  (int sockfd, struct sockaddr *addr,
                                  SOCKLEN_T *addrlen);
@@ -168,6 +174,53 @@ int NEW(open)(const char *file, int oflag, ...)
 int NEW(open64)(const char *file, int oflag, ...)
 {
     int ret; OPEN(open64); return ret;
+}
+#endif
+
+#if defined HAVE_DUP
+int NEW(dup)(int oldfd)
+{
+    int ret;
+
+    LOADSYM(dup);
+    ret = ORIG(dup)(oldfd);
+    if(!_zz_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
+         || !_zz_isactive(oldfd))
+        return ret;
+
+    if(ret >= 0)
+    {
+        debug("%s(%i) = %i", __func__, oldfd, ret);
+        _zz_register(ret);
+    }
+
+    return ret;
+}
+#endif
+
+#if defined HAVE_DUP2
+int NEW(dup2)(int oldfd, int newfd)
+{
+    int ret;
+
+    LOADSYM(dup2);
+    ret = ORIG(dup2)(oldfd, newfd);
+    if(!_zz_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
+         || !_zz_isactive(oldfd))
+        return ret;
+
+    if(ret >= 0)
+    {
+        /* We must close newfd if it was open, but only if oldfd != newfd
+         * and if dup2() suceeded. */
+        if(oldfd != newfd && _zz_iswatched(newfd) && _zz_isactive(newfd))
+            _zz_unregister(newfd);
+
+        debug("%s(%i, %i) = %i", __func__, oldfd, newfd, ret);
+        _zz_register(ret);
+    }
+
+    return ret;
 }
 #endif
 
