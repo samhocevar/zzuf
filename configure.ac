@@ -1,14 +1,11 @@
 # $Id: configure.ac 98 2006-09-22 16:27:37Z sam $
 
 AC_INIT(zzuf, 0.10)
+AC_CONFIG_AUX_DIR(.auto)
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE([no-define tar-ustar])
 
 AC_PREREQ(2.50)
-AC_CONFIG_SRCDIR(src/zzuf.c)
-AC_CONFIG_AUX_DIR(autotools)
-AC_CANONICAL_SYSTEM
-
-AM_INIT_AUTOMAKE(zzuf, 0.10)
-AM_CONFIG_HEADER(config.h)
 
 AM_PROG_CC_C_O
 AC_PROG_CPP

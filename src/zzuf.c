@@ -1140,7 +1140,7 @@ static void *get_entry(char const *name)
 
 static void version(void)
 {
-    printf("zzuf %s\n", VERSION);
+    printf("zzuf %s\n", PACKAGE_VERSION);
     printf("Copyright (C) 2002, 2007 Sam Hocevar <sam@zoy.org>\n");
     printf("This is free software.  You may redistribute copies of it under the\n");
     printf("terms of the Do What The Fuck You Want To Public License, Version 2\n");
