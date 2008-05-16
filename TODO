@@ -3,7 +3,7 @@
     + stdio:
       - fscanf
       - fgetws, fgetwc, ungetwc
-      - pipe, dup, dup2
+      - pipe
     + zlib functions (eg. libpng)
     + divert crc checks or recompute checksums (yeah)
 
