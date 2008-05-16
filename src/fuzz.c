@@ -36,6 +36,7 @@
 
 #define MAGIC1 0x33ea84f7
 #define MAGIC2 0x783bc31f
+#define MAGIC3 0x9b5da2fb
 
 /* Fuzzing mode */
 static enum fuzzing
@@ -105,8 +106,15 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
         /* Cache bitmask array */
         if(fuzz->cur != (int)i)
         {
-            uint32_t chunkseed = ((int)i + (int)(fuzz->ratio * MAGIC1)) ^ MAGIC2;
-            _zz_srand(fuzz->seed ^ chunkseed);
+            uint32_t chunkseed;
+
+            chunkseed = (uint32_t)i;
+            chunkseed ^= MAGIC2;
+            chunkseed += (uint32_t)(fuzz->ratio * MAGIC1);
+            chunkseed ^= fuzz->seed;
+            chunkseed += (uint32_t)(i * MAGIC3);
+
+            _zz_srand(chunkseed);
 
             memset(fuzz->data, 0, CHUNKBYTES);
 
