@@ -139,7 +139,7 @@ void _zz_debug(char const *format, ...)
                     break;
                 if(i == 0)
                     write(_zz_debugfd, ".", 1);
-                write(_zz_debugfd, hex2char + (int)g, 1); 
+                write(_zz_debugfd, hex2char + (int)g, 1);
             }
         }
         else if(f[0] == 'p')

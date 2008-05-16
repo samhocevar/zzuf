@@ -452,7 +452,7 @@ int main(int argc, char *argv[])
     /* Clean up */
     _zz_opts_fini(opts);
 
-    return opts->crashes ? EXIT_FAILURE : EXIT_SUCCESS;    
+    return opts->crashes ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 static void loop_stdin(struct opts *opts)
@@ -1010,7 +1010,7 @@ static int run_process(struct opts *opts, int pipes[][2])
     epaddr = get_entry(opts->newargv[0]);
     if(!epaddr)
         return -1;
-    
+
     memset(&sinfo, 0, sizeof(sinfo));
     sinfo.cb = sizeof(sinfo);
     DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[0][1]), pid,

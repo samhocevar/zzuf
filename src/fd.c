@@ -100,12 +100,12 @@ void _zz_exclude(char const *regex)
 }
 
 void _zz_ports(char const *portlist)
-{   
+{
     ports = _zz_allocrange(portlist, static_ports);
 }
 
 void _zz_list(char const *fdlist)
-{   
+{
     list = _zz_allocrange(fdlist, static_list);
 }
 
@@ -260,7 +260,7 @@ void _zz_register(int fd)
             fds[i] = -1;
         maxfd *= 2;
     }
-            
+
     /* Find an empty slot */
     for(i = 0; i < nfiles; i++)
         if(files[i].managed == 0)

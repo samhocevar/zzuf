@@ -325,7 +325,7 @@ RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
     if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s) || !_zz_isactive(s))
         return ret;
 
-    if(ret > 0) 
+    if(ret > 0)
     {
         char *b = buf;
 
@@ -349,7 +349,7 @@ RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
 
 #if defined HAVE_RECVFROM
 RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
-                     struct sockaddr *from, SOCKLEN_T *fromlen) 
+                     struct sockaddr *from, SOCKLEN_T *fromlen)
 {
     int ret;
 
@@ -358,7 +358,7 @@ RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
     if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s) || !_zz_isactive(s))
         return ret;
 
-    if(ret > 0) 
+    if(ret > 0)
     {
         char *b = buf;
 
