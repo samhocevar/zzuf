@@ -20,3 +20,4 @@ stamp-*
 *-stamp
 src/zzuf
 test/zzcat
+test/zzero
