@@ -62,6 +62,12 @@ static int     (*ORIG(fgetc))    (FILE *stream);
 #if defined HAVE__IO_GETC
 static int     (*ORIG(_IO_getc)) (FILE *stream);
 #endif
+#if defined HAVE_GETC_UNLOCKED
+static int     (*ORIG(getc_unlocked))  (FILE *stream);
+#endif
+#if defined HAVE_FGETC_UNLOCKED
+static int     (*ORIG(fgetc_unlocked)) (FILE *stream);
+#endif
 static char *  (*ORIG(fgets))    (char *s, int size, FILE *stream);
 static int     (*ORIG(ungetc))   (int c, FILE *stream);
 static int     (*ORIG(fclose))   (FILE *fp);
@@ -321,6 +327,20 @@ int NEW(fgetc)(FILE *stream)
 int NEW(_IO_getc)(FILE *stream)
 {
     int ret; FGETC(_IO_getc); return ret;
+}
+#endif
+
+#if defined HAVE_GETC_UNLOCKED
+int NEW(getc_unlocked)(FILE *stream)
+{
+    int ret; FGETC(getc_unlocked); return ret;
+}
+#endif
+
+#if defined HAVE_FGETC_UNLOCKED
+int NEW(fgetc_unlocked)(FILE *stream)
+{
+    int ret; FGETC(fgetc_unlocked); return ret;
 }
 #endif
 
