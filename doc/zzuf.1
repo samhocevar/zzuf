@@ -10,7 +10,7 @@ zzuf \- multiple purpose fuzzer
 .br
        [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR] [\fB\-l\fR \fIlist\fR] [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR]
 .br
-       [\fIPROGRAM\fR [\fB\-\-\fR] [\fIARGS\fR]...]
+       [\fIPROGRAM\fR [\fIARGS\fR]...]
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
 .br
@@ -28,11 +28,11 @@ relevant behaviour on the standard error channel, eg:
 .PP
 \fB    zzuf cat /dev/zero\fR
 .PP
-If you want to specify flags for your application, put a \(oq\fB\-\-\fR\(cq
-marker before them on the command line (otherwise \fBzzuf\fR will try to
-interpret them as arguments for itself), eg:
+Flags found after the application name are considered arguments for the
+application, not for \fBzzuf\fR. For instance, \fB\-v\fR below is an
+argument for \fBcat\fR:
 .PP
-\fB    zzuf \-B 1000 cat \-\- \-v /dev/zero\fR
+\fB    zzuf \-B 1000 cat \-v /dev/zero\fR
 .PP
 When no program is specified, \fBzzuf\fR simply fuzzes the standard input, as
 if the \fBcat\fR utility had been called:
@@ -117,7 +117,8 @@ only unset bits
 The default value for \fImode\fR is \fBxor\fR.
 .TP
 \fB\-F\fR, \fB\-\-max\-forks\fR=\fIforks\fR
-Specify the number of simultaneous children that can be run.
+Specify the number of simultaneous children that can be run. By default,
+\fBzzuf\fR only launches one process at a time.
 
 This option is only relevant if the \fB\-s\fR flag is used with a range
 argument. See also the \fB\-D\fR flag.
@@ -137,7 +138,7 @@ of the regular expressions will be fuzzed. See also the \fB\-c\fR flag.
 Cherry-pick the list of file descriptors that get fuzzed. The Nth descriptor
 will really be fuzzed only if N is in \fIlist\fR.
 
-Values start at one and ranges are inclusive. Use dashes between values and
+Values start at 1 and ranges are inclusive. Use dashes between values and
 commas between ranges. If the right-hand part of a range is ommited, it means
 all subsequent file descriptors. For instance, to restrict fuzzing to the
 first opened descriptor and all descriptors starting from the 10th, use
@@ -327,7 +328,7 @@ original input and excluding \fB.xml\fR files from fuzzing (because
 \fBconvert\fR will also open its own XML configuration files and we do not
 want \fBzzuf\fR to fuzz them):
 .PP
-\fB    zzuf \-E \(aq\\.xml$\(aq convert \-\- foo.jpeg \-format tga /dev/null\fR
+\fB    zzuf \-E \(aq\\.xml$\(aq convert foo.jpeg \-format tga /dev/null\fR
 .PP
 Fuzz the input of VLC, using file \fBmovie.avi\fR as the original input
 and restricting fuzzing to filenames that appear on the command line
@@ -352,7 +353,7 @@ read the file (\fB\-T60\fR) and disabling its \fBSIGSEGV\fR signal handler
 .PP
 \fB    zzuf \-c \-r0.001:0.02 \-s0:10000 \-b4\- \-q \-F5 \-D0.5 \-T60 \-S \\\fR
 .br
-\fB      mplayer \-\- \-benchmark \-vo null \-fps 1000 movie.avi\fR
+\fB      mplayer \-benchmark \-vo null \-fps 1000 movie.avi\fR
 .PP
 Create an HTML-like file that loads 200 times the same \fBhello.jpg\fR image
 and open it in Firefox\(tm in auto-increment mode (\fB\-A\fR):
