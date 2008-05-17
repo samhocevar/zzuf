@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 #else
 #   define OPTSTR_RLIMIT_CPU ""
 #endif
-#define OPTSTR OPTSTR_REGEX OPTSTR_RLIMIT_MEM OPTSTR_RLIMIT_CPU \
+#define OPTSTR "+" OPTSTR_REGEX OPTSTR_RLIMIT_MEM OPTSTR_RLIMIT_CPU \
                 "Ab:B:C:dD:f:F:il:mnp:P:qr:R:s:St:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
