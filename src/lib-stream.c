@@ -369,12 +369,12 @@ int NEW(fgetc_unlocked)(FILE *stream)
 #endif
 
 #if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
-#   define FGETS_FUZZ \
+#   define FGETS_FUZZ(fn, fn2) \
         _zz_lock(fd); \
-        ret = ORIG(fgets)(s, size, stream); \
+        ret = ORIG(fn)(s, size, stream); \
         _zz_unlock(fd);
 #else
-#   define FGETS_FUZZ \
+#   define FGETS_FUZZ(fn, fn2) \
         if(size <= 0) \
             ret = NULL; \
         else if(size == 1) \
@@ -386,7 +386,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
             { \
                 int ch; \
                 _zz_lock(fd); \
-                ch = ORIG(fgetc)(stream); \
+                ch = ORIG(fn2)(stream); \
                 _zz_unlock(fd); \
                 if(ch == EOF) \
                 { \
@@ -407,29 +407,29 @@ int NEW(fgetc_unlocked)(FILE *stream)
         }
 #endif
 
-#define FGETS(fn) \
+#define FGETS(fn, fn2) \
     do \
     { \
         int fd; \
         ret = s; \
         LOADSYM(fn); \
-        LOADSYM(fgetc); \
+        LOADSYM(fn2); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(fn)(s, size, stream); \
-        FGETS_FUZZ \
+        FGETS_FUZZ(fn, fn2) \
         debug("%s(%p, %i, [%i]) = %p", __func__, s, size, fd, ret); \
     } while(0)
 
 char *NEW(fgets)(char *s, int size, FILE *stream)
 {
-    char *ret; FGETS(fgets); return ret;
+    char *ret; FGETS(fgets, fgetc); return ret;
 }
 
 #if defined HAVE_FGETS_UNLOCKED
 char *NEW(fgets_unlocked)(char *s, int size, FILE *stream)
 {
-    char *ret; FGETS(fgets_unlocked); return ret;
+    char *ret; FGETS(fgets_unlocked, fgetc_unlocked); return ret;
 }
 #endif
 
