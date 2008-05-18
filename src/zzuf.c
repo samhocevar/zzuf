@@ -639,7 +639,7 @@ static void spawn_children(struct opts *opts)
     if(opts->verbose)
     {
         finfo(stderr, opts, opts->child[i].seed);
-        fprintf(stderr, "launched %s\n", opts->newargv[0]);
+        fprintf(stderr, "launched `%s'\n", opts->newargv[0]);
     }
 
     opts->lastlaunch = now;
@@ -1141,7 +1141,7 @@ static void *get_entry(char const *name)
 static void version(void)
 {
     printf("zzuf %s\n", PACKAGE_VERSION);
-    printf("Copyright (C) 2002, 2007 Sam Hocevar <sam@zoy.org>\n");
+    printf("Copyright (C) 2002, 2007-2008 Sam Hocevar <sam@zoy.org>\n");
     printf("This is free software.  You may redistribute copies of it under the\n");
     printf("terms of the Do What The Fuck You Want To Public License, Version 2\n");
     printf("<http://sam.zoy.org/wtfpl/>.\n");
