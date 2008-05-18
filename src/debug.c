@@ -38,6 +38,10 @@
 
 extern int _zz_debugfd;
 
+/**
+ * Helper macro to write an integer value to a given file descriptor,
+ * either in base 10 or in hexadecimal.
+ */
 #define WRITE_INT(fd, i, base) \
     do \
     { \
@@ -52,6 +56,17 @@ extern int _zz_debugfd;
         write(fd, b + 1, (int)(buf + 127 - b)); \
     } while(0)
 
+/**
+ * Format a string, printf-like, and write the resulting data to zzuf's
+ * debug file descriptor _zz_debugfd. If the debug file descriptor is
+ * still -1, this function does nothing.
+ *
+ * This function's code is roughly equivalent to the following *printf
+ * calls, except it only uses signal-safe functions:
+ *  - fprintf(stderr, "** zzuf debug ** ");
+ *  - vfprintf(stderr, format, args);
+ *  - fprintf(stderr, "\n");
+ */
 void _zz_debug(char const *format, ...)
 {
     static char const *hex2char = "0123456789abcdef";
@@ -64,14 +79,6 @@ void _zz_debug(char const *format, ...)
 
     saved_errno = errno;
     va_start(args, format);
-
-#if 0
-    /* This function's code is equivalent to the following *printf calls,
-     * except it only uses signal-safe functions */
-    fprintf(stderr, "** zzuf debug ** ");
-    vfprintf(stderr, format, args);
-    fprintf(stderr, "\n");
-#endif
 
     write(_zz_debugfd, "** zzuf debug ** ", 17);
     for(f = format; *f; f++)

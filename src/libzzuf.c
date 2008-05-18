@@ -54,14 +54,49 @@ void _zz_fini(void) __attribute__((destructor));
 BOOL WINAPI DllMain(HINSTANCE, DWORD, PVOID);
 #endif
 
-/* Global variables */
+/**
+ * Is libzzuf fully initialised?
+ */
 int   _zz_ready    = 0;
+
+/**
+ * The file descriptor used by libzzuf for communication with the main
+ * zzuf program in debug mode. Its value is set by the ZZUF_DEBUG
+ * environment variable.
+ */
 int   _zz_debugfd  = -1;
+
+/**
+ * If set to 1, this boolean variable will prevent the called application
+ * from installing signal handlers that would prevent it from really crashing.
+ * SDL applications often do that when not using SDL_INIT_NOPARACHUTE, for
+ * instance. Its value is set by the ZZUF_SIGNAL environment variable.
+ */
 int   _zz_signal   = 0;
+
+/**
+ * If set to a positive value, this value will indicate the maximum number
+ * of megabytes that the called application will be allowed to allocate. Its
+ * value is set by the ZZUF_MEMORY environment variable.
+ */
 int   _zz_memory   = 0;
+
+/**
+ * If set to 1, this boolean will tell libzzuf to fuzz network file
+ * descriptors, too. Its value is set by the ZZUF_NETWORK environment
+ * variable.
+ */
 int   _zz_network  = 0;
 
-/* Library initialisation shit */
+/**
+ * Library initialisation routine.
+ *
+ * This function reads all configuration variables put by zzuf in the
+ * called process's environment and initialises diversions for the three
+ * main function families: memory functions (initialised very early because
+ * other functions we need such as dlsym() require them), file descriptor
+ * functions and stream functions.
+ */
 void _zz_init(void)
 {
     char *tmp, *tmp2;
@@ -138,7 +173,11 @@ void _zz_init(void)
     debug("libzzuf initialised for PID %li", (long int)getpid());
 }
 
-/* Deinitialisation */
+/**
+ * Library deinitialisation routine.
+ *
+ * Free all the memory allocated by libzzuf during its lifetime.
+ */
 void _zz_fini(void)
 {
     _zz_fd_fini();
@@ -163,3 +202,4 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, PVOID impLoad)
     return TRUE;
 }
 #endif
+

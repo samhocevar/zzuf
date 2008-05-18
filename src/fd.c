@@ -70,7 +70,7 @@ static int maxfd, nfiles;
 
 /* Create lock. This lock variable is used to disable file descriptor
  * creation wrappers. For instance on Mac OS X, fopen() calls open()
- * and we don’t want open() to do any zzuf-related stuff, fopen() takes
+ * and we don’t want open() to do any zzuf-related stuff: fopen() takes
  * care of everything. */
 static int create_lock = 0;
 
