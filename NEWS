@@ -1,65 +1,71 @@
 $Id$
 
-Changes from 0.9 to 0.10
+Changes from zzuf 0.10 to 0.11
+
+ * non-locking stdio functions and dup()/dup2() reimplementations
+ * improved testsuite with RNG statistical analysis
+ * better fuzzing ratio range and random number generation
+
+Changes from zzuf 0.9 to 0.10
 
  * network port selection for targeted fuzzing
 
-Changes from 0.8.1 to 0.9
+Changes from zzuf 0.8.1 to 0.9
 
  * support for cherry-picking fuzzed descriptors
  * support for CPU time limits
  * do not interfere with LD_PRELOAD mechanisms
 
-Changes from 0.8 to 0.8.1
+Changes from zzuf 0.8 to 0.8.1
 
  * remove spurious debug message
  * fix an unsaved errno issue
 
-Changes from 0.7 to 0.8
+Changes from zzuf 0.7 to 0.8
 
  * getopt_long() reimplementation
  * fix for 64bit issues
  * -M works on OpenBSD
  * mmap reimplementation does not use the heap
 
-Changes from 0.6.1 to 0.7
+Changes from zzuf 0.6.1 to 0.7
 
  * added new fuzzing modes
  * fixed crash in regex handlers
  * improved debug messages
 
-Changes from 0.6 to 0.6.1
+Changes from zzuf 0.6 to 0.6.1
 
  * fixed bad seed offset
  * fixed a crash in the memory manager
 
-Changes from 0.5 to 0.6
+Changes from zzuf 0.5 to 0.6
 
  * allow to fuzz only parts of the input
  * support for readv(), pread(), recv(), recvfrom(), recvmsg()
  * support for asynchronous IO
  * minor fixes for crashes and memory leaks
 
-Changes from 0.4 to 0.5
+Changes from zzuf 0.4 to 0.5
 
  * ratio range support
  * auto-increment mode
  * better timing support, better debug messages, improved documentation
 
-Changes from 0.3 to 0.4
+Changes from zzuf 0.3 to 0.4
 
  * check for memory exhausting processes
  * built-in MD5 hashing
  * fix for mmap(), OS X map_fd() support
 
-Changes from 0.2 to 0.3
+Changes from zzuf 0.2 to 0.3
 
  * FreeBSD, NetBSD and OpenBSD support
  * direct standard input fuzzing
  * stdio support: full (FreeBSD), freopen, fseeko, rewind
  * fd support: mmap, munmap
 
-Changes from 0.1 to 0.2
+Changes from zzuf 0.1 to 0.2
 
  * network and standard input support
  * Mac OS X support

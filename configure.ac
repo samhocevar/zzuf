@@ -1,6 +1,6 @@
 # $Id: configure.ac 98 2006-09-22 16:27:37Z sam $
 
-AC_INIT(zzuf, 0.10)
+AC_INIT(zzuf, 0.11)
 AC_CONFIG_AUX_DIR(.auto)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE([no-define tar-ustar])
