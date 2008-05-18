@@ -50,11 +50,11 @@ static int *ranges = NULL;
 static int static_ranges[512];
 
 /* Per-value byte protection */
-static int protect[256];
-static int refuse[256];
+static unsigned char protect[256];
+static unsigned char refuse[256];
 
 /* Local prototypes */
-static void readchars(int *, char const *);
+static void readchars(unsigned char *, char const *);
 
 extern void _zz_fuzzing(char const *mode)
 {
@@ -184,13 +184,13 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
     }
 }
 
-static void readchars(int *table, char const *list)
+static void readchars(unsigned char *table, char const *list)
 {
     static char const hex[] = "0123456789abcdef0123456789ABCDEF";
     char const *tmp;
     int a, b;
 
-    memset(table, 0, 256 * sizeof(int));
+    memset(table, 0, 256 * sizeof(unsigned char));
 
     for(tmp = list, a = b = -1; *tmp; tmp++)
     {
