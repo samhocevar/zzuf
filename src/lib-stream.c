@@ -62,19 +62,23 @@ static size_t  (*ORIG(fread_unlocked))  (void *ptr, size_t size, size_t nmemb,
                                          FILE *stream);
 #endif
 static int     (*ORIG(getc))     (FILE *stream);
+static int     (*ORIG(getchar))  (void);
 static int     (*ORIG(fgetc))    (FILE *stream);
 #if defined HAVE__IO_GETC
 static int     (*ORIG(_IO_getc)) (FILE *stream);
 #endif
 #if defined HAVE_GETC_UNLOCKED
-static int     (*ORIG(getc_unlocked))  (FILE *stream);
+static int     (*ORIG(getc_unlocked))    (FILE *stream);
+#endif
+#if defined HAVE_GETCHAR_UNLOCKED
+static int     (*ORIG(getchar_unlocked)) (void);
 #endif
 #if defined HAVE_FGETC_UNLOCKED
-static int     (*ORIG(fgetc_unlocked)) (FILE *stream);
+static int     (*ORIG(fgetc_unlocked))   (FILE *stream);
 #endif
 static char *  (*ORIG(fgets))    (char *s, int size, FILE *stream);
 #if defined HAVE_FGETS_UNLOCKED
-static char *  (*ORIG(fgets_unlocked)) (char *s, int size, FILE *stream);
+static char *  (*ORIG(fgets_unlocked))   (char *s, int size, FILE *stream);
 #endif
 static int     (*ORIG(ungetc))   (int c, FILE *stream);
 static int     (*ORIG(fclose))   (FILE *fp);
@@ -317,15 +321,15 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
         }
 #endif
 
-#define FGETC(fn) \
+#define FGETC(fn, s, arg) \
     do { \
         int fd; \
         LOADSYM(fn); \
-        fd = fileno(stream); \
+        fd = fileno(s); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
-            return ORIG(fn)(stream); \
+            return ORIG(fn)(arg); \
         _zz_lock(fd); \
-        ret = ORIG(fn)(stream); \
+        ret = ORIG(fn)(arg); \
         _zz_unlock(fd); \
         FGETC_FUZZ \
         if(ret == EOF) \
@@ -337,18 +341,24 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 #undef getc /* can be a macro; we don’t want that */
 int NEW(getc)(FILE *stream)
 {
-    int ret; FGETC(getc); return ret;
+    int ret; FGETC(getc, stream, stream); return ret;
+}
+
+#undef getchar /* can be a macro; we don’t want that */
+int NEW(getchar)(void)
+{
+    int ret; FGETC(getchar, stdin, /* empty */); return ret;
 }
 
 int NEW(fgetc)(FILE *stream)
 {
-    int ret; FGETC(fgetc); return ret;
+    int ret; FGETC(fgetc, stream, stream); return ret;
 }
 
 #if defined HAVE__IO_GETC
 int NEW(_IO_getc)(FILE *stream)
 {
-    int ret; FGETC(_IO_getc); return ret;
+    int ret; FGETC(_IO_getc, stream, stream); return ret;
 }
 #endif
 
@@ -356,7 +366,15 @@ int NEW(_IO_getc)(FILE *stream)
 #undef getc_unlocked /* can be a macro; we don’t want that */
 int NEW(getc_unlocked)(FILE *stream)
 {
-    int ret; FGETC(getc_unlocked); return ret;
+    int ret; FGETC(getc_unlocked, stream, stream); return ret;
+}
+#endif
+
+#if defined HAVE_GETCHAR_UNLOCKED
+#undef getchar_unlocked /* can be a macro; we don’t want that */
+int NEW(getchar_unlocked)(void)
+{
+    int ret; FGETC(getchar_unlocked, stdin, /* empty */); return ret;
 }
 #endif
 
@@ -364,7 +382,7 @@ int NEW(getc_unlocked)(FILE *stream)
 #undef fgetc_unlocked /* can be a macro; we don’t want that */
 int NEW(fgetc_unlocked)(FILE *stream)
 {
-    int ret; FGETC(fgetc_unlocked); return ret;
+    int ret; FGETC(fgetc_unlocked, stream, stream); return ret;
 }
 #endif
 
