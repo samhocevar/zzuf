@@ -261,13 +261,20 @@ int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
             return ret; \
         if(ret >= 0) \
         { \
-            const struct sockaddr_in* in = (const struct sockaddr_in *)addr; \
+            struct sockaddr_in in; \
             long int port; \
             switch(addr->sa_family) \
             { \
             case AF_INET: \
             case_AF_INET6 \
-                port = ntohs(in->sin_port); \
+                /* We need to copy rather than cast sockaddr* to sockaddr_in* \
+                 * because sockaddr_in* has actually _larger_ alignment on \
+                 * eg. Linux alpha. And we only need sin_port so we only copy \
+                 * this member. */ \
+                memcpy(&in.sin_port, \
+                   (char const *)addr + ((char *)&in.sin_port - (char *)&in), \
+                   sizeof(in.sin_port)); \
+                port = ntohs(in.sin_port); \
                 if(_zz_portwatched(port)) \
                     break; \
                 /* Fall through */ \
