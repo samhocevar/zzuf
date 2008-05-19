@@ -1169,7 +1169,7 @@ static void usage(void)
     printf(                           "[-T seconds] ");
 #endif
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
-    printf(                                        "[-M megabytes] ");
+    printf(                                        "[-M mebibytes] ");
 #endif
     printf(                                                       "[-b ranges] [-p ports]\n");
     printf("              [-P protect] [-R refuse] [-l list]");

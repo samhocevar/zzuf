@@ -76,8 +76,9 @@ int   _zz_signal   = 0;
 
 /**
  * If set to a positive value, this value will indicate the maximum number
- * of megabytes that the called application will be allowed to allocate. Its
- * value is set by the ZZUF_MEMORY environment variable.
+ * of mebibytes (1 MiB = 1,048,576 bytes) that the called application will be
+ * allowed to allocate. Its value is set by the ZZUF_MEMORY environment
+ * variable.
  */
 int   _zz_memory   = 0;
 

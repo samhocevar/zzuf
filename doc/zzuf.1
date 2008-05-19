@@ -6,7 +6,7 @@ zzuf \- multiple purpose fuzzer
 .br
        [\fB\-f\fR \fIfuzzing\fR] [\fB\-D\fR \fIdelay\fR] [\fB\-j\fR \fIjobs\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
 .br
-       [\fB\-t\fR \fIseconds\fR] [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-b\fR \fIranges\fR] [\fB\-p\fR \fIports\fR]
+       [\fB\-t\fR \fIseconds\fR] [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImebibytes\fR] [\fB\-b\fR \fIranges\fR] [\fB\-p\fR \fIports\fR]
 .br
        [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR] [\fB\-l\fR \fIlist\fR] [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR]
 .br
@@ -156,11 +156,11 @@ Instead of displaying the program's \fIstandard output\fR, just print its MD5
 digest to \fBzzuf\fR's standard output. The standard error channel is left
 untouched.
 .TP
-\fB\-M\fR, \fB\-\-max\-memory\fR=\fImegabytes\fR
-Specify the maximum amount of memory, in megabytes, that children are allowed
-to allocate. This is useful to detect infinite loops that eat up a lot of
-memory. The value should set reasonably high so as not to interfer with normal
-program operation.
+\fB\-M\fR, \fB\-\-max\-memory\fR=\fImebibytes\fR
+Specify the maximum amount of memory, in mebibytes (1 MiB = 1,048,576 bytes),
+that children are allowed to allocate. This is useful to detect infinite loops
+that eat up a lot of memory. The value should be set reasonably high so as not
+to interfer with normal program operation.
 
 \fBzzuf\fR uses the \fBsetrlimit\fR() call to set memory usage limitations and
 relies on the operating system's ability to enforce such limitations.
