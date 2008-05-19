@@ -262,7 +262,9 @@ to use simple utilities such as \fBcat\fR or \fBcp\fR to generate a file that
 causes the target application to crash.
 
 If a range is specified, \fBzzuf\fR will run the application several times,
-each time with a different seed, and report the behaviour of each run.
+each time with a different seed, and report the behaviour of each run. If the
+\(oq:\(cq character is used but the second part of the range is omitted,
+\fBzzuf\fR will increment the seed value indefinitely.
 .TP
 \fB\-S\fR, \fB\-\-signal\fR
 Prevent children from installing signal handlers for signals that usually
