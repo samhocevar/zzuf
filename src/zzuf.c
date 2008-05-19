@@ -854,30 +854,31 @@ static char const *sig2str(int signum)
 {
     switch(signum)
     {
-        case SIGABRT:  return " (SIGABRT)";
-        case SIGFPE:   return " (SIGFPE)";
-        case SIGILL:   return " (SIGILL)";
 #ifdef SIGQUIT
-        case SIGQUIT:  return " (SIGQUIT)";
+        case SIGQUIT:  return " (SIGQUIT)"; /* 3 */
 #endif
-        case SIGSEGV:  return " (SIGSEGV)";
+        case SIGILL:   return " (SIGILL)";  /* 4 */
 #ifdef SIGTRAP
-        case SIGTRAP:  return " (SIGTRAP)";
+        case SIGTRAP:  return " (SIGTRAP)"; /* 5 */
 #endif
-#ifdef SIGSYS
-        case SIGSYS:   return " (SIGSYS)";
-#endif
-#ifdef SIGEMT
-        case SIGEMT:   return " (SIGEMT)";
-#endif
+        case SIGABRT:  return " (SIGABRT)"; /* 6 */
 #ifdef SIGBUS
-        case SIGBUS:   return " (SIGBUS)";
+        case SIGBUS:   return " (SIGBUS)";  /* 7 */
+#endif
+        case SIGFPE:   return " (SIGFPE)";  /* 8 */
+        case SIGSEGV:  return " (SIGSEGV)"; /* 11 */
+        case SIGPIPE:  return " (SIGPIPE)"; /* 13 */
+#ifdef SIGEMT
+        case SIGEMT:   return " (SIGEMT)";  /* ? */
 #endif
 #ifdef SIGXCPU
-        case SIGXCPU:  return " (SIGXCPU)";
+        case SIGXCPU:  return " (SIGXCPU)"; /* 24 */
 #endif
 #ifdef SIGXFSZ
-        case SIGXFSZ:  return " (SIGXFSZ)";
+        case SIGXFSZ:  return " (SIGXFSZ)"; /* 25 */
+#endif
+#ifdef SIGSYS
+        case SIGSYS:   return " (SIGSYS)";  /* 31 */
 #endif
     }
 
