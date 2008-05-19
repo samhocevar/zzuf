@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
 #   define OPTSTR_RLIMIT_CPU ""
 #endif
 #define OPTSTR "+" OPTSTR_REGEX OPTSTR_RLIMIT_MEM OPTSTR_RLIMIT_CPU \
-                "Ab:B:C:dD:f:F:il:mnp:P:qr:R:s:St:vxhV"
+                "Ab:B:C:dD:f:F:ij:l:mnp:P:qr:R:s:St:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
@@ -188,11 +188,11 @@ int main(int argc, char *argv[])
             { "exclude",     1, NULL, 'E' },
 #endif
             { "fuzzing",     1, NULL, 'f' },
-            { "max-forks",   1, NULL, 'F' },
             { "stdin",       0, NULL, 'i' },
 #if defined HAVE_REGEX_H
             { "include",     1, NULL, 'I' },
 #endif
+            { "jobs",        1, NULL, 'j' },
             { "list",        1, NULL, 'l' },
             { "md5",         0, NULL, 'm' },
             { "max-memory",  1, NULL, 'M' },
@@ -259,9 +259,9 @@ int main(int argc, char *argv[])
         case 'f': /* --fuzzing */
             opts->fuzzing = myoptarg;
             break;
-        case 'F': /* --max-forks */
-            opts->maxchild = atoi(myoptarg) > 1 ? atoi(myoptarg) : 1;
-            break;
+        case 'F':
+            fprintf(stderr, "%s: `-F' is deprecated, use `-j'\n", argv[0]);
+            return EXIT_FAILURE;
         case 'i': /* --stdin */
             setenv("ZZUF_STDIN", "1", 1);
             break;
@@ -277,6 +277,9 @@ int main(int argc, char *argv[])
             }
             break;
 #endif
+        case 'j': /* --jobs */
+            opts->maxchild = atoi(myoptarg) > 1 ? atoi(myoptarg) : 1;
+            break;
         case 'l': /* --list */
             opts->list = myoptarg;
             break;
@@ -1160,7 +1163,7 @@ static void usage(void)
 #else
     printf("Usage: zzuf [-AdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
 #endif
-    printf("              [-f fuzzing] [-D delay] [-F forks] [-C crashes] [-B bytes]\n");
+    printf("              [-f fuzzing] [-D delay] [-j jobs] [-C crashes] [-B bytes]\n");
     printf("              [-t seconds] ");
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
     printf(                           "[-T seconds] ");
@@ -1193,11 +1196,11 @@ static void usage(void)
     printf("  -E, --exclude <regex>     do not fuzz files matching <regex>\n");
 #endif
     printf("  -f, --fuzzing <mode>      use fuzzing mode <mode> ([xor] set unset)\n");
-    printf("  -F, --max-forks <n>       number of concurrent children (default 1)\n");
     printf("  -i, --stdin               fuzz standard input\n");
 #if defined HAVE_REGEX_H
     printf("  -I, --include <regex>     only fuzz files matching <regex>\n");
 #endif
+    printf("  -j, --jobs <n>            number of simultaneous jobs (default 1)\n");
     printf("  -l, --list <list>         only fuzz Nth descriptor with N in <list>\n");
     printf("  -m, --md5                 compute the output's MD5 hash\n");
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM

@@ -4,7 +4,7 @@ zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
 \fBzzuf\fR [\fB\-AcdimnqSvx\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR] [\fB\-r\fR \fIratio\fR|\fB\-r\fR \fImin:max\fR]
 .br
-       [\fB\-f\fR \fIfuzzing\fR] [\fB\-D\fR \fIdelay\fR] [\fB\-F\fR \fIforks\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
+       [\fB\-f\fR \fIfuzzing\fR] [\fB\-D\fR \fIdelay\fR] [\fB\-j\fR \fIjobs\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
 .br
        [\fB\-t\fR \fIseconds\fR] [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImegabytes\fR] [\fB\-b\fR \fIranges\fR] [\fB\-p\fR \fIports\fR]
 .br
@@ -91,7 +91,7 @@ Activate the display of debug messages.
 .TP
 \fB\-D\fR, \fB\-\-delay\fR=\fIdelay\fR
 Do not launch more than one process every \fIdelay\fR seconds. This option
-should be used together with \fB\-F\fR to avoid fork bombs.
+should be used together with \fB\-j\fR to avoid fork bombs.
 .TP
 \fB\-E\fR, \fB\-\-exclude\fR=\fIregex\fR
 Do not fuzz files whose name matches the \fIregex\fR regular expression. This
@@ -118,7 +118,7 @@ only unset bits
 .IP
 The default value for \fImode\fR is \fBxor\fR.
 .TP
-\fB\-F\fR, \fB\-\-max\-forks\fR=\fIforks\fR
+\fB\-j\fR, \fB\-\-jobs\fR=\fIjobs\fR
 Specify the number of simultaneous children that can be run. By default,
 \fBzzuf\fR only launches one process at a time.
 
@@ -350,12 +350,12 @@ Fuzz between 0.1% and 2% of MPlayer's input bits (\fB\-r0.001:0.02\fR)
 with seeds 0 to 9999 (\fB\-s0:10000\fR), preserving the AVI 4-byte header
 by restricting fuzzing to offsets after 4 (\fB\-b4\-\fR), disabling its
 standard output messages (\fB\-q\fR), launching up to five simultaneous child
-processes (\fB\-F5\fR) but waiting at least half a second between launches
+processes (\fB\-j5\fR) but waiting at least half a second between launches
 (\fB\-D0.5\fR), killing MPlayer if it takes more than one minute to
 read the file (\fB\-T60\fR) and disabling its \fBSIGSEGV\fR signal handler
 (\fB\-S\fR):
 .PP
-\fB    zzuf \-c \-r0.001:0.02 \-s0:10000 \-b4\- \-q \-F5 \-D0.5 \-T60 \-S \\\fR
+\fB    zzuf \-c \-r0.001:0.02 \-s0:10000 \-b4\- \-q \-j5 \-D0.5 \-T60 \-S \\\fR
 .br
 \fB      mplayer \-benchmark \-vo null \-fps 1000 movie.avi\fR
 .PP
