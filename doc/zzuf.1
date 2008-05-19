@@ -76,9 +76,11 @@ specific files.
 .TP
 \fB\-C\fR, \fB\-\-max\-crashes\fR=\fIn\fR
 Stop forking when at least \fIn\fR children have crashed. The default value
-is 1, meaning \fBzzuf\fR will stop as soon as one child has crashed. A process
-is considered to have crashed if any signal (such as, but not limited to,
-\fBSIGSEGV\fR) caused it to exit. If the \fB\-x\fR flag is used, this will
+is 1, meaning \fBzzuf\fR will stop as soon as one child has crashed. A value
+of 0 tells \fBzzuf\fR to never stop.
+
+A process is considered to have crashed if any signal (such as, but not limited
+to, \fBSIGSEGV\fR) caused it to exit. If the \fB\-x\fR flag is used, this will
 also include processes that exit with a non-zero status.
 
 This option is only relevant if the \fB\-s\fR flag is used with a range
