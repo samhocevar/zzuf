@@ -173,7 +173,11 @@ void *NEW(realloc)(void *ptr, size_t size)
         || ((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP))
     {
         ret = dummy_buffer + dummy_offset;
-        memcpy(ret, ptr, size);
+        /* XXX: If ptr is NULL, we don't copy anything. If it is non-NULL, we
+         * copy everything even if it is too big, we don't have anything to
+         * overflow really. */
+        if(ptr)
+            memcpy(ret, ptr, size);
         dummy_offset += (size + 7) * 8;
         debug("%s(%p, %li) = %p", __func__, ptr, (long int)size, ret);
         return ret;
