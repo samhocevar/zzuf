@@ -102,12 +102,12 @@ void _zz_init(void)
 {
     char *tmp, *tmp2;
 
-    /* We need this as soon as possible */
-    _zz_mem_init();
-
     tmp = getenv("ZZUF_DEBUG");
     if(tmp)
         _zz_debugfd = atoi(tmp);
+
+    /* We need this as soon as possible */
+    _zz_mem_init();
 
     tmp = getenv("ZZUF_SEED");
     if(tmp && *tmp)

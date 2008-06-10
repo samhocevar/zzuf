@@ -110,6 +110,7 @@ static int64_t dummy_offset = 0;
 
 void _zz_mem_init(void)
 {
+    LOADSYM(free);
     LOADSYM(calloc);
     LOADSYM(malloc);
     LOADSYM(realloc);
@@ -156,7 +157,12 @@ void NEW(free)(void *ptr)
         debug("%s(%p)", __func__, ptr);
         return;
     }
-    LOADSYM(free);
+    if(!ORIG(free))
+    {
+        /* FIXME: memory leak */
+        debug("%s(%p) IGNORED", __func__, ptr);
+        return;
+    }
     ORIG(free)(ptr);
 }
 
