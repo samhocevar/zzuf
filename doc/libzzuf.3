@@ -1,0 +1,123 @@
+.TH libzzuf 3 "2008-06-10" "libzzuf"
+.SH NAME
+libzzuf \- helper library for the zzuf multiple purpose fuzzer
+.SH DESCRIPTION
+.PP
+\fBlibzzuf\fR is a helper library automatically preloaded by \fBzzuf\fR when
+fuzzing applications, but it can also be used alone for very specific cases.
+.SH USAGE
+.PP
+\fBlibzzuf\fR must be preloaded using the operating system's default way of
+preloading libraries. For instance, on a typical Linux installation:
+.PP
+\fB    LD_PRELOAD=/usr/lib/zzuf/libzzuf.so\fR
+.SH ENVIRONMENT VARIABLES
+.PP
+\fBlibzzuf\fR's initial setup is done through environment variables. After
+they are read, no further communication is done with the fuzzed process. All
+environment variables are optional.
+.TP
+\fBZZUF_DEBUG\fR
+This environment variable is set to a file descriptor where \fBlibzzuf\fR will
+send debugging information.
+.TP
+\fBZZUF_SEED\fR
+This variable is set to the initial seed.
+.TP
+\fBZZUF_MINRATIO\fR, \fBZZUF_MAXRATIO\fR
+These variables are set to the minimal and maximal seed ratios.
+.TP
+\fBZZUF_AUTOINC\fR
+To do.
+.TP
+\fBZZUF_BYTES\fR
+To do.
+.TP
+\fBZZUF_LIST\fR
+To do.
+.TP
+\fBZZUF_PORTS\fR
+To do.
+.TP
+\fBZZUF_PROTECT\fR
+To do.
+.TP
+\fBZZUF_REFUSE\fR
+To do.
+.TP
+\fBZZUF_INCLUDE\fR
+To do.
+.TP
+\fBZZUF_EXCLUDE\fR
+To do.
+.TP
+\fBZZUF_SIGNAL\fR
+To do.
+.TP
+\fBZZUF_MEMORY\fR
+To do.
+.TP
+\fBZZUF_NETWORK\fR
+To do.
+.TP
+\fBZZUF_STDIN\fR
+To do.
+.SH NOTES
+In order to intercept file and network operations, signal handlers and memory
+allocations, \fBlibzzuf\fR diverts and reimplements the following functions,
+which can sometimes be private C library symbols, too:
+.TP
+Unix file descriptor handling:
+\fBopen\fR(), \fBdup\fR(), \fBdup2\fR(), \fBlseek\fR(), \fBread\fR(),
+\fBreadv\fR(), \fBpread\fR(), \fBaccept\fR(), \fBsocket\fR(), \fBrecv\fR(),
+\fBrecvfrom\fR(), \fBrecvmsg\fR(), \fBaio_read\fR(), \fBaio_return\fR(),
+\fBclose\fR()
+.TP
+Standard IO streams:
+\fBfopen\fR(), \fBfreopen\fR(), \fBfseek\fR(), \fBfseeko\fR(), \fBrewind\fR(),
+\fBfread\fR(), \fBgetc\fR(), \fBgetchar\fR(), \fBfgetc\fR(), \fBfgets\fR(),
+\fBungetc\fR(), \fBfclose\fR()
+.TP
+Memory management:
+\fBmmap\fR(), \fBmunmap\fR(), \fBmalloc\fR(), \fBcalloc\fR(), \fBvalloc\fR(),
+\fBfree\fR(), \fBmemalign\fR(), \fBposix_memalign\fR()
+.TP
+Linux-specific:
+\fBopen64\fR(), \fBlseek64\fR(), \fBmmap64\fR(), \fB_IO_getc\fR(),
+\fBgetline\fR(), \fBgetdelim\fR(), \fB__getdelim\fR(), \fBgetc_unlocked\fR(),
+\fBgetchar_unlocked\fR(), \fBfgetc_unlocked\fR(), \fBfgets_unlocked\fR(),
+\fBfread_unlocked\fR()
+.TP
+BSD-specific:
+\fBfgetln\fR(), \fB__srefill\fR()
+.TP
+Mac OS X-specific:
+\fBmap_fd\fR()
+.TP
+Signal handling:
+\fBsignal\fR(), \fBsigaction\fR()
+.PP
+If an application manipulates file descriptors (reading data, seeking around)
+using functions that are not in that list, \fBlibzzuf\fR will not fuzz its
+input consistently and the results should not be trusted. You can use a tool
+such as \fBltrace(1)\fR on Linux to know the missing functions.
+.PP
+On BSD systems, such as FreeBSD or Mac OS X, \fB__srefill\fR() is enough to
+monitor all standard IO streams functions. On other systems, such as Linux,
+each function is reimplemented on a case by case basis. One important
+unimplemented function is \fBfscanf\fR(), because of its complexity. Missing
+functions will be added upon user request.
+.SH SEE ALSO
+.PP
+\fBzzuf(1)\fR
+.SH AUTHOR
+.PP
+Copyright \(co 2002, 2007\-2008 Sam Hocevar <sam@zoy.org>.
+.PP
+\fBlibzzuf\fR and this manual page are free software. They come without any
+warranty, to the extent permitted by applicable law. You can redistribute
+them and/or modify them under the terms of the Do What The Fuck You Want
+To Public License, Version 2, as published by Sam Hocevar. See
+\fBhttp://sam.zoy.org/wtfpl/COPYING\fR for more details.
+.PP
+\fBzzuf\fR's webpage can be found at \fBhttp://libcaca.zoy.org/wiki/zzuf\fR.

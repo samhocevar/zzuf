@@ -408,55 +408,13 @@ methods are planned.
 As of now, \fBzzuf\fR does not really support multithreaded applications. The
 behaviour with multithreaded applications where more than one thread does file
 descriptor operations is undefined.
-.SH NOTES
-In order to intercept file and network operations, signal handlers and memory
-allocations, \fBzzuf\fR diverts and reimplements the following functions,
-which can be private libc symbols, too:
-.TP
-Unix file descriptor handling:
-\fBopen\fR(), \fBdup\fR(), \fBdup2\fR(), \fBlseek\fR(), \fBread\fR(),
-\fBreadv\fR(), \fBpread\fR(), \fBaccept\fR(), \fBsocket\fR(), \fBrecv\fR(),
-\fBrecvfrom\fR(), \fBrecvmsg\fR(), \fBaio_read\fR(), \fBaio_return\fR(),
-\fBclose\fR()
-.TP
-Standard IO streams:
-\fBfopen\fR(), \fBfreopen\fR(), \fBfseek\fR(), \fBfseeko\fR(), \fBrewind\fR(),
-\fBfread\fR(), \fBgetc\fR(), \fBgetchar\fR(), \fBfgetc\fR(), \fBfgets\fR(),
-\fBungetc\fR(), \fBfclose\fR()
-.TP
-Memory management:
-\fBmmap\fR(), \fBmunmap\fR(), \fBmalloc\fR(), \fBcalloc\fR(), \fBvalloc\fR(),
-\fBfree\fR(), \fBmemalign\fR(), \fBposix_memalign\fR()
-.TP
-Linux-specific:
-\fBopen64\fR(), \fBlseek64\fR(), \fBmmap64\fR(), \fB_IO_getc\fR(),
-\fBgetline\fR(), \fBgetdelim\fR(), \fB__getdelim\fR(), \fBgetc_unlocked\fR(),
-\fBgetchar_unlocked\fR(), \fBfgetc_unlocked\fR(), \fBfgets_unlocked\fR(),
-\fBfread_unlocked\fR()
-.TP
-BSD-specific:
-\fBfgetln\fR(), \fB__srefill\fR()
-.TP
-Mac OS X-specific:
-\fBmap_fd\fR()
-.TP
-Signal handling:
-\fBsignal\fR(), \fBsigaction\fR()
-.PP
-If an application manipulates file descriptors (reading data, seeking around)
-using functions that are not in that list, \fBzzuf\fR will not fuzz its
-input consistently and the results should not be trusted. You can use a tool
-such as \fBltrace(1)\fR on Linux to know the missing functions.
-.PP
-On BSD systems, such as FreeBSD or Mac OS X, \fB__srefill\fR() is enough to
-monitor all standard IO streams functions. On other systems, such as Linux,
-each function is reimplemented on a case by case basis. One important
-unimplemented function is \fBfscanf\fR(), because of its complexity. Missing
-functions will be added upon user request.
 .SH HISTORY
 .PP
 \fBzzuf\fR started its life in 2002 as the \fBstreamfucker\fR tool, a small
 multimedia stream corrupter used to find bugs in the VLC media player.
+.SH SEE ALSO
+.PP
+\fBlibzzuf(3)\fR
 .SH AUTHOR
 .PP
 Copyright \(co 2002, 2007\-2008 Sam Hocevar <sam@zoy.org>.
