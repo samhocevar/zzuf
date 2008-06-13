@@ -1,5 +1,12 @@
 $Id$
 
+Changes from zzuf 0.11 to 0.12
+
+ * no longer crash when the fuzzed application uses realloc() before all
+   libraries have been properly initialised.
+ * minor bug fixes and changes.
+ * deprecate -F in favour of -j, to mimic make.
+
 Changes from zzuf 0.10 to 0.11
 
  * non-locking stdio functions and dup()/dup2() reimplementations
