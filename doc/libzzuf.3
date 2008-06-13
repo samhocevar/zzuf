@@ -4,7 +4,8 @@ libzzuf \- helper library for the zzuf multiple purpose fuzzer
 .SH DESCRIPTION
 .PP
 \fBlibzzuf\fR is a helper library automatically preloaded by \fBzzuf\fR when
-fuzzing applications, but it can also be used alone for very specific cases.
+fuzzing applications, but it can also be used alone for debugging purposes or
+specific cases that cannot be covered by \fBzzuf\fR.
 .SH USAGE
 .PP
 \fBlibzzuf\fR must be preloaded using the operating system's default way of
@@ -14,54 +15,64 @@ preloading libraries. For instance, on a typical Linux installation:
 .SH ENVIRONMENT VARIABLES
 .PP
 \fBlibzzuf\fR's initial setup is done through environment variables. After
-they are read, no further communication is done with the fuzzed process. All
-environment variables are optional.
+they are read, no further information can be sent to the fuzzed process.
+
+All environment variables are optional.
 .TP
 \fBZZUF_DEBUG\fR
 This environment variable is set to a file descriptor where \fBlibzzuf\fR will
-send debugging information.
+send debugging information. This is used to send data to the main \fBzzuf\fR
+controlling binary.
 .TP
 \fBZZUF_SEED\fR
-This variable is set to the initial seed.
+This variable is set to the initial random seed. Corresponding \fBzzuf\fR flag:
+\fB\-\-seed\fR.
 .TP
 \fBZZUF_MINRATIO\fR, \fBZZUF_MAXRATIO\fR
-These variables are set to the minimal and maximal seed ratios.
+These variables are set to the minimal and maximal fuzzing ratios.
+Corresponding \fBzzuf\fR flag: \fB\-\-ratio\fR.
 .TP
 \fBZZUF_AUTOINC\fR
-To do.
+If this variable is set, the random seed is incremented each time a new
+file is opened. Corresponding \fBzzuf\fR flag: \fB\-\-autoinc\fR.
 .TP
 \fBZZUF_BYTES\fR
-To do.
+This variable contains byte ranges to which fuzzing should be restricted.
+Corresponding \fBzzuf\fR flag: \fB\-\-bytes\fR.
 .TP
 \fBZZUF_LIST\fR
-To do.
-.TP
-\fBZZUF_PORTS\fR
-To do.
-.TP
-\fBZZUF_PROTECT\fR
-To do.
-.TP
-\fBZZUF_REFUSE\fR
-To do.
-.TP
-\fBZZUF_INCLUDE\fR
-To do.
-.TP
-\fBZZUF_EXCLUDE\fR
-To do.
-.TP
-\fBZZUF_SIGNAL\fR
-To do.
-.TP
-\fBZZUF_MEMORY\fR
-To do.
+This variable contains file descriptor ranges to which fuzzing should be
+restricted. Corresponding \fBzzuf\fR flag: \fB\-\-list\fR.
 .TP
 \fBZZUF_NETWORK\fR
-To do.
+If this variable is set, network mode is activated. Corresponding \fBzzuf\fR
+flag: \fB\-\-network\fR.
+.TP
+\fBZZUF_PORTS\fR
+This variable contains port ranges to which fuzzing should be restricted.
+Corresponding \fBzzuf\fR flag: \fB\-\-port\fR.
+.TP
+\fBZZUF_PROTECT\fR, \fBZZUF_REFUSE\fR
+These variables contain character ranges to protect or refuse. Corresponding
+\fBzzuf\fR flags: \fB\-\-protect\fR, \fB\-\-refuse\fR.
+.TP
+\fBZZUF_INCLUDE\fR, \fBZZUF_EXCLUDE\fR
+These variables contain regular expressions to indicate which files should be
+included or excluded from the list of fuzzed files. Corresponding \fBzzuf\fR
+flags: \fB\-\-include\fR, \fB\-\-exclude\fR.
+.TP
+\fBZZUF_SIGNAL\fR
+If this variable is set, the fuzzed process will be prevented from installing
+signal handlers that usually cause coredumps. Corresponding \fBzzuf\fR flag:
+\fB\-\-signal\fR.
+.TP
+\fBZZUF_MEMORY\fR
+This variable contains the maximum amount of memory that the fuzzed process
+is allowed to allocate. Corresponding \fBzzuf\fR flag: \fB\-\-max-memory\fR.
 .TP
 \fBZZUF_STDIN\fR
-To do.
+If this variable is set, standard input will be fuzzed, too. Corresponding
+\fBzzuf\fR flag: \fB\-\-stdin\fR.
 .SH NOTES
 In order to intercept file and network operations, signal handlers and memory
 allocations, \fBlibzzuf\fR diverts and reimplements the following functions,
@@ -109,7 +120,7 @@ unimplemented function is \fBfscanf\fR(), because of its complexity. Missing
 functions will be added upon user request.
 .SH SEE ALSO
 .PP
-\fBzzuf(1)\fR
+\fBzzuf(1)\fR, \fBld.so(8)\fR
 .SH AUTHOR
 .PP
 Copyright \(co 2002, 2007\-2008 Sam Hocevar <sam@zoy.org>.
