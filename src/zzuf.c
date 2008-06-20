@@ -917,8 +917,8 @@ static int run_process(struct opts *opts, int pipes[][2])
     STARTUPINFO sinfo;
     HANDLE pid;
     void *epaddr;
-#endif
     int ret;
+#endif
 
 #if defined HAVE_FORK
     /* Fork and launch child */
@@ -970,18 +970,21 @@ static int run_process(struct opts *opts, int pipes[][2])
     setenv("ZZUF_MAXRATIO", buf, 1);
 
 #if defined HAVE_FORK
-    /* Meaningless but makes sure there is space for everything */
+    /* Make sure there is space for everything we might do. */
     libpath = malloc(len + strlen(LIBDIR "/.libs/" FILENAME EXTRAINFO) + 1);
     strcpy(libpath, opts->oldargv[0]);
 
-    /* Replace "/path/binaryname" with "/path/.libs/libzzuf.$(EXT)"
-     *     and "binaryname" with ".libs/libzzuf.$(EXT)"
-     * Write the result in libpath. */
+    /* If the binary name contains a '/', we look for a libzzuf in the
+     * same directory. Otherwise, we only look into the system directory
+     * to avoid shared library attacks. Write the result in libpath. */
     tmp = strrchr(libpath, '/');
-    strcpy(tmp ? tmp + 1 : libpath, ".libs/" FILENAME);
-
-    ret = access(libpath, R_OK);
-    if(ret < 0)
+    if(tmp)
+    {
+        strcpy(tmp + 1, ".libs/" FILENAME);
+        if(access(libpath, R_OK) < 0)
+            strcpy(libpath, LIBDIR "/" FILENAME);
+    }
+    else
         strcpy(libpath, LIBDIR "/" FILENAME);
 
     /* OSF1 only */
