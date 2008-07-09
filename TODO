@@ -19,3 +19,8 @@
     + signal handling
     + exported functions
     + memory limits
+
+  * /etc/zzufrc and ~/.zzufrc files
+    + global settings, overridden by the command line
+    + ship rules such as -E '^/usr/' by default
+
