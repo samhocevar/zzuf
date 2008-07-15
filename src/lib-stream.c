@@ -638,7 +638,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
 int NEW(__srefill)(FILE *fp)
 {
     off_t newpos;
-    int ret, fd, tmp;
+    int ret, fd;
 
     LOADSYM(__srefill);
     fd = fileno(fp);
