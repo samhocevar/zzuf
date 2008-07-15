@@ -95,7 +95,7 @@ check()
     CMD="$2"
     ALIAS="$3"
     CHECK="$4"
-    echo -n " $(echo "$ALIAS .............." | cut -b1-18) "
+    printf " $(echo "$ALIAS .............." | cut -b1-18) "
     MD5="$(eval "$ZZUF -m $ZZOPTS $CMD" 2>/dev/null | cut -f2 -d' ')"
     if [ -n "$CHECK" ]; then
         REFMD5="$CHECK"
