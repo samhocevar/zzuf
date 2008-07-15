@@ -83,6 +83,9 @@ static int     (*ORIG(open))    (const char *file, int oflag, ...);
 #if defined HAVE_OPEN64
 static int     (*ORIG(open64))  (const char *file, int oflag, ...);
 #endif
+#if defined HAVE___OPEN64
+static int     (*ORIG(__open64))(const char *file, int oflag, ...);
+#endif
 #if defined HAVE_DUP
 static int     (*ORIG(dup))     (int oldfd);
 #endif
@@ -133,6 +136,9 @@ static off_t   (*ORIG(lseek))   (int fd, off_t offset, int whence);
 #if defined HAVE_LSEEK64
 static off64_t (*ORIG(lseek64)) (int fd, off64_t offset, int whence);
 #endif
+#if defined HAVE___LSEEK64
+static off64_t (*ORIG(__lseek64)) (int fd, off64_t offset, int whence);
+#endif
 static int     (*ORIG(close))   (int fd);
 
 #define OPEN(fn) \
@@ -176,6 +182,13 @@ int NEW(open)(const char *file, int oflag, ...)
 int NEW(open64)(const char *file, int oflag, ...)
 {
     int ret; OPEN(open64); return ret;
+}
+#endif
+
+#if defined HAVE___OPEN64
+int NEW(__open64)(const char *file, int oflag, ...)
+{
+    int ret; OPEN(__open64); return ret;
 }
 #endif
 
@@ -522,9 +535,14 @@ off_t NEW(lseek)(int fd, off_t offset, int whence)
 #if defined HAVE_LSEEK64
 off64_t NEW(lseek64)(int fd, off64_t offset, int whence)
 {
-    off64_t ret;
-    LSEEK(lseek64, off64_t);
-    return ret;
+    off64_t ret; LSEEK(lseek64, off64_t); return ret;
+}
+#endif
+
+#if defined HAVE___LSEEK64
+off64_t NEW(__lseek64)(int fd, off64_t offset, int whence)
+{
+    off64_t ret; LSEEK(__lseek64, off64_t); return ret;
 }
 #endif
 

@@ -93,17 +93,21 @@ Memory management:
 \fBmmap\fR(), \fBmunmap\fR(), \fBmalloc\fR(), \fBcalloc\fR(), \fBvalloc\fR(),
 \fBfree\fR(), \fBmemalign\fR(), \fBposix_memalign\fR()
 .TP
-Linux-specific:
+Required on Linux:
 \fBopen64\fR(), \fBlseek64\fR(), \fBmmap64\fR(), \fB_IO_getc\fR(),
 \fBgetline\fR(), \fBgetdelim\fR(), \fB__getdelim\fR(), \fBgetc_unlocked\fR(),
 \fBgetchar_unlocked\fR(), \fBfgetc_unlocked\fR(), \fBfgets_unlocked\fR(),
 \fBfread_unlocked\fR()
 .TP
-BSD-specific:
+Required on BSD systems:
 \fBfgetln\fR(), \fB__srefill\fR()
 .TP
-Mac OS X-specific:
+Required on Mac OS X:
 \fBmap_fd\fR()
+.TP
+Required on HP-UX:
+\fB__fopen64\fR(), \fB__fseeko64\fR(), \fB__freopen64\fR(), \fB__open64\fR(),
+\fB__lseek64\fR()
 .TP
 Signal handling:
 \fBsignal\fR(), \fBsigaction\fR()
