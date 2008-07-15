@@ -48,8 +48,14 @@
 #include "fuzz.h"
 
 /* Library initialisation shit */
+#if defined __GNUC__
 void _zz_init(void) __attribute__((constructor));
 void _zz_fini(void) __attribute__((destructor));
+#elif defined HAVE_PRAGMA_INIT
+#   pragma INIT "_zz_init"
+#   pragma FINI "_zz_fini"
+#endif
+
 #if defined HAVE_WINDOWS_H
 BOOL WINAPI DllMain(HINSTANCE, DWORD, PVOID);
 #endif

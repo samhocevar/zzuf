@@ -25,6 +25,8 @@
 #define _GNU_SOURCE
 /* Use this to get lseek64() on glibc systems */
 #define _LARGEFILE64_SOURCE
+/* Use this to get proper prototypes on HP-UX systems */
+#define _XOPEN_SOURCE_EXTENDED
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>

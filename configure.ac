@@ -11,6 +11,15 @@ AM_PROG_CC_C_O
 AC_PROG_CPP
 AC_PROG_LIBTOOL
 
+AC_C_INLINE
+
+# Optimizations
+AC_TRY_CFLAGS(-g -O2, CFLAGS="${CFLAGS} -g -O2")
+# Code qui fait des warnings == code de porc == deux baffes dans ta gueule
+AC_TRY_CFLAGS(-Wall, CFLAGS="${CFLAGS} -Wall")
+AC_TRY_CFLAGS(-W, CFLAGS="${CFLAGS} -W")
+AC_TRY_CFLAGS(-Wpointer-arith -Wcast-align -Wcast-qual -Wstrict-prototypes -Wshadow -Waggregate-return -Wmissing-prototypes -Wnested-externs -Wsign-compare, CFLAGS="${CFLAGS} -Wpointer-arith -Wcast-align -Wcast-qual -Wstrict-prototypes -Wshadow -Waggregate-return -Wmissing-prototypes -Wnested-externs -Wsign-compare")
+
 case "${host_os}" in
   *mingw32*)
     DLL_LDFLAGS="-Wl,-l,imagehlp" # Trick libtool here
@@ -49,12 +58,21 @@ AC_TRY_COMPILE([#include <unistd.h>],
 
 AC_MSG_CHECKING(for recv() return value)
 ac_v_recv_t="int"
-AC_TRY_COMPILE([#include <sys/types.h>
-  #include <sys/socket.h>],
+AC_TRY_COMPILE([#define _XOPEN_SOURCE_EXTENDED
+                #include <sys/types.h>
+                #include <sys/socket.h>],
  [ssize_t recv(int s, void *buf, size_t len, int flags);],
  [ac_v_recv_t="ssize_t"])
 AC_MSG_RESULT($ac_v_recv_t)
 AC_DEFINE_UNQUOTED(RECV_T, $ac_v_recv_t, [Define to the recv() return type])
+
+AC_MSG_CHECKING(for pragma INIT/FINI)
+AC_TRY_COMPILE([],
+ [#pragma INIT "my_init"
+  void my_init(void)],
+ [AC_MSG_RESULT(yes)
+  AC_DEFINE(HAVE_PRAGMA_INIT, 1, [Define to 1 if you have pragma INIT])],
+ [AC_MSG_RESULT(no)])
 
 ac_cv_have_getopt_long="no"
 AC_CHECK_FUNCS(getopt_long,
@@ -72,11 +90,6 @@ AC_CHECK_LIB(m, log, [MATH_LIBS="-lm"])
 AC_SUBST(MATH_LIBS)
 AC_CHECK_LIB(dl, dlopen, [DL_LIBS="-ldl"])
 AC_SUBST(DL_LIBS)
-
-# Optimizations
-CFLAGS="${CFLAGS} -g -O2"
-# Code qui fait des warnings == code de porc == deux baffes dans ta gueule
-CFLAGS="${CFLAGS} -Wall -W -Wpointer-arith -Wcast-align -Wcast-qual -Wstrict-prototypes -Wshadow -Waggregate-return -Wmissing-prototypes -Wnested-externs -Wsign-compare"
 
 AC_OUTPUT([
   Makefile
