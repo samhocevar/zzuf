@@ -24,6 +24,8 @@
 #define _BSD_SOURCE
 /* Use this to get mmap64() on glibc systems */
 #define _LARGEFILE64_SOURCE
+/* Use this to get ENOMEM on HP-UX */
+#define _INCLUDE_POSIX_SOURCE
 /* Use this to get posix_memalign */
 #if defined HAVE_POSIX_MEMALIGN
 #   define _XOPEN_SOURCE 600

@@ -18,6 +18,9 @@
 
 #include "config.h"
 
+/* Needed for STDERR_FILENO on HP-UX */
+#define _INCLUDE_POSIX_SOURCE
+
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
 #elif defined HAVE_INTTYPES_H
@@ -49,6 +52,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#if defined HAVE_SYS_TIME_H
+#   include <sys/time.h>
+#endif
 #if defined HAVE_SYS_WAIT_H
 #   include <sys/wait.h>
 #endif

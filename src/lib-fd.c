@@ -27,6 +27,7 @@
 #define _LARGEFILE64_SOURCE
 /* Use this to get proper prototypes on HP-UX systems */
 #define _XOPEN_SOURCE_EXTENDED
+#define _INCLUDE_POSIX_SOURCE
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>

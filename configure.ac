@@ -50,7 +50,8 @@ AC_CHECK_TYPES(socklen_t, [], [],
    #include <sys/socket.h>])
 
 AC_MSG_CHECKING(for read() prototype)
-AC_TRY_COMPILE([#include <unistd.h>],
+AC_TRY_COMPILE([#define _INCLUDE_POSIX_SOURCE
+                #include <unistd.h>],
  [ssize_t read(int fd, void *buf, size_t count);],
  [AC_MSG_RESULT(ssize_t read(... size_t);)
   AC_DEFINE(READ_USES_SSIZE_T, 1, [Define to 1 if read() uses ssize_t.])],

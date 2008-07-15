@@ -14,7 +14,10 @@
 
 #include "config.h"
 
-#define _LARGEFILE64_SOURCE /* for lseek64() */
+/* Needed for lseek64() */
+#define _LARGEFILE64_SOURCE
+/* Needed for O_RDONLY on HP-UX */
+#define _INCLUDE_POSIX_SOURCE
 
 #include <sys/types.h>
 #include <sys/stat.h>

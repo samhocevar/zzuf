@@ -18,8 +18,10 @@
 
 #include "config.h"
 
-/* needed for sighandler_t */
+/* Needed for sighandler_t on glibc systems */
 #define _GNU_SOURCE
+/* Needed for struct sigaction on HP-UX */
+#define _INCLUDE_POSIX_SOURCE
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
