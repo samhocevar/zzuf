@@ -1151,10 +1151,10 @@ static void version(void)
 {
     printf("zzuf %s\n", PACKAGE_VERSION);
     printf("Copyright (C) 2002, 2007-2008 Sam Hocevar <sam@zoy.org>\n");
-    printf("This is free software.  You may redistribute copies of it under the\n");
-    printf("terms of the Do What The Fuck You Want To Public License, Version 2\n");
-    printf("<http://sam.zoy.org/wtfpl/>.\n");
-    printf("There is NO WARRANTY, to the extent permitted by law.\n");
+    printf("This program is free software. It comes without any warranty, to the extent\n");
+    printf("permitted by applicable law. You can redistribute it and/or modify it under\n");
+    printf("the terms of the Do What The Fuck You Want To Public License, Version 2, as\n");
+    printf("published by Sam Hocevar. See <http://sam.zoy.org/wtfpl/> for more details.\n");
     printf("\n");
     printf("Written by Sam Hocevar. Report bugs to <sam@zoy.org>.\n");
 }
