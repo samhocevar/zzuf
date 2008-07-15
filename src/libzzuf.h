@@ -31,6 +31,10 @@
 #define MIN_RATIO 0.00000000001
 #define MAX_RATIO 5.0
 
+/* The default maximum memory usage is 1024 MiB. If this value is not set,
+ * zzuf may bring a machine down to its knees because of I/O. */
+#define DEFAULT_MEM 1024
+
 struct fuzz
 {
     uint32_t seed;

@@ -159,8 +159,12 @@ untouched.
 \fB\-M\fR, \fB\-\-max\-memory\fR=\fImebibytes\fR
 Specify the maximum amount of memory, in mebibytes (1 MiB = 1,048,576 bytes),
 that children are allowed to allocate. This is useful to detect infinite loops
-that eat up a lot of memory. The value should be set reasonably high so as not
-to interfer with normal program operation.
+that eat up a lot of memory.
+
+The value should be set reasonably high so as not to interfer with normal
+program operation. By default, it is set to 1024 MiB in order to avoid
+accidental excessive swapping. To disable the limitation, set the maximum
+memory usage to -1 instead.
 
 \fBzzuf\fR uses the \fBsetrlimit\fR() call to set memory usage limitations and
 relies on the operating system's ability to enforce such limitations.

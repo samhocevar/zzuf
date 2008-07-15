@@ -1207,7 +1207,7 @@ static void usage(void)
     printf("  -l, --list <list>         only fuzz Nth descriptor with N in <list>\n");
     printf("  -m, --md5                 compute the output's MD5 hash\n");
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
-    printf("  -M, --max-memory <n>      maximum child virtual memory size in MB\n");
+    printf("  -M, --max-memory <n>      maximum child virtual memory in MiB (default %u)\n", DEFAULT_MEM);
 #endif
     printf("  -n, --network             fuzz network input\n");
     printf("  -p, --ports <list>        only fuzz network destination ports in <list>\n");

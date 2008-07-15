@@ -43,7 +43,7 @@ void _zz_opts_init(struct opts *opts)
     opts->md5 = 0;
     opts->checkexit = 0;
     opts->verbose = 0;
-    opts->maxmem = -1;
+    opts->maxmem = DEFAULT_MEM;
     opts->maxtime = -1;
     opts->maxcpu = -1;
     opts->delay = 0;
