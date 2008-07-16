@@ -1,9 +1,9 @@
 
-EXTRA_DIST = testsuite.sh file-00 file-ff file-random file-text
+EXTRA_DIST = rng utils file-00 file-ff file-random file-text
 
 noinst_PROGRAMS = zzcat zzero
 
-TESTS = testsuite.sh
+TESTS = rng utils
 
 zzcat_SOURCES = zzcat.c
 
