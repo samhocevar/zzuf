@@ -91,10 +91,10 @@ if [ ! -f "$ZZCAT" ]; then
   echo "error: test/zzcat is missing"
   exit 1
 fi
-if file /bin/cat | grep -q 'statically linked'; then
+if file /bin/cat | grep 'statically linked' >/dev/null 2>&1; then
   STATIC_CAT=1
 fi
-if file /bin/dd | grep -q 'statically linked'; then
+if file /bin/dd | grep 'statically linked' >/dev/null 2>&1; then
   STATIC_DD=1
 fi
 FAILED=0
