@@ -62,6 +62,10 @@ static FILE *  (*ORIG(__fopen64))(const char *path, const char *mode);
 #endif
 static FILE *  (*ORIG(freopen))  (const char *path, const char *mode,
                                   FILE *stream);
+#if defined HAVE_FREOPEN64
+static FILE *  (*ORIG(freopen64))(const char *path, const char *mode,
+                                  FILE *stream);
+#endif
 #if defined HAVE___FREOPEN64
 static FILE *  (*ORIG(__freopen64)) (const char *path, const char *mode,
                                      FILE *stream);
@@ -70,8 +74,14 @@ static int     (*ORIG(fseek))    (FILE *stream, long offset, int whence);
 #if defined HAVE_FSEEKO
 static int     (*ORIG(fseeko))   (FILE *stream, off_t offset, int whence);
 #endif
+#if defined HAVE_FSEEKO64
+static int     (*ORIG(fseeko64)) (FILE *stream, off_t offset, int whence);
+#endif
 #if defined HAVE___FSEEKO64
 static int     (*ORIG(__fseeko64)) (FILE *stream, off_t offset, int whence);
+#endif
+#if defined HAVE_FSETPOS64
+static int     (*ORIG(fsetpos64))(FILE *stream, const fpos64_t *pos);
 #endif
 #if defined HAVE___FSETPOS64
 static int     (*ORIG(__fsetpos64)) (FILE *stream, const fpos64_t *pos);
@@ -205,6 +215,13 @@ FILE *NEW(freopen)(const char *path, const char *mode, FILE *stream)
     FILE *ret; FREOPEN(freopen); return ret;
 }
 
+#if defined HAVE_FREOPEN64
+FILE *NEW(freopen64)(const char *path, const char *mode, FILE *stream)
+{
+    FILE *ret; FREOPEN(freopen64); return ret;
+}
+#endif
+
 #if defined HAVE___FREOPEN64
 FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
 {
@@ -262,6 +279,13 @@ int NEW(fseeko)(FILE *stream, off_t offset, int whence)
 }
 #endif
 
+#if defined HAVE_FSEEKO64
+int NEW(fseeko64)(FILE *stream, off64_t offset, int whence)
+{
+    int ret; FSEEK(fseeko64, ftello); return ret;
+}
+#endif
+
 #if defined HAVE___FSEEKO64
 int NEW(__fseeko64)(FILE *stream, off64_t offset, int whence)
 {
@@ -269,24 +293,35 @@ int NEW(__fseeko64)(FILE *stream, off64_t offset, int whence)
 }
 #endif
 
+#define FSETPOS(fn) \
+    do \
+    { \
+        int fd; \
+        LOADSYM(fn); \
+        fd = fileno(stream); \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
+            return ORIG(fn)(stream, pos); \
+        _zz_lock(fd); \
+        ret = ORIG(fn)(stream, pos); \
+        _zz_unlock(fd); \
+        debug("%s([%i], %lli) = %i", __func__, \
+              fd, (long long int)*pos, ret); \
+        /* On HP-UX at least, fpos64_t == int64_t */ \
+        _zz_setpos(fd, (int64_t)*pos); \
+    } \
+    while(0)
+
+#if defined HAVE_FSETPOS64
+int NEW(fsetpos64)(FILE *stream, const fpos64_t *pos)
+{
+    int ret; FSETPOS(fsetpos64); return ret;
+}
+#endif
+
 #if defined HAVE___FSETPOS64
 int NEW(__fsetpos64)(FILE *stream, const fpos64_t *pos)
 {
-    int ret, fd;
-
-    LOADSYM(__fsetpos64);
-    fd = fileno(stream);
-    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
-        return ORIG(__fsetpos64)(stream, pos);
-    _zz_lock(fd);
-    ret = ORIG(__fsetpos64)(stream, pos);
-    _zz_unlock(fd);
-    debug("%s([%i], %lli) = %i", __func__,
-          fd, (long long int)*pos, ret);
-    /* On HP-UX at least, fpos64_t == int64_t */
-    _zz_setpos(fd, (int64_t)*pos);
-
-    return ret;
+    int ret; FSETPOS(__fsetpos64); return ret;
 }
 #endif
 
