@@ -39,8 +39,16 @@
 #include "fuzz.h"
 #include "fd.h"
 
+#if defined HAVE___SREFILL || defined HAVE___FILBUF
+#   define HAVE_REFILL_STDIO
+#endif
+
 #if defined HAVE___SREFILL
 int NEW(__srefill)(FILE *fp);
+#endif
+
+#if defined HAVE___FILBUF
+int NEW(__filbuf)(FILE *fp);
 #endif
 
 /* Library functions that we divert */
@@ -63,6 +71,9 @@ static int     (*ORIG(fseeko))   (FILE *stream, off_t offset, int whence);
 #endif
 #if defined HAVE___FSEEKO64
 static int     (*ORIG(__fseeko64)) (FILE *stream, off_t offset, int whence);
+#endif
+#if defined HAVE___FSETPOS64
+static int     (*ORIG(__fsetpos64)) (FILE *stream, const fpos64_t *pos);
 #endif
 static void    (*ORIG(rewind))   (FILE *stream);
 static size_t  (*ORIG(fread))    (void *ptr, size_t size, size_t nmemb,
@@ -114,7 +125,19 @@ static char *  (*ORIG(fgetln))    (FILE *stream, size_t *len);
 int            (*ORIG(__srefill)) (FILE *fp);
 #endif
 
+/* Additional HP-UXisms */
+#if defined HAVE___FILBUF
+int            (*ORIG(__filbuf))  (FILE *fp);
+#endif
+
 /* Our function wrappers */
+#if defined HAVE_REFILL_STDIO /* Fuzz fp if we have __srefill() */
+#   define FOPEN_FUZZ() \
+    _zz_fuzz(fd, ret->__ptr, ret->__cnt)
+#else
+#   define FOPEN_FUZZ()
+#endif
+
 #define FOPEN(fn) \
     do \
     { \
@@ -129,6 +152,7 @@ int            (*ORIG(__srefill)) (FILE *fp);
             int fd = fileno(ret); \
             _zz_register(fd); \
             debug("%s(\"%s\", \"%s\") = [%i]", __func__, path, mode, fd); \
+            FOPEN_FUZZ(); \
         } \
     } while(0)
 
@@ -187,7 +211,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
 }
 #endif
 
-#if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_REFILL_STDIO /* Don't fuzz or seek if we have __srefill() */
 #   define FSEEK_FUZZ(fn2)
 #else
 #   define FSEEK_FUZZ(fn2) \
@@ -244,6 +268,27 @@ int NEW(__fseeko64)(FILE *stream, off64_t offset, int whence)
 }
 #endif
 
+#if defined HAVE___FSETPOS64
+int NEW(__fsetpos64)(FILE *stream, const fpos64_t *pos)
+{
+    int ret, fd;
+
+    LOADSYM(__fsetpos64);
+    fd = fileno(stream);
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
+        return ORIG(__fsetpos64)(stream, pos);
+    _zz_lock(fd);
+    ret = ORIG(__fsetpos64)(stream, pos);
+    _zz_unlock(fd);
+    debug("%s([%i], %lli) = %i", __func__,
+          fd, (long long int)*pos, ret);
+    /* On HP-UX at least, fpos64_t == int64_t */
+    _zz_setpos(fd, (int64_t)*pos);
+
+    return ret;
+}
+#endif
+
 void NEW(rewind)(FILE *stream)
 {
     int fd;
@@ -261,14 +306,14 @@ void NEW(rewind)(FILE *stream)
     _zz_unlock(fd);
     debug("%s([%i])", __func__, fd);
 
-#if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_REFILL_STDIO /* Don't fuzz or seek if we have __srefill() */
 #else
     /* FIXME: check what happens when rewind()ing a pipe */
     _zz_setpos(fd, 0);
 #endif
 }
 
-#if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_REFILL_STDIO /* Don't fuzz or seek if we have __srefill() */
 #   define FREAD_FUZZ() \
     do \
     { \
@@ -338,7 +383,7 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 }
 #endif
 
-#if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_REFILL_STDIO /* Don't fuzz or seek if we have __srefill() */
 #   define FGETC_FUZZ
 #else
 #   define FGETC_FUZZ \
@@ -416,7 +461,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
 }
 #endif
 
-#if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_REFILL_STDIO /* Don't fuzz or seek if we have __srefill() */
 #   define FGETS_FUZZ(fn, fn2) \
         _zz_lock(fd); \
         ret = ORIG(fn)(s, size, stream); \
@@ -500,7 +545,7 @@ int NEW(ungetc)(int c, FILE *stream)
         fuzz->uflag = 1;
         fuzz->upos = _zz_getpos(fd) - 1;
         fuzz->uchar = c;
-#if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_REFILL_STDIO /* Don't fuzz or seek if we have __srefill() */
 #else
         _zz_addpos(fd, -1);
 #endif
@@ -613,7 +658,7 @@ ssize_t NEW(__getdelim)(char **lineptr, size_t *n, int delim, FILE *stream)
 char *NEW(fgetln)(FILE *stream, size_t *len)
 {
     char *ret;
-#if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_REFILL_STDIO /* Don't fuzz or seek if we have __srefill() */
 #else
     struct fuzz *fuzz;
     size_t i, size;
@@ -626,7 +671,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(fgetln)(stream, len);
 
-#if defined HAVE___SREFILL /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_REFILL_STDIO /* Don't fuzz or seek if we have __srefill() */
     _zz_lock(fd);
     ret = ORIG(fgetln)(stream, len);
     _zz_unlock(fd);
@@ -681,10 +726,42 @@ int NEW(__srefill)(FILE *fp)
     _zz_unlock(fd);
     if(ret != EOF)
     {
+        /* FIXME: do we have to fuzz ret, too, like in __filbuf? */
         if(newpos != -1)
             _zz_setpos(fd, newpos - fp->_r);
         _zz_fuzz(fd, fp->_p, fp->_r);
         _zz_addpos(fd, fp->_r);
+    }
+
+    if(!_zz_islocked(fd))
+        debug("%s([%i]) = %i", __func__, fd, ret);
+
+    return ret;
+}
+#endif
+
+#if defined HAVE___FILBUF
+int NEW(__filbuf)(FILE *fp)
+{
+    off_t newpos;
+    int ret, fd;
+
+    LOADSYM(__filbuf);
+    fd = fileno(fp);
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
+        return ORIG(__filbuf)(fp);
+
+    _zz_lock(fd);
+    ret = ORIG(__filbuf)(fp);
+    newpos = lseek(fd, 0, SEEK_CUR);
+    _zz_unlock(fd);
+    if(ret != EOF)
+    {
+        if(newpos != -1)
+            _zz_setpos(fd, newpos - fp->__cnt - 1);
+        _zz_fuzz(fd, fp->__ptr - 1, fp->__cnt + 1);
+        ret = (uint8_t)fp->__ptr[-1];
+        _zz_addpos(fd, fp->__cnt + 1);
     }
 
     if(!_zz_islocked(fd))
