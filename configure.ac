@@ -83,6 +83,22 @@ AC_MSG_RESULT($ac_v_fp_cnt/$ac_v_fp_ptr)
 AC_DEFINE_UNQUOTED(FILE_CNT, $ac_v_fp_cnt, [Define to the FILE::cnt member name])
 AC_DEFINE_UNQUOTED(FILE_PTR, $ac_v_fp_ptr, [Define to the FILE::ptr member name])
 
+dnl  On HP-UX, fpos64_t == int64_t, but on Linux it's a compound object.
+AC_MSG_CHECKING(how to access fpos64_t x)
+ac_v_fpos64_t="unknown"
+AC_TRY_COMPILE(
+ [#define _LARGEFILE64_SOURCE
+  #include <stdio.h>],
+ [fpos64_t x; long long int y = x.__pos;],
+ [ac_v_fpos64_t="(x).__pos"])
+AC_TRY_COMPILE(
+ [#define _LARGEFILE64_SOURCE
+  #include <stdio.h>],
+ [fpos64_t x; long long int y = (long long int)x;],
+ [ac_v_fpos64_t="(x)"])
+AC_MSG_RESULT($ac_v_fpos64_t)
+AC_DEFINE_UNQUOTED(FPOS_CAST(x), $ac_v_fpos64_t, [Define to a macro for accessing an fpos64_t variable])
+
 AC_MSG_CHECKING(for pragma INIT/FINI)
 AC_TRY_COMPILE([],
  [#pragma INIT "my_init"

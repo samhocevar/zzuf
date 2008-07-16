@@ -307,9 +307,8 @@ int NEW(__fseeko64)(FILE *stream, off64_t offset, int whence)
         ret = ORIG(fn)(stream, pos); \
         _zz_unlock(fd); \
         debug("%s([%i], %lli) = %i", __func__, \
-              fd, (long long int)*pos, ret); \
-        /* On HP-UX at least, fpos64_t == int64_t */ \
-        _zz_setpos(fd, (int64_t)*pos); \
+              fd, (long long int)FPOS_CAST(*pos), ret); \
+        _zz_setpos(fd, (int64_t)FPOS_CAST(*pos)); \
     } \
     while(0)
 
