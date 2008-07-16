@@ -20,6 +20,8 @@
 
 /* Needed for getline() and getdelim() */
 #define _GNU_SOURCE
+/* Needed for getc_unlocked() on OpenSolaris */
+#define __EXTENSIONS__
 
 #if defined HAVE___SREFILL || defined HAVE___FILBUF
 #   define HAVE_REFILL_STDIO
