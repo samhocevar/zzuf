@@ -26,6 +26,10 @@
 #define _LARGEFILE64_SOURCE
 /* Use this to get ENOMEM on HP-UX */
 #define _INCLUDE_POSIX_SOURCE
+/* Need this to get standard mmap() on OpenSolaris */
+#define _POSIX_C_SOURCE 3
+/* Need this to get valloc() on OpenSolaris */
+#define __EXTENSIONS__
 /* Use this to get posix_memalign */
 #if defined HAVE_POSIX_MEMALIGN
 #   define _XOPEN_SOURCE 600
