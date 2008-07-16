@@ -21,3 +21,6 @@ stamp-*
 src/zzuf
 test/zzcat
 test/zzero
+test/bug-div0
+test/bug-memory
+test/bug-overflow

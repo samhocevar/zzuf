@@ -1,0 +1,58 @@
+#!/bin/sh
+
+set -e
+
+DIR="$(dirname "$0")"
+ZZUF="$DIR/../src/zzuf"
+PROGRAM="$DIR/bug-memory"
+if [ ! -f "$PROGRAM" ]; then
+  echo "error: test/bug-memory is missing"
+  exit 1
+fi
+FAILED=0
+TESTED=0
+
+if [ -z "$1" ]; then
+  seed=$(date | $ZZUF -m 2>/dev/null | cut -f2 -d' ' | tr -d abcdef | cut -b1-8)
+else
+  seed="$1"
+fi
+
+echo "*** running zzuf buffer memory test with seed $seed ***"
+
+echo "*** bug-memory < /file-00"
+if ! $PROGRAM < "$DIR/file-00"; then
+    echo "unexpected exit status $?"
+    FAILED="$(($FAILED + 1))"
+else
+    echo "*** test OK ***"
+fi
+TESTED="$(($TESTED + 1))"
+
+echo "*** zzuf -qi -r0 bug-memory < /file-00"
+if ! "$ZZUF" -r0 -qi "$PROGRAM" < "$DIR/file-00"; then
+    echo "unexpected exit status $?"
+    FAILED="$(($FAILED + 1))"
+else
+    echo "*** test OK ***"
+fi
+TESTED="$(($TESTED + 1))"
+
+echo "*** zzuf -qi bug-memory < file-00"
+if "$ZZUF" -M 256 -qi "$PROGRAM" < "$DIR/file-00"; then
+    echo "unexpected exit status $?"
+    FAILED="$(($FAILED + 1))"
+else
+    echo "*** test OK ***"
+fi
+TESTED="$(($TESTED + 1))"
+
+echo ""
+if [ "$FAILED" != 0 ]; then
+    echo "*** $FAILED tests failed out of $TESTED ***"
+    exit 1
+fi
+echo "*** all $TESTED tests OK ***"
+
+exit 0
+
