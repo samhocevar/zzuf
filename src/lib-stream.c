@@ -18,7 +18,12 @@
 
 #include "config.h"
 
-#define _GNU_SOURCE /* for getline() and getdelim() */
+/* Needed for getline() and getdelim() */
+#define _GNU_SOURCE
+
+#if defined HAVE___SREFILL || defined HAVE___FILBUF
+#   define HAVE_REFILL_STDIO
+#endif
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
@@ -29,7 +34,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#if defined HAVE___SREFILL && defined HAVE_UNISTD_H
+#if defined HAVE_REFILL_STDIO && defined HAVE_UNISTD_H
 #   include <unistd.h> /* Needed for __srefill’s lseek() call */
 #endif
 
@@ -38,10 +43,6 @@
 #include "debug.h"
 #include "fuzz.h"
 #include "fd.h"
-
-#if defined HAVE___SREFILL || defined HAVE___FILBUF
-#   define HAVE_REFILL_STDIO
-#endif
 
 #if defined HAVE___SREFILL
 int NEW(__srefill)(FILE *fp);
