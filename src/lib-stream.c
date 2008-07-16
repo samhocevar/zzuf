@@ -144,7 +144,7 @@ int            (*ORIG(__filbuf))  (FILE *fp);
 /* Our function wrappers */
 #if defined HAVE_REFILL_STDIO /* Fuzz fp if we have __srefill() */
 #   define FOPEN_FUZZ() \
-    _zz_fuzz(fd, ret->__ptr, ret->__cnt)
+    _zz_fuzz(fd, ret->FP_PTR, ret->FP_CNT)
 #else
 #   define FOPEN_FUZZ()
 #endif
@@ -794,10 +794,10 @@ int NEW(__filbuf)(FILE *fp)
     if(ret != EOF)
     {
         if(newpos != -1)
-            _zz_setpos(fd, newpos - fp->__cnt - 1);
-        _zz_fuzz(fd, fp->__ptr - 1, fp->__cnt + 1);
-        ret = (uint8_t)fp->__ptr[-1];
-        _zz_addpos(fd, fp->__cnt + 1);
+            _zz_setpos(fd, newpos - fp->FP_CNT - 1);
+        _zz_fuzz(fd, fp->FP_PTR - 1, fp->FP_CNT + 1);
+        ret = (uint8_t)fp->FP_PTR[-1];
+        _zz_addpos(fd, fp->FP_CNT + 1);
     }
 
     if(!_zz_islocked(fd))

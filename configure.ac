@@ -67,6 +67,22 @@ AC_TRY_COMPILE([#define _XOPEN_SOURCE_EXTENDED
 AC_MSG_RESULT($ac_v_recv_t)
 AC_DEFINE_UNQUOTED(RECV_T, $ac_v_recv_t, [Define to the recv() return type])
 
+AC_MSG_CHECKING(for FILE* internal members)
+ac_v_fp_cnt="unknown"
+ac_v_fp_ptr="unknown"
+AC_TRY_COMPILE([#include <stdio.h>],
+ [FILE *fp; fp->__cnt++; fp->__ptr++],
+ [ac_v_fp_cnt=__cnt; ac_v_fp_ptr=__ptr])
+AC_TRY_COMPILE([#include <stdio.h>],
+ [FILE *fp; fp->_cnt++; fp->_ptr++],
+ [ac_v_fp_cnt=_cnt; ac_v_fp_ptr=_ptr])
+AC_TRY_COMPILE([#include <stdio.h>],
+ [FILE *fp; fp->_c++; fp->_p++],
+ [ac_v_fp_cnt=_c; ac_v_fp_ptr=_p])
+AC_MSG_RESULT($ac_v_fp_cnt/$ac_v_fp_ptr)
+AC_DEFINE_UNQUOTED(FILE_CNT, $ac_v_fp_cnt, [Define to the FILE::cnt member name])
+AC_DEFINE_UNQUOTED(FILE_PTR, $ac_v_fp_ptr, [Define to the FILE::ptr member name])
+
 AC_MSG_CHECKING(for pragma INIT/FINI)
 AC_TRY_COMPILE([],
  [#pragma INIT "my_init"
