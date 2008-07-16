@@ -905,16 +905,13 @@ static int run_process(struct opts *opts, int pipes[][2])
     char *libpath, *tmp;
     int pid, j, len = strlen(opts->oldargv[0]);
 #   if defined __APPLE__
-#       define FILENAME "libzzuf.dylib"
 #       define EXTRAINFO ""
 #       define PRELOAD "DYLD_INSERT_LIBRARIES"
     setenv("DYLD_FORCE_FLAT_NAMESPACE", "1", 1);
 #   elif defined __osf__
-#       define FILENAME "libzzuf.so"
 #       define EXTRAINFO ":DEFAULT"
 #       define PRELOAD "_RLD_LIST"
 #   else
-#       define FILENAME "libzzuf.so"
 #       define EXTRAINFO ""
 #       define PRELOAD "LD_PRELOAD"
 #   endif
@@ -977,7 +974,7 @@ static int run_process(struct opts *opts, int pipes[][2])
 
 #if defined HAVE_FORK
     /* Make sure there is space for everything we might do. */
-    libpath = malloc(len + strlen(LIBDIR "/.libs/" FILENAME EXTRAINFO) + 1);
+    libpath = malloc(len + strlen(LIBDIR "/.libs/" SONAME EXTRAINFO) + 1);
     strcpy(libpath, opts->oldargv[0]);
 
     /* If the binary name contains a '/', we look for a libzzuf in the
@@ -986,12 +983,12 @@ static int run_process(struct opts *opts, int pipes[][2])
     tmp = strrchr(libpath, '/');
     if(tmp)
     {
-        strcpy(tmp + 1, ".libs/" FILENAME);
+        strcpy(tmp + 1, ".libs/" SONAME);
         if(access(libpath, R_OK) < 0)
-            strcpy(libpath, LIBDIR "/" FILENAME);
+            strcpy(libpath, LIBDIR "/" SONAME);
     }
     else
-        strcpy(libpath, LIBDIR "/" FILENAME);
+        strcpy(libpath, LIBDIR "/" SONAME);
 
     /* OSF1 only */
     strcat(libpath, EXTRAINFO);
