@@ -39,16 +39,16 @@ checkutils()
             # they put a newline at the end of their input if it was not there
             # initially. (Linux sed doesn't, but OS X sed does.)
             check "$ZZOPTS" "head -n 9999 $file" "head -n 9999"
-            check "$ZZOPTS" "tail -n 9999 $file" "tail -n 9999"
-            check "$ZZOPTS" "tail -n +1 $file" "tail -n +1"
+            check "$ZZOPTS" "${TAILN}9999 $file" "${TAILN}9999"
+            check "$ZZOPTS" "${TAILP}1 $file" "${TAILP}1"
             if grep -a '' /dev/null >/dev/null 2>&1; then
                 check "$ZZOPTS" "grep -a '' $file" "grep -a ''"
             fi
             check "$ZZOPTS" "sed -e n $file" "sed -e n"
             #check "$ZZOPTS" "cut -b1- $file" "cut -b1-"
             check "$ZZOPTS" "-i head -n 9999 < $file" "|head -n 9999"
-            check "$ZZOPTS" "-i tail -n 9999 < $file" "|tail -n 9999"
-            check "$ZZOPTS" "-i tail -n +1 < $file" "|tail -n +1"
+            check "$ZZOPTS" "-i ${TAILN}9999 < $file" "|${TAILN}9999"
+            check "$ZZOPTS" "-i ${TAILP}1 < $file" "|${TAILP}1"
             if grep -a '' /dev/null >/dev/null 2>&1; then
                 check "$ZZOPTS" "-i grep -a '' < $file" "|grep -a ''"
             fi
@@ -96,6 +96,13 @@ if file /bin/cat | grep 'statically linked' >/dev/null 2>&1; then
 fi
 if file /bin/dd | grep 'statically linked' >/dev/null 2>&1; then
   STATIC_DD=1
+fi
+if tail -n 1 /dev/null >/dev/null 2>&1; then
+  TAILN="tail -n "
+  TAILP="tail -n +"
+else
+  TAILN="tail -"
+  TAILP="tail +"
 fi
 FAILED=0
 TESTED=0
