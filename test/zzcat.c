@@ -19,6 +19,11 @@
 /* Needed for O_RDONLY on HP-UX */
 #define _INCLUDE_POSIX_SOURCE
 
+#if defined HAVE_STDINT_H
+#   include <stdint.h>
+#elif defined HAVE_INTTYPES_H
+#   include <inttypes.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -29,7 +34,6 @@
 #   include <sys/mman.h>
 #endif
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
