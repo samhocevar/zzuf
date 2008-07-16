@@ -23,7 +23,7 @@ int main(void)
 
     while((ch = getc(stdin)) != EOF)
     {
-        char *tmp = malloc(ch * 1024 * 1024);
+        char *tmp = malloc(1 + ch * 1024 * 1024);
         for(i = 0; i < 1024; i++)
             tmp[ch * 1024 * i] = i;
     }
