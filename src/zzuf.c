@@ -112,7 +112,7 @@ static void read_children(struct opts *);
 static void setenv(char const *, char const *, int);
 #endif
 #if defined HAVE_WAITPID
-static char const *sig2str(int);
+static char const *sig2name(int);
 #endif
 #if defined HAVE_WINDOWS_H
 static int dll_inject(void *, void *);
@@ -759,7 +759,7 @@ static void clean_children(struct opts *opts)
 
             finfo(stderr, opts, opts->child[i].seed);
             fprintf(stderr, "signal %i%s%s\n",
-                    WTERMSIG(status), sig2str(WTERMSIG(status)), message);
+                    WTERMSIG(status), sig2name(WTERMSIG(status)), message);
             opts->crashes++;
         }
 #endif
@@ -861,7 +861,7 @@ static void setenv(char const *name, char const *value, int overwrite)
 #endif
 
 #if defined HAVE_WAITPID
-static char const *sig2str(int signum)
+static char const *sig2name(int signum)
 {
     switch(signum)
     {
