@@ -101,7 +101,8 @@ int main(int argc, char *argv[])
             long int now;
             fseek(stream, myrand() % len, SEEK_SET);
             for(j = 0; j < 4; j++)
-                fread(data + ftell(stream), myrand() % 4096, 1, stream);
+                fread(data + ftell(stream),
+                      myrand() % (len - ftell(stream)), 1, stream);
             fseek(stream, myrand() % len, SEEK_SET);
             now = ftell(stream);
             for(j = 0; j < 16; j++)
