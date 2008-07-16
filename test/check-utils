@@ -116,7 +116,6 @@ checkutils 0.001
 checkutils 0.1
 checkutils 10.0
 
-echo ""
 if [ "$FAILED" != 0 ]; then
     echo "*** $FAILED tests failed out of $TESTED ***"
     exit 1

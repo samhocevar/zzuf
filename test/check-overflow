@@ -22,32 +22,31 @@ echo "*** running zzuf buffer overflow test with seed $seed ***"
 
 echo "*** bug-overflow < /file-00"
 if ! $PROGRAM < "$DIR/file-00"; then
-    echo "unexpected exit status $?"
+    echo " unexpected exit status $?"
     FAILED="$(($FAILED + 1))"
 else
-    echo "*** test OK ***"
+    echo " OK"
 fi
 TESTED="$(($TESTED + 1))"
 
 echo "*** zzuf -qi -r0 bug-overflow < /file-00"
 if ! "$ZZUF" -r0 -qi "$PROGRAM" < "$DIR/file-00"; then
-    echo "unexpected exit status $?"
+    echo " unexpected exit status $?"
     FAILED="$(($FAILED + 1))"
 else
-    echo "*** test OK ***"
+    echo " OK"
 fi
 TESTED="$(($TESTED + 1))"
 
 echo "*** zzuf -qi bug-overflow < file-00"
 if "$ZZUF" -qi "$PROGRAM" < "$DIR/file-00"; then
-    echo "unexpected exit status $?"
+    echo " unexpected exit status $?"
     FAILED="$(($FAILED + 1))"
 else
-    echo "*** test OK ***"
+    echo " OK"
 fi
 TESTED="$(($TESTED + 1))"
 
-echo ""
 if [ "$FAILED" != 0 ]; then
     echo "*** $FAILED tests failed out of $TESTED ***"
     exit 1

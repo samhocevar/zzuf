@@ -66,7 +66,6 @@ checkflip 0.001  167604
 checkflip 0.01  1661055
 checkflip 0.1  15205967
 
-echo ""
 if [ "$FAILED" != 0 ]; then
     echo "*** $FAILED tests failed out of $TESTED ***"
     exit 1
