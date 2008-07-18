@@ -41,6 +41,7 @@ typedef int pid_t;
 
 #define inline /* undefined */
 #define __attribute__(x) /* undefined */
+#define __func__ __FUNCTION__
 
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
