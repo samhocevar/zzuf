@@ -116,12 +116,8 @@ fi
 echo "*** running zzuf utils test suite with seed $seed ***"
 
 checkutils 0.0
-checkutils 0.000000001
-checkutils 0.0000001
-checkutils 0.00001
 checkutils 0.001
-checkutils 0.1
-checkutils 10.0
+checkutils 1.0
 
 if [ "$FAILED" != 0 ]; then
     echo "*** $FAILED tests failed out of $TESTED ***"
