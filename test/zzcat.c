@@ -75,7 +75,39 @@ int main(int argc, char *argv[])
     /* Read shit here and there, using different methods */
     switch(atoi(argv[1]))
     {
-    case 1: /* socket seeks and reads */
+    case 0: /* only read() calls */
+        fd = open(name, O_RDONLY);
+        if(fd < 0)
+            return EXIT_FAILURE;
+        for(i = 0; i < len; i++)
+            read(fd, data + i, 1);
+        close(fd);
+        break;
+    case 10: /* only fread() calls */
+        stream = fopen(name, "r");
+        if(!stream)
+            return EXIT_FAILURE;
+        for(i = 0; i < len; i++)
+            fread(data + i, 1, 1, stream);
+        fclose(stream);
+        break;
+    case 11: /* only getc() calls */
+        stream = fopen(name, "r");
+        if(!stream)
+            return EXIT_FAILURE;
+        for(i = 0; i < len; i++)
+            data[i] = getc(stream);
+        fclose(stream);
+        break;
+    case 12: /* only fgetc() calls */
+        stream = fopen(name, "r");
+        if(!stream)
+            return EXIT_FAILURE;
+        for(i = 0; i < len; i++)
+            data[i] = fgetc(stream);
+        fclose(stream);
+        break;
+    case 20: /* socket seeks and reads */
         fd = open(name, O_RDONLY);
         if(fd < 0)
             return EXIT_FAILURE;
@@ -92,7 +124,7 @@ int main(int argc, char *argv[])
         }
         close(fd);
         break;
-    case 2: /* std streams seeks and reads */
+    case 21: /* std streams seeks and reads */
         stream = fopen(name, "r");
         if(!stream)
             return EXIT_FAILURE;
@@ -113,7 +145,7 @@ int main(int argc, char *argv[])
         }
         fclose(stream);
         break;
-    case 3: /* mmap() */
+    case 22: /* mmap() */
         fd = open(name, O_RDONLY);
         if(fd < 0)
             return EXIT_FAILURE;
