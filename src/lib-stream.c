@@ -55,6 +55,10 @@ int NEW(__srefill)(FILE *fp);
 int NEW(__filbuf)(FILE *fp);
 #endif
 
+#if defined HAVE___SRGET
+int NEW(__srget)(FILE *fp);
+#endif
+
 /* Library functions that we divert */
 static FILE *  (*ORIG(fopen))    (const char *path, const char *mode);
 #if defined HAVE_FOPEN64
@@ -137,6 +141,9 @@ static char *  (*ORIG(fgetln))    (FILE *stream, size_t *len);
 #endif
 #if defined HAVE___SREFILL
 int            (*ORIG(__srefill)) (FILE *fp);
+#endif
+#if defined HAVE___SRGET
+int            (*ORIG(__srget))   (FILE *fp);
 #endif
 
 /* Additional HP-UXisms */
@@ -748,65 +755,50 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
 }
 #endif
 
+#define REFILL(fn) \
+    do \
+    { \
+        off_t newpos; \
+        int fd; \
+        LOADSYM(fn); \
+        fd = fileno(fp); \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
+            return ORIG(fn)(fp); \
+        _zz_lock(fd); \
+        ret = ORIG(fn)(fp); \
+        newpos = lseek(fd, 0, SEEK_CUR); \
+        _zz_unlock(fd); \
+        if(ret != EOF) \
+        { \
+            if(newpos != -1) \
+                _zz_setpos(fd, newpos - fp->FILE_CNT - 1); \
+            _zz_fuzz(fd, fp->FILE_PTR - 1, fp->FILE_CNT + 1); \
+            ret = (uint8_t)fp->FILE_PTR[-1]; \
+            _zz_addpos(fd, fp->FILE_CNT + 1); \
+        } \
+        if(!_zz_islocked(fd)) \
+            debug("%s([%i]) = %i", __func__, fd, ret); \
+    } \
+    while(0)
+
 #if defined HAVE___SREFILL
 int NEW(__srefill)(FILE *fp)
 {
-    off_t newpos;
-    int ret, fd;
+    int ret; REFILL(__srefill); return ret;
+}
+#endif
 
-    LOADSYM(__srefill);
-    fd = fileno(fp);
-    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
-        return ORIG(__srefill)(fp);
-
-    _zz_lock(fd);
-    ret = ORIG(__srefill)(fp);
-    newpos = lseek(fd, 0, SEEK_CUR);
-    _zz_unlock(fd);
-    if(ret != EOF)
-    {
-        /* FIXME: do we have to fuzz ret, too, like in __filbuf? */
-        if(newpos != -1)
-            _zz_setpos(fd, newpos - fp->_r);
-        _zz_fuzz(fd, fp->_p, fp->_r);
-        _zz_addpos(fd, fp->_r);
-    }
-
-    if(!_zz_islocked(fd))
-        debug("%s([%i]) = %i", __func__, fd, ret);
-
-    return ret;
+#if defined HAVE___SRGET
+int NEW(__srget)(FILE *fp)
+{
+    int ret; REFILL(__srget); return ret;
 }
 #endif
 
 #if defined HAVE___FILBUF
 int NEW(__filbuf)(FILE *fp)
 {
-    off_t newpos;
-    int ret, fd;
-
-    LOADSYM(__filbuf);
-    fd = fileno(fp);
-    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
-        return ORIG(__filbuf)(fp);
-
-    _zz_lock(fd);
-    ret = ORIG(__filbuf)(fp);
-    newpos = lseek(fd, 0, SEEK_CUR);
-    _zz_unlock(fd);
-    if(ret != EOF)
-    {
-        if(newpos != -1)
-            _zz_setpos(fd, newpos - fp->FILE_CNT - 1);
-        _zz_fuzz(fd, fp->FILE_PTR - 1, fp->FILE_CNT + 1);
-        ret = (uint8_t)fp->FILE_PTR[-1];
-        _zz_addpos(fd, fp->FILE_CNT + 1);
-    }
-
-    if(!_zz_islocked(fd))
-        debug("%s([%i]) = %i", __func__, fd, ret);
-
-    return ret;
+    int ret; REFILL(__filbuf); return ret;
 }
 #endif
 
