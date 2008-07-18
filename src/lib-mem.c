@@ -22,6 +22,9 @@
 #define _GNU_SOURCE
 /* Need this for MAP_ANON and valloc() on FreeBSD (together with cdefs.h) */
 #define _BSD_SOURCE
+#if defined HAVE_SYS_CDEFS_H
+#   include <sys/cdefs.h>
+#endif
 /* Use this to get mmap64() on glibc systems */
 #define _LARGEFILE64_SOURCE
 /* Use this to get ENOMEM on HP-UX */
@@ -45,9 +48,6 @@
 #include <errno.h>
 #include <signal.h>
 
-#if defined HAVE_SYS_CDEFS_H
-#   include <sys/cdefs.h>
-#endif
 #if defined HAVE_MALLOC_H
 #   include <malloc.h>
 #endif
