@@ -75,6 +75,8 @@ int main(int argc, char *argv[])
     /* Read shit here and there, using different methods */
     switch(atoi(argv[1]))
     {
+    /* 0x: simple fd calls
+     * 1x: complex fd calls */
     case 0: /* only read() calls */
         fd = open(name, O_RDONLY);
         if(fd < 0)
@@ -83,7 +85,9 @@ int main(int argc, char *argv[])
             read(fd, data + i, 1);
         close(fd);
         break;
-    case 10: /* only fread() calls */
+    /* 2x: simple stdio calls
+     * 3x: complex stdio calls */
+    case 20: /* only fread() calls */
         stream = fopen(name, "r");
         if(!stream)
             return EXIT_FAILURE;
@@ -91,7 +95,7 @@ int main(int argc, char *argv[])
             fread(data + i, 1, 1, stream);
         fclose(stream);
         break;
-    case 11: /* only getc() calls */
+    case 21: /* only getc() calls */
         stream = fopen(name, "r");
         if(!stream)
             return EXIT_FAILURE;
@@ -99,7 +103,7 @@ int main(int argc, char *argv[])
             data[i] = getc(stream);
         fclose(stream);
         break;
-    case 12: /* only fgetc() calls */
+    case 22: /* only fgetc() calls */
         stream = fopen(name, "r");
         if(!stream)
             return EXIT_FAILURE;
@@ -107,7 +111,26 @@ int main(int argc, char *argv[])
             data[i] = fgetc(stream);
         fclose(stream);
         break;
-    case 20: /* socket seeks and reads */
+    case 30: /* one fread(), then only getc() calls */
+        stream = fopen(name, "r");
+        if(!stream)
+            return EXIT_FAILURE;
+        fread(data, 1, 10, stream);
+        for(i = 10; i < len; i++)
+            data[i] = getc(stream);
+        fclose(stream);
+        break;
+    case 31: /* one fread(), then only fgetc() calls */
+        stream = fopen(name, "r");
+        if(!stream)
+            return EXIT_FAILURE;
+        fread(data, 1, 10, stream);
+        for(i = 10; i < len; i++)
+            data[i] = fgetc(stream);
+        fclose(stream);
+        break;
+    /* 4x: complex, random stuff */
+    case 40: /* socket seeks and reads */
         fd = open(name, O_RDONLY);
         if(fd < 0)
             return EXIT_FAILURE;
@@ -124,7 +147,7 @@ int main(int argc, char *argv[])
         }
         close(fd);
         break;
-    case 21: /* std streams seeks and reads */
+    case 41: /* std streams seeks and reads */
         stream = fopen(name, "r");
         if(!stream)
             return EXIT_FAILURE;
@@ -145,7 +168,7 @@ int main(int argc, char *argv[])
         }
         fclose(stream);
         break;
-    case 22: /* mmap() */
+    case 42: /* mmap() */
         fd = open(name, O_RDONLY);
         if(fd < 0)
             return EXIT_FAILURE;
