@@ -9,11 +9,10 @@ checkflip()
     s2=$seed
     mib=20
     echo "*** $mib MiB of zeroes, ratio $r ***"
-    echo " expected ....... $expect"
     rmax=-1
     rmin=-1
     rtot=0
-    for x in 0 1 2 3 4 5 6 7 8 9; do
+    for x in 0 1 2 3 4; do
         ret=`dd if=/dev/zero bs=1048576 count=$mib 2>/dev/null | "$ZZUF" -s $s2 -r $r | "$ZZERO"`
         if [ "$rmax" = -1 -o "$ret" -gt "$rmax" ]; then rmax=$ret; fi
         if [ "$rmin" = -1 -o "$ret" -lt "$rmin" ]; then rmin=$ret; fi
@@ -21,7 +20,7 @@ checkflip()
         echo " try $x .......... $ret"
         s2=`expr $s2 + 1`
     done
-    rmean=`expr '(' $rtot + 5 ')' / 10 || true`
+    rmean=`expr '(' $rtot + 2 ')' / 5 || true`
     delta=`expr $rmean - $expect || true`
     if [ "$delta" -gt -5 -a "$delta" -lt 5 ]; then
         result="ok"
@@ -33,7 +32,7 @@ checkflip()
         result="ok"
     fi
     TESTED=$(($TESTED + 1))
-    echo " min/avg/max $rmin/$rmean/$rmax .......... $result"
+    echo " expected $expect min/avg/max $rmin/$rmean/$rmax .......... $result"
 }
 
 DIR="$(dirname "$0")"
