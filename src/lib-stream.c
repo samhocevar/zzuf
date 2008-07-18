@@ -375,6 +375,7 @@ void NEW(rewind)(FILE *stream)
         if(newpos != pos) \
         { \
             char *b = ptr; \
+            _zz_setpos(fd, pos); \
             _zz_fuzz(fd, ptr, newpos - pos); \
             _zz_setpos(fd, newpos); \
             if(newpos >= pos + 4) \
