@@ -55,7 +55,7 @@ int NEW(__srefill)(FILE *fp);
 int NEW(__filbuf)(FILE *fp);
 #endif
 
-#if defined HAVE___SRGET
+#if defined HAVE___SRGET && !defined HAVE___SREFILL
 int NEW(__srget)(FILE *fp);
 #endif
 
@@ -142,7 +142,7 @@ static char *  (*ORIG(fgetln))    (FILE *stream, size_t *len);
 #if defined HAVE___SREFILL
 int            (*ORIG(__srefill)) (FILE *fp);
 #endif
-#if defined HAVE___SRGET
+#if defined HAVE___SRGET && !defined HAVE___SREFILL
 int            (*ORIG(__srget))   (FILE *fp);
 #endif
 
@@ -799,7 +799,7 @@ int NEW(__srefill)(FILE *fp)
 }
 #endif
 
-#if defined HAVE___SRGET
+#if defined HAVE___SRGET && !defined HAVE___SREFILL
 int NEW(__srget)(FILE *fp)
 {
     int ret; REFILL(__srget, 1); return ret;
