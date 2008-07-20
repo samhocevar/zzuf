@@ -91,10 +91,7 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
     int64_t i, j;
     int todo;
 
-#if 0
-    debug("fuzz(%i, %lli@%lli)", fd, (long long int)len,
-          (long long int)pos);
-#endif
+    debug("fuzz(%i, @%lli, %lli)", fd, (long long int)pos, (long long int)len);
 
     aligned_buf = buf - pos;
     fuzz = _zz_getfuzz(fd);
