@@ -1,5 +1,5 @@
 
-EXTRA_DIST = $(TESTS) file-00 file-ff file-random file-text
+EXTRA_DIST = $(TESTS) functions.inc file-00 file-ff file-random file-text
 
 noinst_PROGRAMS = zzcat zzero bug-overflow bug-memory bug-div0
 
