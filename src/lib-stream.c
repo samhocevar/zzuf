@@ -780,7 +780,10 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
                 _zz_addpos(fd, 1); \
             } \
             else \
-                ret = ((uint8_t *)fp->FILE_PTR)[0]; \
+            { \
+                if(newpos != -1) \
+                    _zz_setpos(fd, newpos - fp->FILE_CNT); \
+            } \
             _zz_fuzz(fd, fp->FILE_PTR, fp->FILE_CNT); \
             _zz_addpos(fd, fp->FILE_CNT); \
         } \
