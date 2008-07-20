@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 
 int buf[1];
 
@@ -24,7 +25,10 @@ int main(void)
     int ch;
 
     while((ch = getc(stdin)) != EOF)
+    {
         buf[0] = 1 / !ch;
+        if(ch) raise(SIGFPE); /* Needed on OS X... sigh. */
+    }
 
     return EXIT_SUCCESS;
 }
