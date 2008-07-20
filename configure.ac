@@ -111,6 +111,14 @@ AC_TRY_COMPILE([],
   AC_DEFINE(HAVE_PRAGMA_INIT, 1, [Define to 1 if you have pragma INIT])],
  [AC_MSG_RESULT(no)])
 
+AC_MSG_CHECKING(for __printf__ attribute)
+AC_TRY_COMPILE([],
+ [extern void foo(const char *, ...)
+     __attribute__((__format__(__printf__, 1, 2)));],
+ [AC_MSG_RESULT(yes)
+  AC_DEFINE(ATTRIBUTE_PRINTF(x,y), __attribute__((__format__(__printf__, x, y))), [Define to the __printf__ attribute if present])],
+ [AC_MSG_RESULT(no)])
+
 ac_cv_have_getopt_long="no"
 AC_CHECK_FUNCS(getopt_long,
  [ac_cv_have_getopt_long="yes"],
