@@ -1,57 +1,37 @@
 #!/bin/sh
 
-set -e
+. "$(dirname "$0")/functions.inc"
 
-DIR="$(dirname "$0")"
-ZZUF="$DIR/../src/zzuf"
 PROGRAM="$DIR/bug-div0"
 if [ ! -f "$PROGRAM" ]; then
   echo "error: test/bug-div0 is missing"
   exit 1
 fi
-FAILED=0
-TESTED=0
 
-if [ -z "$1" ]; then
-  seed=$(date | $ZZUF -m 2>/dev/null | cut -f2 -d' ' | tr -d abcdef | cut -b1-8)
-else
-  seed="$1"
-fi
+start_test "zzuf division-by-zero test"
 
-echo "*** running zzuf division-by-zero test with seed $seed ***"
-
-echo "*** bug-div0 < /file-00"
+new_test "bug-div0 < /file-00"
 if ! $PROGRAM < "$DIR/file-00"; then
-    echo " unexpected exit status $?"
-    FAILED="$(($FAILED + 1))"
+    fail_test " unexpected exit status $?"
 else
-    echo " OK"
+    pass_test " OK"
 fi
-TESTED="$(($TESTED + 1))"
 
-echo "*** zzuf -qi -r0 bug-div0 < /file-00"
+new_test "zzuf -qi -r0 bug-div0 < /file-00"
 if ! "$ZZUF" -r0 -qi "$PROGRAM" < "$DIR/file-00"; then
-    echo " unexpected exit status $?"
-    FAILED="$(($FAILED + 1))"
+    fail_test " unexpected exit status $?"
 else
-    echo " OK"
+    pass_test " OK"
 fi
-TESTED="$(($TESTED + 1))"
 
-echo "*** zzuf -qi bug-div0 < file-00"
+new_test "zzuf -qi bug-div0 < file-00"
 if "$ZZUF" -qi "$PROGRAM" < "$DIR/file-00"; then
-    echo " unexpected exit status $?"
-    FAILED="$(($FAILED + 1))"
+    fail_test " unexpected exit status $?"
 else
-    echo " OK"
+    pass_test " OK"
 fi
-TESTED="$(($TESTED + 1))"
 
-if [ "$FAILED" != 0 ]; then
-    echo "*** $FAILED tests failed out of $TESTED ***"
-    exit 1
-fi
-echo "*** all $TESTED tests OK ***"
+stop_test
 
 exit 0
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+. "$(dirname "$0")/functions.inc"
 
 checkmd5()
 {
@@ -8,31 +8,18 @@ checkmd5()
     REFMD5="$2"
     printf " $(echo "$CMD .............................." | cut -b1-30) "
     MD5="$(eval "$CMD | $ZZUF -m -r0" 2>/dev/null | cut -f2 -d' ')"
-    TESTED=$(($TESTED + 1))
     if [ "$MD5" != "$REFMD5" ]; then
-        FAILED=$(($FAILED + 1))
-        echo "$MD5 FAILED"
+        fail_test "$MD5 FAILED"
     else
-        echo 'ok'
+        pass_test 'ok'
     fi
 }
 
-DIR="$(dirname "$0")"
-ZZUF="$DIR/../src/zzuf"
-FAILED=0
-TESTED=0
-
-echo "*** running zzuf MD5 test ***"
+start_test "zzuf MD5 test"
 
 checkmd5 "printf ''" d41d8cd98f00b204e9800998ecf8427e
 checkmd5 echo 68b329da9893e34099c7d8ad5cb9c940
 checkmd5 "printf 'hello world'" 5eb63bbbe01eeed093cb22bb8f5acdc3
 
-if [ "$FAILED" != 0 ]; then
-    echo "*** $FAILED tests failed out of $TESTED ***"
-    exit 1
-fi
-echo "*** all $TESTED tests OK ***"
-
-exit 0
+stop_test
 

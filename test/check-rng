@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+. "$(dirname "$0")/functions.inc"
 
 checkflip()
 {
@@ -8,10 +8,10 @@ checkflip()
     expect=$2
     s2=$seed
     mib=20
-    echo "*** $mib MiB of zeroes, ratio $r ***"
     rmax=-1
     rmin=-1
     rtot=0
+    new_test "$mib MiB of zeroes, ratio $r"
     for x in 0 1 2 3 4; do
         ret=`dd if=/dev/zero bs=1048576 count=$mib 2>/dev/null | "$ZZUF" -s $s2 -r $r | "$ZZERO"`
         if [ "$rmax" = -1 -o "$ret" -gt "$rmax" ]; then rmax=$ret; fi
@@ -22,36 +22,18 @@ checkflip()
     done
     rmean=`expr '(' $rtot + 2 ')' / 5 || true`
     delta=`expr $rmean - $expect || true`
+    printf " expected $expect min/avg/max $rmin/$rmean/$rmax .........."
     if [ "$delta" -gt -5 -a "$delta" -lt 5 ]; then
-        result="ok"
+        pass_test " ok"
     elif [ $(($rmean * 8)) -lt $(($expect * 7)) \
                -o $(($rmean * 7)) -gt $(($expect * 8)) ]; then
-        result="FAILED"
-        FAILED=$(($FAILED + 1))
+        fail_test " FAILED"
     else
-        result="ok"
+        pass_test " ok"
     fi
-    TESTED=$(($TESTED + 1))
-    echo " expected $expect min/avg/max $rmin/$rmean/$rmax .......... $result"
 }
 
-DIR="$(dirname "$0")"
-ZZUF="$DIR/../src/zzuf"
-ZZERO="$DIR/zzero"
-if [ ! -f "$ZZERO" ]; then
-  echo "error: test/zzero is missing"
-  exit 1
-fi
-FAILED=0
-TESTED=0
-
-if [ -z "$1" ]; then
-  seed=$(date | $ZZUF -m 2>/dev/null | cut -f2 -d' ' | tr -d abcdef | cut -b1-8)
-else
-  seed="$1"
-fi
-
-echo "*** running zzuf RNG test suite with seed $seed ***"
+start_test "zzuf RNG test suite"
 
 # if X flips are performed on N bits set to 0, the average number of bits
 # set to 1 is: N / 2 * (1 - pow(1 - 2 / N, X)
@@ -65,11 +47,5 @@ checkflip 0.001  167604
 checkflip 0.01  1661055
 checkflip 0.1  15205967
 
-if [ "$FAILED" != 0 ]; then
-    echo "*** $FAILED tests failed out of $TESTED ***"
-    exit 1
-fi
-echo "*** all $TESTED tests OK ***"
-
-exit 0
+stop_test
 
