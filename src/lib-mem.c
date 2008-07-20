@@ -33,6 +33,8 @@
 #define _POSIX_C_SOURCE 3
 /* Need this to get valloc() on OpenSolaris */
 #define __EXTENSIONS__
+/* Need this to include <libc.h> on OS X */
+#define _DARWIN_C_SOURCE
 /* Use this to get posix_memalign */
 #if defined HAVE_POSIX_MEMALIGN
 #   define _XOPEN_SOURCE 600
