@@ -755,7 +755,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
 }
 #endif
 
-#define REFILL(fn) \
+#define REFILL(fn, fn_advances) \
     do \
     { \
         off_t newpos; \
@@ -770,11 +770,19 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
         _zz_unlock(fd); \
         if(ret != EOF) \
         { \
-            if(newpos != -1) \
-                _zz_setpos(fd, newpos - fp->FILE_CNT - 1); \
-            _zz_fuzz(fd, fp->FILE_PTR - 1, fp->FILE_CNT + 1); \
-            ret = (uint8_t)fp->FILE_PTR[-1]; \
-            _zz_addpos(fd, fp->FILE_CNT + 1); \
+            if(fn_advances) \
+            { \
+                if(newpos != -1) \
+                    _zz_setpos(fd, newpos - fp->FILE_CNT - 1); \
+                uint8_t ch = (uint8_t)(unsigned int)ret; \
+                _zz_fuzz(fd, &ch, 1); \
+                ret = ch; \
+                _zz_addpos(fd, 1); \
+            } \
+            else \
+                ret = ((uint8_t *)fp->FILE_PTR)[0]; \
+            _zz_fuzz(fd, fp->FILE_PTR, fp->FILE_CNT); \
+            _zz_addpos(fd, fp->FILE_CNT); \
         } \
         if(!_zz_islocked(fd)) \
             debug("%s([%i]) = %i", __func__, fd, ret); \
@@ -784,21 +792,21 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
 #if defined HAVE___SREFILL
 int NEW(__srefill)(FILE *fp)
 {
-    int ret; REFILL(__srefill); return ret;
+    int ret; REFILL(__srefill, 0); return ret;
 }
 #endif
 
 #if defined HAVE___SRGET
 int NEW(__srget)(FILE *fp)
 {
-    int ret; REFILL(__srget); return ret;
+    int ret; REFILL(__srget, 1); return ret;
 }
 #endif
 
 #if defined HAVE___FILBUF
 int NEW(__filbuf)(FILE *fp)
 {
-    int ret; REFILL(__filbuf); return ret;
+    int ret; REFILL(__filbuf, 1); return ret;
 }
 #endif
 
