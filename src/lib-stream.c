@@ -358,6 +358,20 @@ void NEW(rewind)(FILE *stream)
 #endif
 }
 
+#if defined HAVE___FILBUF || defined HAVE___SRGET
+#   define FREAD_PREFUZZ() \
+    do \
+    { \
+        int64_t tmp = _zz_getpos(fd); \
+        _zz_setpos(fd, pos); \
+        already_fuzzed = _zz_getfuzzed(fd); \
+        _zz_setpos(fd, tmp); \
+    } \
+    while(0)
+#else
+#   define FREAD_PREFUZZ() do {} while(0)
+#endif
+
 #if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
 #   define FREAD_FUZZ() \
     do \
@@ -382,8 +396,12 @@ void NEW(rewind)(FILE *stream)
         if(newpos != pos) \
         { \
             char *b = ptr; \
-            _zz_setpos(fd, pos); \
-            _zz_fuzz(fd, ptr, newpos - pos); \
+            /* Skip bytes that were already fuzzed by __filbuf or __srget */ \
+            if(newpos > pos + already_fuzzed) \
+            { \
+                _zz_setpos(fd, pos + already_fuzzed); \
+                _zz_fuzz(fd, ptr, newpos - pos - already_fuzzed); \
+            } \
             _zz_setpos(fd, newpos); \
             if(newpos >= pos + 4) \
                 debug("%s(%p, %li, %li, [%i]) = %li \"%c%c%c%c...", __func__, \
@@ -404,7 +422,7 @@ void NEW(rewind)(FILE *stream)
     do \
     { \
         int64_t pos; \
-        int fd; \
+        int fd, already_fuzzed = 0; \
         LOADSYM(fn); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
@@ -413,6 +431,7 @@ void NEW(rewind)(FILE *stream)
         _zz_lock(fd); \
         ret = ORIG(fn)(ptr, size, nmemb, stream); \
         _zz_unlock(fd); \
+        FREAD_PREFUZZ(); \
         FREAD_FUZZ(); \
     } while(0)
 
@@ -429,6 +448,12 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 }
 #endif
 
+#if defined HAVE___FILBUF || defined HAVE___SRGET
+#   define FGETC_PREFUZZ already_fuzzed = _zz_getfuzzed(fd);
+#else
+#   define FGETC_PREFUZZ
+#endif
+
 #if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
 #   define FGETC_FUZZ
 #else
@@ -436,7 +461,8 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
         if(ret != EOF) \
         { \
             uint8_t ch = ret; \
-            _zz_fuzz(fd, &ch, 1); \
+            if(already_fuzzed <= 0) \
+               _zz_fuzz(fd, &ch, 1); \
             _zz_addpos(fd, 1); \
             ret = ch; \
         }
@@ -444,7 +470,7 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 #define FGETC(fn, s, arg) \
     do { \
-        int fd; \
+        int fd, already_fuzzed = 0; \
         LOADSYM(fn); \
         fd = fileno(s); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
@@ -452,6 +478,7 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
         _zz_lock(fd); \
         ret = ORIG(fn)(arg); \
         _zz_unlock(fd); \
+        FGETC_PREFUZZ \
         FGETC_FUZZ \
         if(ret == EOF) \
             debug("%s([%i]) = EOF", __func__, fd); \
@@ -758,37 +785,47 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
 #define REFILL(fn, fn_advances) \
     do \
     { \
+        int64_t pos; \
         off_t newpos; \
         int fd; \
         LOADSYM(fn); \
         fd = fileno(fp); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(fn)(fp); \
+        pos = _zz_getpos(fd); \
         _zz_lock(fd); \
         ret = ORIG(fn)(fp); \
         newpos = lseek(fd, 0, SEEK_CUR); \
         _zz_unlock(fd); \
         if(ret != EOF) \
         { \
+            int already_fuzzed = 0; \
             if(fn_advances) \
             { \
+                uint8_t ch = (uint8_t)(unsigned int)ret; \
                 if(newpos != -1) \
                     _zz_setpos(fd, newpos - fp->FILE_CNT - 1); \
-                uint8_t ch = (uint8_t)(unsigned int)ret; \
+                already_fuzzed = _zz_getfuzzed(fd); \
                 _zz_fuzz(fd, &ch, 1); \
-                ret = ch; \
+                ret = fp->FILE_PTR[-1] = ch; \
+                _zz_setfuzzed(fd, fp->FILE_CNT + 1); \
                 _zz_addpos(fd, 1); \
             } \
             else \
             { \
+                _zz_setfuzzed(fd, fp->FILE_CNT); \
                 if(newpos != -1) \
                     _zz_setpos(fd, newpos - fp->FILE_CNT); \
             } \
-            _zz_fuzz(fd, fp->FILE_PTR, fp->FILE_CNT); \
-            _zz_addpos(fd, fp->FILE_CNT); \
+            if(fp->FILE_CNT > already_fuzzed) \
+            { \
+                _zz_addpos(fd, already_fuzzed); \
+                _zz_fuzz(fd, fp->FILE_PTR, fp->FILE_CNT - already_fuzzed); \
+            } \
+            _zz_addpos(fd, fp->FILE_CNT - already_fuzzed); \
         } \
-        if(!_zz_islocked(fd)) \
-            debug("%s([%i]) = %i", __func__, fd, ret); \
+        _zz_setpos(fd, pos); /* FIXME: do we always need to do this? */ \
+        debug("%s([%i]) = %i", __func__, fd, ret); \
     } \
     while(0)
 

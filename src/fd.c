@@ -59,8 +59,8 @@ static int static_list[512];
 #define STATIC_FILES 32
 static struct files
 {
-    int managed, locked, active;
-    int64_t pos;
+    int managed, locked, active, already_fuzzed;
+    int64_t pos, already_pos;
     /* Public stuff */
     struct fuzz fuzz;
 }
@@ -383,6 +383,36 @@ void _zz_addpos(int fd, int64_t off)
         return;
 
     files[fds[fd]].pos += off;
+}
+
+void _zz_setfuzzed(int fd, int count)
+{
+    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
+        return;
+
+    /* FIXME: what if we just slightly advanced? */
+    if(files[fds[fd]].pos == files[fds[fd]].already_pos
+        && count <= files[fds[fd]].already_fuzzed)
+        return;
+
+    files[fds[fd]].already_pos = files[fds[fd]].pos;
+    files[fds[fd]].already_fuzzed = count;
+}
+
+int _zz_getfuzzed(int fd)
+{
+    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
+        return 0;
+
+    if(files[fds[fd]].pos < files[fds[fd]].already_pos)
+        return 0;
+
+    if(files[fds[fd]].pos >= files[fds[fd]].already_pos
+                               + files[fds[fd]].already_fuzzed)
+        return 0;
+
+    return files[fds[fd]].already_fuzzed + files[fds[fd]].already_pos
+                                         - files[fds[fd]].pos;
 }
 
 struct fuzz *_zz_getfuzz(int fd)

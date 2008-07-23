@@ -37,5 +37,8 @@ extern int _zz_isactive(int);
 extern int64_t _zz_getpos(int);
 extern void _zz_setpos(int, int64_t);
 extern void _zz_addpos(int, int64_t);
+extern void _zz_setfuzzed(int, int);
+extern int _zz_getfuzzed(int);
+
 extern struct fuzz *_zz_getfuzz(int);
 
