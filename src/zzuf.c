@@ -470,6 +470,7 @@ static void loop_stdin(struct opts *opts)
 {
     uint8_t md5sum[16];
     struct md5 *ctx = NULL;
+    int total = 0;
 
     if(opts->md5)
         ctx = _zz_md5_init();
@@ -493,11 +494,21 @@ static void loop_stdin(struct opts *opts)
     for(;;)
     {
         uint8_t buf[BUFSIZ];
-        int ret, off = 0, nw = 0;
+        int ret, toread = BUFSIZ, off = 0, nw = 0;
 
-        ret = read(0, buf, BUFSIZ);
+        if(opts->maxbytes >= 0)
+        {
+            if(total >= opts->maxbytes)
+                break;
+            if(total + BUFSIZ >= opts->maxbytes)
+                toread = opts->maxbytes - total;
+        }
+
+        ret = read(0, buf, toread);
         if(ret <= 0)
             break;
+
+        total += ret;
 
         _zz_fuzz(0, buf, ret);
         _zz_addpos(0, ret);

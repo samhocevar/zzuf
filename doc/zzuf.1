@@ -57,9 +57,14 @@ This option is useful to preserve file headers or corrupt only a specific
 portion of a file.
 .TP
 \fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
-Automatically terminate child processes that output more than \fIn\fR bytes
-on the standard output and standard error channels. This is useful to detect
-infinite loops. See also the \fB\-t\fR and \fB\-T\fR flags.
+Automatically stop after \fIn\fR bytes have been output.
+
+This either terminates child processes that output more than \fIn\fR bytes
+on the standard output and standard error channels, or stop reading from
+standard input if no program is being fuzzed.
+
+This is useful to detect infinite loops. See also the \fB\-t\fR and \fB\-T\fR
+flags.
 .TP
 \fB\-c\fR, \fB\-\-cmdline\fR
 Only fuzz files whose name is specified in the target application's command
