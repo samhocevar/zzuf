@@ -368,6 +368,12 @@ read the file (\fB\-T60\fR) and disabling its \fBSIGSEGV\fR signal handler
 .br
 \fB      mplayer \-benchmark \-vo null \-fps 1000 movie.avi\fR
 .PP
+A more advanced VLC fuzzing example, stopping only at the first crash:
+.PP
+\fB    zzuf \-j4 \-vqc \-r0.000001:0.01 \-s0: vlc \-v \-I dummy movie.avi \\\fR
+.br
+\fB       \-\-sout \(aq#transcode{acodec=s16l,vcodec=I420}:dummy\(aq vlc:quit
+.PP
 Create an HTML-like file that loads 200 times the same \fBhello.jpg\fR image
 and open it in Firefox\(tm in auto-increment mode (\fB\-A\fR):
 .PP
