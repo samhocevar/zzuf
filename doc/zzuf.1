@@ -51,7 +51,7 @@ Restrict fuzzing to bytes whose offsets in the file are within \fIranges\fR.
 Range values start at zero and are inclusive. Use dashes between range values
 and commas between ranges. If the right-hand part of a range is ommited, it
 means end of file. For instance, to restrict fuzzing to bytes 0, 3, 4, 5 and
-all bytes after offset 31, use \(oq\fB\-r0,3\-5,31\-\fR\(cq.
+all bytes after offset 31, use \(oq\fB\-b0,3\-5,31\-\fR\(cq.
 
 This option is useful to preserve file headers or corrupt only a specific
 portion of a file.
