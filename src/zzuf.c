@@ -232,6 +232,8 @@ int main(int argc, char *argv[])
             opts->bytes = myoptarg;
             break;
         case 'B': /* --max-bytes */
+            if(myoptarg[0] == '=')
+                myoptarg++;
             opts->maxbytes = atoi(myoptarg);
             break;
 #if defined HAVE_REGEX_H
@@ -240,6 +242,8 @@ int main(int argc, char *argv[])
             break;
 #endif
         case 'C': /* --max-crashes */
+            if(myoptarg[0] == '=')
+                myoptarg++;
             opts->maxcrashes = atoi(myoptarg);
             if(opts->maxcrashes <= 0)
                 opts->maxcrashes = 0;
@@ -248,6 +252,8 @@ int main(int argc, char *argv[])
             setenv("ZZUF_DEBUG", DEBUG_FILENO_STR, 1);
             break;
         case 'D': /* --delay */
+            if(myoptarg[0] == '=')
+                myoptarg++;
             opts->delay = (int64_t)(atof(myoptarg) * 1000000.0);
             break;
 #if defined HAVE_REGEX_H
@@ -284,6 +290,8 @@ int main(int argc, char *argv[])
             break;
 #endif
         case 'j': /* --jobs */
+            if(myoptarg[0] == '=')
+                myoptarg++;
             opts->maxchild = atoi(myoptarg) > 1 ? atoi(myoptarg) : 1;
             break;
         case 'l': /* --list */
@@ -295,6 +303,8 @@ int main(int argc, char *argv[])
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
         case 'M': /* --max-memory */
             setenv("ZZUF_MEMORY", "1", 1);
+            if(myoptarg[0] == '=')
+                myoptarg++;
             opts->maxmem = atoi(myoptarg);
             break;
 #endif
@@ -312,6 +322,8 @@ int main(int argc, char *argv[])
             opts->quiet = 1;
             break;
         case 'r': /* --ratio */
+            if(myoptarg[0] == '=')
+                myoptarg++;
             tmp = strchr(myoptarg, ':');
             opts->minratio = atof(myoptarg);
             opts->maxratio = tmp ? atof(tmp + 1) : opts->minratio;
@@ -320,6 +332,8 @@ int main(int argc, char *argv[])
             opts->refuse = myoptarg;
             break;
         case 's': /* --seed */
+            if(myoptarg[0] == '=')
+                myoptarg++;
             tmp = strchr(myoptarg, ':');
             opts->seed = atol(myoptarg);
             opts->endseed = tmp ? tmp[1] ? (uint32_t)atoi(tmp + 1)
@@ -330,10 +344,14 @@ int main(int argc, char *argv[])
             setenv("ZZUF_SIGNAL", "1", 1);
             break;
         case 't': /* --max-time */
+            if(myoptarg[0] == '=')
+                myoptarg++;
             opts->maxtime = (int64_t)(atof(myoptarg) * 1000000.0);
             break;
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
         case 'T': /* --max-cpu */
+            if(myoptarg[0] == '=')
+                myoptarg++;
             opts->maxcpu = (int)(atof(myoptarg) + 0.5);
             break;
 #endif
