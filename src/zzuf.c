@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
                 myoptarg++;
             tmp = strchr(myoptarg, ':');
             opts->seed = atol(myoptarg);
-            opts->endseed = tmp ? tmp[1] ? (uint32_t)atoi(tmp + 1)
+            opts->endseed = tmp ? tmp[1] ? (uint32_t)atol(tmp + 1)
                                          : (uint32_t)-1UL
                                 : opts->seed + 1;
             break;
