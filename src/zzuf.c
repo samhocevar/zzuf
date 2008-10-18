@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
             { "seed",        1, NULL, 's' },
             { "signal",      0, NULL, 'S' },
             { "max-time",    1, NULL, 't' },
-            { "max-cpu",     1, NULL, 'T' },
+            { "max-cputime", 1, NULL, 'T' },
             { "verbose",     0, NULL, 'v' },
             { "check-exit",  0, NULL, 'x' },
             { "help",        0, NULL, 'h' },
@@ -349,7 +349,7 @@ int main(int argc, char *argv[])
             opts->maxtime = (int64_t)(atof(myoptarg) * 1000000.0);
             break;
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
-        case 'T': /* --max-cpu */
+        case 'T': /* --max-cputime */
             if(myoptarg[0] == '=')
                 myoptarg++;
             opts->maxcpu = (int)(atof(myoptarg) + 0.5);
@@ -1252,7 +1252,7 @@ static void usage(void)
     printf("      --seed <start:stop>   specify a seed range\n");
     printf("  -S, --signal              prevent children from diverting crashing signals\n");
     printf("  -t, --max-time <n>        kill children that run for more than <n> seconds\n");
-    printf("  -T, --max-cpu <n>         kill children that use more than <n> CPU seconds\n");
+    printf("  -T, --max-cputime <n>     kill children that use more than <n> CPU seconds\n");
     printf("  -v, --verbose             print information during the run\n");
     printf("  -x, --check-exit          report processes that exit with a non-zero status\n");
     printf("  -h, --help                display this help and exit\n");
