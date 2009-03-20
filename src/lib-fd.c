@@ -256,8 +256,11 @@ int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 
     if(ret >= 0)
     {
-        debug("%s(%i, %p, &%i) = %i", __func__,
-              sockfd, addr, (int)*addrlen, ret);
+        if(addrlen)
+            debug("%s(%i, %p, &%i) = %i", __func__,
+                  sockfd, addr, (int)*addrlen, ret);
+        else
+            debug("%s(%i, %p, NULL) = %i", __func__, sockfd, addr, ret);
         _zz_register(ret);
     }
 
