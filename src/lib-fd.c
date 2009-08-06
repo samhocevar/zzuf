@@ -398,7 +398,7 @@ RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
         if (fromlen)
             sprintf(tmp, "&%i", (int)*fromlen);
         else
-            strcat(tmp, "NULL");
+            strcpy(tmp, "NULL");
 
         if (ret >= 4)
             debug("%s(%i, %p, %li, 0x%x, %p, %s) = %i \"%c%c%c%c...",
