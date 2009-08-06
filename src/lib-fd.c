@@ -389,18 +389,24 @@ RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
 
     if(ret > 0)
     {
+        char tmp[128];
         char *b = buf;
 
         _zz_fuzz(s, buf, ret);
         _zz_addpos(s, ret);
 
-        if(ret >= 4)
-            debug("%s(%i, %p, %li, 0x%x, %p, &%i) = %i \"%c%c%c%c...",
-                  __func__, s, buf, (long int)len, flags, from, (int)*fromlen,
+        if (fromlen)
+            sprintf(tmp, "&%i", (int)*fromlen);
+        else
+            strcat(tmp, "NULL");
+
+        if (ret >= 4)
+            debug("%s(%i, %p, %li, 0x%x, %p, %s) = %i \"%c%c%c%c...",
+                  __func__, s, buf, (long int)len, flags, from, tmp,
                   ret, b[0], b[1], b[2], b[3]);
         else
-            debug("%s(%i, %p, %li, 0x%x, %p, &%i) = %i \"%c...",
-                  __func__, s, buf, (long int)len, flags, from, (int)*fromlen,
+            debug("%s(%i, %p, %li, 0x%x, %p, %s) = %i \"%c...",
+                  __func__, s, buf, (long int)len, flags, from, tmp,
                   ret, b[0]);
     }
     else
