@@ -1,6 +1,7 @@
 /*
  *  zzuf - general purpose fuzzer
  *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
+ *                2009 Corentin Delorme <codelorme@gmail.com>
  *                All Rights Reserved
  *
  *  $Id$
@@ -13,14 +14,15 @@
  */
 
 /*
- *  fuzz.h: fuzz functions
+ *  network.h: network connection helper functions
  */
 
-extern void _zz_fuzzing(char const *);
-extern void _zz_bytes(char const *);
-extern void _zz_list(char const *);
-extern void _zz_protect(char const *);
-extern void _zz_refuse(char const *);
+extern void _zz_ports(char const *);
+extern void _zz_allow(char const *);
+extern void _zz_deny(char const *);
+extern void _zz_network_init(void);
+extern void _zz_network_fini(void);
 
-extern void _zz_fuzz(int, volatile uint8_t *, int64_t);
+extern int _zz_portwatched(int);
+extern int _zz_hostwatched(int);
 

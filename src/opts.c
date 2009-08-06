@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2002, 2007 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2002, 2007-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -34,6 +34,7 @@
 void _zz_opts_init(struct opts *opts)
 {
     opts->fuzzing = opts->bytes = opts->list = opts->ports = NULL;
+    opts->allow = opts->deny = NULL;
     opts->protect = opts->refuse = NULL;
     opts->seed = DEFAULT_SEED;
     opts->endseed = DEFAULT_SEED + 1;

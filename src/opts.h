@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2002, 2007 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2002, 2007-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -20,7 +20,7 @@ struct opts
 {
     char **oldargv;
     char **newargv;
-    char *fuzzing, *bytes, *list, *ports, *protect, *refuse;
+    char *fuzzing, *bytes, *list, *ports, *protect, *refuse, *allow, *deny;
     uint32_t seed;
     uint32_t endseed;
     double minratio;

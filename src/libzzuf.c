@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -44,6 +44,7 @@
 #include "libzzuf.h"
 #include "debug.h"
 #include "fd.h"
+#include "network.h"
 #include "sys.h"
 #include "fuzz.h"
 
@@ -140,6 +141,14 @@ void _zz_init(void)
     if(tmp && *tmp)
         _zz_ports(tmp);
 
+    tmp = getenv("ZZUF_ALLOW");
+    if(tmp && *tmp)
+        _zz_allow(tmp);
+
+    tmp = getenv("ZZUF_DENY");
+    if(tmp && *tmp)
+        _zz_deny(tmp);
+
     tmp = getenv("ZZUF_PROTECT");
     if(tmp && *tmp)
         _zz_protect(tmp);
@@ -169,6 +178,7 @@ void _zz_init(void)
         _zz_network = 1;
 
     _zz_fd_init();
+    _zz_network_init();
     _zz_sys_init();
 
     tmp = getenv("ZZUF_STDIN");
@@ -188,6 +198,7 @@ void _zz_init(void)
 void _zz_fini(void)
 {
     _zz_fd_fini();
+    _zz_network_fini();
 }
 
 #if defined HAVE_WINDOWS_H

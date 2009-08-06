@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -26,7 +26,6 @@ extern void _zz_fd_init(void);
 extern void _zz_fd_fini(void);
 
 extern int _zz_mustwatch(char const *);
-extern int _zz_portwatched(int);
 extern int _zz_iswatched(int);
 extern void _zz_register(int);
 extern void _zz_unregister(int);

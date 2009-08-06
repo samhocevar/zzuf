@@ -1,10 +1,12 @@
 $Id$
 
 main zzuf author:
- Sam Hocevar <sam@zoy.org>
+ Sam Hocevar <sam@hocevar.net>
 
 other contributors:
  Rémi Denis-Courmont <rdenis#simphalempin:com> (readv, recvmsg)
  Clément Stenac <zorglub#diwi:org> (pread)
  Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de> (recvfrom)
  Sami Liedes <sliedes#cc:hut:fi> (LD_PRELOAD conservation)
+ Corentin Delorme <codelorme@gmail.com> (remote host filtering)
+

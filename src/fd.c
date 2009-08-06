@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2007 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -35,6 +35,7 @@
 #include "libzzuf.h"
 #include "fd.h"
 #include "fuzz.h"
+#include "network.h"
 #include "ranges.h"
 
 /* Regex stuff */
@@ -42,10 +43,6 @@
 static regex_t re_include, re_exclude;
 static int has_include = 0, has_exclude = 0;
 #endif
-
-/* Network port cherry picking */
-static int *ports = NULL;
-static int static_ports[512];
 
 /* File descriptor cherry picking */
 static int *list = NULL;
@@ -97,11 +94,6 @@ void _zz_exclude(char const *regex)
 #else
     (void)regex;
 #endif
-}
-
-void _zz_ports(char const *portlist)
-{
-    ports = _zz_allocrange(portlist, static_ports);
 }
 
 void _zz_list(char const *fdlist)
@@ -199,8 +191,6 @@ void _zz_fd_fini(void)
         free(fds);
     if(list != static_list)
         free(list);
-    if(ports != static_ports)
-        free(ports);
 }
 
 int _zz_mustwatch(char const *file)
@@ -224,14 +214,6 @@ int _zz_iswatched(int fd)
         return 0;
 
     return 1;
-}
-
-int _zz_portwatched(int port)
-{
-    if(!ports)
-        return 1;
-
-    return _zz_isinrange(port, ports);
 }
 
 void _zz_register(int fd)

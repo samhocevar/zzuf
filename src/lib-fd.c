@@ -1,9 +1,10 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006, 2007 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                2007 Rémi Denis-Courmont <rdenis#simphalempin:com>
  *                2007 Clément Stenac <zorglub#diwi:org>
  *                2007 Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de>
+ *                2009 Corentin Delorme <codelorme@gmail.com>
  *                All Rights Reserved
  *
  *  $Id$
@@ -351,7 +352,8 @@ RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
 
     LOADSYM(recv);
     ret = ORIG(recv)(s, buf, len, flags);
-    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s) || !_zz_isactive(s))
+    if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s)
+         || _zz_islocked(s) || !_zz_isactive(s))
         return ret;
 
     if(ret > 0)
@@ -384,7 +386,8 @@ RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
 
     LOADSYM(recvfrom);
     ret = ORIG(recvfrom)(s, buf, len, flags, from, fromlen);
-    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s) || !_zz_isactive(s))
+    if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s)
+         || _zz_islocked(s) || !_zz_isactive(s))
         return ret;
 
     if(ret > 0)
@@ -424,7 +427,8 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
 
     LOADSYM(recvmsg);
     ret = ORIG(recvmsg)(s, hdr, flags);
-    if(!_zz_ready || !_zz_iswatched(s) || _zz_islocked(s) || !_zz_isactive(s))
+    if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s)
+         || _zz_islocked(s) || !_zz_isactive(s))
         return ret;
 
     fuzz_iovec(s, hdr->msg_iov, ret);
@@ -444,8 +448,8 @@ int NEW(read)(int fd, void *buf, unsigned int count)
 
     LOADSYM(read);
     ret = ORIG(read)(fd, buf, count);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
-         || !_zz_isactive(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_hostwatched(fd)
+         || _zz_islocked(fd) || !_zz_isactive(fd))
         return ret;
 
     if(ret > 0)

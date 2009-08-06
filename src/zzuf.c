@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2002, 2007 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2002, 2007-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -175,12 +175,13 @@ int main(int argc, char *argv[])
 #   define OPTSTR_RLIMIT_CPU ""
 #endif
 #define OPTSTR "+" OPTSTR_REGEX OPTSTR_RLIMIT_MEM OPTSTR_RLIMIT_CPU \
-                "Ab:B:C:dD:f:F:ij:l:mnp:P:qr:R:s:St:vxhV"
+                "a:Ab:B:C:dD:e:f:F:ij:l:mnp:P:qr:R:s:St:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
         {
             /* Long option, needs arg, flag, short option */
+            { "allow",      1, NULL, 'a' },
             { "autoinc",     0, NULL, 'A' },
             { "bytes",       1, NULL, 'b' },
             { "max-bytes",   1, NULL, 'B' },
@@ -190,6 +191,7 @@ int main(int argc, char *argv[])
             { "max-crashes", 1, NULL, 'C' },
             { "debug",       0, NULL, 'd' },
             { "delay",       1, NULL, 'D' },
+            { "deny",        1, NULL, 'e' },
 #if defined HAVE_REGEX_H
             { "exclude",     1, NULL, 'E' },
 #endif
@@ -225,6 +227,9 @@ int main(int argc, char *argv[])
 
         switch(c)
         {
+        case 'a': /* --allow */
+            opts->allow = myoptarg;
+            break;
         case 'A': /* --autoinc */
             setenv("ZZUF_AUTOINC", "1", 1);
             break;
@@ -255,6 +260,9 @@ int main(int argc, char *argv[])
             if(myoptarg[0] == '=')
                 myoptarg++;
             opts->delay = (int64_t)(atof(myoptarg) * 1000000.0);
+            break;
+        case 'e': /* --deny */
+            opts->deny = myoptarg;
             break;
 #if defined HAVE_REGEX_H
         case 'E': /* --exclude */
@@ -386,6 +394,24 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    if (opts->allow && !network)
+    {
+        fprintf(stderr, "%s: allow option (-a) requires network fuzzing (-n)\n",
+                argv[0]);
+        printf(MOREINFO, argv[0]);
+        _zz_opts_fini(opts);
+        return EXIT_FAILURE;
+    }
+
+    if (opts->deny && !network)
+    {
+        fprintf(stderr, "%s: deny option (-e) requires network fuzzing (-n)\n",
+                argv[0]);
+        printf(MOREINFO, argv[0]);
+        _zz_opts_fini(opts);
+        return EXIT_FAILURE;
+    }
+
     _zz_setratio(opts->minratio, opts->maxratio);
     _zz_setseed(opts->seed);
 
@@ -444,6 +470,10 @@ int main(int argc, char *argv[])
         setenv("ZZUF_LIST", opts->list, 1);
     if(opts->ports)
         setenv("ZZUF_PORTS", opts->ports, 1);
+    if(opts->allow)
+        setenv("ZZUF_ALLOW", opts->allow, 1);
+    if(opts->deny)
+        setenv("ZZUF_DENY", opts->deny, 1);
     if(opts->protect)
         setenv("ZZUF_PROTECT", opts->protect, 1);
     if(opts->refuse)
@@ -499,8 +529,6 @@ static void loop_stdin(struct opts *opts)
         _zz_bytes(opts->bytes);
     if(opts->list)
         _zz_list(opts->list);
-    if(opts->ports)
-        _zz_ports(opts->ports);
     if(opts->protect)
         _zz_protect(opts->protect);
     if(opts->refuse)
@@ -1182,13 +1210,13 @@ static void *get_entry(char const *name)
 static void version(void)
 {
     printf("zzuf %s\n", PACKAGE_VERSION);
-    printf("Copyright (C) 2002, 2007-2008 Sam Hocevar <sam@zoy.org>\n");
+    printf("Copyright (C) 2002, 2007-2009 Sam Hocevar <sam@hocevar.net>\n");
     printf("This program is free software. It comes without any warranty, to the extent\n");
     printf("permitted by applicable law. You can redistribute it and/or modify it under\n");
     printf("the terms of the Do What The Fuck You Want To Public License, Version 2, as\n");
     printf("published by Sam Hocevar. See <http://sam.zoy.org/wtfpl/> for more details.\n");
     printf("\n");
-    printf("Written by Sam Hocevar. Report bugs to <sam@zoy.org>.\n");
+    printf("Written by Sam Hocevar. Report bugs to <sam@hocevar.net>.\n");
 }
 
 static void usage(void)
@@ -1218,6 +1246,7 @@ static void usage(void)
     printf("Run PROGRAM with optional arguments ARGS and fuzz its input.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
+    printf("  -a, --allow <list>        only fuzz network input for IPs in <list>\n");
     printf("  -A, --autoinc             increment seed each time a new file is opened\n");
     printf("  -b, --bytes <ranges>      only fuzz bytes at offsets within <ranges>\n");
     printf("  -B, --max-bytes <n>       kill children that output more than <n> bytes\n");
@@ -1227,6 +1256,7 @@ static void usage(void)
     printf("  -C, --max-crashes <n>     stop after <n> children have crashed (default 1)\n");
     printf("  -d, --debug               print debug messages\n");
     printf("  -D, --delay               delay between forks\n");
+    printf("  -e, --deny <list>         do not fuzz network input for IPs in <list>\n");
 #if defined HAVE_REGEX_H
     printf("  -E, --exclude <regex>     do not fuzz files matching <regex>\n");
 #endif
@@ -1258,6 +1288,6 @@ static void usage(void)
     printf("  -h, --help                display this help and exit\n");
     printf("  -V, --version             output version information and exit\n");
     printf("\n");
-    printf("Written by Sam Hocevar. Report bugs to <sam@zoy.org>.\n");
+    printf("Written by Sam Hocevar. Report bugs to <sam@hocevar.net>.\n");
 }
 
