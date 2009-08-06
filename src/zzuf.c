@@ -1003,7 +1003,7 @@ static int run_process(struct opts *opts, int pipes[][2])
 
 #if defined HAVE_FORK
     /* Make sure there is space for everything we might do. */
-    libpath = malloc(len + strlen(LIBDIR "/.libs/" SONAME EXTRAINFO) + 1);
+    libpath = malloc(len + strlen(LIBDIR "/" LT_OBJDIR SONAME EXTRAINFO) + 1);
     strcpy(libpath, opts->oldargv[0]);
 
     /* If the binary name contains a '/', we look for a libzzuf in the
@@ -1012,7 +1012,7 @@ static int run_process(struct opts *opts, int pipes[][2])
     tmp = strrchr(libpath, '/');
     if(tmp)
     {
-        strcpy(tmp + 1, ".libs/" SONAME);
+        strcpy(tmp + 1, LT_OBJDIR SONAME);
         if(access(libpath, R_OK) < 0)
             strcpy(libpath, LIBDIR "/" SONAME);
     }
