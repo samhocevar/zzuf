@@ -26,10 +26,12 @@
 #   include <sys/cdefs.h>
 #endif
 /* Use this to get mmap64() on glibc systems */
+#undef _LARGEFILE64_SOURCE
 #define _LARGEFILE64_SOURCE
 /* Use this to get ENOMEM on HP-UX */
 #define _INCLUDE_POSIX_SOURCE
 /* Need this to get standard mmap() on OpenSolaris */
+#undef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 3
 /* Need this to get valloc() on OpenSolaris */
 #define __EXTENSIONS__
