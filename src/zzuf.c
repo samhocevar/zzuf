@@ -83,7 +83,7 @@
 
 /* Handle old libtool versions */
 #if !defined LT_OBJDIR
-#   define LT_OBJDIR ".libs"
+#   define LT_OBJDIR ".libs/"
 #endif
 
 #if defined RLIMIT_AS
