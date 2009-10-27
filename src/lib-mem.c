@@ -39,6 +39,7 @@
 #define _DARWIN_C_SOURCE
 /* Use this to get posix_memalign */
 #if defined HAVE_POSIX_MEMALIGN
+#   undef _XOPEN_SOURCE
 #   define _XOPEN_SOURCE 600
 #endif
 
