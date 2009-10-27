@@ -113,12 +113,14 @@ int main(int argc, char *argv[])
         fclose(stream);
         break;
 #if defined HAVE_GETLINE
-    case 23: /* getline() calls */
+    case 23: /* getline() and getc() calls */
+    case 24: /* getline() and getc_unlocked() calls */
         stream = fopen(name, "r");
         if(!stream)
             return EXIT_FAILURE;
         i = 0;
-        while ((c = getc(stream)) != EOF)
+        while ((c = (atoi(argv[1]) == 23) ? getc(stream)
+                                          : getc_unlocked(stream)) != EOF)
         {
             char *line;
             ssize_t ret;
