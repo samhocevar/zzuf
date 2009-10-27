@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
     char const *name;
     FILE *stream;
     int i, j, fd;
+    char c;
 
     if(argc != 3)
         return EXIT_FAILURE;
@@ -111,6 +112,27 @@ int main(int argc, char *argv[])
             data[i] = fgetc(stream);
         fclose(stream);
         break;
+#if defined HAVE_GETLINE
+    case 23: /* getline() calls */
+        stream = fopen(name, "r");
+        if(!stream)
+            return EXIT_FAILURE;
+        i = 0;
+        while ((c = getc(stream)) != EOF)
+        {
+            char *line;
+            ssize_t ret;
+            size_t n;
+
+            ungetc(c, stream);
+            line = NULL;
+            ret = getline(&line, &n, stream);
+            for (j = 0; j < ret; i++, j++)
+                data[i] = line[j];
+        }
+        fclose(stream);
+        break;
+#endif
     case 30: /* one fread(), then only getc() calls */
         stream = fopen(name, "r");
         if(!stream)
