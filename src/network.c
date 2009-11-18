@@ -26,15 +26,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#if defined HAVE_SYS_SOCKET_H
+#   include <sys/socket.h>
+#   include <netinet/in.h>
+#   include <arpa/inet.h>
+#endif
 
 #include "libzzuf.h"
 #include "debug.h"
 #include "ranges.h"
 #include "network.h"
 
+#if defined HAVE_SYS_SOCKET_H
 static unsigned int get_socket_ip(int);
 static int host_in_list(unsigned int, unsigned int const *);
 static unsigned int *create_host_list(char const *, unsigned int *);
@@ -48,6 +51,7 @@ static unsigned int static_deny[512];
 /* Network port cherry picking */
 static int *ports = NULL;
 static int static_ports[512];
+#endif
 
 void _zz_network_init(void)
 {
@@ -56,39 +60,52 @@ void _zz_network_init(void)
 
 void _zz_network_fini(void)
 {
+#if defined HAVE_SYS_SOCKET_H
     if(ports != static_ports)
         free(ports);
     if(allow != static_allow)
         free(allow);
     if(deny != static_deny)
         free(deny);
+#endif
 }
 
 void _zz_allow(char const *allowlist)
 {
+#if defined HAVE_SYS_SOCKET_H
     allow = create_host_list(allowlist, static_allow);
+#endif
 }
 
 void _zz_deny(char const *denylist)
 {
+#if defined HAVE_SYS_SOCKET_H
     deny = create_host_list(denylist, static_deny);
+#endif
 }
 
 void _zz_ports(char const *portlist)
 {
+#if defined HAVE_SYS_SOCKET_H
     ports = _zz_allocrange(portlist, static_ports);
+#endif
 }
 
 int _zz_portwatched(int port)
 {
+#if defined HAVE_SYS_SOCKET_H
     if(!ports)
         return 1;
 
     return _zz_isinrange(port, ports);
+#else
+    return 0;
+#endif
 }
 
 int _zz_hostwatched(int sock)
 {
+#if defined HAVE_SYS_SOCKET_H
     int watch = 1;
     unsigned int ip;
 
@@ -103,10 +120,14 @@ int _zz_hostwatched(int sock)
         watch = host_in_list(ip, allow);
 
     return watch;
+#else
+    return 0;
+#endif
 }
 
 /* XXX: the following functions are local */
 
+#if defined HAVE_SYS_SOCKET_H
 static unsigned int *create_host_list(char const *list,
                                       unsigned int *static_list)
 {
@@ -192,4 +213,4 @@ static unsigned int get_socket_ip(int sock)
 
     return sin.sin_addr.s_addr;
 }
-
+#endif /* HAVE_SYS_SOCKET_H */

@@ -16,8 +16,10 @@
  *  config.h: MSVC-specific configuration file
  */
 
-#define VERSION "0.7 (msvc)"
+#define PACKAGE_VERSION "0.7 (msvc)"
 #define SONAME "libzzuf.dll"
+
+#define ATTRIBUTE_PRINTF(x,y)
 
 #define HAVE_WINDOWS_H 1
 #define HAVE_WINSOCK2_H 1
