@@ -8,7 +8,7 @@ endif
 bin_PROGRAMS = zzuf
 zzuf_SOURCES = zzuf.c $(COMMON) $(GETOPT) \
                opts.c opts.h md5.c md5.h timer.c timer.h
-zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\" -DSONAME=\"$$(grep dlname libzzuf.la | cut -f2 -d"'")\"
+zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\"
 zzuf_LDFLAGS = $(MATH_LIBS) $(WINSOCK2_LIBS)
 zzuf_DEPENDENCIES = libzzuf.la
 

@@ -14,6 +14,15 @@ AC_PROG_LIBTOOL
 AC_C_INLINE
 AC_C_FUNC
 
+# Library suffix
+AC_MSG_CHECKING(for libzzuf full name)
+case "$shrext_cmds" in
+  "") SONAME="libzzuf.so" ;;
+  *) SONAME="libzzuf$shrext_cmds" ;;
+esac
+AC_MSG_RESULT($SONAME)
+AC_SUBST(SONAME)
+
 # Optimizations
 AC_TRY_CFLAGS(-g -O2, CFLAGS="${CFLAGS} -g -O2")
 # Code qui fait des warnings == code de porc == deux baffes dans ta gueule
