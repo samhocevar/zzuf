@@ -292,7 +292,7 @@ int NEW(fseeko)(FILE *stream, off_t offset, int whence)
 #if defined HAVE_FSEEKO64
 int NEW(fseeko64)(FILE *stream, off64_t offset, int whence)
 {
-    int ret; FSEEK(fseeko64, ftello); return ret;
+    int ret; FSEEK(fseeko64, ftello64); return ret;
 }
 #endif
 
