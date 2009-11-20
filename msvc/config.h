@@ -16,16 +16,112 @@
  *  config.h: MSVC-specific configuration file
  */
 
-#define PACKAGE_VERSION "0.7 (msvc)"
-#define SONAME "libzzuf.dll"
-
 #define ATTRIBUTE_PRINTF(x,y)
 
+#define FILE_CNT _cnt
+#define FILE_PTR _ptr
+#define FPOS_CAST(x) (x)
+#define HAVE_ACCEPT 1
+/* #undef HAVE_AIO_H */
+/* #undef HAVE_AIO_READ */
+/* #undef HAVE_ARPA_INET_H */
+#define HAVE_BIND 1
+#define HAVE_CONNECT 1
+/* #undef HAVE_DLFCN_H */
+#define HAVE_DUP 1
+#define HAVE_DUP2 1
+/* #undef HAVE_ENDIAN_H */
+/* #undef HAVE_FGETC_UNLOCKED */
+/* #undef HAVE_FGETLN */
+/* #undef HAVE_FGETS_UNLOCKED */
+#define HAVE_FOPEN64 1
+/* #undef HAVE_FORK */
+/* #undef HAVE_FREAD_UNLOCKED */
+/* #undef HAVE_FREOPEN64 */
+/* #undef HAVE_FSEEKO */
+#define HAVE_FSEEKO64 1
+/* #undef HAVE_FSETPOS64 */
+/* #undef HAVE_GETCHAR_UNLOCKED */
+/* #undef HAVE_GETC_UNLOCKED */
+/* #undef HAVE_GETDELIM */
+/* #undef HAVE_GETLINE */
+#define HAVE_GETOPT_H 1
+#define HAVE_GETOPT_LONG 1
+#define HAVE_GETPAGESIZE 1
+#define HAVE_GETTIMEOFDAY 1
+#define HAVE_INTTYPES_H 1
 #define HAVE_IO_H 1
+/* #undef HAVE_KILL */
+/* #undef HAVE_LIBC_H */
+#define HAVE_LSEEK64 1
+#define HAVE_MALLOC_H 1
+/* #undef HAVE_MAP_FD */
+/* #undef HAVE_MEMALIGN */
+#define HAVE_MEMORY_H 1
+/* #undef HAVE_MMAP */
+/* #undef HAVE_MMAP64 */
+/* #undef HAVE_NETINET_IN_H */
+/* #undef HAVE_OPEN64 */
+/* #undef HAVE_PIPE */
+/* #undef HAVE_POSIX_MEMALIGN */
+#define HAVE_PRAGMA_INIT 1
+/* #undef HAVE_PREAD */
 #define HAVE_PROCESS_H 1
+/* #undef HAVE_READV */
+#define HAVE_RECV 1
+#define HAVE_RECVFROM 1
+/* #undef HAVE_RECVMSG */
+/* #undef HAVE_REGEX_H */
+/* #undef HAVE_SETENV */
+/* #undef HAVE_SETRLIMIT */
+/* #undef HAVE_SIGACTION */
+/* #undef HAVE_SIGHANDLER_T */
+/* #undef HAVE_SIG_T */
+#define HAVE_SOCKET 1
+/* #undef HAVE_SOCKLEN_T */
+#define HAVE_STDINT_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+/* #undef HAVE_SYS_CDEFS_H */
+/* #undef HAVE_SYS_MMAN_H */
+/* #undef HAVE_SYS_RESOURCE_H */
+/* #undef HAVE_SYS_SOCKET_H */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TIME_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_SYS_UIO_H */
+/* #undef HAVE_SYS_WAIT_H */
+#define HAVE_UNISTD_H 1
+/* #undef HAVE_VALLOC */
+/* #undef HAVE_WAITPID */
 #define HAVE_WINDOWS_H 1
 #define HAVE_WINSOCK2_H 1
+/* #undef HAVE__IO_GETC */
 #define HAVE__PIPE
+/* #undef HAVE___FILBUF */
+/* #undef HAVE___FOPEN64 */
+/* #undef HAVE___FREOPEN64 */
+/* #undef HAVE___FSEEKO64 */
+/* #undef HAVE___FSETPOS64 */
+/* #undef HAVE___GETDELIM */
+/* #undef HAVE___LSEEK64 */
+/* #undef HAVE___OPEN64 */
+/* #undef HAVE___SREFILL */
+/* #undef HAVE___SRGET */
+#define LT_OBJDIR ""
+/* #undef NO_MINUS_C_MINUS_O */
+#define PACKAGE_BUGREPORT ""
+#define PACKAGE_NAME "zzuf"
+#define PACKAGE_STRING "zzuf 0.12"
+#define PACKAGE_TARNAME "zzuf"
+#define PACKAGE_URL ""
+#define PACKAGE_VERSION "0.12"
+/* #undef READ_USES_SSIZE_T */
+#define RECV_T int
+#define SONAME "libzzuf.dll"
+#define STDC_HEADERS 1
+/* #undef __func__ */
 
 /* Win32-specific, of course. */
 typedef signed long long int int64_t;
