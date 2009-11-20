@@ -21,11 +21,10 @@
 
 #define ATTRIBUTE_PRINTF(x,y)
 
-#define HAVE_WINDOWS_H 1
-#define HAVE_WINSOCK2_H 1
 #define HAVE_IO_H 1
 #define HAVE_PROCESS_H 1
-
+#define HAVE_WINDOWS_H 1
+#define HAVE_WINSOCK2_H 1
 #define HAVE__PIPE
 
 /* Win32-specific, of course. */

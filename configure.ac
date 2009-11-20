@@ -21,7 +21,7 @@ case "$shrext_cmds" in
   *) SONAME="libzzuf$shrext_cmds" ;;
 esac
 AC_MSG_RESULT($SONAME)
-AC_SUBST(SONAME)
+AC_DEFINE_UNQUOTED(SONAME, "$SONAME", [Define to the libzzuf full name])
 
 # Optimizations
 AC_TRY_CFLAGS(-g -O2, CFLAGS="${CFLAGS} -g -O2")

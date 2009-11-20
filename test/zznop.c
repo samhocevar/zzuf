@@ -15,6 +15,7 @@
 #include "config.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #if defined HAVE_WINDOWS_H
 #   include <windows.h>
