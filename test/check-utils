@@ -20,7 +20,12 @@ checkutils()
         else
             check "$ZZOPTS" "< $file" "zzuf"
         fi
-        for n in 0 20 21 22 23 24 25 30 31 40 41 42; do
+        for n in 100 \
+                 200 201 202 203 204 205 206 207 208 \
+                 300 301 302 303 304 305 306 307 \
+                 400 \
+                 500 \
+                 600; do
             check "$ZZOPTS" "$ZZCAT $n $file" "zzcat $n"
         done
         if [ "$STATIC_CAT" = "" ]; then

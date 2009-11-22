@@ -40,10 +40,10 @@
 static int zzcat_read(char const *, unsigned char *, int64_t);
 static int zzcat_fread(char const *, unsigned char *, int64_t);
 static int zzcat_getc(char const *, unsigned char *, int64_t, int);
-static int zzcat_fgetc(char const *, unsigned char *, int64_t);
 #if defined HAVE_GETLINE
 static int zzcat_getdelim_getc(char const *, unsigned char *, int64_t, int);
 #endif
+static int zzcat_fseek_getc(char const *, unsigned char *, int64_t, int);
 static int zzcat_fread_getc(char const *, unsigned char *, int64_t, int);
 static int zzcat_random_socket(char const *, unsigned char *, int64_t);
 static int zzcat_random_stream(char const *, unsigned char *, int64_t);
@@ -59,6 +59,19 @@ static inline unsigned int myrand(void)
     y = (seed + 0xfedcba98) >> 21;
     seed = x * 1010101 + y * 343434;
     return seed;
+}
+
+static inline int mygetc(FILE *stream, int getc_method)
+{
+    switch (getc_method)
+    {
+#if defined HAVE_GETC_UNLOCKED
+        case 3: return fgetc_unlocked(stream);
+        case 2: return getc_unlocked(stream);
+#endif
+        case 1: return fgetc(stream);
+        default: return getc(stream);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -88,25 +101,40 @@ int main(int argc, char *argv[])
     /* Read shit here and there, using different methods */
     switch((cmd = atoi(argv[1])))
     {
-        case 0: ret = zzcat_read(name, data, len); break;
-        case 20: ret = zzcat_fread(name, data, len); break;
-        case 21: ret = zzcat_getc(name, data, len, 0); break;
-#if defined HAVE_GETC_UNLOCKED
-        case 22: ret = zzcat_getc(name, data, len, 1); break;
-#endif
-        case 23: ret = zzcat_fgetc(name, data, len); break;
+        /* Simple socket calls */
+        case 100: ret = zzcat_read(name, data, len); break;
+        /* Simple stream calls */
+        case 200: ret = zzcat_fread(name, data, len); break;
+        case 201: ret = zzcat_getc(name, data, len, 0); break;
+        case 202: ret = zzcat_getc(name, data, len, 1); break;
+        case 203: ret = zzcat_fseek_getc(name, data, len, 0); break;
+        case 204: ret = zzcat_fseek_getc(name, data, len, 1); break;
+        case 205: ret = zzcat_fread_getc(name, data, len, 0); break;
+        case 206: ret = zzcat_fread_getc(name, data, len, 1); break;
 #if defined HAVE_GETLINE
-        case 24: ret = zzcat_getdelim_getc(name, data, len, 0); break;
-#   if defined HAVE_GETC_UNLOCKED
-        case 25: ret = zzcat_getdelim_getc(name, data, len, 1); break;
+        case 207: ret = zzcat_getdelim_getc(name, data, len, 0); break;
+        case 208: ret = zzcat_getdelim_getc(name, data, len, 1); break;
+#endif
+        /* Simple unlocked stream calls */
+#if defined HAVE_GETC_UNLOCKED
+        case 300: ret = zzcat_getc(name, data, len, 2); break;
+        case 301: ret = zzcat_getc(name, data, len, 3); break;
+        case 302: ret = zzcat_fseek_getc(name, data, len, 2); break;
+        case 303: ret = zzcat_fseek_getc(name, data, len, 3); break;
+        case 304: ret = zzcat_fread_getc(name, data, len, 2); break;
+        case 305: ret = zzcat_fread_getc(name, data, len, 3); break;
+#   if defined HAVE_GETLINE
+        case 306: ret = zzcat_getdelim_getc(name, data, len, 2); break;
+        case 307: ret = zzcat_getdelim_getc(name, data, len, 3); break;
 #   endif
 #endif
-        case 30: ret = zzcat_fread_getc(name, data, len, 0); break;
-        case 31: ret = zzcat_fread_getc(name, data, len, 1); break;
-        case 40: ret = zzcat_random_socket(name, data, len); break;
-        case 41: ret = zzcat_random_stream(name, data, len); break;
+        /* Complex socket calls */
+        case 400: ret = zzcat_random_socket(name, data, len); break;
+        /* Complex stream calls */
+        case 500: ret = zzcat_random_stream(name, data, len); break;
+        /* Misc */
 #if defined HAVE_MMAP
-        case 42: ret = zzcat_random_mmap(name, data, len); break;
+        case 600: ret = zzcat_random_mmap(name, data, len); break;
 #endif
         default: ret = EXIT_SUCCESS;
     }
@@ -143,34 +171,16 @@ static int zzcat_fread(char const *name, unsigned char *data, int64_t len)
     return EXIT_SUCCESS;
 }
 
-/* Only getc() or getc_unlocked() calls */
+/* Only getc() or fgetc() calls */
 static int zzcat_getc(char const *name, unsigned char *data, int64_t len,
-                      int unlocked)
+                      int getc_method)
 {
     FILE *stream = fopen(name, "r");
     int i;
     if(!stream)
         return EXIT_FAILURE;
     for(i = 0; i < len; i++)
-#if defined HAVE_GETC_UNLOCKED
-        data[i] = unlocked ? getc_unlocked(stream)
-                           : getc(stream);
-#else
-        data[i] = getc(stream);
-#endif
-    fclose(stream);
-    return EXIT_SUCCESS;
-}
-
-/* Only fgetc() calls */
-static int zzcat_fgetc(char const *name, unsigned char *data, int64_t len)
-{
-    FILE *stream = fopen(name, "r");
-    int i;
-    if(!stream)
-        return EXIT_FAILURE;
-    for(i = 0; i < len; i++)
-        data[i] = fgetc(stream);
+        data[i] = mygetc(stream, getc_method);
     fclose(stream);
     return EXIT_SUCCESS;
 }
@@ -178,7 +188,7 @@ static int zzcat_fgetc(char const *name, unsigned char *data, int64_t len)
 #if defined HAVE_GETLINE
 /* getdelim() and getc() calls */
 static int zzcat_getdelim_getc(char const *name, unsigned char *data,
-                               int64_t len, int unlocked)
+                               int64_t len, int getc_method)
 {
     FILE *stream = fopen(name, "r");
     int i = 0, j;
@@ -186,11 +196,7 @@ static int zzcat_getdelim_getc(char const *name, unsigned char *data,
     if(!stream)
         return EXIT_FAILURE;
     (void)len;
-#if defined HAVE_GETC_UNLOCKED
-    while ((c = (unlocked ? getc_unlocked(stream) : getc(stream))) != EOF)
-#else
-    while ((c = getc(stream)) != EOF)
-#endif
+    while ((c = mygetc(stream, getc_method)) != EOF)
     {
         char *line;
         ssize_t ret;
@@ -207,17 +213,32 @@ static int zzcat_getdelim_getc(char const *name, unsigned char *data,
 }
 #endif
 
-/* One fread(), then only getc() or fgetc() calls */
-static int zzcat_fread_getc(char const *name, unsigned char *data,
-                            int64_t len, int use_fgetc)
+/* One fseek(), then only getc() or fgetc() calls */
+static int zzcat_fseek_getc(char const *name, unsigned char *data,
+                            int64_t len, int getc_method)
 {
     FILE *stream = fopen(name, "r");
     int i;
     if(!stream)
         return EXIT_FAILURE;
-    fread(data, 1, 10, stream);
-    for(i = 10; i < len; i++)
-        data[i] = use_fgetc ? fgetc(stream) : getc(stream);
+    fseek(stream, len / 2, SEEK_CUR);
+    for(i = len / 2; i < len; i++)
+        data[i] = mygetc(stream, getc_method);
+    fclose(stream);
+    return EXIT_SUCCESS;
+}
+
+/* One fread(), then only getc() or fgetc() calls */
+static int zzcat_fread_getc(char const *name, unsigned char *data,
+                            int64_t len, int getc_method)
+{
+    FILE *stream = fopen(name, "r");
+    int i;
+    if(!stream)
+        return EXIT_FAILURE;
+    fread(data, 1, len / 2, stream);
+    for(i = len / 2; i < len; i++)
+        data[i] = mygetc(stream, getc_method);
     fclose(stream);
     return EXIT_SUCCESS;
 }
