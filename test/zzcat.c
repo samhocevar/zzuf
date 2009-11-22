@@ -1,6 +1,6 @@
 /*
  *  zzcat - various cat reimplementations for testing purposes
- *  Copyright (c) 2006, 2007 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -37,6 +37,20 @@
 #include <stdio.h>
 #include <string.h>
 
+static int zzcat_read(char const *, unsigned char *, int64_t);
+static int zzcat_fread(char const *, unsigned char *, int64_t);
+static int zzcat_getc(char const *, unsigned char *, int64_t, int);
+static int zzcat_fgetc(char const *, unsigned char *, int64_t);
+#if defined HAVE_GETLINE
+static int zzcat_getdelim_getc(char const *, unsigned char *, int64_t, int);
+#endif
+static int zzcat_fread_getc(char const *, unsigned char *, int64_t, int);
+static int zzcat_random_socket(char const *, unsigned char *, int64_t);
+static int zzcat_random_stream(char const *, unsigned char *, int64_t);
+#if defined HAVE_MMAP
+static int zzcat_random_mmap(char const *, unsigned char *, int64_t);
+#endif
+
 static inline unsigned int myrand(void)
 {
     static int seed = 1;
@@ -52,9 +66,7 @@ int main(int argc, char *argv[])
     int64_t len;
     unsigned char *data;
     char const *name;
-    FILE *stream;
-    int cmd, i, j, fd;
-    char c;
+    int ret, cmd, fd;
 
     if(argc != 3)
         return EXIT_FAILURE;
@@ -76,171 +88,218 @@ int main(int argc, char *argv[])
     /* Read shit here and there, using different methods */
     switch((cmd = atoi(argv[1])))
     {
-    /* 0x: simple fd calls
-     * 1x: complex fd calls */
-    case 0: /* only read() calls */
-        fd = open(name, O_RDONLY);
-        if(fd < 0)
-            return EXIT_FAILURE;
-        for(i = 0; i < len; i++)
-            read(fd, data + i, 1);
-        close(fd);
-        break;
-    /* 2x: simple stdio calls
-     * 3x: complex stdio calls */
-    case 20: /* only fread() calls */
-        stream = fopen(name, "r");
-        if(!stream)
-            return EXIT_FAILURE;
-        for(i = 0; i < len; i++)
-            fread(data + i, 1, 1, stream);
-        fclose(stream);
-        break;
-    case 21: /* only getc() calls */
+        case 0: ret = zzcat_read(name, data, len); break;
+        case 20: ret = zzcat_fread(name, data, len); break;
+        case 21: ret = zzcat_getc(name, data, len, 0); break;
 #if defined HAVE_GETC_UNLOCKED
-    case 22: /* only getc_unlocked() calls */
+        case 22: ret = zzcat_getc(name, data, len, 1); break;
 #endif
-        stream = fopen(name, "r");
-        if(!stream)
-            return EXIT_FAILURE;
-        for(i = 0; i < len; i++)
-#if defined HAVE_GETC_UNLOCKED
-            data[i] = cmd == 21 ? getc(stream)
-                                : getc_unlocked(stream);
-#else
-            data[i] = getc(stream);
-#endif
-        fclose(stream);
-        break;
-    case 23: /* only fgetc() calls */
-        stream = fopen(name, "r");
-        if(!stream)
-            return EXIT_FAILURE;
-        for(i = 0; i < len; i++)
-            data[i] = fgetc(stream);
-        fclose(stream);
-        break;
+        case 23: ret = zzcat_fgetc(name, data, len); break;
 #if defined HAVE_GETLINE
-    case 24: /* getline() and getc() calls */
-#if defined HAVE_GETC_UNLOCKED
-    case 25: /* getline() and getc_unlocked() calls */
+        case 24: ret = zzcat_getdelim_getc(name, data, len, 0); break;
+#   if defined HAVE_GETC_UNLOCKED
+        case 25: ret = zzcat_getdelim_getc(name, data, len, 1); break;
+#   endif
 #endif
-        stream = fopen(name, "r");
-        if(!stream)
-            return EXIT_FAILURE;
-        i = 0;
-#if defined HAVE_GETC_UNLOCKED
-        while ((c = (cmd == 24 ? getc(stream)
-                               : getc_unlocked(stream))) != EOF)
-#else
-        while ((c = getc(stream)) != EOF)
+        case 30: ret = zzcat_fread_getc(name, data, len, 0); break;
+        case 31: ret = zzcat_fread_getc(name, data, len, 1); break;
+        case 40: ret = zzcat_random_socket(name, data, len); break;
+        case 41: ret = zzcat_random_stream(name, data, len); break;
+#if defined HAVE_MMAP
+        case 42: ret = zzcat_random_mmap(name, data, len); break;
 #endif
-        {
-            char *line;
-            ssize_t ret;
-            size_t n;
-
-            ungetc(c, stream);
-            line = NULL;
-            ret = getline(&line, &n, stream);
-            for (j = 0; j < ret; i++, j++)
-                data[i] = line[j];
-        }
-        fclose(stream);
-        break;
-#endif
-    case 30: /* one fread(), then only getc() calls */
-        stream = fopen(name, "r");
-        if(!stream)
-            return EXIT_FAILURE;
-        fread(data, 1, 10, stream);
-        for(i = 10; i < len; i++)
-            data[i] = getc(stream);
-        fclose(stream);
-        break;
-    case 31: /* one fread(), then only fgetc() calls */
-        stream = fopen(name, "r");
-        if(!stream)
-            return EXIT_FAILURE;
-        fread(data, 1, 10, stream);
-        for(i = 10; i < len; i++)
-            data[i] = fgetc(stream);
-        fclose(stream);
-        break;
-    /* 4x: complex, random stuff */
-    case 40: /* socket seeks and reads */
-        fd = open(name, O_RDONLY);
-        if(fd < 0)
-            return EXIT_FAILURE;
-        for(i = 0; i < 128; i++)
-        {
-            lseek(fd, myrand() % len, SEEK_SET);
-            for(j = 0; j < 4; j++)
-                read(fd, data + lseek(fd, 0, SEEK_CUR), myrand() % 4096);
-#ifdef HAVE_LSEEK64
-            lseek64(fd, myrand() % len, SEEK_SET);
-            for(j = 0; j < 4; j++)
-                read(fd, data + lseek(fd, 0, SEEK_CUR), myrand() % 4096);
-#endif
-        }
-        close(fd);
-        break;
-    case 41: /* std streams seeks and reads */
-        stream = fopen(name, "r");
-        if(!stream)
-            return EXIT_FAILURE;
-        for(i = 0; i < 128; i++)
-        {
-            long int now;
-            fseek(stream, myrand() % len, SEEK_SET);
-            for(j = 0; j < 4; j++)
-                fread(data + ftell(stream),
-                      myrand() % (len - ftell(stream)), 1, stream);
-            fseek(stream, myrand() % len, SEEK_SET);
-            now = ftell(stream);
-            for(j = 0; j < 16; j++)
-                data[now + j] = getc(stream);
-            now = ftell(stream);
-            for(j = 0; j < 16; j++)
-                data[now + j] = fgetc(stream);
-        }
-        fclose(stream);
-        break;
-    case 42: /* mmap() */
-        fd = open(name, O_RDONLY);
-        if(fd < 0)
-            return EXIT_FAILURE;
-#ifdef HAVE_MMAP
-        for(i = 0; i < 128; i++)
-        {
-            char *map;
-            int moff, mlen, pgsz = len + 1;
-#ifdef HAVE_GETPAGESIZE
-            pgsz = getpagesize();
-#endif
-            moff = len < pgsz ? 0 : (myrand() % (len / pgsz)) * pgsz;
-            mlen = 1 + (myrand() % (len - moff));
-            map = mmap(NULL, mlen, PROT_READ, MAP_PRIVATE, fd, moff);
-            if(map == MAP_FAILED)
-                return EXIT_FAILURE;
-            for(j = 0; j < 128; j++)
-            {
-                int x = myrand() % mlen;
-                data[moff + x] = map[x];
-            }
-            munmap(map, mlen);
-        }
-#endif
-        close(fd);
-        break;
-    default:
-        return EXIT_FAILURE;
+        default: ret = EXIT_SUCCESS;
     }
 
     /* Write what we have read */
     fwrite(data, len, 1, stdout);
     free(data);
 
+    return ret;
+}
+
+/* Only read(1) calls */
+static int zzcat_read(char const *name, unsigned char *data, int64_t len)
+{
+    int i, fd = open(name, O_RDONLY);
+    if(fd < 0)
+        return EXIT_FAILURE;
+    for(i = 0; i < len; i++)
+        read(fd, data + i, 1);
+    close(fd);
     return EXIT_SUCCESS;
 }
+
+/* Only fread() calls */
+static int zzcat_fread(char const *name, unsigned char *data, int64_t len)
+{
+    FILE *stream = fopen(name, "r");
+    int i;
+    if(!stream)
+        return EXIT_FAILURE;
+    for(i = 0; i < len; i++)
+        fread(data + i, 1, 1, stream);
+    fclose(stream);
+    return EXIT_SUCCESS;
+}
+
+/* Only getc() or getc_unlocked() calls */
+static int zzcat_getc(char const *name, unsigned char *data, int64_t len,
+                      int unlocked)
+{
+    FILE *stream = fopen(name, "r");
+    int i;
+    if(!stream)
+        return EXIT_FAILURE;
+    for(i = 0; i < len; i++)
+#if defined HAVE_GETC_UNLOCKED
+        data[i] = unlocked ? getc_unlocked(stream)
+                           : getc(stream);
+#else
+        data[i] = getc(stream);
+#endif
+    fclose(stream);
+    return EXIT_SUCCESS;
+}
+
+/* Only fgetc() calls */
+static int zzcat_fgetc(char const *name, unsigned char *data, int64_t len)
+{
+    FILE *stream = fopen(name, "r");
+    int i;
+    if(!stream)
+        return EXIT_FAILURE;
+    for(i = 0; i < len; i++)
+        data[i] = fgetc(stream);
+    fclose(stream);
+    return EXIT_SUCCESS;
+}
+
+#if defined HAVE_GETLINE
+/* getdelim() and getc() calls */
+static int zzcat_getdelim_getc(char const *name, unsigned char *data,
+                               int64_t len, int unlocked)
+{
+    FILE *stream = fopen(name, "r");
+    int i = 0, j;
+    char c;
+    if(!stream)
+        return EXIT_FAILURE;
+    (void)len;
+#if defined HAVE_GETC_UNLOCKED
+    while ((c = (unlocked ? getc_unlocked(stream) : getc(stream))) != EOF)
+#else
+    while ((c = getc(stream)) != EOF)
+#endif
+    {
+        char *line;
+        ssize_t ret;
+        size_t n;
+
+        ungetc(c, stream);
+        line = NULL;
+        ret = getline(&line, &n, stream);
+        for (j = 0; j < ret; i++, j++)
+            data[i] = line[j];
+    }
+    fclose(stream);
+    return EXIT_SUCCESS;
+}
+#endif
+
+/* One fread(), then only getc() or fgetc() calls */
+static int zzcat_fread_getc(char const *name, unsigned char *data,
+                            int64_t len, int use_fgetc)
+{
+    FILE *stream = fopen(name, "r");
+    int i;
+    if(!stream)
+        return EXIT_FAILURE;
+    fread(data, 1, 10, stream);
+    for(i = 10; i < len; i++)
+        data[i] = use_fgetc ? fgetc(stream) : getc(stream);
+    fclose(stream);
+    return EXIT_SUCCESS;
+}
+
+/* Socket seeks and reads */
+static int zzcat_random_socket(char const *name, unsigned char *data,
+                               int64_t len)
+{
+    int i, j, fd = open(name, O_RDONLY);
+    if(fd < 0)
+        return EXIT_FAILURE;
+    for(i = 0; i < 128; i++)
+    {
+        lseek(fd, myrand() % len, SEEK_SET);
+        for(j = 0; j < 4; j++)
+            read(fd, data + lseek(fd, 0, SEEK_CUR), myrand() % 4096);
+#ifdef HAVE_LSEEK64
+        lseek64(fd, myrand() % len, SEEK_SET);
+        for(j = 0; j < 4; j++)
+            read(fd, data + lseek(fd, 0, SEEK_CUR), myrand() % 4096);
+#endif
+    }
+    close(fd);
+    return EXIT_SUCCESS;
+}
+
+/* Standard stream seeks and reads */
+static int zzcat_random_stream(char const *name, unsigned char *data,
+                               int64_t len)
+{
+    FILE *stream = fopen(name, "r");
+    int i, j;
+    if(!stream)
+        return EXIT_FAILURE;
+    for(i = 0; i < 128; i++)
+    {
+        long int now;
+        fseek(stream, myrand() % len, SEEK_SET);
+        for(j = 0; j < 4; j++)
+            fread(data + ftell(stream),
+                  myrand() % (len - ftell(stream)), 1, stream);
+        fseek(stream, myrand() % len, SEEK_SET);
+        now = ftell(stream);
+        for(j = 0; j < 16; j++)
+            data[now + j] = getc(stream);
+        now = ftell(stream);
+        for(j = 0; j < 16; j++)
+            data[now + j] = fgetc(stream);
+    }
+    fclose(stream);
+    return EXIT_SUCCESS;
+}
+
+#ifdef HAVE_MMAP
+/* mmap() followed by random memory reads */
+static int zzcat_random_mmap(char const *name, unsigned char *data,
+                               int64_t len)
+{
+    int i, j, fd = open(name, O_RDONLY);
+    if(fd < 0)
+        return EXIT_FAILURE;
+    for(i = 0; i < 128; i++)
+    {
+        char *map;
+        int moff, mlen, pgsz = len + 1;
+#ifdef HAVE_GETPAGESIZE
+        pgsz = getpagesize();
+#endif
+        moff = len < pgsz ? 0 : (myrand() % (len / pgsz)) * pgsz;
+        mlen = 1 + (myrand() % (len - moff));
+        map = mmap(NULL, mlen, PROT_READ, MAP_PRIVATE, fd, moff);
+        if(map == MAP_FAILED)
+            return EXIT_FAILURE;
+        for(j = 0; j < 128; j++)
+        {
+            int x = myrand() % mlen;
+            data[moff + x] = map[x];
+        }
+        munmap(map, mlen);
+    }
+    close(fd);
+    return EXIT_SUCCESS;
+}
+#endif
 
