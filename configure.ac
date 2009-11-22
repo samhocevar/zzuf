@@ -48,7 +48,7 @@ AC_SUBST(DLL_LDFLAGS)
 AC_CHECK_HEADERS(windows.h winsock2.h io.h process.h unistd.h inttypes.h stdint.h getopt.h libc.h malloc.h dlfcn.h regex.h sys/cdefs.h sys/socket.h netinet/in.h arpa/inet.h sys/uio.h aio.h sys/mman.h sys/wait.h sys/resource.h sys/time.h endian.h)
 
 AC_CHECK_FUNCS(setenv waitpid setrlimit gettimeofday fork kill pipe _pipe)
-AC_CHECK_FUNCS(open64 __open64 lseek64 __lseek64 mmap64 fopen64 __fopen64 freopen64 __freopen64 dup dup2 fseeko fseeko64 __fseeko64 fsetpos64 __fsetpos64 _IO_getc getline getdelim __getdelim fgetln __srefill __filbuf __srget map_fd memalign posix_memalign aio_read accept bind connect socket readv pread recv recvfrom recvmsg mmap valloc sigaction getpagesize getc_unlocked getchar_unlocked fgetc_unlocked fread_unlocked fgets_unlocked)
+AC_CHECK_FUNCS(open64 __open64 lseek64 __lseek64 mmap64 fopen64 __fopen64 freopen64 __freopen64 dup dup2 fseeko fseeko64 __fseeko64 fsetpos64 __fsetpos64 _IO_getc getline getdelim __getdelim fgetln __srefill __filbuf __srget __uflow map_fd memalign posix_memalign aio_read accept bind connect socket readv pread recv recvfrom recvmsg mmap valloc sigaction getpagesize getc_unlocked getchar_unlocked fgetc_unlocked fread_unlocked fgets_unlocked)
 
 AC_CHECK_TYPES(sighandler_t, [], [],
   [#define _GNU_SOURCE

@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006, 2007 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id: timer.h 192 2007-01-12 15:47:48Z sam $
@@ -109,6 +109,7 @@
 /* #undef HAVE___OPEN64 */
 /* #undef HAVE___SREFILL */
 /* #undef HAVE___SRGET */
+/* #undef HAVE___UFLOW */
 #define LT_OBJDIR ""
 /* #undef NO_MINUS_C_MINUS_O */
 #define PACKAGE_BUGREPORT ""
