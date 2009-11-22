@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     unsigned char *data;
     char const *name;
     FILE *stream;
-    int i, j, fd;
+    int cmd, i, j, fd;
     char c;
 
     if(argc != 3)
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     close(fd);
 
     /* Read shit here and there, using different methods */
-    switch(atoi(argv[1]))
+    switch((cmd = atoi(argv[1])))
     {
     /* 0x: simple fd calls
      * 1x: complex fd calls */
@@ -97,14 +97,22 @@ int main(int argc, char *argv[])
         fclose(stream);
         break;
     case 21: /* only getc() calls */
+#if defined HAVE_GETC_UNLOCKED
+    case 22: /* only getc_unlocked() calls */
+#endif
         stream = fopen(name, "r");
         if(!stream)
             return EXIT_FAILURE;
         for(i = 0; i < len; i++)
+#if defined HAVE_GETC_UNLOCKED
+            data[i] = cmd == 21 ? getc(stream)
+                                : getc_unlocked(stream);
+#else
             data[i] = getc(stream);
+#endif
         fclose(stream);
         break;
-    case 22: /* only fgetc() calls */
+    case 23: /* only fgetc() calls */
         stream = fopen(name, "r");
         if(!stream)
             return EXIT_FAILURE;
@@ -113,17 +121,17 @@ int main(int argc, char *argv[])
         fclose(stream);
         break;
 #if defined HAVE_GETLINE
-    case 23: /* getline() and getc() calls */
+    case 24: /* getline() and getc() calls */
 #if defined HAVE_GETC_UNLOCKED
-    case 24: /* getline() and getc_unlocked() calls */
+    case 25: /* getline() and getc_unlocked() calls */
 #endif
         stream = fopen(name, "r");
         if(!stream)
             return EXIT_FAILURE;
         i = 0;
 #if defined HAVE_GETC_UNLOCKED
-        while ((c = (atoi(argv[1]) == 23) ? getc(stream)
-                                          : getc_unlocked(stream)) != EOF)
+        while ((c = (cmd == 24 ? getc(stream)
+                               : getc_unlocked(stream))) != EOF)
 #else
         while ((c = getc(stream)) != EOF)
 #endif
