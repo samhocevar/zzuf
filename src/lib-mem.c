@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006,2007 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -117,9 +117,12 @@ static kern_return_t (*ORIG(map_fd)) (int fd, vm_offset_t offset,
 
 /* We need a static memory buffer because some functions call memory
  * allocation routines before our library is loaded. Hell, even dlsym()
- * calls calloc(), so we need to do something about it */
-#define DUMMY_BYTES 655360 /* 640 kB ought to be enough for anybody */
-static uint64_t dummy_buffer[DUMMY_BYTES / 8];
+ * calls calloc(), so we need to do something about it. The dummy buffer
+ * is defined as an uint64_t array to ensure at least 8-byte alignment. */
+#define DUMMY_BYTES 640*1024 /* 640 kB ought to be enough for anybody */
+#define DUMMY_TYPE uint64_t
+#define DUMMY_ALIGNMENT (sizeof(DUMMY_TYPE))
+static DUMMY_TYPE dummy_buffer[DUMMY_BYTES / DUMMY_ALIGNMENT];
 static int64_t dummy_offset = 0;
 #define DUMMY_START ((uintptr_t)dummy_buffer)
 #define DUMMY_STOP ((uintptr_t)dummy_buffer + DUMMY_BYTES)
@@ -138,8 +141,8 @@ void *NEW(calloc)(size_t nmemb, size_t size)
     if(!ORIG(calloc))
     {
         ret = dummy_buffer + dummy_offset;
-        memset(ret, 0, (nmemb * size + 7) / 8);
-        dummy_offset += (nmemb * size + 7) / 8;
+        memset(ret, 0, nmemb * size);
+        dummy_offset += (nmemb * size + DUMMY_ALIGNMENT - 1) / DUMMY_ALIGNMENT;
         debug("%s(%li, %li) = %p", __func__,
               (long int)nmemb, (long int)size, ret);
         return ret;
@@ -156,7 +159,7 @@ void *NEW(malloc)(size_t size)
     if(!ORIG(malloc))
     {
         ret = dummy_buffer + dummy_offset;
-        dummy_offset += (size + 7) / 8;
+        dummy_offset += (size + DUMMY_ALIGNMENT - 1) / DUMMY_ALIGNMENT;
         debug("%s(%li) = %p", __func__, (long int)size, ret);
         return ret;
     }
@@ -175,7 +178,7 @@ void NEW(free)(void *ptr)
     }
     if(!ORIG(free))
     {
-        /* FIXME: memory leak */
+        /* FIXME: if free() doesn't exist yet, we have a memory leak */
         debug("%s(%p) IGNORED", __func__, ptr);
         return;
     }
@@ -194,7 +197,7 @@ void *NEW(realloc)(void *ptr, size_t size)
          * overflow really. */
         if(ptr)
             memcpy(ret, ptr, size);
-        dummy_offset += (size + 7) * 8;
+        dummy_offset += (size + DUMMY_ALIGNMENT - 1) / DUMMY_ALIGNMENT;
         debug("%s(%p, %li) = %p", __func__, ptr, (long int)size, ret);
         return ret;
     }
