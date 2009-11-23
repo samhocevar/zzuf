@@ -395,8 +395,11 @@ void NEW(rewind)(FILE *stream)
 #endif
 }
 
+/* Compute how many bytes from the stream were already fuzzed by __filbuf,
+ * __srget or __uflow, and store it in already_fuzzed. If these functions
+ * are not available, do nothing. */
 #if defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
-#   define FREAD_PREFUZZ() \
+#   define FREAD_PREFUZZ(fd, pos) \
     do \
     { \
         int64_t tmp = _zz_getpos(fd); \
@@ -406,18 +409,22 @@ void NEW(rewind)(FILE *stream)
     } \
     while(0)
 #else
-#   define FREAD_PREFUZZ() do {} while(0)
+#   define FREAD_PREFUZZ(fd, pos) do {} while(0)
 #endif
 
-#if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
-#   define FREAD_FUZZ() \
+/* Fuzz the data returned by fread(). If a __fillbuf mechanism already
+ * fuzzed some of our data, we skip the relevant amount of bytes. If we
+ * have __srefill, we just do nothing because that function is the only
+ * one that actually fuzzes things. */
+#if defined REFILL_ONLY_STDIO
+#   define FREAD_FUZZ(fd, pos) \
     do \
     { \
         debug("%s(%p, %li, %li, [%i]) = %li", __func__, ptr, \
               (long int)size, (long int)nmemb, fd, (long int)ret); \
     } while(0)
 #else
-#   define FREAD_FUZZ() \
+#   define FREAD_FUZZ(fd, pos) \
     do \
     { \
         int64_t newpos = ftell(stream); \
@@ -439,6 +446,9 @@ void NEW(rewind)(FILE *stream)
                 _zz_setpos(fd, pos + already_fuzzed); \
                 _zz_fuzz(fd, ptr, newpos - pos - already_fuzzed); \
             } \
+            /* FIXME: we need to fuzz the extra bytes that may have been \
+             * read by the fread call we just made, or subsequent calls \
+             * to getc_unlocked may miss them. */ \
             _zz_setpos(fd, newpos); \
             if(newpos >= pos + 4) \
                 debug("%s(%p, %li, %li, [%i]) = %li \"%c%c%c%c...", __func__, \
@@ -469,8 +479,8 @@ void NEW(rewind)(FILE *stream)
         _zz_lock(fd); \
         ret = ORIG(fn)(ptr, size, nmemb, stream); \
         _zz_unlock(fd); \
-        FREAD_PREFUZZ(); \
-        FREAD_FUZZ(); \
+        FREAD_PREFUZZ(fd, pos); \
+        FREAD_FUZZ(fd, pos); \
         END_STREAM(stream); \
     } while(0)
 
@@ -699,7 +709,7 @@ int NEW(fclose)(FILE *fp)
     do { \
         char *line; \
         ssize_t done, size; \
-        int fd, finished = 0; \
+        int fd, already_fuzzed = 0, finished = 0; \
         LOADSYM(fn); \
         LOADSYM(getdelim); \
         LOADSYM(fgetc); \
