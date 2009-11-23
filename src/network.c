@@ -196,21 +196,23 @@ static int host_in_list(unsigned int value, unsigned int const *list)
 
 static unsigned int get_socket_ip(int sock)
 {
-    int ret;
+    struct sockaddr s;
     struct sockaddr_in sin;
     socklen_t len = sizeof(sin);
+    int ret;
 
     // Probably not a socket descriptor
     if (sock < 3)
         return 0;
 
-    memset(&sin, 0, sizeof(sin));
-    ret = getsockname(sock, &sin, &len);
-    if (ret) {
-        // TODO error handling
-        return 0;
-    }
+    /* Use a sockaddr instead of sockaddr_in because we don't know whether
+     * their alignments are compatible. So, no cast. */
+    memset(&s, 0, sizeof(sin));
+    ret = getsockname(sock, &s, &len);
+    if (ret)
+        return 0; // TODO: error handling
 
+    memcpy(&sin, &s, sizeof(sin));
     return sin.sin_addr.s_addr;
 }
 #endif /* HAVE_SYS_SOCKET_H */
