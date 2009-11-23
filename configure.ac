@@ -78,23 +78,30 @@ AC_MSG_RESULT($ac_v_recv_t)
 AC_DEFINE_UNQUOTED(RECV_T, $ac_v_recv_t, [Define to the recv() return type])
 
 AC_MSG_CHECKING(for FILE* internal members)
+ac_cv_have_glibc_fp="no"
 ac_v_fp_cnt="unknown"
 ac_v_fp_ptr="unknown"
 AC_TRY_COMPILE([#include <stdio.h>],
- [FILE *fp; fp->__cnt++; fp->__ptr++],
- [ac_v_fp_cnt=__cnt; ac_v_fp_ptr=__ptr],
+ [FILE *fp; fp->_IO_read_ptr++; fp->_IO_read_end++],
+ [ac_cv_have_glibc_fp=yes; ac_v_fp_cnt=_IO_read_end; ac_v_fp_ptr=_IO_read_ptr],
  [AC_TRY_COMPILE([#include <stdio.h>],
-   [FILE *fp; fp->_cnt++; fp->_ptr++],
-   [ac_v_fp_cnt=_cnt; ac_v_fp_ptr=_ptr],
+   [FILE *fp; fp->__cnt++; fp->__ptr++],
+   [ac_v_fp_cnt=__cnt; ac_v_fp_ptr=__ptr],
    [AC_TRY_COMPILE([#include <stdio.h>],
-     [FILE *fp; fp->_c++; fp->_p++],
-     [ac_v_fp_cnt=_c; ac_v_fp_ptr=_p],
+     [FILE *fp; fp->_cnt++; fp->_ptr++],
+     [ac_v_fp_cnt=_cnt; ac_v_fp_ptr=_ptr],
      [AC_TRY_COMPILE([#include <stdio.h>],
-       [FILE *fp; fp->_r++; fp->_p++],
-       [ac_v_fp_cnt=_r; ac_v_fp_ptr=_p])])])])
-AC_MSG_RESULT($ac_v_fp_cnt/$ac_v_fp_ptr)
-AC_DEFINE_UNQUOTED(FILE_CNT, $ac_v_fp_cnt, [Define to the FILE::cnt member name])
-AC_DEFINE_UNQUOTED(FILE_PTR, $ac_v_fp_ptr, [Define to the FILE::ptr member name])
+       [FILE *fp; fp->_c++; fp->_p++],
+       [ac_v_fp_cnt=_c; ac_v_fp_ptr=_p],
+       [AC_TRY_COMPILE([#include <stdio.h>],
+         [FILE *fp; fp->_r++; fp->_p++],
+         [ac_v_fp_cnt=_r; ac_v_fp_ptr=_p])])])])])
+AC_MSG_RESULT($ac_v_fp_ptr/$ac_v_fp_cnt)
+if test "$ac_cv_have_glibc_fp" != "no"; then
+  AC_DEFINE(HAVE_GLIBC_FP, 1, [Define to 1 if FILE has glibc-style members])
+fi
+AC_DEFINE_UNQUOTED(FILE_PTR, $ac_v_fp_ptr, [Define to the FILE::ptr member])
+AC_DEFINE_UNQUOTED(FILE_CNT, $ac_v_fp_cnt, [Define to the FILE::cnt member])
 
 dnl  On HP-UX, fpos64_t == int64_t, but on Linux it's a compound object.
 AC_MSG_CHECKING(how to access fpos64_t x)

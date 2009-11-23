@@ -49,6 +49,7 @@
 #define HAVE_GETOPT_LONG 1
 #define HAVE_GETPAGESIZE 1
 #define HAVE_GETTIMEOFDAY 1
+/* #undef HAVE_GLIBC_FP */
 #define HAVE_INTTYPES_H 1
 #define HAVE_IO_H 1
 /* #undef HAVE_KILL */
