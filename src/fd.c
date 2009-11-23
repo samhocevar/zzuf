@@ -223,10 +223,8 @@ void _zz_register(int fd)
     if(fd < 0 || fd > 65535 || (fd < maxfd && fds[fd] != -1))
         return;
 
-#if 0
     if(autoinc)
-        debug("using seed %li", (long int)seed);
-#endif
+        debug2("using seed %li", (long int)seed);
 
     /* If filedescriptor is outside our bounds */
     while(fd >= maxfd)
@@ -376,6 +374,8 @@ void _zz_setfuzzed(int fd, int count)
     if(files[fds[fd]].pos == files[fds[fd]].already_pos
         && count <= files[fds[fd]].already_fuzzed)
         return;
+
+    debug2("setfuzzed(%i, %i)", fd, count);
 
     files[fds[fd]].already_pos = files[fds[fd]].pos;
     files[fds[fd]].already_fuzzed = count;

@@ -64,14 +64,21 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD, PVOID);
 /**
  * Is libzzuf fully initialised?
  */
-int   _zz_ready    = 0;
+int _zz_ready = 0;
+
+/**
+ * The debugging level that libzzuf should use. 0 means no debugging,
+ * 1 means minimal debugging, 2 means verbose debugging. Its value is set
+ * by the ZZUF_DEBUG environment variable.
+ */
+int _zz_debuglevel = 0;
 
 /**
  * The file descriptor used by libzzuf for communication with the main
- * zzuf program in debug mode. Its value is set by the ZZUF_DEBUG
+ * zzuf program in debug mode. Its value is set by the ZZUF_DEBUGFD
  * environment variable.
  */
-int   _zz_debugfd  = -1;
+int _zz_debugfd = -1;
 
 /**
  * If set to 1, this boolean variable will prevent the called application
@@ -79,7 +86,7 @@ int   _zz_debugfd  = -1;
  * SDL applications often do that when not using SDL_INIT_NOPARACHUTE, for
  * instance. Its value is set by the ZZUF_SIGNAL environment variable.
  */
-int   _zz_signal   = 0;
+int _zz_signal = 0;
 
 /**
  * If set to a positive value, this value will indicate the maximum number
@@ -87,14 +94,14 @@ int   _zz_signal   = 0;
  * allowed to allocate. Its value is set by the ZZUF_MEMORY environment
  * variable.
  */
-int   _zz_memory   = 0;
+int _zz_memory = 0;
 
 /**
  * If set to 1, this boolean will tell libzzuf to fuzz network file
  * descriptors, too. Its value is set by the ZZUF_NETWORK environment
  * variable.
  */
-int   _zz_network  = 0;
+int _zz_network = 0;
 
 /**
  * Library initialisation routine.
@@ -110,6 +117,10 @@ void _zz_init(void)
     char *tmp, *tmp2;
 
     tmp = getenv("ZZUF_DEBUG");
+    if(tmp)
+        _zz_debuglevel = atoi(tmp);
+
+    tmp = getenv("ZZUF_DEBUGFD");
     if(tmp)
         _zz_debugfd = atoi(tmp);
 

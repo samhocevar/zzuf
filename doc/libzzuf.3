@@ -1,4 +1,4 @@
-.TH libzzuf 3 "2008-06-10" "libzzuf"
+.TH libzzuf 3 "2009-11-22" "libzzuf"
 .SH NAME
 libzzuf \- helper library for the zzuf multiple purpose fuzzer
 .SH DESCRIPTION
@@ -20,6 +20,12 @@ they are read, no further information can be sent to the fuzzed process.
 All environment variables are optional.
 .TP
 \fBZZUF_DEBUG\fR
+This environment variable is set to the debugging level. 0 means no debugging
+information is sent to \fBzzuf\fR. 1 logs important information as well as
+all diverted functions. 2 logs fuzzing status and all optional file stream
+information.
+.TP
+\fBZZUF_DEBUGFD\fR
 This environment variable is set to a file descriptor where \fBlibzzuf\fR will
 send debugging information. This is used to send data to the main \fBzzuf\fR
 controlling binary.

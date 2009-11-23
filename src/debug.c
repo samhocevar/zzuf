@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -36,7 +36,7 @@
 #include "debug.h"
 #include "libzzuf.h"
 
-extern int _zz_debugfd;
+static void mydebug(char const *format, va_list args);
 
 /**
  * Helper macro to write an integer value to a given file descriptor,
@@ -56,6 +56,24 @@ extern int _zz_debugfd;
         write(fd, b + 1, (int)(buf + 127 - b)); \
     } while(0)
 
+void _zz_debug(char const *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    if (_zz_debuglevel >= 1)
+        mydebug(format, args);
+    va_end(args);
+}
+
+void _zz_debug2(char const *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    if (_zz_debuglevel >= 2)
+        mydebug(format, args);
+    va_end(args);
+}
+
 /**
  * Format a string, printf-like, and write the resulting data to zzuf's
  * debug file descriptor _zz_debugfd. If the debug file descriptor is
@@ -67,18 +85,16 @@ extern int _zz_debugfd;
  *  - vfprintf(stderr, format, args);
  *  - fprintf(stderr, "\n");
  */
-void _zz_debug(char const *format, ...)
+static void mydebug(char const *format, va_list args)
 {
     static char const *hex2char = "0123456789abcdef";
     char const *f;
-    va_list args;
     int saved_errno;
 
     if(_zz_debugfd < 0)
         return;
 
     saved_errno = errno;
-    va_start(args, format);
 
     write(_zz_debugfd, "** zzuf debug ** ", 17);
     for(f = format; *f; f++)
@@ -186,6 +202,5 @@ void _zz_debug(char const *format, ...)
         }
     }
     write(_zz_debugfd, "\n", 1);
-    va_end(args);
     errno = saved_errno;
 }

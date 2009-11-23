@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -50,6 +50,7 @@ struct fuzz
 /* Internal variables */
 extern int _zz_ready;
 extern int _zz_disabled;
+extern int _zz_debuglevel;
 extern int _zz_debugfd;
 extern int _zz_signal;
 extern int _zz_memory;

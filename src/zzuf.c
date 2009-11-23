@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
     char *include = NULL, *exclude = NULL;
     int cmdline = 0;
 #endif
-    int network = 0;
+    int debug = 0, network = 0;
     int i;
 
     _zz_opts_init(opts);
@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
                 opts->maxcrashes = 0;
             break;
         case 'd': /* --debug */
-            setenv("ZZUF_DEBUG", DEBUG_FILENO_STR, 1);
+            debug++;
             break;
         case 'D': /* --delay */
             if(myoptarg[0] == '=')
@@ -466,6 +466,9 @@ int main(int argc, char *argv[])
     if(exclude)
         setenv("ZZUF_EXCLUDE", exclude, 1);
 #endif
+
+    setenv("ZZUF_DEBUG", debug ? debug > 1 ? "2" : "1" : "0", 1);
+    setenv("ZZUF_DEBUGFD", DEBUG_FILENO_STR, 1);
 
     if(opts->fuzzing)
         setenv("ZZUF_FUZZING", opts->fuzzing, 1);

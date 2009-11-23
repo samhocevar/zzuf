@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -17,10 +17,13 @@
  */
 
 extern void _zz_debug(const char *format, ...) ATTRIBUTE_PRINTF(1,2);
+extern void _zz_debug2(const char *format, ...) ATTRIBUTE_PRINTF(1,2);
 
 #ifdef LIBZZUF
 #   define debug _zz_debug
+#   define debug2 _zz_debug2
 #else
-#   define debug(...)
+#   define debug(...) do {} while(0)
+#   define debug2(...) do {} while(0)
 #endif
 

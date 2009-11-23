@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2007 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -91,7 +91,7 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
     int64_t i, j;
     int todo;
 
-    debug("fuzz(%i, @%lli, %lli)", fd, (long long int)pos, (long long int)len);
+    debug2("fuzz(%i, @%lli, %lli)", fd, (long long int)pos, (long long int)len);
 
     aligned_buf = buf - pos;
     fuzz = _zz_getfuzz(fd);
