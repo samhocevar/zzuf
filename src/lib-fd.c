@@ -146,22 +146,22 @@ static off64_t (*ORIG(__lseek64)) (int fd, off64_t offset, int whence);
 #endif
 static int     (*ORIG(close))   (int fd);
 
-#define OPEN(fn) \
+#define OPEN(myopen) \
     do \
     { \
         int mode = 0; \
-        LOADSYM(fn); \
+        LOADSYM(myopen); \
         if(oflag & O_CREAT) \
         { \
             va_list va; \
             va_start(va, oflag); \
             mode = va_arg(va, int); \
             va_end(va); \
-            ret = ORIG(fn)(file, oflag, mode); \
+            ret = ORIG(myopen)(file, oflag, mode); \
         } \
         else \
         { \
-            ret = ORIG(fn)(file, oflag); \
+            ret = ORIG(myopen)(file, oflag); \
         } \
         if(!_zz_ready || _zz_islocked(-1)) \
             return ret; \
@@ -275,11 +275,11 @@ int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 #   define case_AF_INET6
 #endif
 
-#define CONNECTION(fn, addr) \
+#define CONNECTION(myconnect, addr) \
     do \
     { \
-        LOADSYM(fn); \
-        ret = ORIG(fn)(sockfd, addr, addrlen); \
+        LOADSYM(myconnect); \
+        ret = ORIG(myconnect)(sockfd, addr, addrlen); \
         if(!_zz_ready || _zz_islocked(-1) || !_zz_network) \
             return ret; \
         if(ret >= 0) \
@@ -528,11 +528,11 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
 }
 #endif
 
-#define LSEEK(fn, off_t) \
+#define LSEEK(mylseek, off_t) \
     do \
     { \
-        LOADSYM(fn); \
-        ret = ORIG(fn)(fd, offset, whence); \
+        LOADSYM(mylseek); \
+        ret = ORIG(mylseek)(fd, offset, whence); \
         if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
              || !_zz_isactive(fd)) \
             return ret; \

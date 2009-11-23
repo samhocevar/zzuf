@@ -159,23 +159,34 @@ int            (*ORIG(__filbuf))  (FILE *fp);
 #endif
 
 /* Helper functions for refill-like functions */
-#if defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
 static inline uint8_t *get_stream_ptr(FILE *stream)
 {
+#if defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
     return (uint8_t *)stream->FILE_PTR;
+#else
+    return NULL;
+#endif
 }
 
 static inline int get_stream_cnt(FILE *stream)
 {
-#   if defined HAVE_GLIBC_FP
+#if defined HAVE_GLIBC_FP
     return (int)((uint8_t *)stream->FILE_CNT - (uint8_t *)stream->FILE_PTR);
-#   else
+#elif defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
     return stream->FILE_CNT;
-#   endif
-}
+#else
+    return 0;
 #endif
+}
 
-/* Our function wrappers */
+#define DEBUG_STREAM(prefix, fp) \
+    debug2(prefix "stream([%i], %p, %i)", fileno(fp), \
+           get_stream_ptr(fp), get_stream_cnt(fp));
+
+/*
+ * fopen, fopen64 etc.
+ */
+
 #if defined REFILL_ONLY_STDIO /* Fuzz fp if we have __srefill() */
 #   define FOPEN_FUZZ() \
     _zz_fuzz(fd, get_stream_ptr(ret), get_stream_cnt(ret))
@@ -183,29 +194,21 @@ static inline int get_stream_cnt(FILE *stream)
 #   define FOPEN_FUZZ()
 #endif
 
-#define BEGIN_STREAM(fp) \
-    debug2("oldstream([%i], %p, %i)", fileno(fp), \
-           get_stream_ptr(fp), get_stream_cnt(fp));
-
-#define END_STREAM(fp) \
-    debug2("newstream([%i], %p, %i)", fileno(fp), \
-           get_stream_ptr(fp), get_stream_cnt(fp));
-
-#define FOPEN(fn) \
+#define FOPEN(myfopen) \
     do \
     { \
-        LOADSYM(fn); \
+        LOADSYM(myfopen); \
         if(!_zz_ready) \
-            return ORIG(fn)(path, mode); \
+            return ORIG(myfopen)(path, mode); \
         _zz_lock(-1); \
-        ret = ORIG(fn)(path, mode); \
+        ret = ORIG(myfopen)(path, mode); \
         _zz_unlock(-1); \
         if(ret && _zz_mustwatch(path)) \
         { \
             int fd = fileno(ret); \
             _zz_register(fd); \
             debug("%s(\"%s\", \"%s\") = [%i]", __func__, path, mode, fd); \
-            END_STREAM(ret); \
+            DEBUG_STREAM("new", ret); \
             FOPEN_FUZZ(); \
         } \
     } while(0)
@@ -229,18 +232,22 @@ FILE *NEW(__fopen64)(const char *path, const char *mode)
 }
 #endif
 
-#define FREOPEN(fn) \
+/*
+ * freopen, freopen64 etc.
+ */
+
+#define FREOPEN(myfreopen) \
     do \
     { \
         int fd0 = -1, fd1 = -1, disp = 0; \
-        LOADSYM(fn); \
+        LOADSYM(myfreopen); \
         if(_zz_ready && (fd0 = fileno(stream)) >= 0 && _zz_iswatched(fd0)) \
         { \
             _zz_unregister(fd0); \
             disp = 1; \
         } \
         _zz_lock(-1); \
-        ret = ORIG(fn)(path, mode, stream); \
+        ret = ORIG(myfreopen)(path, mode, stream); \
         _zz_unlock(-1); \
         if(ret && _zz_mustwatch(path)) \
         { \
@@ -272,17 +279,21 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
 }
 #endif
 
+/*
+ * fseek, fseeko etc.
+ */
+
 #if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
-#   define FSEEK_FUZZ(fn2)
+#   define FSEEK_FUZZ(myftell)
 #else
-#   define FSEEK_FUZZ(fn2) \
+#   define FSEEK_FUZZ(myftell) \
         if(ret == 0) \
         { \
             /* FIXME: check what happens when fseek()ing a pipe */ \
             switch(whence) \
             { \
                 case SEEK_END: \
-                    offset = fn2(stream); \
+                    offset = myftell(stream); \
                     /* fall through */ \
                 case SEEK_SET: \
                     _zz_setpos(fd, offset); \
@@ -294,22 +305,22 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         }
 #endif
 
-#define FSEEK(fn, fn2) \
+#define FSEEK(myfseek, myftell) \
     do \
     { \
         int fd; \
-        LOADSYM(fn); \
+        LOADSYM(myfseek); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
-            return ORIG(fn)(stream, offset, whence); \
-        BEGIN_STREAM(stream); \
+            return ORIG(myfseek)(stream, offset, whence); \
+        DEBUG_STREAM("old", stream); \
         _zz_lock(fd); \
-        ret = ORIG(fn)(stream, offset, whence); \
+        ret = ORIG(myfseek)(stream, offset, whence); \
         _zz_unlock(fd); \
         debug("%s([%i], %lli, %i) = %i", __func__, \
               fd, (long long int)offset, whence, ret); \
-        FSEEK_FUZZ(fn2) \
-        END_STREAM(stream); \
+        FSEEK_FUZZ(myftell) \
+        DEBUG_STREAM("new", stream); \
     } while(0)
 
 int NEW(fseek)(FILE *stream, long offset, int whence)
@@ -338,22 +349,26 @@ int NEW(__fseeko64)(FILE *stream, off64_t offset, int whence)
 }
 #endif
 
-#define FSETPOS(fn) \
+/*
+ * fsetpos64, __fsetpos64
+ */
+
+#define FSETPOS(myfsetpos) \
     do \
     { \
         int fd; \
-        LOADSYM(fn); \
+        LOADSYM(myfsetpos); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
-            return ORIG(fn)(stream, pos); \
-        BEGIN_STREAM(stream); \
+            return ORIG(myfsetpos)(stream, pos); \
+        DEBUG_STREAM("old", stream); \
         _zz_lock(fd); \
-        ret = ORIG(fn)(stream, pos); \
+        ret = ORIG(myfsetpos)(stream, pos); \
         _zz_unlock(fd); \
         debug("%s([%i], %lli) = %i", __func__, \
               fd, (long long int)FPOS_CAST(*pos), ret); \
         _zz_setpos(fd, (int64_t)FPOS_CAST(*pos)); \
-        END_STREAM(stream); \
+        DEBUG_STREAM("new", stream); \
     } \
     while(0)
 
@@ -370,6 +385,10 @@ int NEW(__fsetpos64)(FILE *stream, const fpos64_t *pos)
     int ret; FSETPOS(__fsetpos64); return ret;
 }
 #endif
+
+/*
+ * rewind
+ */
 
 void NEW(rewind)(FILE *stream)
 {
@@ -395,21 +414,25 @@ void NEW(rewind)(FILE *stream)
 #endif
 }
 
+/*
+ * fread, fread_unlocked
+ */
+
 /* Compute how many bytes from the stream were already fuzzed by __filbuf,
  * __srget or __uflow, and store it in already_fuzzed. If these functions
  * are not available, do nothing. */
 #if defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
-#   define FREAD_PREFUZZ(fd, pos) \
+#   define FREAD_PREFUZZ(fd, oldpos) \
     do \
     { \
         int64_t tmp = _zz_getpos(fd); \
-        _zz_setpos(fd, pos); \
+        _zz_setpos(fd, oldpos); \
         already_fuzzed = _zz_getfuzzed(fd); \
         _zz_setpos(fd, tmp); \
     } \
     while(0)
 #else
-#   define FREAD_PREFUZZ(fd, pos) do {} while(0)
+#   define FREAD_PREFUZZ(fd, oldpos) do {} while(0)
 #endif
 
 /* Fuzz the data returned by fread(). If a __fillbuf mechanism already
@@ -417,14 +440,14 @@ void NEW(rewind)(FILE *stream)
  * have __srefill, we just do nothing because that function is the only
  * one that actually fuzzes things. */
 #if defined REFILL_ONLY_STDIO
-#   define FREAD_FUZZ(fd, pos) \
+#   define FREAD_FUZZ(fd, oldpos) \
     do \
     { \
         debug("%s(%p, %li, %li, [%i]) = %li", __func__, ptr, \
               (long int)size, (long int)nmemb, fd, (long int)ret); \
     } while(0)
 #else
-#   define FREAD_FUZZ(fd, pos) \
+#   define FREAD_FUZZ(fd, oldpos) \
     do \
     { \
         int64_t newpos = ftell(stream); \
@@ -434,23 +457,28 @@ void NEW(rewind)(FILE *stream)
          * is then better than nothing. */ \
         if(newpos <= 0) \
         { \
-            pos = _zz_getpos(fd); \
-            newpos = pos + ret * size; \
+            oldpos = _zz_getpos(fd); \
+            newpos = oldpos + ret * size; \
         } \
-        if(newpos != pos) \
+        if(newpos != oldpos) \
         { \
             char *b = ptr; \
             /* Skip bytes that were already fuzzed by __filbuf or __srget */ \
-            if(newpos > pos + already_fuzzed) \
+            if(newpos > oldpos + already_fuzzed) \
             { \
-                _zz_setpos(fd, pos + already_fuzzed); \
-                _zz_fuzz(fd, ptr, newpos - pos - already_fuzzed); \
+                _zz_setpos(fd, oldpos + already_fuzzed); \
+                _zz_fuzz(fd, ptr, newpos - oldpos - already_fuzzed); \
+                /* FIXME: we need to fuzz the extra bytes that may have been \
+                 * read by the fread call we just made, or subsequent calls \
+                 * to getc_unlocked may miss them. */ \
+                _zz_setpos(fd, newpos); \
+                _zz_fuzz(fd, get_stream_ptr(stream), get_stream_cnt(stream)); \
+                _zz_setfuzzed(fd, get_stream_cnt(stream)); \
+                /* FIXME: *AND* we need to fuzz the buffer before the current \
+                 * position, in case fseek() causes us to rewind. */ \
             } \
-            /* FIXME: we need to fuzz the extra bytes that may have been \
-             * read by the fread call we just made, or subsequent calls \
-             * to getc_unlocked may miss them. */ \
             _zz_setpos(fd, newpos); \
-            if(newpos >= pos + 4) \
+            if(newpos >= oldpos + 4) \
                 debug("%s(%p, %li, %li, [%i]) = %li \"%c%c%c%c...", __func__, \
                       ptr, (long int)size, (long int)nmemb, fd, \
                       (long int)ret, b[0], b[1], b[2], b[3]); \
@@ -465,23 +493,23 @@ void NEW(rewind)(FILE *stream)
     } while(0)
 #endif
 
-#define FREAD(fn) \
+#define FREAD(myfread) \
     do \
     { \
-        int64_t pos; \
+        int64_t oldpos; \
         int fd, already_fuzzed = 0; \
-        LOADSYM(fn); \
+        LOADSYM(myfread); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
-            return ORIG(fn)(ptr, size, nmemb, stream); \
-        BEGIN_STREAM(stream); \
-        pos = ftell(stream); \
+            return ORIG(myfread)(ptr, size, nmemb, stream); \
+        DEBUG_STREAM("old", stream); \
+        oldpos = ftell(stream); \
         _zz_lock(fd); \
-        ret = ORIG(fn)(ptr, size, nmemb, stream); \
+        ret = ORIG(myfread)(ptr, size, nmemb, stream); \
         _zz_unlock(fd); \
-        FREAD_PREFUZZ(fd, pos); \
-        FREAD_FUZZ(fd, pos); \
-        END_STREAM(stream); \
+        FREAD_PREFUZZ(fd, oldpos); \
+        FREAD_FUZZ(fd, oldpos); \
+        DEBUG_STREAM("new", stream); \
     } while(0)
 
 size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
@@ -496,6 +524,10 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
     size_t ret; FREAD(fread_unlocked); return ret;
 }
 #endif
+
+/*
+ * getc, getchar, fgetc etc.
+ */
 
 #if defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
 #   define FGETC_PREFUZZ already_fuzzed = _zz_getfuzzed(fd);
@@ -517,16 +549,16 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
         }
 #endif
 
-#define FGETC(fn, s, arg) \
+#define FGETC(myfgetc, s, arg) \
     do { \
         int fd, already_fuzzed = 0; \
-        LOADSYM(fn); \
+        LOADSYM(myfgetc); \
         fd = fileno(s); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
-            return ORIG(fn)(arg); \
-        BEGIN_STREAM(s); \
+            return ORIG(myfgetc)(arg); \
+        DEBUG_STREAM("old", s); \
         _zz_lock(fd); \
-        ret = ORIG(fn)(arg); \
+        ret = ORIG(myfgetc)(arg); \
         _zz_unlock(fd); \
         FGETC_PREFUZZ \
         FGETC_FUZZ \
@@ -534,7 +566,7 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
             debug("%s([%i]) = EOF", __func__, fd); \
         else \
             debug("%s([%i]) = '%c'", __func__, fd, ret); \
-        END_STREAM(s); \
+        DEBUG_STREAM("new", s); \
     } while(0)
 
 #undef getc /* can be a macro; we don’t want that */
@@ -585,13 +617,17 @@ int NEW(fgetc_unlocked)(FILE *stream)
 }
 #endif
 
+/*
+ * fgets, fgets_unlocked
+ */
+
 #if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
-#   define FGETS_FUZZ(fn, fn2) \
+#   define FGETS_FUZZ(myfgets, myfgetc) \
         _zz_lock(fd); \
-        ret = ORIG(fn)(s, size, stream); \
+        ret = ORIG(myfgets)(s, size, stream); \
         _zz_unlock(fd);
 #else
-#   define FGETS_FUZZ(fn, fn2) \
+#   define FGETS_FUZZ(myfgets, myfgetc) \
         if(size <= 0) \
             ret = NULL; \
         else if(size == 1) \
@@ -603,7 +639,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
             { \
                 int ch; \
                 _zz_lock(fd); \
-                ch = ORIG(fn2)(stream); \
+                ch = ORIG(myfgetc)(stream); \
                 _zz_unlock(fd); \
                 if(ch == EOF) \
                 { \
@@ -624,20 +660,20 @@ int NEW(fgetc_unlocked)(FILE *stream)
         }
 #endif
 
-#define FGETS(fn, fn2) \
+#define FGETS(myfgets, myfgetc) \
     do \
     { \
         int fd; \
         ret = s; \
-        LOADSYM(fn); \
-        LOADSYM(fn2); \
+        LOADSYM(myfgets); \
+        LOADSYM(myfgetc); \
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
-            return ORIG(fn)(s, size, stream); \
-        BEGIN_STREAM(s); \
-        FGETS_FUZZ(fn, fn2) \
+            return ORIG(myfgets)(s, size, stream); \
+        DEBUG_STREAM("old", s); \
+        FGETS_FUZZ(myfgets, myfgetc) \
         debug("%s(%p, %i, [%i]) = %p", __func__, s, size, fd, ret); \
-        END_STREAM(s); \
+        DEBUG_STREAM("new", s); \
     } while(0)
 
 char *NEW(fgets)(char *s, int size, FILE *stream)
@@ -652,6 +688,10 @@ char *NEW(fgets_unlocked)(char *s, int size, FILE *stream)
 }
 #endif
 
+/*
+ * ungetc
+ */
+
 int NEW(ungetc)(int c, FILE *stream)
 {
     int ret, fd;
@@ -661,7 +701,7 @@ int NEW(ungetc)(int c, FILE *stream)
     if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(ungetc)(c, stream);
 
-    BEGIN_STREAM(stream);
+    DEBUG_STREAM("old", stream);
     _zz_lock(fd);
     ret = ORIG(ungetc)(c, stream);
     _zz_unlock(fd);
@@ -682,9 +722,13 @@ int NEW(ungetc)(int c, FILE *stream)
         debug("%s(0x%02x, [%i]) = EOF", __func__, c, fd);
     else
         debug("%s(0x%02x, [%i]) = '%c'", __func__, c, fd, ret);
-    END_STREAM(stream);
+    DEBUG_STREAM("new", stream);
     return ret;
 }
+
+/*
+ * fclose
+ */
 
 int NEW(fclose)(FILE *fp)
 {
@@ -695,7 +739,7 @@ int NEW(fclose)(FILE *fp)
     if(!_zz_ready || !_zz_iswatched(fd))
         return ORIG(fclose)(fp);
 
-    BEGIN_STREAM(fp);
+    DEBUG_STREAM("old", fp);
     _zz_lock(fd);
     ret = ORIG(fclose)(fp);
     _zz_unlock(fd);
@@ -705,12 +749,16 @@ int NEW(fclose)(FILE *fp)
     return ret;
 }
 
-#define GETDELIM(fn, delim, need_delim) \
+/*
+ * getline, getdelim etc.
+ */
+
+#define GETDELIM(mygetdelim, delim, need_delim) \
     do { \
         char *line; \
         ssize_t done, size; \
         int fd, already_fuzzed = 0, finished = 0; \
-        LOADSYM(fn); \
+        LOADSYM(mygetdelim); \
         LOADSYM(getdelim); \
         LOADSYM(fgetc); \
         fd = fileno(stream); \
@@ -719,7 +767,7 @@ int NEW(fclose)(FILE *fp)
             ret = ORIG(getdelim)(lineptr, n, delim, stream); \
             break; \
         } \
-        BEGIN_STREAM(stream); \
+        DEBUG_STREAM("old", stream); \
         line = *lineptr; \
         size = line ? *n : 0; \
         ret = done = finished = 0; \
@@ -762,7 +810,7 @@ int NEW(fclose)(FILE *fp)
         else \
             debug("%s(%p, %p, [%i]) = %li", __func__, \
                   lineptr, n, fd, (long int)ret); \
-        END_STREAM(stream); \
+        DEBUG_STREAM("new", stream); \
         break; \
     } while(0)
 
@@ -787,6 +835,10 @@ ssize_t NEW(__getdelim)(char **lineptr, size_t *n, int delim, FILE *stream)
 }
 #endif
 
+/*
+ * fgetln
+ */
+
 #if defined HAVE_FGETLN
 char *NEW(fgetln)(FILE *stream, size_t *len)
 {
@@ -804,7 +856,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(fgetln)(stream, len);
 
-    BEGIN_STREAM(stream);
+    DEBUG_STREAM("old", stream);
 #if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
     _zz_lock(fd);
     ret = ORIG(fgetln)(stream, len);
@@ -839,31 +891,35 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
 #endif
 
     debug("%s([%i], &%li) = %p", __func__, fd, (long int)*len, ret);
-    END_STREAM(stream);
+    DEBUG_STREAM("new", stream);
     return ret;
 }
 #endif
 
-#if defined HAVE___FILBUF || defined HAVE___SRGET
+/*
+ * __srefill, __filbuf, __srget, __uflow
+ */
+
+#if defined HAVE___SREFILL || defined HAVE___FILBUF || defined HAVE___SRGET
 #   define REFILL_RETURNS_INT 1
 #elif defined HAVE___UFLOW
 #   define REFILL_RETURNS_INT 0
 #endif
 
-#define REFILL(fn, fn_advances) \
+#define REFILL(myrefill, fn_advances) \
     do \
     { \
         int64_t pos; \
         off_t newpos; \
         int fd; \
-        LOADSYM(fn); \
+        LOADSYM(myrefill); \
         fd = fileno(fp); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
-            return ORIG(fn)(fp); \
-        BEGIN_STREAM(fp); \
+            return ORIG(myrefill)(fp); \
+        DEBUG_STREAM("old", fp); \
         pos = _zz_getpos(fd); \
         _zz_lock(fd); \
-        ret = ORIG(fn)(fp); \
+        ret = ORIG(myrefill)(fp); \
         newpos = lseek(fd, 0, SEEK_CUR); \
         _zz_unlock(fd); \
         if(ret != EOF) \
@@ -901,7 +957,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
             debug("%s([%i]) = EOF", __func__, fd, ret); \
         else \
             debug("%s([%i]) = '%c'", __func__, fd, ret); \
-        END_STREAM(fp); \
+        DEBUG_STREAM("new", fp); \
     } \
     while(0)
 

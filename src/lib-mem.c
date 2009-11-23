@@ -248,18 +248,18 @@ int NEW(posix_memalign)(void **memptr, size_t alignment, size_t size)
 void **maps = NULL;
 int nbmaps = 0;
 
-#define MMAP(fn, off_t) \
+#define MMAP(mymmap, off_t) \
     do { \
         char *b = MAP_FAILED; \
-        LOADSYM(fn); \
+        LOADSYM(mymmap); \
         if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
              || !_zz_isactive(fd)) \
-            return ORIG(fn)(start, length, prot, flags, fd, offset); \
-        ret = ORIG(fn)(NULL, length, prot, flags, fd, offset); \
+            return ORIG(mymmap)(start, length, prot, flags, fd, offset); \
+        ret = ORIG(mymmap)(NULL, length, prot, flags, fd, offset); \
         if(ret != MAP_FAILED && length) \
         { \
-            b = ORIG(fn)(start, length, PROT_READ | PROT_WRITE, \
-                         MAP_PRIVATE | MAP_ANONYMOUS, -1, 0); \
+            b = ORIG(mymmap)(start, length, PROT_READ | PROT_WRITE, \
+                             MAP_PRIVATE | MAP_ANONYMOUS, -1, 0); \
             if(b == MAP_FAILED) \
             { \
                 munmap(ret, length); \
