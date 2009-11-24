@@ -168,6 +168,15 @@ static inline uint8_t *get_stream_ptr(FILE *stream)
 #endif
 }
 
+static inline int get_stream_off(FILE *stream)
+{
+#if defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
+    return (int)((uint8_t *)stream->FILE_PTR - (uint8_t *)stream->FILE_BASE);
+#else
+    return 0;
+#endif
+}
+
 static inline int get_stream_cnt(FILE *stream)
 {
 #if defined HAVE_GLIBC_FP

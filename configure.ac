@@ -79,27 +79,30 @@ AC_DEFINE_UNQUOTED(RECV_T, $ac_v_recv_t, [Define to the recv() return type])
 
 AC_MSG_CHECKING(for FILE* internal members)
 ac_cv_have_glibc_fp="no"
-ac_v_fp_cnt="unknown"
+ac_v_fp_base="unknown"
 ac_v_fp_ptr="unknown"
+ac_v_fp_cnt="unknown"
 AC_TRY_COMPILE([#include <stdio.h>],
  [FILE *fp; fp->_IO_read_ptr++; fp->_IO_read_end++],
- [ac_cv_have_glibc_fp=yes; ac_v_fp_cnt=_IO_read_end; ac_v_fp_ptr=_IO_read_ptr],
+ [ac_cv_have_glibc_fp=yes; ac_v_fp_base=_IO_read_base
+  ac_v_fp_cnt=_IO_read_end; ac_v_fp_ptr=_IO_read_ptr],
  [AC_TRY_COMPILE([#include <stdio.h>],
    [FILE *fp; fp->__cnt++; fp->__ptr++],
-   [ac_v_fp_cnt=__cnt; ac_v_fp_ptr=__ptr],
+   [ac_v_fp_base=FIXME; ac_v_fp_ptr=__ptr; ac_v_fp_cnt=__cnt],
    [AC_TRY_COMPILE([#include <stdio.h>],
      [FILE *fp; fp->_cnt++; fp->_ptr++],
-     [ac_v_fp_cnt=_cnt; ac_v_fp_ptr=_ptr],
+     [aac_v_fp_base=FIXME; c_v_fp_ptr=_ptr; ac_v_fp_cnt=_cnt],
      [AC_TRY_COMPILE([#include <stdio.h>],
        [FILE *fp; fp->_c++; fp->_p++],
-       [ac_v_fp_cnt=_c; ac_v_fp_ptr=_p],
+       [aac_v_fp_base=FIXME; c_v_fp_ptr=_p; ac_v_fp_cnt=_c],
        [AC_TRY_COMPILE([#include <stdio.h>],
          [FILE *fp; fp->_r++; fp->_p++],
-         [ac_v_fp_cnt=_r; ac_v_fp_ptr=_p])])])])])
-AC_MSG_RESULT($ac_v_fp_ptr/$ac_v_fp_cnt)
+         [aac_v_fp_base=FIXME; c_v_fp_ptr=_p; ac_v_fp_cnt=_r])])])])])
+AC_MSG_RESULT($ac_v_fp_base/$ac_v_fp_ptr/$ac_v_fp_cnt)
 if test "$ac_cv_have_glibc_fp" != "no"; then
   AC_DEFINE(HAVE_GLIBC_FP, 1, [Define to 1 if FILE has glibc-style members])
 fi
+AC_DEFINE_UNQUOTED(FILE_BASE, $ac_v_fp_base, [Define to the FILE::base member])
 AC_DEFINE_UNQUOTED(FILE_PTR, $ac_v_fp_ptr, [Define to the FILE::ptr member])
 AC_DEFINE_UNQUOTED(FILE_CNT, $ac_v_fp_cnt, [Define to the FILE::cnt member])
 
