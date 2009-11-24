@@ -39,6 +39,7 @@
 
 static int zzcat_read(char const *, unsigned char *, int64_t, int64_t);
 static int zzcat_fread(char const *, unsigned char *, int64_t);
+static int zzcat_fread_fseek(char const *, unsigned char *, int64_t, int64_t);
 #if defined HAVE_GETLINE
 static int zzcat_getline_getc(char const *, unsigned char *, int64_t, int);
 #endif
@@ -139,13 +140,15 @@ int main(int argc, char *argv[])
         case 311: ret = zzcat_getline_getc(name, data, len, 3); break;
 #   endif
 #endif
-        /* Complex socket calls */
-        case 400: ret = zzcat_random_socket(name, data, len); break;
-        /* Complex stream calls */
-        case 500: ret = zzcat_random_stream(name, data, len); break;
+        /* Incomplete calls (but still OK since data is pre-filled) */
+        case 400: ret = zzcat_fread_fseek(name, data, len, 1); break;
+        case 401: ret = zzcat_fread_fseek(name, data, len, 2); break;
+        case 402: ret = zzcat_fread_fseek(name, data, len, 4000); break;
+        case 403: ret = zzcat_random_socket(name, data, len); break;
+        case 404: ret = zzcat_random_stream(name, data, len); break;
         /* Misc */
 #if defined HAVE_MMAP
-        case 600: ret = zzcat_random_mmap(name, data, len); break;
+        case 500: ret = zzcat_random_mmap(name, data, len); break;
 #endif
         default: ret = EXIT_SUCCESS;
     }
@@ -179,6 +182,27 @@ static int zzcat_fread(char const *name, unsigned char *data, int64_t len)
         return EXIT_FAILURE;
     for(i = 0; i < len; i++)
         fread(data + i, 1, 1, stream);
+    fclose(stream);
+    return EXIT_SUCCESS;
+}
+
+/* Only fread() and fseek() calls */
+static int zzcat_fread_fseek(char const *name, unsigned char *data,
+                             int64_t len, int64_t chunk)
+{
+    FILE *stream = fopen(name, "r");
+    int i;
+    if(!stream)
+        return EXIT_FAILURE;
+    for(i = 0; i < len; )
+    {
+        fread(data + i, chunk, 1, stream);
+        i += chunk;
+        if (i >= len)
+            break;
+        fseek(stream, chunk, SEEK_CUR);
+        i += chunk;
+    }
     fclose(stream);
     return EXIT_SUCCESS;
 }
