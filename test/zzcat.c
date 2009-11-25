@@ -38,8 +38,9 @@
 #include <string.h>
 
 static int zzcat_read(char const *, unsigned char *, int64_t, int64_t);
-static int zzcat_fread(char const *, unsigned char *, int64_t);
+static int zzcat_fread(char const *, unsigned char *, int64_t, int64_t);
 static int zzcat_fread_fseek(char const *, unsigned char *, int64_t, int64_t);
+static int zzcat_fseek_fread(char const *, unsigned char *, int64_t, int64_t);
 #if defined HAVE_GETLINE
 static int zzcat_getline_getc(char const *, unsigned char *, int64_t, int);
 #endif
@@ -108,20 +109,22 @@ int main(int argc, char *argv[])
         case 101: ret = zzcat_read(name, data, len, 3); break;
         case 102: ret = zzcat_read(name, data, len, len); break;
         /* Simple stream calls */
-        case 200: ret = zzcat_fread(name, data, len); break;
-        case 201: ret = zzcat_fseek_getc(name, data, len, 0, 0); break;
-        case 202: ret = zzcat_fseek_getc(name, data, len, 0, 1); break;
-        case 203: ret = zzcat_fseek_getc(name, data, len, 2, 0); break;
-        case 204: ret = zzcat_fseek_getc(name, data, len, 2, 1); break;
-        case 205: ret = zzcat_fseek_getc(name, data, len, len / 2, 0); break;
-        case 206: ret = zzcat_fseek_getc(name, data, len, len / 2, 1); break;
-        case 207: ret = zzcat_fread_getc(name, data, len, 2, 0); break;
-        case 208: ret = zzcat_fread_getc(name, data, len, 2, 1); break;
-        case 209: ret = zzcat_fread_getc(name, data, len, len / 2, 0); break;
-        case 210: ret = zzcat_fread_getc(name, data, len, len / 2, 1); break;
+        case 200: ret = zzcat_fread(name, data, len, 1); break;
+        case 201: ret = zzcat_fread(name, data, len, 2); break;
+        case 202: ret = zzcat_fread(name, data, len, len); break;
+        case 203: ret = zzcat_fseek_getc(name, data, len, 0, 0); break;
+        case 204: ret = zzcat_fseek_getc(name, data, len, 0, 1); break;
+        case 205: ret = zzcat_fseek_getc(name, data, len, 2, 0); break;
+        case 206: ret = zzcat_fseek_getc(name, data, len, 2, 1); break;
+        case 207: ret = zzcat_fseek_getc(name, data, len, len / 2, 0); break;
+        case 208: ret = zzcat_fseek_getc(name, data, len, len / 2, 1); break;
+        case 209: ret = zzcat_fread_getc(name, data, len, 2, 0); break;
+        case 210: ret = zzcat_fread_getc(name, data, len, 2, 1); break;
+        case 211: ret = zzcat_fread_getc(name, data, len, len / 2, 0); break;
+        case 212: ret = zzcat_fread_getc(name, data, len, len / 2, 1); break;
 #if defined HAVE_GETLINE
-        case 211: ret = zzcat_getline_getc(name, data, len, 0); break;
-        case 212: ret = zzcat_getline_getc(name, data, len, 1); break;
+        case 213: ret = zzcat_getline_getc(name, data, len, 0); break;
+        case 214: ret = zzcat_getline_getc(name, data, len, 1); break;
 #endif
         /* Simple unlocked stream calls */
 #if defined HAVE_GETC_UNLOCKED
@@ -144,8 +147,11 @@ int main(int argc, char *argv[])
         case 400: ret = zzcat_fread_fseek(name, data, len, 1); break;
         case 401: ret = zzcat_fread_fseek(name, data, len, 2); break;
         case 402: ret = zzcat_fread_fseek(name, data, len, 4000); break;
-        case 403: ret = zzcat_random_socket(name, data, len); break;
-        case 404: ret = zzcat_random_stream(name, data, len); break;
+        case 403: ret = zzcat_fseek_fread(name, data, len, 1); break;
+        case 404: ret = zzcat_fseek_fread(name, data, len, 2); break;
+        case 405: ret = zzcat_fseek_fread(name, data, len, 4000); break;
+        case 406: ret = zzcat_random_socket(name, data, len); break;
+        case 407: ret = zzcat_random_stream(name, data, len); break;
         /* Misc */
 #if defined HAVE_MMAP
         case 500: ret = zzcat_random_mmap(name, data, len); break;
@@ -174,14 +180,15 @@ static int zzcat_read(char const *name, unsigned char *data, int64_t len,
 }
 
 /* Only fread() calls */
-static int zzcat_fread(char const *name, unsigned char *data, int64_t len)
+static int zzcat_fread(char const *name, unsigned char *data, int64_t len,
+                       int64_t chunk)
 {
     FILE *stream = fopen(name, "r");
     int i;
     if(!stream)
         return EXIT_FAILURE;
-    for(i = 0; i < len; i++)
-        fread(data + i, 1, 1, stream);
+    for(i = 0; i < len; i += chunk)
+        fread(data + i, chunk, 1, stream);
     fclose(stream);
     return EXIT_SUCCESS;
 }
@@ -201,6 +208,27 @@ static int zzcat_fread_fseek(char const *name, unsigned char *data,
         if (i >= len)
             break;
         fseek(stream, chunk, SEEK_CUR);
+        i += chunk;
+    }
+    fclose(stream);
+    return EXIT_SUCCESS;
+}
+
+/* Only fseek() and fread() calls */
+static int zzcat_fseek_fread(char const *name, unsigned char *data,
+                             int64_t len, int64_t chunk)
+{
+    FILE *stream = fopen(name, "r");
+    int i;
+    if(!stream)
+        return EXIT_FAILURE;
+    for(i = 0; i < len; )
+    {
+        fseek(stream, chunk, SEEK_CUR);
+        i += chunk;
+        if (i >= len)
+            break;
+        fread(data + i, chunk, 1, stream);
         i += chunk;
     }
     fclose(stream);
