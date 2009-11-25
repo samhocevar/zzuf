@@ -25,7 +25,9 @@
 
 /* Define if stdio operations use *only* the refill mechanism */
 #if defined HAVE___SREFILL
-#   define REFILL_ONLY_STDIO
+#   define HAVE_DARWIN_STDIO
+#elif defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
+#   define HAVE_BSD_STDIO
 #endif
 
 #if defined HAVE_STDINT_H
@@ -161,7 +163,7 @@ int            (*ORIG(__filbuf))  (FILE *fp);
 /* Helper functions for refill-like functions */
 static inline uint8_t *get_stream_ptr(FILE *stream)
 {
-#if defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
+#if defined HAVE_BSD_STDIO
     return (uint8_t *)stream->FILE_PTR;
 #else
     return NULL;
@@ -170,7 +172,7 @@ static inline uint8_t *get_stream_ptr(FILE *stream)
 
 static inline int get_stream_off(FILE *stream)
 {
-#if defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
+#if defined HAVE_BSD_STDIO
     return (int)((uint8_t *)stream->FILE_PTR - (uint8_t *)stream->FILE_BASE);
 #else
     return 0;
@@ -181,7 +183,7 @@ static inline int get_stream_cnt(FILE *stream)
 {
 #if defined HAVE_GLIBC_FP
     return (int)((uint8_t *)stream->FILE_CNT - (uint8_t *)stream->FILE_PTR);
-#elif defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
+#elif defined HAVE_BSD_STDIO
     return stream->FILE_CNT;
 #else
     return 0;
@@ -196,7 +198,7 @@ static inline int get_stream_cnt(FILE *stream)
  * fopen, fopen64 etc.
  */
 
-#if defined REFILL_ONLY_STDIO /* Fuzz fp if we have __srefill() */
+#if defined HAVE_DARWIN_STDIO /* Fuzz fp if we have __srefill() */
 #   define FOPEN_FUZZ() \
     _zz_fuzz(fd, get_stream_ptr(ret), get_stream_cnt(ret))
 #else
@@ -292,7 +294,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
  * fseek, fseeko etc.
  */
 
-#if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_DARWIN_STDIO /* Don't fuzz or seek if we have __srefill() */
 #   define FSEEK_FUZZ(myftell)
 #else
 #   define FSEEK_FUZZ(myftell) \
@@ -416,7 +418,7 @@ void NEW(rewind)(FILE *stream)
     _zz_unlock(fd);
     debug("%s([%i])", __func__, fd);
 
-#if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_DARWIN_STDIO /* Don't fuzz or seek if we have __srefill() */
 #else
     /* FIXME: check what happens when rewind()ing a pipe */
     _zz_setpos(fd, 0);
@@ -430,7 +432,7 @@ void NEW(rewind)(FILE *stream)
 /* Compute how many bytes from the stream were already fuzzed by __filbuf,
  * __srget or __uflow, and store it in already_fuzzed. If these functions
  * are not available, do nothing. */
-#if defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
+#if defined HAVE_BSD_STDIO
 #   define FREAD_PREFUZZ(fd, oldpos) \
     do \
     { \
@@ -448,7 +450,7 @@ void NEW(rewind)(FILE *stream)
  * fuzzed some of our data, we skip the relevant amount of bytes. If we
  * have __srefill, we just do nothing because that function is the only
  * one that actually fuzzes things. */
-#if defined REFILL_ONLY_STDIO
+#if defined HAVE_DARWIN_STDIO
 #   define FREAD_FUZZ(fd, oldpos) \
     do \
     { \
@@ -538,13 +540,13 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
  * getc, getchar, fgetc etc.
  */
 
-#if defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
+#if defined HAVE_BSD_STDIO
 #   define FGETC_PREFUZZ already_fuzzed = _zz_getfuzzed(fd);
 #else
 #   define FGETC_PREFUZZ
 #endif
 
-#if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_DARWIN_STDIO /* Don't fuzz or seek if we have __srefill() */
 #   define FGETC_FUZZ
 #else
 #   define FGETC_FUZZ \
@@ -630,7 +632,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
  * fgets, fgets_unlocked
  */
 
-#if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_DARWIN_STDIO /* Don't fuzz or seek if we have __srefill() */
 #   define FGETS_FUZZ(myfgets, myfgetc) \
         _zz_lock(fd); \
         ret = ORIG(myfgets)(s, size, stream); \
@@ -721,7 +723,7 @@ int NEW(ungetc)(int c, FILE *stream)
         fuzz->uflag = 1;
         fuzz->upos = _zz_getpos(fd) - 1;
         fuzz->uchar = c;
-#if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_DARWIN_STDIO /* Don't fuzz or seek if we have __srefill() */
 #else
         _zz_addpos(fd, -1);
 #endif
@@ -852,7 +854,7 @@ ssize_t NEW(__getdelim)(char **lineptr, size_t *n, int delim, FILE *stream)
 char *NEW(fgetln)(FILE *stream, size_t *len)
 {
     char *ret;
-#if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_DARWIN_STDIO /* Don't fuzz or seek if we have __srefill() */
 #else
     struct fuzz *fuzz;
     size_t i, size;
@@ -866,7 +868,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
         return ORIG(fgetln)(stream, len);
 
     DEBUG_STREAM("old", stream);
-#if defined REFILL_ONLY_STDIO /* Don't fuzz or seek if we have __srefill() */
+#if defined HAVE_DARWIN_STDIO /* Don't fuzz or seek if we have __srefill() */
     _zz_lock(fd);
     ret = ORIG(fgetln)(stream, len);
     _zz_unlock(fd);
@@ -909,10 +911,10 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
  * __srefill, __filbuf, __srget, __uflow
  */
 
-#if defined HAVE___SREFILL || defined HAVE___FILBUF || defined HAVE___SRGET
-#   define REFILL_RETURNS_INT 1
-#elif defined HAVE___UFLOW
+#if defined HAVE___UFLOW
 #   define REFILL_RETURNS_INT 0
+#else
+#   define REFILL_RETURNS_INT 1
 #endif
 
 #define REFILL(myrefill, fn_advances) \
