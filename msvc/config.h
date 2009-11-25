@@ -18,6 +18,7 @@
 
 #define ATTRIBUTE_PRINTF(x,y)
 
+#define FILE_BASE /* FIXME */
 #define FILE_CNT _cnt
 #define FILE_PTR _ptr
 #define FPOS_CAST(x) (x)
