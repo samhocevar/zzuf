@@ -20,3 +20,5 @@ libzzuf_la_CFLAGS = -DLIBZZUF
 libzzuf_la_LDFLAGS = -avoid-version -no-undefined $(DLL_LDFLAGS)
 libzzuf_la_LIBADD = $(GETOPT_LIBS) $(DL_LIBS) $(MATH_LIBS) $(WINSOCK2_LIBS)
 
+echo-sources: ; echo $(SOURCES)
+
