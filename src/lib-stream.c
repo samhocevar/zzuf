@@ -30,6 +30,17 @@
 #   define HAVE_BSD_STDIO
 #endif
 
+/* Define the best ftell() clone */
+#if defined HAVE_FTELLO64
+#   define MYFTELL ftello64
+#elif defined HAVE___FTELLO64
+#   define MYFTELL __ftello64
+#elif defined HAVE_FTELLO
+#   define MYFTELL ftello
+#else
+#   define MYFTELL ftell
+#endif
+
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
 #elif defined HAVE_INTTYPES_H
@@ -295,16 +306,16 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
  */
 
 #if defined HAVE_DARWIN_STDIO /* Don't fuzz or seek if we have __srefill() */
-#   define FSEEK_FUZZ(myftell)
+#   define FSEEK_FUZZ()
 #else
-#   define FSEEK_FUZZ(myftell) \
+#   define FSEEK_FUZZ() \
         if(ret == 0) \
         { \
             /* FIXME: check what happens when fseek()ing a pipe */ \
             switch(whence) \
             { \
                 case SEEK_END: \
-                    offset = myftell(stream); \
+                    offset = MYFTELL(stream); \
                     /* fall through */ \
                 case SEEK_SET: \
                     _zz_setpos(fd, offset); \
@@ -316,7 +327,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         }
 #endif
 
-#define FSEEK(myfseek, myftell) \
+#define FSEEK(myfseek) \
     do \
     { \
         int fd; \
@@ -330,33 +341,33 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         _zz_unlock(fd); \
         debug("%s([%i], %lli, %i) = %i", __func__, \
               fd, (long long int)offset, whence, ret); \
-        FSEEK_FUZZ(myftell) \
+        FSEEK_FUZZ() \
         DEBUG_STREAM("new", stream); \
     } while(0)
 
 int NEW(fseek)(FILE *stream, long offset, int whence)
 {
-    int ret; FSEEK(fseek, ftell); return ret;
+    int ret; FSEEK(fseek); return ret;
 }
 
 #if defined HAVE_FSEEKO
 int NEW(fseeko)(FILE *stream, off_t offset, int whence)
 {
-    int ret; FSEEK(fseeko, ftello); return ret;
+    int ret; FSEEK(fseeko); return ret;
 }
 #endif
 
 #if defined HAVE_FSEEKO64
 int NEW(fseeko64)(FILE *stream, off64_t offset, int whence)
 {
-    int ret; FSEEK(fseeko64, ftello64); return ret;
+    int ret; FSEEK(fseeko64); return ret;
 }
 #endif
 
 #if defined HAVE___FSEEKO64
 int NEW(__fseeko64)(FILE *stream, off64_t offset, int whence)
 {
-    int ret; FSEEK(__fseeko64, ftello); return ret;
+    int ret; FSEEK(__fseeko64); return ret;
 }
 #endif
 
@@ -461,7 +472,7 @@ void NEW(rewind)(FILE *stream)
 #   define FREAD_FUZZ(fd, oldpos) \
     do \
     { \
-        int64_t newpos = ftell(stream); \
+        int64_t newpos = MYFTELL(stream); \
         /* XXX: the number of bytes read is not ret * size, because \
          * a partial read may have advanced the stream pointer. However, \
          * when reading from a pipe ftell() will return 0, and ret * size \
@@ -514,7 +525,7 @@ void NEW(rewind)(FILE *stream)
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(myfread)(ptr, size, nmemb, stream); \
         DEBUG_STREAM("old", stream); \
-        oldpos = ftell(stream); \
+        oldpos = MYFTELL(stream); \
         _zz_lock(fd); \
         ret = ORIG(myfread)(ptr, size, nmemb, stream); \
         _zz_unlock(fd); \

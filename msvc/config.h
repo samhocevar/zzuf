@@ -42,6 +42,8 @@
 /* #undef HAVE_FSEEKO */
 #define HAVE_FSEEKO64 1
 /* #undef HAVE_FSETPOS64 */
+/* #undef HAVE_FTELLO */
+#define HAVE_FTELLO64 1
 /* #undef HAVE_GETCHAR_UNLOCKED */
 /* #undef HAVE_GETC_UNLOCKED */
 /* #undef HAVE_GETDELIM */
@@ -106,6 +108,7 @@
 /* #undef HAVE___FREOPEN64 */
 /* #undef HAVE___FSEEKO64 */
 /* #undef HAVE___FSETPOS64 */
+/* #undef HAVE___FTELLO64 */
 /* #undef HAVE___GETDELIM */
 /* #undef HAVE___LSEEK64 */
 /* #undef HAVE___OPEN64 */
