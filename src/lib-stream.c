@@ -526,6 +526,7 @@ void NEW(rewind)(FILE *stream)
             return ORIG(myfread)(ptr, size, nmemb, stream); \
         DEBUG_STREAM("old", stream); \
         oldpos = MYFTELL(stream); \
+        _zz_setpos(fd, oldpos); \
         _zz_lock(fd); \
         ret = ORIG(myfread)(ptr, size, nmemb, stream); \
         _zz_unlock(fd); \
@@ -579,6 +580,7 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(myfgetc)(arg); \
         DEBUG_STREAM("old", s); \
+        _zz_setpos(fd, MYFTELL(s)); \
         _zz_lock(fd); \
         ret = ORIG(myfgetc)(arg); \
         _zz_unlock(fd); \
@@ -693,6 +695,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(myfgets)(s, size, stream); \
         DEBUG_STREAM("old", s); \
+        _zz_setpos(fd, MYFTELL(stream)); \
         FGETS_FUZZ(myfgets, myfgetc) \
         debug("%s(%p, %i, [%i]) = %p", __func__, s, size, fd, ret); \
         DEBUG_STREAM("new", s); \
@@ -724,6 +727,7 @@ int NEW(ungetc)(int c, FILE *stream)
         return ORIG(ungetc)(c, stream);
 
     DEBUG_STREAM("old", stream);
+    _zz_setpos(fd, MYFTELL(stream));
     _zz_lock(fd);
     ret = ORIG(ungetc)(c, stream);
     _zz_unlock(fd);
@@ -790,6 +794,7 @@ int NEW(fclose)(FILE *fp)
             break; \
         } \
         DEBUG_STREAM("old", stream); \
+        _zz_setpos(fd, MYFTELL(stream)); \
         line = *lineptr; \
         size = line ? *n : 0; \
         ret = done = finished = 0; \
@@ -884,6 +889,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     ret = ORIG(fgetln)(stream, len);
     _zz_unlock(fd);
 #else
+    _zz_setpos(fd, MYFTELL(stream));
     fuzz = _zz_getfuzz(fd);
 
     for(i = size = 0; ; /* i is incremented below */)
