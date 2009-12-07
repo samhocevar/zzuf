@@ -43,8 +43,10 @@ static void insert_func(void *, void *, void *);
 HINSTANCE (*LoadLibraryA_orig)(LPCSTR);
 HINSTANCE __stdcall LoadLibraryA_new(LPCSTR path)
 {
-    void *ret = LoadLibraryA_orig(path);
+    void *ret;
     fprintf(stderr, "If you see this message, DLL preloading worked\n");
+    ret = LoadLibraryA_orig(path);
+    fprintf(stderr, "If you see this message, function diversion worked\n");
     return ret;
 }
 #endif
