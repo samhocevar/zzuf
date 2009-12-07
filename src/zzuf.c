@@ -689,13 +689,18 @@ static void spawn_children(struct opts *opts)
         if(ret < 0)
         {
             perror("pipe");
+            opts->seed++;
             return;
         }
     }
 
     pid = run_process(opts, pipes);
     if(pid < 0)
+    {
+        fprintf(stderr, "error launching `%s'\n", opts->newargv[0]);
+        opts->seed++;
         return;
+    }
 
     /* We’re the parent, acknowledge spawn */
     opts->child[i].date = now;
@@ -1174,18 +1179,18 @@ static void *get_entry(char const *name)
 {
     PIMAGE_DOS_HEADER dos;
     PIMAGE_NT_HEADERS nt;
-    void *file, *map, *base;
+    void *file, *map, *base, *ret = NULL;
 
     file = CreateFile(name, GENERIC_READ, FILE_SHARE_READ,
                       NULL, OPEN_EXISTING, 0, NULL);
     if(file == INVALID_HANDLE_VALUE)
-        return NULL;
+        return ret;
 
     map = CreateFileMapping(file, NULL, PAGE_READONLY, 0, 0, NULL);
     if(!map)
     {
         CloseHandle(file);
-        return NULL;
+        return ret;
     }
 
     base = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 0);
@@ -1193,25 +1198,26 @@ static void *get_entry(char const *name)
     {
         CloseHandle(map);
         CloseHandle(file);
-        return NULL;
+        return ret;
     }
 
     /* Sanity checks */
     dos = (PIMAGE_DOS_HEADER)base;
     nt = (PIMAGE_NT_HEADERS)((char *)base + dos->e_lfanew);
-    if(dos->e_magic != IMAGE_DOS_SIGNATURE
-      || nt->Signature != IMAGE_NT_SIGNATURE
-      || nt->FileHeader.Machine != IMAGE_FILE_MACHINE_I386
-      || nt->OptionalHeader.Magic != 0x10b /* IMAGE_NT_OPTIONAL_HDR32_MAGIC */)
+    if(dos->e_magic == IMAGE_DOS_SIGNATURE /* 0x5A4D */
+      && nt->Signature == IMAGE_NT_SIGNATURE /* 0x00004550 */
+      && nt->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 
+      && nt->OptionalHeader.Magic == 0x10b /* IMAGE_NT_OPTIONAL_HDR32_MAGIC */)
     {
-        UnmapViewOfFile(base);
-        CloseHandle(map);
-        CloseHandle(file);
-        return NULL;
+        ret = (void *)(uintptr_t)(nt->OptionalHeader.ImageBase +
+                                  nt->OptionalHeader.AddressOfEntryPoint);
     }
 
-    return (void *)(uintptr_t)(nt->OptionalHeader.ImageBase +
-                                 nt->OptionalHeader.AddressOfEntryPoint);
+    UnmapViewOfFile(base);
+    CloseHandle(map);
+    CloseHandle(file);
+
+    return ret;
 }
 #endif
 
