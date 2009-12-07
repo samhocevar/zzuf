@@ -40,7 +40,7 @@
 static void insert_func(void *, void *, void *);
 
 /* TODO: get rid of this later */
-HINSTANCE (*LoadLibraryA_orig)(LPCSTR);
+HINSTANCE (__stdcall *LoadLibraryA_orig)(LPCSTR);
 HINSTANCE __stdcall LoadLibraryA_new(LPCSTR path)
 {
     void *ret;
