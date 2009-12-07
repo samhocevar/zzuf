@@ -350,7 +350,7 @@ int main(int argc, char *argv[])
             tmp = strchr(myoptarg, ':');
             opts->seed = atol(myoptarg);
             opts->endseed = tmp ? tmp[1] ? (uint32_t)atol(tmp + 1)
-                                         : (uint32_t)-1UL
+                                         : (uint32_t)-1L
                                 : opts->seed + 1;
             break;
         case 'S': /* --signal */

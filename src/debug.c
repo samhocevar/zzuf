@@ -152,7 +152,7 @@ static void mydebug(char const *format, va_list args)
         else if(f[0] == 'g')
         {
             double g = va_arg(args, double), h = 0.0000001;
-            int i = g;
+            int i = (int)g;
             WRITE_INT(_zz_debugfd, i, 10);
             for(i = 0; i < 7; i++)
             {

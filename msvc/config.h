@@ -40,24 +40,24 @@
 /* #undef HAVE_FREAD_UNLOCKED */
 /* #undef HAVE_FREOPEN64 */
 /* #undef HAVE_FSEEKO */
-#define HAVE_FSEEKO64 1
+/* #undef HAVE_FSEEKO64 */
 /* #undef HAVE_FSETPOS64 */
 /* #undef HAVE_FTELLO */
-#define HAVE_FTELLO64 1
+/* #undef HAVE_FTELLO64 */
 /* #undef HAVE_GETCHAR_UNLOCKED */
 /* #undef HAVE_GETC_UNLOCKED */
 /* #undef HAVE_GETDELIM */
 /* #undef HAVE_GETLINE */
-#define HAVE_GETOPT_H 1
-#define HAVE_GETOPT_LONG 1
+/* #undef HAVE_GETOPT_H */
+/* #undef HAVE_GETOPT_LONG */
 #define HAVE_GETPAGESIZE 1
-#define HAVE_GETTIMEOFDAY 1
+/* #undef HAVE_GETTIMEOFDAY */
 /* #undef HAVE_GLIBC_FP */
 #define HAVE_INTTYPES_H 1
 #define HAVE_IO_H 1
 /* #undef HAVE_KILL */
 /* #undef HAVE_LIBC_H */
-#define HAVE_LSEEK64 1
+/* #undef HAVE_LSEEK64 */
 #define HAVE_MALLOC_H 1
 /* #undef HAVE_MAP_FD */
 /* #undef HAVE_MEMALIGN */
@@ -92,11 +92,11 @@
 /* #undef HAVE_SYS_RESOURCE_H */
 /* #undef HAVE_SYS_SOCKET_H */
 #define HAVE_SYS_STAT_H 1
-#define HAVE_SYS_TIME_H 1
+/* #undef HAVE_SYS_TIME_H */
 #define HAVE_SYS_TYPES_H 1
 /* #undef HAVE_SYS_UIO_H */
 /* #undef HAVE_SYS_WAIT_H */
-#define HAVE_UNISTD_H 1
+/* #undef HAVE_UNISTD_H */
 /* #undef HAVE_VALLOC */
 /* #undef HAVE_WAITPID */
 #define HAVE_WINDOWS_H 1
@@ -128,6 +128,10 @@
 #define SONAME "libzzuf.dll"
 #define STDC_HEADERS 1
 /* #undef __func__ */
+
+/* Fucking Visual Studio should just shut the fuck up with this fucking
+ * warning about fucking ISO C++ when we fucking compile fucking C. */
+#pragma warning(disable: 4996)
 
 /* Win32-specific, of course. */
 typedef signed long long int int64_t;
