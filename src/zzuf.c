@@ -1129,47 +1129,69 @@ static int run_process(struct opts *opts, int pipes[][2])
 #if defined HAVE_WINDOWS_H
 static int dll_inject(void *process, void *epaddr)
 {
-    uint8_t old_ep[7];
-    uint8_t new_ep[] = "\xb8<01>\xff\xe0";
-    uint8_t loader[] = "libzzuf.dll\0<0000c>\xb8<14>\x50\xb8<1a>\xff\xd0"
-                       "\xb8\0\0\0\0\x50\xb8\x07\x00\x00\x00\x50\xb8<2d>"
-                       "\x50\xb8<33>\x50\xb8<39>\xff\xd0\x50\xb8<41>\xff"
-                       "\xd0\xb8<48>\xff\xe0";
+    uint8_t code1[] =                  /* LIBZZUF: */
+                      "libzzuf.dll\0"
+                                       /* OLDEP: */
+                      "_______"
+                                       /* START: */
+                      "\xb8____"       /* mov eax,<libzzuf.dll> */
+                      "\x50"           /* push eax */
+                      "\xb8____"       /* mov eax,<LoadLibraryA> */
+                      "\xff\xd0"       /* call eax */
+                      "\xb8\0\0\0\0"   /* mov eax,0 */
+                      "\x50"           /* push eax */
+                      "\xb8\x07\0\0\0" /* mov eax,7 */
+                      "\x50"           /* push eax */
+                      "\xb8____"       /* mov eax,<OLDEP> */
+                      "\x50"           /* push eax */
+                      "\xb8____"       /* mov eax,<NEWEP> */
+                      "\x50"           /* push eax */
+                      "\xb8____"       /* mov eax,<GetCurrentProcess> */
+                      "\xff\xd0"       /* call eax */
+                      "\x50"           /* push eax */
+                      "\xb8____"       /* mov eax,<WriteProcessMemory> */
+                      "\xff\xd0"       /* call eax */
+                      "\xb8____"       /* mov eax,<NEWEP> */
+                      "\xff\xe0";      /* jmp eax */
+    uint8_t code2[] =                  /* NEWEP: */
+                      "\xb8____"       /* mov eax,<START> */
+                      "\xff\xe0";      /* jmp eax */
     void *lib;
     uint8_t *loaderaddr;
     DWORD tmp;
 
-    /* Save the old entry-point code */
-    ReadProcessMemory(process, epaddr, old_ep, 7, &tmp);
+    /* Backup the old entry-point code */
+    ReadProcessMemory(process, epaddr, code1 + 0x0c, 7, &tmp);
     if(tmp != 7)
         return -1;
 
-    loaderaddr = VirtualAllocEx(process, NULL, 78, MEM_COMMIT,
+    /* Copy the first shell code to a freshly allocated memory area. */
+    loaderaddr = VirtualAllocEx(process, NULL, sizeof(code1), MEM_COMMIT,
                                 PAGE_EXECUTE_READWRITE);
     if(!loaderaddr)
-        return -1;
-
-    addcpy(new_ep + 0x01, loaderaddr + 0x0c + 7);
-    WriteProcessMemory(process, epaddr, new_ep, 7, &tmp);
-    if(tmp != 7)
         return -1;
 
     lib = LoadLibrary("kernel32.dll");
     if(!lib)
         return -1;
 
-    memcpy(loader + 0x0c, old_ep, 7);
-    addcpy(loader + 0x14, loaderaddr + 0x00); /* offset for dll string */
-    addcpy(loader + 0x1a, GetProcAddress(lib, "LoadLibraryA"));
-    addcpy(loader + 0x2d, loaderaddr + 0x0c);
-    addcpy(loader + 0x33, epaddr);
-    addcpy(loader + 0x39, GetProcAddress(lib, "GetCurrentProcess"));
-    addcpy(loader + 0x41, GetProcAddress(lib, "WriteProcessMemory"));
-    addcpy(loader + 0x48, epaddr);
+    addcpy(code1 + 0x14, loaderaddr + 0x00); /* offset for dll string */
+    addcpy(code1 + 0x1a, GetProcAddress(lib, "LoadLibraryA"));
+    addcpy(code1 + 0x2d, loaderaddr + 0x0c);
+    addcpy(code1 + 0x33, epaddr);
+    addcpy(code1 + 0x39, GetProcAddress(lib, "GetCurrentProcess"));
+    addcpy(code1 + 0x41, GetProcAddress(lib, "WriteProcessMemory"));
+    addcpy(code1 + 0x48, epaddr);
     FreeLibrary(lib);
 
-    WriteProcessMemory(process, loaderaddr, loader, 78, &tmp);
-    if(tmp != 78)
+    WriteProcessMemory(process, loaderaddr, code1, sizeof(code1), &tmp);
+    if(tmp != sizeof(code1))
+        return -1;
+
+    /* Copy the second shell code where the old entry point was. */
+    addcpy(code2 + 0x01, loaderaddr + 12 + 7);
+    WriteProcessMemory(process, epaddr, code2, 7, &tmp);
+    if(tmp != 7)
         return -1;
 
     return 0;
