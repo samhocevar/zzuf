@@ -50,16 +50,10 @@
 static int run_process(struct opts *, int[][2]);
 
 #if defined HAVE_WINDOWS_H
-static int dll_inject(void *, void *);
+static void rep32(uint8_t *buf, void *addr);
+static int dll_inject(void *, void *, char const *);
 static intptr_t get_base_address(DWORD);
 static intptr_t get_entry_point_offset(char const *);
-#endif
-
-#if defined HAVE_WINDOWS_H
-static inline void addcpy(void *buf, void *x)
-{
-    memcpy(buf, &x, 4);
-}
 #endif
 
 int myfork(struct child *child, struct opts *opts)
@@ -258,7 +252,7 @@ static int run_process(struct opts *opts, int pipes[][2])
         return -1;
 
     /* Insert the replacement code */
-    ret = dll_inject(pinfo.hProcess, epaddr);
+    ret = dll_inject(pinfo.hProcess, epaddr, SONAME);
     if(ret < 0)
     {
         TerminateProcess(pinfo.hProcess, -1);
@@ -277,71 +271,124 @@ static int run_process(struct opts *opts, int pipes[][2])
 }
 
 #if defined HAVE_WINDOWS_H
-static int dll_inject(void *process, void *epaddr)
+static void rep32(uint8_t *buf, void *addr)
 {
-    uint8_t code1[] =                  /* LIBZZUF: */
-                      "libzzuf.dll\0"
-                                       /* OLDEP: */
-                      "_______"
-                                       /* START: */
-                      "\xb8____"       /* mov eax,<libzzuf.dll> */
-                      "\x50"           /* push eax */
-                      "\xb8____"       /* mov eax,<LoadLibraryA> */
-                      "\xff\xd0"       /* call eax */
-                      "\xb8\0\0\0\0"   /* mov eax,0 */
-                      "\x50"           /* push eax */
-                      "\xb8\x07\0\0\0" /* mov eax,7 */
-                      "\x50"           /* push eax */
-                      "\xb8____"       /* mov eax,<OLDEP> */
-                      "\x50"           /* push eax */
-                      "\xb8____"       /* mov eax,<NEWEP> */
-                      "\x50"           /* push eax */
-                      "\xb8____"       /* mov eax,<GetCurrentProcess> */
-                      "\xff\xd0"       /* call eax */
-                      "\x50"           /* push eax */
-                      "\xb8____"       /* mov eax,<WriteProcessMemory> */
-                      "\xff\xd0"       /* call eax */
-                      "\xb8____"       /* mov eax,<NEWEP> */
-                      "\xff\xe0";      /* jmp eax */
-    uint8_t code2[] =                  /* NEWEP: */
-                      "\xb8____"       /* mov eax,<START> */
-                      "\xff\xe0";      /* jmp eax */
-    void *lib;
+    while(buf++)
+        if (memcmp(buf, "____", 4) == 0)
+        {
+            memcpy(buf, &addr, 4);
+            return;
+        }
+}
+
+static int dll_inject(void *process, void *epaddr, char const *lib)
+{
+    static uint8_t const loader[] =
+        /* Load the injected DLL into memory */
+        "\xb8____"       /* mov %eax, <library_name_address> */
+        "\x50"           /* push %eax */
+        "\xb8____"       /* mov %eax, <LoadLibraryA> */
+        "\xff\xd0"       /* call %eax */
+        /* Restore the clobbered entry point code using our backup */
+        "\xb8\0\0\0\0"   /* mov %eax,0 */
+        "\x50"           /* push %eax */
+        "\xb8____"       /* mov %eax, <jumper_length> */
+        "\x50"           /* push %eax */
+        "\xb8____"       /* mov %eax, <backuped_entry_point_address> */
+        "\x50"           /* push %eax */
+        "\xb8____"       /* mov %eax, <original_entry_point_address> */
+        "\x50"           /* push %eax */
+        "\xb8____"       /* mov %eax, <GetCurrentProcess> */
+        "\xff\xd0"       /* call %eax */
+        "\x50"           /* push %eax */
+        "\xb8____"       /* mov %eax, <WriteProcessMemory> */
+        "\xff\xd0"       /* call %eax */
+        /* Jump to the original entry point */
+        "\xb8____"       /* mov %eax, <original_entry_point_address> */
+        "\xff\xe0";      /* jmp %eax */
+
+    static uint8_t const jumper[] =
+        /* Jump to the injected loader */
+        "\xb8____"       /* mov eax, <loader_address> */
+        "\xff\xe0";      /* jmp eax */
+
+    /* code:
+     * +---------------+--------------------+--------------+-------------+
+     * |     loader    | entry point backup | library name |   jumper    |
+     * |  len(loader)  |    len(jumper)     |   len(lib)   | len(jumper) |
+     * +---------------+--------------------+--------------+-------------+ */
+    uint8_t code[1024];
+
+    void *kernel32;
     uint8_t *loaderaddr;
+    size_t liblen, loaderlen, jumperlen;
     DWORD tmp;
 
-    /* Backup the old entry-point code */
-    ReadProcessMemory(process, epaddr, code1 + 0x0c, 7, &tmp);
-    if(tmp != 7)
+    liblen = strlen(lib) + 1;
+    loaderlen = sizeof(loader) - 1;
+    jumperlen = sizeof(jumper) - 1;
+    if (loaderlen + jumperlen + liblen > 1024)
         return -1;
 
-    /* Copy the first shell code to a freshly allocated memory area. */
-    loaderaddr = VirtualAllocEx(process, NULL, sizeof(code1), MEM_COMMIT,
-                                PAGE_EXECUTE_READWRITE);
+    /* Allocate memory in the child for our injected code */
+    loaderaddr = VirtualAllocEx(process, NULL, loaderlen + jumperlen + liblen,
+                                MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if(!loaderaddr)
         return -1;
 
-    lib = LoadLibrary("kernel32.dll");
-    if(!lib)
+    /* Create the first shellcode (jumper).
+     *
+     * The jumper's job is simply to jump at the second shellcode's location.
+     * It is written at the original entry point's location, which will in
+     * turn be restored by the second shellcode.
+     */
+    memcpy(code + loaderlen + jumperlen + liblen, jumper, jumperlen);
+    rep32(code + loaderlen + jumperlen + liblen, loaderaddr);
+
+    /* Create the second shellcode (loader, backuped entry point, and library
+     * name).
+     *
+     * The loader's job is to load the library by calling LoadLibraryA(),
+     * restore the original entry point using the backup copy, and jump
+     * back to the original entry point as if the process had just started.
+     *
+     * The second shellcode is written at a freshly allocated memory location.
+     */
+    memcpy(code, loader, loaderlen);
+    memcpy(code + loaderlen + jumperlen, lib, liblen);
+
+    /* Backup the old entry point code */
+    ReadProcessMemory(process, epaddr, code + loaderlen,
+                      jumperlen, &tmp);
+    if(tmp != jumperlen)
         return -1;
 
-    addcpy(code1 + 0x14, loaderaddr + 0x00); /* offset for dll string */
-    addcpy(code1 + 0x1a, GetProcAddress(lib, "LoadLibraryA"));
-    addcpy(code1 + 0x2d, loaderaddr + 0x0c);
-    addcpy(code1 + 0x33, epaddr);
-    addcpy(code1 + 0x39, GetProcAddress(lib, "GetCurrentProcess"));
-    addcpy(code1 + 0x41, GetProcAddress(lib, "WriteProcessMemory"));
-    addcpy(code1 + 0x48, epaddr);
-    FreeLibrary(lib);
-
-    WriteProcessMemory(process, loaderaddr, code1, sizeof(code1), &tmp);
-    if(tmp != sizeof(code1))
+    /* FIXME: the GetProcAddress calls assume the library was loaded at
+     * the same address in the child process. This is wrong since Vista
+     * and its address space randomisation. */
+    kernel32 = LoadLibrary("kernel32.dll");
+    if(!kernel32)
         return -1;
 
-    /* Copy the second shell code where the old entry point was. */
-    addcpy(code2 + 0x01, loaderaddr + 12 + 7);
-    WriteProcessMemory(process, epaddr, code2, 7, &tmp);
-    if(tmp != 7)
+    rep32(code, loaderaddr + loaderlen + jumperlen);
+    rep32(code, GetProcAddress(kernel32, "LoadLibraryA"));
+    rep32(code, (void *)(uintptr_t)jumperlen);
+    rep32(code, loaderaddr + loaderlen);
+    rep32(code, epaddr);
+    rep32(code, GetProcAddress(kernel32, "GetCurrentProcess"));
+    rep32(code, GetProcAddress(kernel32, "WriteProcessMemory"));
+    rep32(code, epaddr);
+    FreeLibrary(kernel32);
+
+    /* Write our shellcodes into the target process */
+    WriteProcessMemory(process, epaddr, code + loaderlen + jumperlen + liblen,
+                       jumperlen, &tmp);
+    if(tmp != jumperlen)
+        return -1;
+
+    WriteProcessMemory(process, loaderaddr, code,
+                       loaderlen + jumperlen + liblen, &tmp);
+    if(tmp != loaderlen + jumperlen + liblen)
         return -1;
 
     return 0;
