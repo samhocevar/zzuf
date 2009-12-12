@@ -4,7 +4,7 @@ bin_PROGRAMS = zzuf
 pkglib_LTLIBRARIES = libzzuf.la
 
 ZZUF = \
-    zzuf.c opts.c opts.h md5.c md5.h timer.c timer.h
+    zzuf.c opts.c opts.h md5.c md5.h timer.c timer.h myfork.c myfork.h
 
 LIBZZUF = \
     libzzuf/libzzuf.c libzzuf/libzzuf.h \
@@ -25,12 +25,12 @@ GETOPT = mygetopt.c mygetopt.h
 endif
 
 zzuf_SOURCES = $(ZZUF) $(COMMON) $(GETOPT)
-zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\" -Icommon/
+zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\" -I$(srcdir)/common
 zzuf_LDFLAGS = $(MATH_LIBS) $(WINSOCK2_LIBS)
 zzuf_DEPENDENCIES = libzzuf.la
 
 libzzuf_la_SOURCES = $(LIBZZUF) $(COMMON)
-libzzuf_la_CFLAGS = -DLIBZZUF -Ilibzzuf/ -Icommon/
+libzzuf_la_CFLAGS = -DLIBZZUF -I$(srcdir)/libzzuf -I$(srcdir)/common
 libzzuf_la_LDFLAGS = -avoid-version -no-undefined $(DLL_LDFLAGS)
 libzzuf_la_LIBADD = $(GETOPT_LIBS) $(DL_LIBS) $(MATH_LIBS) $(WINSOCK2_LIBS)
 

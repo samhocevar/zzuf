@@ -35,6 +35,10 @@
  * zzuf may bring a machine down to its knees because of I/O. */
 #define DEFAULT_MEM 1024
 
+/* We use file descriptor 17 as the debug channel */
+#define DEBUG_FILENO 17
+#define DEBUG_FILENO_STR "17"
+
 struct fuzz
 {
     uint32_t seed;
