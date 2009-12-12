@@ -27,12 +27,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "libzzuf.h"
-#include "debug.h"
+#include "common.h"
 #include "random.h"
 #include "fuzz.h"
 #include "fd.h"
 #include "ranges.h"
+#if defined LIBZZUF
+#   include "debug.h"
+#endif
 
 #define MAGIC1 0x33ea84f7
 #define MAGIC2 0x783bc31f
@@ -91,7 +93,9 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
     int64_t i, j;
     int todo;
 
+#if defined LIBZZUF
     debug2("fuzz(%i, @%lli, %lli)", fd, (long long int)pos, (long long int)len);
+#endif
 
     aligned_buf = buf - pos;
     fuzz = _zz_getfuzz(fd);

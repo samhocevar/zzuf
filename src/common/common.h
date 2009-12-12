@@ -13,7 +13,7 @@
  */
 
 /*
- *  libzzuf.h: preloaded wrapper library
+ *  common.h: default fuzzing settings
  */
 
 /* We arbitrarily split files into 1024-byte chunks. Each chunk has an
@@ -46,17 +46,4 @@ struct fuzz
     int uflag; int64_t upos; uint8_t uchar; /* ungetc stuff */
     uint8_t data[CHUNKBYTES];
 };
-
-/* Internal variables */
-extern int _zz_ready;
-extern int _zz_disabled;
-extern int _zz_debuglevel;
-extern int _zz_debugfd;
-extern int _zz_signal;
-extern int _zz_memory;
-extern int _zz_network;
-extern int _zz_autoinc;
-
-/* This function is needed to initialise memory functions */
-extern void _zz_mem_init(void);
 

@@ -64,7 +64,7 @@
 #   include <sys/resource.h>
 #endif
 
-#include "libzzuf.h"
+#include "common.h"
 #include "opts.h"
 #include "random.h"
 #include "fd.h"
@@ -1256,7 +1256,7 @@ static intptr_t get_entry_point_offset(char const *name)
     nt = (PIMAGE_NT_HEADERS)((char *)base + dos->e_lfanew);
     if(dos->e_magic == IMAGE_DOS_SIGNATURE /* 0x5A4D */
       && nt->Signature == IMAGE_NT_SIGNATURE /* 0x00004550 */
-      && nt->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 
+      && nt->FileHeader.Machine == IMAGE_FILE_MACHINE_I386
       && nt->OptionalHeader.Magic == 0x10b /* IMAGE_NT_OPTIONAL_HDR32_MAGIC */)
     {
         ret = (intptr_t)nt->OptionalHeader.AddressOfEntryPoint;

@@ -31,12 +31,14 @@
 #include <string.h>
 #include <math.h>
 
-#include "debug.h"
-#include "libzzuf.h"
+#include "common.h"
 #include "fd.h"
 #include "fuzz.h"
-#include "network.h"
 #include "ranges.h"
+#if defined LIBZZUF
+#   include "debug.h"
+#   include "network.h"
+#endif
 
 /* Regex stuff */
 #if defined HAVE_REGEX_H
@@ -223,8 +225,10 @@ void _zz_register(int fd)
     if(fd < 0 || fd > 65535 || (fd < maxfd && fds[fd] != -1))
         return;
 
+#if defined LIBZZUF
     if(autoinc)
         debug2("using seed %li", (long int)seed);
+#endif
 
     /* If filedescriptor is outside our bounds */
     while(fd >= maxfd)
@@ -375,7 +379,9 @@ void _zz_setfuzzed(int fd, int count)
         && count <= files[fds[fd]].already_fuzzed)
         return;
 
+#if defined LIBZZUF
     debug2("setfuzzed(%i, %i)", fd, count);
+#endif
 
     files[fds[fd]].already_pos = files[fds[fd]].pos;
     files[fds[fd]].already_fuzzed = count;

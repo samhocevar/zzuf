@@ -54,6 +54,7 @@
 #   include <unistd.h> /* Needed for __srefill’s lseek() call */
 #endif
 
+#include "common.h"
 #include "libzzuf.h"
 #include "lib-load.h"
 #include "debug.h"

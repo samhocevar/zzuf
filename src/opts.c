@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "libzzuf.h"
+#include "common.h"
 #include "opts.h"
 
 void _zz_opts_init(struct opts *opts)

@@ -1,22 +1,36 @@
 # $Id$
 
-COMMON = random.c random.h ranges.c ranges.h fd.c fd.h fuzz.c fuzz.h
+bin_PROGRAMS = zzuf
+pkglib_LTLIBRARIES = libzzuf.la
+
+ZZUF = \
+    zzuf.c opts.c opts.h md5.c md5.h timer.c timer.h
+
+LIBZZUF = \
+    libzzuf/libzzuf.c libzzuf/libzzuf.h \
+    libzzuf/debug.c libzzuf/debug.h \
+    libzzuf/sys.c libzzuf/sys.h \
+    libzzuf/network.c libzzuf/network.h \
+    libzzuf/lib-fd.c libzzuf/lib-mem.c libzzuf/lib-signal.c \
+    libzzuf/lib-stream.c libzzuf/lib-load.h
+
+COMMON = \
+    common/random.c common/random.h \
+    common/ranges.c common/ranges.h \
+    common/fd.c common/fd.h \
+    common/fuzz.c common/fuzz.h
+
 if NEED_GETOPT_LONG
 GETOPT = mygetopt.c mygetopt.h
 endif
 
-bin_PROGRAMS = zzuf
-zzuf_SOURCES = zzuf.c $(COMMON) $(GETOPT) \
-               opts.c opts.h md5.c md5.h timer.c timer.h
-zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\"
+zzuf_SOURCES = $(ZZUF) $(COMMON) $(GETOPT)
+zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\" -Icommon/
 zzuf_LDFLAGS = $(MATH_LIBS) $(WINSOCK2_LIBS)
 zzuf_DEPENDENCIES = libzzuf.la
 
-pkglib_LTLIBRARIES = libzzuf.la
-libzzuf_la_SOURCES = libzzuf.c libzzuf.h $(COMMON) debug.c debug.h \
-                     sys.c sys.h network.c network.h \
-                     lib-fd.c lib-mem.c lib-signal.c lib-stream.c lib-load.h
-libzzuf_la_CFLAGS = -DLIBZZUF
+libzzuf_la_SOURCES = $(LIBZZUF) $(COMMON)
+libzzuf_la_CFLAGS = -DLIBZZUF -Ilibzzuf/ -Icommon/
 libzzuf_la_LDFLAGS = -avoid-version -no-undefined $(DLL_LDFLAGS)
 libzzuf_la_LIBADD = $(GETOPT_LIBS) $(DL_LIBS) $(MATH_LIBS) $(WINSOCK2_LIBS)
 

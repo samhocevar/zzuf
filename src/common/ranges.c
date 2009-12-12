@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "libzzuf.h"
+#include "common.h"
 #include "ranges.h"
 
 /* This function converts a string containing a list of ranges in the format
