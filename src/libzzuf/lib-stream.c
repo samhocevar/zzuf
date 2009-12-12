@@ -178,6 +178,7 @@ static inline uint8_t *get_stream_ptr(FILE *stream)
 #if defined HAVE_BSD_STDIO
     return (uint8_t *)stream->FILE_PTR;
 #else
+    (void)stream;
     return NULL;
 #endif
 }
@@ -187,6 +188,7 @@ static inline int get_stream_off(FILE *stream)
 #if defined HAVE_BSD_STDIO
     return (int)((uint8_t *)stream->FILE_PTR - (uint8_t *)stream->FILE_BASE);
 #else
+    (void)stream;
     return 0;
 #endif
 }
@@ -198,6 +200,7 @@ static inline int get_stream_cnt(FILE *stream)
 #elif defined HAVE_BSD_STDIO
     return stream->FILE_CNT;
 #else
+    (void)stream;
     return 0;
 #endif
 }
