@@ -15,6 +15,7 @@ LIBZZUF = \
     libzzuf/lib-stream.c libzzuf/lib-load.h
 
 COMMON = \
+    common/common.h \
     common/random.c common/random.h \
     common/ranges.c common/ranges.h \
     common/fd.c common/fd.h \
