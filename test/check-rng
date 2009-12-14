@@ -13,7 +13,7 @@ checkflip()
     rtot=0
     new_test "$mib MiB of zeroes, ratio $r"
     for x in 0 1 2 3 4; do
-        ret=`dd if=/dev/zero bs=1048576 count=$mib 2>/dev/null | "$ZZUF" -s $s2 -r $r | "$ZZERO"`
+        ret=`dd if=/dev/zero bs=1048576 count=$mib 2>/dev/null | $ZZUF -s $s2 -r $r | "$ZZERO"`
         if [ "$rmax" = -1 -o "$ret" -gt "$rmax" ]; then rmax=$ret; fi
         if [ "$rmin" = -1 -o "$ret" -lt "$rmin" ]; then rmin=$ret; fi
         rtot=`expr $rtot + $ret || true`

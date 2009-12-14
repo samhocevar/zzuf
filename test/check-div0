@@ -2,7 +2,7 @@
 
 . "$(dirname "$0")/functions.inc"
 
-limit coredumpsize 0
+ulimit -c 0
 
 PROGRAM="$DIR/bug-div0"
 if [ ! -f "$PROGRAM" ]; then
@@ -20,14 +20,14 @@ else
 fi
 
 new_test "zzuf -qi -r0 bug-div0 < /file-00"
-if ! "$ZZUF" -r0 -qi "$PROGRAM" < "$DIR/file-00"; then
+if ! $ZZUF -r0 -qi "$PROGRAM" < "$DIR/file-00"; then
     fail_test " unexpected exit status $?"
 else
     pass_test " OK"
 fi
 
 new_test "zzuf -qi bug-div0 < file-00"
-if "$ZZUF" -qi "$PROGRAM" < "$DIR/file-00"; then
+if $ZZUF -qi "$PROGRAM" < "$DIR/file-00"; then
     fail_test " unexpected exit status $?"
 else
     pass_test " OK"

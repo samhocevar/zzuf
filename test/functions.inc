@@ -2,7 +2,7 @@
 # . "$(dirname "$0")/functions.inc"
 
 DIR="$(dirname "$0")"
-ZZUF="$DIR/../src/zzuf"
+ZZUF="$DIR/../src/zzuf -E '[.]ilist$'"
 
 ZZCAT="$DIR/zzcat"
 if [ ! -f "$ZZCAT" ]; then
