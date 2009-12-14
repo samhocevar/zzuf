@@ -2,6 +2,8 @@
 
 . "$(dirname "$0")/functions.inc"
 
+limit coredumpsize 0
+
 PROGRAM="$DIR/bug-div0"
 if [ ! -f "$PROGRAM" ]; then
   echo "error: test/bug-div0 is missing"

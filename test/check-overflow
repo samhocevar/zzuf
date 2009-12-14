@@ -2,6 +2,8 @@
 
 . "$(dirname "$0")/functions.inc"
 
+limit coredumpsize 0
+
 PROGRAM="$DIR/bug-overflow"
 if [ ! -f "$PROGRAM" ]; then
   echo "error: test/bug-overflow is missing"
