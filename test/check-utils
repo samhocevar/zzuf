@@ -20,12 +20,41 @@ checkutils()
         else
             check "$ZZOPTS" "< $file" "zzuf"
         fi
-        for n in 100 101 102 \
-                 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 \
-                 300 301 302 303 304 305 306 307 308 309 310 311 \
-                 400 401 402 403 404 405 406 407 \
-                 500; do
-            check "$ZZOPTS" "$ZZCAT $n $file" "zzcat $n"
+        for n in \
+          "fread(1,33000)" \
+          "repeat(33,fread(1,1000))" \
+          "repeat(1000,fread(1,33))" \
+          "getc() fread(1,33000)" \
+          "getc_unlocked() fread(1,33000)" \
+          "fgetc() fread(1,33000)" \
+          "fgetc_unlocked() fread(1,33000)" \
+          "getc() ungetc() fread(1,33000)" \
+          "getc_unlocked() ungetc() fread(1,33000)" \
+          "fgetc() ungetc() fread(1,33000)" \
+          "fgetc_unlocked() ungetc() fread(1,33000)" \
+          "repeat(33000,getc())" \
+          "repeat(33000,getc_unlocked())" \
+          "repeat(33000,fgetc())" \
+          "repeat(33000,fgetc_unlocked())" \
+          "repeat(8000,getc()) fread(1,33000)" \
+          "repeat(8000,getc_unlocked()) fread(1,33000)" \
+          "repeat(8000,fgetc()) fread(1,33000)" \
+          "repeat(8000,fgetc_unlocked()) fread(1,33000)" \
+          "repeat(10,getline()) fread(1,33000)" \
+          "repeat(10,getdelim(0)) fread(1,33000)" \
+          "repeat(10,getdelim(' ')) fread(1,33000)" \
+          "fread(1,100) fseek(50,SEEK_SET) fread(1,33000)" \
+          "fread(1,100) rewind() fseek(50,SEEK_CUR) fread(1,33000)" \
+          "fread(1,33000) rewind() repeat(10000,fseek(2,SEEK_CUR) fread(1,2))" \
+          "repeat(33000,getc() ungetc() getline())" \
+          "repeat(33000,fgetc() ungetc() getline())" \
+          "repeat(33000,getc_unlocked() ungetc() getline())" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,fread(1,2))" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,getc())" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,fgetc())" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,getc_unlocked())" \
+          ; do
+            check "$ZZOPTS" "$ZZCAT \"$n\" $file" "zzcat $n"
         done
         if [ "$STATIC_CAT" = "" ]; then
             check "$ZZOPTS" "cat $file" "cat"
@@ -69,7 +98,7 @@ check()
     CMD="$2"
     ALIAS="$3"
     CHECK="$4"
-    printf " $(echo "$ALIAS .............." | cut -b1-18) "
+    printf " $(echo "$ALIAS .................................." | cut -b1-38) "
     MD5="$(eval "$ZZUF -m $ZZOPTS $CMD" 2>/dev/null | cut -f2 -d' ')"
     if [ -n "$CHECK" ]; then
         REFMD5="$CHECK"

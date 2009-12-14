@@ -12,12 +12,18 @@
  *  http://sam.zoy.org/wtfpl/COPYING for more details.
  */
 
+/*
+ * TODO: fsetpos64, fgetln
+ */
+
 #include "config.h"
 
 /* Needed for lseek64() */
 #define _LARGEFILE64_SOURCE
 /* Needed for O_RDONLY on HP-UX */
 #define _INCLUDE_POSIX_SOURCE
+/* Needed for fgets_unlocked() */
+#define _GNU_SOURCE
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
@@ -37,23 +43,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static int zzcat_read(char const *, unsigned char *, int64_t, int64_t);
-static int zzcat_fread(char const *, unsigned char *, int64_t, int64_t);
-static int zzcat_fread_fseek(char const *, unsigned char *, int64_t, int64_t);
-static int zzcat_fseek_fread(char const *, unsigned char *, int64_t, int64_t);
-#if defined HAVE_GETLINE
-static int zzcat_getline_getc(char const *, unsigned char *, int64_t, int);
-#endif
-static int zzcat_fseek_getc(char const *, unsigned char *,
-                            int64_t, int64_t, int);
-static int zzcat_fread_getc(char const *, unsigned char *, int64_t,
-                            int64_t, int);
-static int zzcat_random_socket(char const *, unsigned char *, int64_t);
-static int zzcat_random_stream(char const *, unsigned char *, int64_t);
-#if defined HAVE_MMAP
-static int zzcat_random_mmap(char const *, unsigned char *, int64_t);
-#endif
-
 static inline unsigned int myrand(void)
 {
     static int seed = 1;
@@ -64,108 +53,330 @@ static inline unsigned int myrand(void)
     return seed;
 }
 
-static inline int mygetc(FILE *stream, int getc_method)
+#define FOPEN(cmd) \
+    do { \
+        cmd; \
+        if (!f) \
+        { \
+            fprintf(stderr, "E: zzcat: cannot open `%s'\n", file); \
+            return EXIT_FAILURE; \
+        } \
+        retoff = 0; \
+        p = strchr(p, ')') + 1; \
+    } while(0)
+
+#define FCLOSE(cmd) \
+    do { \
+        cmd; \
+        f = NULL; \
+        p = strchr(p, ')') + 1; \
+    } while(0)
+
+#define MERGE(address, cnt, off) \
+    do { \
+        size_t _cnt = cnt, _off = off; \
+        if (_cnt && retoff + _cnt > retlen) \
+        { \
+            retlen = retoff + _cnt; \
+            retbuf = realloc(retbuf, retlen); \
+        } \
+        if (_cnt > 0) \
+            memcpy(retbuf + retoff, address, _cnt); \
+        retoff += _off; \
+    } while(0)
+
+#define FREAD(cmd, buf, cnt) FCALL(cmd, buf, cnt, cnt)
+#define FSEEK(cmd, off) FCALL(cmd, /* unused */ "", 0, off)
+
+#define FCALL(cmd, buf, cnt, off) \
+    do { \
+        if (!f) \
+        { \
+            f = fopen(file, "r"); \
+            if (!f) \
+            { \
+                fprintf(stderr, "E: zzcat: cannot open `%s'\n", file); \
+                return EXIT_FAILURE; \
+            } \
+        } \
+        cmd; \
+        MERGE(buf, cnt, off); \
+        p = strchr(p, ')') + 1; \
+    } while(0)
+
+/*
+ * Command parser. We rewrite fmt by replacing the last character with
+ * '%c' and check that the sscanf() call returns the expected number of
+ * matches plus one (for the last character). We use this macro trick to
+ * avoid using vsscanf() which does not exist on all platforms.
+ */
+
+struct parser
 {
-    switch (getc_method)
-    {
-#if defined HAVE_GETC_UNLOCKED
-        case 3: return fgetc_unlocked(stream);
-        case 2: return getc_unlocked(stream);
-#endif
-        case 1: return fgetc(stream);
-        default: return getc(stream);
-    }
-}
+    char tmpfmt[1024], ch, lastch;
+};
 
-int main(int argc, char *argv[])
+static int make_fmt(struct parser *p, char const *fmt)
 {
-    int64_t len;
-    unsigned char *data;
-    char const *name;
-    int ret, cmd, fd;
+    char const *tmp;
+    size_t len;
+    int ret = 0;
 
-    if(argc != 3)
-        return EXIT_FAILURE;
+    len = strlen(fmt);
+    p->lastch = fmt[len - 1];
 
-    name = argv[2];
+    memcpy(p->tmpfmt, fmt, len - 1);
+    p->tmpfmt[len - 1] = '%';
+    p->tmpfmt[len] = 'c';
+    p->tmpfmt[len + 1] = '\0';
 
-    /* Read the whole file */
-    fd = open(name, O_RDONLY);
-    if(fd < 0)
-        return EXIT_FAILURE;
-    len = lseek(fd, 0, SEEK_END);
-    if(len < 0)
-        return EXIT_FAILURE;
-    data = malloc(len + 16); /* 16 safety bytes */
-    lseek(fd, 0, SEEK_SET);
-    read(fd, data, len);
-    close(fd);
-
-    /* Read shit here and there, using different methods */
-    switch((cmd = atoi(argv[1])))
-    {
-        /* Simple socket calls */
-        case 100: ret = zzcat_read(name, data, len, 1); break;
-        case 101: ret = zzcat_read(name, data, len, 3); break;
-        case 102: ret = zzcat_read(name, data, len, len); break;
-        /* Simple stream calls */
-        case 200: ret = zzcat_fread(name, data, len, 1); break;
-        case 201: ret = zzcat_fread(name, data, len, 2); break;
-        case 202: ret = zzcat_fread(name, data, len, len); break;
-        case 203: ret = zzcat_fseek_getc(name, data, len, 0, 0); break;
-        case 204: ret = zzcat_fseek_getc(name, data, len, 0, 1); break;
-        case 205: ret = zzcat_fseek_getc(name, data, len, 2, 0); break;
-        case 206: ret = zzcat_fseek_getc(name, data, len, 2, 1); break;
-        case 207: ret = zzcat_fseek_getc(name, data, len, len / 2, 0); break;
-        case 208: ret = zzcat_fseek_getc(name, data, len, len / 2, 1); break;
-        case 209: ret = zzcat_fread_getc(name, data, len, 2, 0); break;
-        case 210: ret = zzcat_fread_getc(name, data, len, 2, 1); break;
-        case 211: ret = zzcat_fread_getc(name, data, len, len / 2, 0); break;
-        case 212: ret = zzcat_fread_getc(name, data, len, len / 2, 1); break;
-#if defined HAVE_GETLINE
-        case 213: ret = zzcat_getline_getc(name, data, len, 0); break;
-        case 214: ret = zzcat_getline_getc(name, data, len, 1); break;
-#endif
-        /* Simple unlocked stream calls */
-#if defined HAVE_GETC_UNLOCKED
-        case 300: ret = zzcat_fseek_getc(name, data, len, 0, 2); break;
-        case 301: ret = zzcat_fseek_getc(name, data, len, 0, 3); break;
-        case 302: ret = zzcat_fseek_getc(name, data, len, 2, 2); break;
-        case 303: ret = zzcat_fseek_getc(name, data, len, 2, 3); break;
-        case 304: ret = zzcat_fseek_getc(name, data, len, len / 2, 2); break;
-        case 305: ret = zzcat_fseek_getc(name, data, len, len / 2, 3); break;
-        case 306: ret = zzcat_fread_getc(name, data, len, 2, 2); break;
-        case 307: ret = zzcat_fread_getc(name, data, len, 2, 3); break;
-        case 308: ret = zzcat_fread_getc(name, data, len, len / 2, 2); break;
-        case 309: ret = zzcat_fread_getc(name, data, len, len / 2, 3); break;
-#   if defined HAVE_GETLINE
-        case 310: ret = zzcat_getline_getc(name, data, len, 2); break;
-        case 311: ret = zzcat_getline_getc(name, data, len, 3); break;
-#   endif
-#endif
-        /* Incomplete calls (but still OK since data is pre-filled) */
-        case 400: ret = zzcat_fread_fseek(name, data, len, 1); break;
-        case 401: ret = zzcat_fread_fseek(name, data, len, 2); break;
-        case 402: ret = zzcat_fread_fseek(name, data, len, 4000); break;
-        case 403: ret = zzcat_fseek_fread(name, data, len, 1); break;
-        case 404: ret = zzcat_fseek_fread(name, data, len, 2); break;
-        case 405: ret = zzcat_fseek_fread(name, data, len, 4000); break;
-        case 406: ret = zzcat_random_socket(name, data, len); break;
-        case 407: ret = zzcat_random_stream(name, data, len); break;
-        /* Misc */
-#if defined HAVE_MMAP
-        case 500: ret = zzcat_random_mmap(name, data, len); break;
-#endif
-        default: ret = EXIT_SUCCESS;
-    }
-
-    /* Write what we have read */
-    fwrite(data, len, 1, stdout);
-    free(data);
+    for (tmp = p->tmpfmt; *tmp; tmp++)
+        if (*tmp == '%')
+            tmp++, ret++;
 
     return ret;
 }
 
+#define PARSECMD(fmt, arg...) \
+    make_fmt(&parser, fmt) == sscanf(p, parser.tmpfmt, ##arg, &parser.ch) \
+        && parser.ch == parser.lastch
+
+/*
+ * File reader. We parse a command line and perform all the operations it
+ * contains on the specified file.
+ */
+
+static int cat_file(char const *p, char const *file)
+{
+    struct { char const *p; int count; } loops[128];
+    char *retbuf = NULL, *tmp;
+    FILE *f = NULL;
+    size_t retlen = 0, retoff = 0;
+    int nloops = 0, fd = -1;
+
+    /* Allocate 32MB for our temporary buffer. Any larger value will crash. */
+    tmp = malloc(32 * 1024 * 1024);
+
+    while (*p)
+    {
+        struct parser parser;
+        long int l1, l2;
+        char *s, *lineptr = NULL;
+        size_t k;
+        ssize_t l;
+        int n;
+        char ch;
+
+        /* Ignore punctuation */
+        if (strchr(" \t,;\r\n", *p))
+            p++;
+
+        /* Loop handling */
+        else if (PARSECMD("repeat ( %li ,", &l1))
+        {
+            p = strchr(p, ',') + 1;
+            loops[nloops].p = p;
+            loops[nloops].count = l1;
+            nloops++;
+        }
+        else if (PARSECMD(")"))
+        {
+            if (nloops == 0)
+            {
+                fprintf(stderr, "E: zzcat: ')' outside a loop\n");
+                return EXIT_FAILURE;
+            }
+            loops[nloops - 1].count--;
+            if (loops[nloops - 1].count <= 0)
+            {
+                nloops--;
+                p = strchr(p, ')') + 1;
+            }
+            else
+            {
+                p = loops[nloops - 1].p;
+            }
+        }
+
+        /* FILE * opening functions */
+        else if (PARSECMD("fopen ( )"))
+            FOPEN(f = fopen(file, "r"));
+#if defined HAVE_FOPEN64
+        else if (PARSECMD("fopen64 ( )"))
+            FOPEN(f = fopen64(file, "r"));
+#endif
+#if defined HAVE___FOPEN64
+        else if (PARSECMD("__fopen64 ( )"))
+            FOPEN(f = __fopen64(file, "r"));
+#endif
+        else if (PARSECMD("freopen ( )"))
+            FOPEN(f = freopen(file, "r", f));
+#if defined HAVE_FREOPEN64
+        else if (PARSECMD("freopen64 ( )"))
+            FOPEN(f = freopen64(file, "r", f));
+#endif
+#if defined HAVE___FREOPEN64
+        else if (PARSECMD("__freopen64 ( )"))
+            FOPEN(f = __freopen64(file, "r", f));
+#endif
+
+        /* FILE * closing functions */
+        else if (PARSECMD("fclose ( )"))
+            FCLOSE(fclose(f));
+
+        /* FILE * reading functions */
+        else if (PARSECMD("fread ( %li , %li )", &l1, &l2))
+            FREAD(l = fread(tmp, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
+        else if (PARSECMD("getc ( )"))
+            FREAD(ch = (n = getc(f)), &ch, (n != EOF));
+        else if (PARSECMD("fgetc ( )"))
+            FREAD(ch = (n = fgetc(f)), &ch, (n != EOF));
+        else if (PARSECMD("fgets ( %li )", &l1))
+            FREAD(s = fgets(tmp, l1, f), tmp, s ? strlen(tmp) : 0);
+#if defined HAVE__IO_GETC
+        else if (PARSECMD("_IO_getc ( )"))
+            FREAD(ch = (n = _IO_getc(f)), &ch, (n != EOF));
+#endif
+#if defined HAVE_FREAD_UNLOCKED
+        else if (PARSECMD("fread_unlocked ( %li , %li )", &l1, &l2))
+            FREAD(l = fread_unlocked(tmp, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
+#endif
+#if defined HAVE_FGETS_UNLOCKED
+        else if (PARSECMD("fgets_unlocked ( %li )", &l1))
+            FREAD(s = fgets_unlocked(tmp, l1, f), tmp, s ? strlen(tmp) : 0);
+#endif
+#if defined HAVE_GETC_UNLOCKED
+        else if (PARSECMD("getc_unlocked ( )"))
+            FREAD(ch = (n = getc_unlocked(f)), &ch, (n != EOF));
+#endif
+#if defined HAVE_FGETC_UNLOCKED
+        else if (PARSECMD("fgetc_unlocked ( )"))
+            FREAD(ch = (n = fgetc_unlocked(f)), &ch, (n != EOF));
+#endif
+
+        /* FILE * getdelim functions */
+#if defined HAVE_GETLINE
+        else if (PARSECMD("getline ( )"))
+            FREAD(l = getline(&lineptr, &k, f), lineptr, l >= 0 ? l : 0);
+#endif
+#if defined HAVE_GETDELIM
+        else if (PARSECMD("getdelim ( '%c' )", &ch))
+            FREAD(l = getdelim(&lineptr, &k, ch, f), lineptr, l >= 0 ? l : 0);
+        else if (PARSECMD("getdelim ( %i )", &n))
+            FREAD(l = getdelim(&lineptr, &k, n, f), lineptr, l >= 0 ? l : 0);
+#endif
+#if defined HAVE___GETDELIM
+        else if (PARSECMD("__getdelim ( '%c' )", &ch))
+            FREAD(l = __getdelim(&lineptr, &k, ch, f), lineptr, l >= 0 ? l : 0);
+        else if (PARSECMD("__getdelim ( %i )", &n))
+            FREAD(l = __getdelim(&lineptr, &k, n, f), lineptr, l >= 0 ? l : 0);
+#endif
+
+        /* FILE * seeking functions */
+        else if (PARSECMD("fseek ( %li , SEEK_CUR )", &l1))
+            FSEEK(l = fseek(f, l1, SEEK_CUR),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+        else if (PARSECMD("fseek ( %li , SEEK_SET )", &l1))
+            FSEEK(l = fseek(f, l1, SEEK_SET),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+        else if (PARSECMD("fseek ( %li , SEEK_END )", &l1))
+            FSEEK(l = fseek(f, l1, SEEK_END),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+#if defined HAVE_FSEEKO
+        else if (PARSECMD("fseeko ( %li , SEEK_CUR )", &l1))
+            FSEEK(l = fseeko(f, l1, SEEK_CUR),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+        else if (PARSECMD("fseeko ( %li , SEEK_SET )", &l1))
+            FSEEK(l = fseeko(f, l1, SEEK_SET),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+        else if (PARSECMD("fseeko ( %li , SEEK_END )", &l1))
+            FSEEK(l = fseeko(f, l1, SEEK_END),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+#endif
+#if defined HAVE_FSEEKO64
+        else if (PARSECMD("fseeko64 ( %li , SEEK_CUR )", &l1))
+            FSEEK(l = fseeko64(f, l1, SEEK_CUR),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+        else if (PARSECMD("fseeko64 ( %li , SEEK_SET )", &l1))
+            FSEEK(l = fseeko64(f, l1, SEEK_SET),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+        else if (PARSECMD("fseeko64 ( %li , SEEK_END )", &l1))
+            FSEEK(l = fseeko64(f, l1, SEEK_END),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+#endif
+#if defined HAVE___FSEEKO64
+        else if (PARSECMD("__fseeko64 ( %li , SEEK_CUR )", &l1))
+            FSEEK(l = __fseeko64(f, l1, SEEK_CUR),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+        else if (PARSECMD("__fseeko64 ( %li , SEEK_SET )", &l1))
+            FSEEK(l = __fseeko64(f, l1, SEEK_SET),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+        else if (PARSECMD("__fseeko64 ( %li , SEEK_END )", &l1))
+            FSEEK(l = __fseeko64(f, l1, SEEK_END),
+                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+#endif
+        else if (PARSECMD("rewind ( )"))
+            FSEEK(rewind(f), -retlen);
+        else if (PARSECMD("ungetc ( )"))
+            FSEEK(if(retoff) ungetc((unsigned char)retbuf[retoff - 1], f),
+                  retoff ? -1 : 0);
+
+        /* Unrecognised sequence */
+        else
+        {
+            char buf[16];
+            snprintf(buf, 16, strlen(p) < 16 ? "%s" : "%.12s...", p);
+            fprintf(stderr, "E: zzcat: syntax error near `%s'\n", buf);
+            return EXIT_FAILURE;
+        }
+
+        /* Clean up our mess */
+        if (lineptr)
+            free(lineptr);
+    }
+
+    if (f)
+        fclose(f);
+
+    if (fd >= 0)
+        close(fd);
+
+    fwrite(retbuf, retlen, 1, stdout);
+
+    free(retbuf);
+    free(tmp);
+
+    return EXIT_SUCCESS;
+}
+
+/*
+ * Main program.
+ */
+
+int main(int argc, char *argv[])
+{
+    int i;
+
+    if (argc < 2)
+    {
+        fprintf(stderr, "E: zzcat: too few arguments\n");
+        return EXIT_FAILURE;
+    }
+
+    if (argc == 2)
+        return cat_file("fread(1,33554432)", argv[1]);
+
+    for (i = 2; i < argc; i++)
+    {
+        int ret = cat_file(argv[1], argv[i]);
+        if (ret)
+            return ret;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+#if 0
 /* Only read() calls */
 static int zzcat_read(char const *name, unsigned char *data, int64_t len,
                       int64_t chunk)
@@ -176,122 +387,6 @@ static int zzcat_read(char const *name, unsigned char *data, int64_t len,
     for(i = 0; i < len; i += chunk)
         read(fd, data + i, chunk);
     close(fd);
-    return EXIT_SUCCESS;
-}
-
-/* Only fread() calls */
-static int zzcat_fread(char const *name, unsigned char *data, int64_t len,
-                       int64_t chunk)
-{
-    FILE *stream = fopen(name, "r");
-    int i;
-    if(!stream)
-        return EXIT_FAILURE;
-    for(i = 0; i < len; i += chunk)
-        fread(data + i, chunk, 1, stream);
-    fclose(stream);
-    return EXIT_SUCCESS;
-}
-
-/* Only fread() and fseek() calls */
-static int zzcat_fread_fseek(char const *name, unsigned char *data,
-                             int64_t len, int64_t chunk)
-{
-    FILE *stream = fopen(name, "r");
-    int i;
-    if(!stream)
-        return EXIT_FAILURE;
-    for(i = 0; i < len; )
-    {
-        fread(data + i, chunk, 1, stream);
-        i += chunk;
-        if (i >= len)
-            break;
-        fseek(stream, chunk, SEEK_CUR);
-        i += chunk;
-    }
-    fclose(stream);
-    return EXIT_SUCCESS;
-}
-
-/* Only fseek() and fread() calls */
-static int zzcat_fseek_fread(char const *name, unsigned char *data,
-                             int64_t len, int64_t chunk)
-{
-    FILE *stream = fopen(name, "r");
-    int i;
-    if(!stream)
-        return EXIT_FAILURE;
-    for(i = 0; i < len; )
-    {
-        fseek(stream, chunk, SEEK_CUR);
-        i += chunk;
-        if (i >= len)
-            break;
-        fread(data + i, chunk, 1, stream);
-        i += chunk;
-    }
-    fclose(stream);
-    return EXIT_SUCCESS;
-}
-
-#if defined HAVE_GETLINE
-/* getdelim() and getc() calls */
-static int zzcat_getline_getc(char const *name, unsigned char *data,
-                              int64_t len, int getc_method)
-{
-    FILE *stream = fopen(name, "r");
-    int i = 0, j;
-    char c;
-    if(!stream)
-        return EXIT_FAILURE;
-    (void)len;
-    while ((c = mygetc(stream, getc_method)) != EOF)
-    {
-        char *line;
-        ssize_t ret;
-        size_t n;
-
-        ungetc(c, stream);
-        line = NULL;
-        ret = getline(&line, &n, stream);
-        for (j = 0; j < ret; i++, j++)
-            data[i] = line[j];
-    }
-    fclose(stream);
-    return EXIT_SUCCESS;
-}
-#endif
-
-/* One fseek(), then only getc() or fgetc() calls */
-static int zzcat_fseek_getc(char const *name, unsigned char *data,
-                            int64_t len, int64_t chunk, int getc_method)
-{
-    FILE *stream = fopen(name, "r");
-    int i;
-    if(!stream)
-        return EXIT_FAILURE;
-    if (chunk)
-        fseek(stream, chunk, SEEK_CUR);
-    for(i = chunk; i < len; i++)
-        data[i] = mygetc(stream, getc_method);
-    fclose(stream);
-    return EXIT_SUCCESS;
-}
-
-/* One fread(), then only getc() or fgetc() calls */
-static int zzcat_fread_getc(char const *name, unsigned char *data,
-                            int64_t len, int64_t chunk, int getc_method)
-{
-    FILE *stream = fopen(name, "r");
-    int i;
-    if(!stream)
-        return EXIT_FAILURE;
-    if (chunk)
-        fread(data, 1, chunk, stream);
-    for(i = chunk; i < len; i++)
-        data[i] = mygetc(stream, getc_method);
-    fclose(stream);
     return EXIT_SUCCESS;
 }
 
@@ -374,5 +469,6 @@ static int zzcat_random_mmap(char const *name, unsigned char *data,
     close(fd);
     return EXIT_SUCCESS;
 }
+#endif
 #endif
 
