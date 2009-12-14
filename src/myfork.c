@@ -37,6 +37,9 @@
 #endif
 #include <string.h>
 #include <fcntl.h> /* for O_BINARY */
+#if defined HAVE_SYS_RESOURCE_H
+#   include <sys/resource.h> /* for RLIMIT_AS */
+#endif
 
 #include "common.h"
 #include "opts.h"
@@ -46,6 +49,22 @@
 #include "myfork.h"
 #include "md5.h"
 #include "timer.h"
+
+#if defined RLIMIT_AS
+#   define ZZUF_RLIMIT_MEM RLIMIT_AS
+#elif defined RLIMIT_VMEM
+#   define ZZUF_RLIMIT_MEM RLIMIT_VMEM
+#elif defined RLIMIT_DATA
+#   define ZZUF_RLIMIT_MEM RLIMIT_DATA
+#else
+#   undef ZZUF_RLIMIT_MEM
+#endif
+
+#if defined RLIMIT_CPU
+#   define ZZUF_RLIMIT_CPU RLIMIT_CPU
+#else
+#   undef ZZUF_RLIMIT_CPU
+#endif
 
 static int run_process(struct opts *, int[][2]);
 

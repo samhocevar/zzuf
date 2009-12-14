@@ -54,7 +54,7 @@
 #   include <sys/wait.h>
 #endif
 #if defined HAVE_SYS_RESOURCE_H
-#   include <sys/resource.h>
+#   include <sys/resource.h> /* for RLIMIT_AS */
 #endif
 
 #include "common.h"
