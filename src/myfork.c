@@ -265,8 +265,8 @@ static int run_process(struct opts *opts, int pipes[][2])
         return -1;
 
     /* Get the child process's entry point address */
-    epaddr = (void *)(get_base_address(pinfo.dwProcessId)
-                       + get_entry_point_offset(opts->newargv[0]));
+    epaddr = (void *)get_entry_point(opts->newargv[0],
+                                     pinfo.dwProcessId);
     if(!epaddr)
         return -1;
 
@@ -413,30 +413,9 @@ static int dll_inject(void *process, void *epaddr, char const *lib)
     return 0;
 }
 
-/* Find the process's base address once it is loaded in memory (the header
- * information is unreliable because of Vista's ASLR). */
-static intptr_t get_base_address(DWORD pid)
-{
-    MODULEENTRY32 entry;
-    intptr_t ret = 0;
-    void *list;
-    int k;
-
-    list = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid);
-    entry.dwSize = sizeof(entry);
-    for(k = Module32First(list, &entry); k; k = Module32Next(list, &entry))
-    {
-        /* FIXME: how do we select the correct module? */
-        ret = (intptr_t)entry.modBaseAddr;
-    }
-    CloseHandle(list);
-
-    return ret;
-}
-
 /* Find the process's entry point address offset. The information is in
  * the file's PE header. */
-static intptr_t get_entry_point_offset(char const *name)
+static intptr_t get_entry_point(char const *name, DWORD pid)
 {
     PIMAGE_DOS_HEADER dos;
     PIMAGE_NT_HEADERS nt;
@@ -471,7 +450,14 @@ static intptr_t get_entry_point_offset(char const *name)
       && nt->FileHeader.Machine == IMAGE_FILE_MACHINE_I386
       && nt->OptionalHeader.Magic == 0x10b /* IMAGE_NT_OPTIONAL_HDR32_MAGIC */)
     {
-        ret = (intptr_t)nt->OptionalHeader.AddressOfEntryPoint;
+        ret = get_base_address(pid);
+        /* Base address not found in the running process. Falling back
+         * to the header's information, which is unreliable because of
+         * Vista's address space randomisation. */
+        if (!ret)
+            ret = (intptr_t)nt->OptionalHeader.BaseOfCode;
+
+        ret += (intptr_t)nt->OptionalHeader.AddressOfEntryPoint;
     }
 
     UnmapViewOfFile(base);
@@ -480,5 +466,26 @@ static intptr_t get_entry_point_offset(char const *name)
 
     return ret;
 }
-#endif
 
+/* Find the process's base address once it is loaded in memory (the header
+ * information is unreliable because of Vista's ASLR). */
+static intptr_t get_base_address(DWORD pid)
+{
+    MODULEENTRY32 entry;
+    intptr_t ret = 0;
+    void *list;
+    int k;
+
+    list = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid);
+    entry.dwSize = sizeof(entry);
+    for(k = Module32First(list, &entry); k; k = Module32Next(list, &entry))
+    {
+        /* FIXME: how do we select the correct module? */
+        ret = (intptr_t)entry.modBaseAddr;
+    }
+    CloseHandle(list);
+
+    return ret;
+}
+
+#endif

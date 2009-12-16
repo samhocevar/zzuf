@@ -51,7 +51,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\msvc;..\src\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -78,7 +78,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\msvc;..\src\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <ObjectFileName>$(IntDir).libs/</ObjectFileName>
@@ -104,30 +104,31 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\debug.c" />
-    <ClCompile Include="..\src\fd.c" />
-    <ClCompile Include="..\src\fuzz.c" />
-    <ClCompile Include="..\src\lib-fd.c" />
-    <ClCompile Include="..\src\lib-mem.c" />
-    <ClCompile Include="..\src\lib-signal.c" />
-    <ClCompile Include="..\src\lib-stream.c" />
-    <ClCompile Include="..\src\libzzuf.c" />
-    <ClCompile Include="..\src\network.c" />
-    <ClCompile Include="..\src\random.c" />
-    <ClCompile Include="..\src\ranges.c" />
-    <ClCompile Include="..\src\sys.c" />
+    <ClInclude Include="..\src\common\common.h" />
+    <ClInclude Include="..\src\common\fd.h" />
+    <ClInclude Include="..\src\common\fuzz.h" />
+    <ClInclude Include="..\src\common\random.h" />
+    <ClInclude Include="..\src\common\ranges.h" />
+    <ClInclude Include="..\src\libzzuf\debug.h" />
+    <ClInclude Include="..\src\libzzuf\lib-load.h" />
+    <ClInclude Include="..\src\libzzuf\libzzuf.h" />
+    <ClInclude Include="..\src\libzzuf\network.h" />
+    <ClInclude Include="..\src\libzzuf\sys.h" />
+    <ClInclude Include="config.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="config.h" />
-    <ClInclude Include="..\src\debug.h" />
-    <ClInclude Include="..\src\fd.h" />
-    <ClInclude Include="..\src\fuzz.h" />
-    <ClInclude Include="..\src\lib-load.h" />
-    <ClInclude Include="..\src\libzzuf.h" />
-    <ClInclude Include="..\src\network.h" />
-    <ClInclude Include="..\src\random.h" />
-    <ClInclude Include="..\src\ranges.h" />
-    <ClInclude Include="..\src\sys.h" />
+    <ClCompile Include="..\src\common\fd.c" />
+    <ClCompile Include="..\src\common\fuzz.c" />
+    <ClCompile Include="..\src\common\random.c" />
+    <ClCompile Include="..\src\common\ranges.c" />
+    <ClCompile Include="..\src\libzzuf\debug.c" />
+    <ClCompile Include="..\src\libzzuf\lib-fd.c" />
+    <ClCompile Include="..\src\libzzuf\lib-mem.c" />
+    <ClCompile Include="..\src\libzzuf\lib-signal.c" />
+    <ClCompile Include="..\src\libzzuf\lib-stream.c" />
+    <ClCompile Include="..\src\libzzuf\libzzuf.c" />
+    <ClCompile Include="..\src\libzzuf\network.c" />
+    <ClCompile Include="..\src\libzzuf\sys.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
