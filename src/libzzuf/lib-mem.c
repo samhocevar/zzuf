@@ -140,6 +140,11 @@ void *NEW(calloc)(size_t nmemb, size_t size)
     void *ret;
     if(!ORIG(calloc))
     {
+        /* Store the chunk length just before the buffer we'll return */
+        size_t lsize = size;
+        memcpy(dummy_buffer + dummy_offset, &lsize, sizeof(size_t));
+        dummy_offset++;
+
         ret = dummy_buffer + dummy_offset;
         memset(ret, 0, nmemb * size);
         dummy_offset += (nmemb * size + DUMMY_ALIGNMENT - 1) / DUMMY_ALIGNMENT;
@@ -158,6 +163,10 @@ void *NEW(malloc)(size_t size)
     void *ret;
     if(!ORIG(malloc))
     {
+        /* Store the chunk length just before the buffer we'll return */
+        memcpy(dummy_buffer + dummy_offset, &size, sizeof(size_t));
+        dummy_offset++;
+
         ret = dummy_buffer + dummy_offset;
         dummy_offset += (size + DUMMY_ALIGNMENT - 1) / DUMMY_ALIGNMENT;
         debug("%s(%li) = %p", __func__, (long int)size, ret);
@@ -191,12 +200,18 @@ void *NEW(realloc)(void *ptr, size_t size)
     if(!ORIG(realloc)
         || ((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP))
     {
+        size_t oldsize;
+
+        /* Store the chunk length just before the buffer we'll return */
+        memcpy(dummy_buffer + dummy_offset, &size, sizeof(size_t));
+        dummy_offset++;
+
         ret = dummy_buffer + dummy_offset;
-        /* XXX: If ptr is NULL, we don't copy anything. If it is non-NULL, we
-         * copy everything even if it is too big, we don't have anything to
-         * overflow really. */
-        if(ptr)
-            memcpy(ret, ptr, size);
+        if ((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
+            memcpy(&oldsize, (DUMMY_TYPE *)ptr - 1, sizeof(size_t));
+        else
+            oldsize = 0;
+        memcpy(ret, ptr, size < oldsize ? size : oldsize);
         dummy_offset += (size + DUMMY_ALIGNMENT - 1) / DUMMY_ALIGNMENT;
         debug("%s(%p, %li) = %p", __func__, ptr, (long int)size, ret);
         return ret;
