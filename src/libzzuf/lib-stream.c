@@ -812,7 +812,7 @@ int NEW(fclose)(FILE *fp)
             if(chr == EOF) \
             { \
                 finished = 1; \
-                ret = done; \
+                ret = done ? done : -1; \
             } \
             else \
             { \
