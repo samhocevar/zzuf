@@ -26,7 +26,13 @@
 #   define LOADSYM(x) \
         do { \
             if(!ORIG(x)) \
+            { \
+                /* XXX: we try to initialise libzzuf as soon as possible, \
+                 * otherwise we may miss a lot of stuff if we wait for \
+                 * the linker to load us fully. */ \
+                _zz_init(); \
                 ORIG(x) = dlsym(RTLD_NEXT, STR(x)); \
+            } \
             if(!ORIG(x)) \
                 abort(); \
         } while(0)
@@ -34,7 +40,8 @@
 #   define NEW(x) x##_new
 #   define LOADSYM(x) \
         do { \
-            /* Nothing to do */ \
+            /* Nothing to do under Windows, everything is done as soon \
+             * as the process is launched. */ \
         } while(0)
 #endif
 

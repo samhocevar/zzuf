@@ -48,15 +48,6 @@
 #include "sys.h"
 #include "fuzz.h"
 
-/* Library initialisation shit */
-#if defined __GNUC__
-void _zz_init(void) __attribute__((constructor));
-void _zz_fini(void) __attribute__((destructor));
-#elif defined HAVE_PRAGMA_INIT
-#   pragma INIT "_zz_init"
-#   pragma FINI "_zz_fini"
-#endif
-
 #if defined HAVE_WINDOWS_H
 BOOL WINAPI DllMain(HINSTANCE, DWORD, PVOID);
 #endif
@@ -114,7 +105,12 @@ int _zz_network = 0;
  */
 void _zz_init(void)
 {
+    static int initializing = 0;
     char *tmp, *tmp2;
+
+    /* Make sure we don't get initialised more than once */
+    if (initializing++)
+        return;
 
     tmp = getenv("ZZUF_DEBUG");
     if(tmp)
@@ -208,8 +204,15 @@ void _zz_init(void)
  */
 void _zz_fini(void)
 {
+    if (!_zz_ready)
+        return;
+
+    debug("libzzuf finishing for PID %li", (long int)getpid());
+
     _zz_fd_fini();
     _zz_network_fini();
+
+    _zz_ready = 0;
 }
 
 #if defined HAVE_WINDOWS_H
