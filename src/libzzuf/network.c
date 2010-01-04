@@ -114,10 +114,10 @@ int _zz_hostwatched(int sock)
 
     ip = get_socket_ip(sock);
 
-    if(deny && host_in_list(ip, deny))
-        watch = 0;
     if(allow)
         watch = host_in_list(ip, allow);
+    else if(deny && host_in_list(ip, deny))
+        watch = 0;
 
     return watch;
 #else
@@ -131,24 +131,14 @@ int _zz_hostwatched(int sock)
 static unsigned int *create_host_list(char const *list,
                                       unsigned int *static_list)
 {
-    int ret;
-    char *copy;
-    char *parser;
+    char buf[BUFSIZ];
     struct in_addr addr;
-    unsigned int i, chunks, len, *iplist;
-
-    len = strlen(list);
-    copy = malloc(len + 1);
-    if (!copy) {
-        // TODO better error handling
-        perror("malloc");
-        exit(EXIT_FAILURE);
-    }
-    strncpy(copy, list, len);
-    copy[len] = 0;
+    char const *parser;
+    unsigned int i, chunks, *iplist;
+    int ret;
 
     /* Count commas */
-    for(parser = copy, chunks = 1; *parser; parser++)
+    for(parser = list, chunks = 1; *parser; parser++)
         if(*parser == ',')
             chunks++;
 
@@ -157,25 +147,38 @@ static unsigned int *create_host_list(char const *list,
     else
         iplist = static_list;
 
-    for(parser = copy, i = 0; i < chunks; i++)
+    for(i = 0, parser = list; *parser; )
     {
         char *comma = strchr(parser, ',');
-        if (comma)
-            *comma = 0;
 
-        ret = inet_aton(parser, &addr);
-        if (ret)
-            iplist[i] = addr.s_addr;
-        else {
-            i--;
-            chunks--;
-            debug("create_host_list: Invalid IP address '%s'. Skipping it.", parser);
+        if (comma && (comma - parser) < BUFSIZ - 1)
+        {
+            memcpy(buf, parser, comma - parser);
+            buf[comma - parser] = '\0';
+            parser = comma + 1;
         }
-        parser = comma + 1;
+        else if (strlen(parser) < BUFSIZ - 1)
+        {
+            strcpy(buf, parser);
+            parser += strlen(parser);
+        }
+        else
+        {
+            buf[0] = '\0';
+            parser++;
+        }
+
+        ret = inet_aton(buf, &addr);
+        if (ret)
+            iplist[i++] = addr.s_addr;
+        else
+        {
+            chunks--;
+            debug("create_host_list: skipping invalid address '%s'", parser);
+        }
     }
 
     iplist[i] = 0;
-    free(copy);
 
     return iplist;
 }
