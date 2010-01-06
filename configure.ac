@@ -157,10 +157,15 @@ AC_SUBST(MATH_LIBS)
 AC_CHECK_LIB(dl, dlopen, [DL_LIBS="-ldl"])
 AC_SUBST(DL_LIBS)
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
   Makefile
   src/Makefile
   doc/Makefile
   test/Makefile
 ])
+AC_CONFIG_FILES([
+  doc/zzuf.1
+  doc/libzzuf.3
+])
+AC_OUTPUT
 

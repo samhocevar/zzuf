@@ -30,3 +30,5 @@ test/zznop
 test/bug-div0
 test/bug-memory
 test/bug-overflow
+doc/zzuf.1
+doc/libzzuf.3
