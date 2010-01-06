@@ -205,6 +205,18 @@ static inline int get_stream_cnt(FILE *stream)
 #endif
 }
 
+static char const *get_seek_mode_name(int mode)
+{
+    /* We don’t use switch/case to avoid duplicate labels */
+    if (mode == SEEK_CUR)
+        return "SEEK_CUR";
+    if (mode == SEEK_SET)
+        return "SEEK_SET";
+    if (mode == SEEK_END)
+        return "SEEK_END";
+    return "SEEK_???";
+}
+
 static inline void debug_stream(char const *prefix, FILE *stream)
 {
     debug2("%p stream([%i], %p, %i)", prefix, fileno(stream),
@@ -338,8 +350,8 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
                          get_stream_cnt(stream) + get_stream_off(stream)); \
         } \
         _zz_setpos(fd, newpos); \
-        debug("%s([%i], %lli, %i) = %i", __func__, \
-              fd, (long long int)offset, whence, ret); \
+        debug("%s([%i], %lli, %s) = %i", __func__, \
+              fd, (long long int)offset, get_seek_mode_name(whence), ret); \
         debug_stream("new", stream); \
     } while(0)
 
