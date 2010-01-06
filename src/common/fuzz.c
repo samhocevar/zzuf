@@ -94,7 +94,8 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
     int todo;
 
 #if defined LIBZZUF
-    debug2("fuzz(%i, @%lli, %lli)", fd, (long long int)pos, (long long int)len);
+    debug2("... fuzz(%i, @%lli, %lli)", fd, (long long int)pos,
+           (long long int)len);
 #endif
 
     aligned_buf = buf - pos;

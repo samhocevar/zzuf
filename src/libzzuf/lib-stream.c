@@ -219,8 +219,9 @@ static char const *get_seek_mode_name(int mode)
 
 static inline void debug_stream(char const *prefix, FILE *stream)
 {
-    debug2("%p stream([%i], %p, %i)", prefix, fileno(stream),
-           get_stream_ptr(stream), get_stream_cnt(stream));
+    debug2("... %s stream([%i], %p, %i + %i)", prefix, fileno(stream),
+           get_stream_ptr(stream), get_stream_off(stream),
+           get_stream_cnt(stream));
 }
 
 /*
@@ -245,8 +246,8 @@ static inline void debug_stream(char const *prefix, FILE *stream)
             int fd = fileno(ret); \
             _zz_register(fd); \
             _zz_fuzz(fd, get_stream_ptr(ret), get_stream_cnt(ret)); \
+            debug_stream("after", ret); \
             debug("%s(\"%s\", \"%s\") = [%i]", __func__, path, mode, fd); \
-            debug_stream("new", ret); \
         } \
     } while(0)
 
@@ -334,7 +335,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(myfseek)(stream, offset, whence); \
-        debug_stream("old", stream); \
+        debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         oldpos = MYFTELL(stream); \
         oldoff = get_stream_off(stream); \
@@ -343,16 +344,16 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         ret = ORIG(myfseek)(stream, offset, whence); \
         _zz_unlock(fd); \
         newpos = MYFTELL(stream); \
-        if (newpos > oldpos + oldcnt || newpos < oldpos - oldoff) \
+        if (newpos >= oldpos + oldcnt || newpos < oldpos - oldoff) \
         { \
             _zz_setpos(fd, newpos - get_stream_off(stream)); \
             _zz_fuzz(fd, get_stream_ptr(stream) - get_stream_off(stream), \
                          get_stream_cnt(stream) + get_stream_off(stream)); \
         } \
         _zz_setpos(fd, newpos); \
+        debug_stream("after", stream); \
         debug("%s([%i], %lli, %s) = %i", __func__, \
               fd, (long long int)offset, get_seek_mode_name(whence), ret); \
-        debug_stream("new", stream); \
     } while(0)
 
 #define FSETPOS(myfsetpos) \
@@ -365,7 +366,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(myfsetpos)(stream, pos); \
-        debug_stream("old", stream); \
+        debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         oldpos = MYFTELL(stream); \
         oldoff = get_stream_off(stream); \
@@ -374,16 +375,16 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         ret = ORIG(myfsetpos)(stream, pos); \
         _zz_unlock(fd); \
         newpos = MYFTELL(stream); \
-        if (newpos > oldpos + oldcnt || newpos < oldpos - oldoff) \
+        if (newpos >= oldpos + oldcnt || newpos < oldpos - oldoff) \
         { \
             _zz_setpos(fd, newpos - get_stream_off(stream)); \
             _zz_fuzz(fd, get_stream_ptr(stream) - get_stream_off(stream), \
                          get_stream_cnt(stream) + get_stream_off(stream)); \
         } \
         _zz_setpos(fd, (int64_t)FPOS_CAST(*pos)); \
+        debug_stream("after", stream); \
         debug("%s([%i], %lli) = %i", __func__, \
               fd, (long long int)FPOS_CAST(*pos), ret); \
-        debug_stream("new", stream); \
     } \
     while(0)
 
@@ -397,7 +398,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(rewind)(stream); \
-        debug_stream("old", stream); \
+        debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         oldpos = MYFTELL(stream); \
         oldoff = get_stream_off(stream); \
@@ -406,15 +407,15 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         ORIG(rewind)(stream); \
         _zz_unlock(fd); \
         newpos = MYFTELL(stream); \
-        if (newpos > oldpos + oldcnt || newpos < oldpos - oldoff) \
+        if (newpos >= oldpos + oldcnt || newpos < oldpos - oldoff) \
         { \
             _zz_setpos(fd, newpos - get_stream_off(stream)); \
             _zz_fuzz(fd, get_stream_ptr(stream) - get_stream_off(stream), \
                          get_stream_cnt(stream) + get_stream_off(stream)); \
         } \
         _zz_setpos(fd, newpos); \
+        debug_stream("after", stream); \
         debug("%s([%i])", __func__, fd); \
-        debug_stream("new", stream); \
     } while(0)
 
 int NEW(fseek)(FILE *stream, long offset, int whence)
@@ -482,7 +483,7 @@ void NEW(rewind)(FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(myfread)(ptr, size, nmemb, stream); \
-        debug_stream("old", stream); \
+        debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         oldpos = MYFTELL(stream); \
         oldoff = get_stream_off(stream); \
@@ -491,7 +492,7 @@ void NEW(rewind)(FILE *stream)
         ret = ORIG(myfread)(ptr, size, nmemb, stream); \
         _zz_unlock(fd); \
         newpos = MYFTELL(stream); \
-        if (newpos > oldpos + oldcnt) \
+        if (newpos >= oldpos + oldcnt) \
         { \
             /* Fuzz returned data that wasn't in the old internal buffer */ \
             _zz_setpos(fd, oldpos + oldcnt); \
@@ -502,7 +503,8 @@ void NEW(rewind)(FILE *stream)
                          get_stream_cnt(stream) + get_stream_off(stream)); \
         } \
         _zz_setpos(fd, newpos); \
-        if (newpos > oldpos + 4) \
+        debug_stream("after", stream); \
+        if (newpos >= oldpos + 4) \
             debug("%s(%p, %li, %li, [%i]) = %li \"%c%c%c%c...", __func__, \
                   ptr, (long int)size, (long int)nmemb, fd, \
                   (long int)ret, b[0], b[1], b[2], b[3]); \
@@ -513,7 +515,6 @@ void NEW(rewind)(FILE *stream)
         else \
             debug("%s(%p, %li, %li, [%i]) = %li", __func__, ptr, \
                   (long int)size, (long int)nmemb, fd, (long int)ret); \
-        debug_stream("new", stream); \
     } while(0)
 
 size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
@@ -547,7 +548,7 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
         fd = fileno(s); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(myfgetc)(arg); \
-        debug_stream("old", s); \
+        debug_stream("before", s); \
         oldpos = MYFTELL(s); \
         oldoff = get_stream_off(s); \
         oldcnt = get_stream_cnt(s); \
@@ -563,7 +564,7 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
             _zz_fuzz(fd, &ch, 1); \
             ret = ch; \
         } \
-        if (newpos > oldpos + oldcnt) \
+        if (newpos >= oldpos + oldcnt) \
         { \
             /* Fuzz the internal stream buffer */ \
             _zz_setpos(fd, newpos - get_stream_off(s)); \
@@ -571,11 +572,11 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
                          get_stream_cnt(s) + get_stream_off(s)); \
         } \
         _zz_setpos(fd, newpos); \
+        debug_stream("after", s); \
         if(ret == EOF) \
             debug("%s([%i]) = EOF", __func__, fd); \
         else \
             debug("%s([%i]) = '%c'", __func__, fd, ret); \
-        debug_stream("new", s); \
     } while(0)
 
 #undef getc /* can be a macro; we don’t want that */
@@ -642,7 +643,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(myfgets)(s, size, stream); \
-        debug_stream("old", stream); \
+        debug_stream("before", stream); \
         oldpos = MYFTELL(stream); \
         oldoff = get_stream_off(stream); \
         oldcnt = get_stream_cnt(stream); \
@@ -669,7 +670,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
                     _zz_fuzz(fd, &ch, 1); \
                     chr = ch; \
                 } \
-                if (newpos > oldpos + oldcnt) \
+                if (newpos >= oldpos + oldcnt) \
                 { \
                     /* Fuzz the internal stream buffer, if necessary */ \
                     _zz_setpos(fd, newpos - get_stream_off(stream)); \
@@ -695,8 +696,8 @@ int NEW(fgetc_unlocked)(FILE *stream)
             } \
         } \
         _zz_setpos(fd, newpos); \
+        debug_stream("after", stream); \
         debug("%s(%p, %i, [%i]) = %p", __func__, s, size, fd, ret); \
-        debug_stream("new", stream); \
     } while(0)
 
 char *NEW(fgets)(char *s, int size, FILE *stream)
@@ -724,18 +725,18 @@ int NEW(ungetc)(int c, FILE *stream)
     if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(ungetc)(c, stream);
 
-    debug_stream("old", stream);
+    debug_stream("before", stream);
     oldpos = MYFTELL(stream);
     _zz_lock(fd);
     ret = ORIG(ungetc)(c, stream);
     _zz_unlock(fd);
     _zz_setpos(fd, oldpos - 1);
 
+    debug_stream("after", stream);
     if(ret == EOF)
         debug("%s(0x%02x, [%i]) = EOF", __func__, c, fd);
     else
         debug("%s(0x%02x, [%i]) = '%c'", __func__, c, fd, ret);
-    debug_stream("new", stream);
     return ret;
 }
 
@@ -752,7 +753,7 @@ int NEW(fclose)(FILE *fp)
     if(!_zz_ready || !_zz_iswatched(fd))
         return ORIG(fclose)(fp);
 
-    debug_stream("old", fp);
+    debug_stream("before", fp);
     _zz_lock(fd);
     ret = ORIG(fclose)(fp);
     _zz_unlock(fd);
@@ -779,7 +780,7 @@ int NEW(fclose)(FILE *fp)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(getdelim)(lineptr, n, delim, stream); \
-        debug_stream("old", stream); \
+        debug_stream("before", stream); \
         oldpos = MYFTELL(stream); \
         oldoff = get_stream_off(stream); \
         oldcnt = get_stream_cnt(stream); \
@@ -811,7 +812,7 @@ int NEW(fclose)(FILE *fp)
                 _zz_fuzz(fd, &ch, 1); \
                 chr = ch; \
             } \
-            if (newpos > oldpos + oldcnt) \
+            if (newpos >= oldpos + oldcnt) \
             { \
                 /* Fuzz the internal stream buffer, if necessary */ \
                 _zz_setpos(fd, newpos - get_stream_off(stream)); \
@@ -838,13 +839,13 @@ int NEW(fclose)(FILE *fp)
             } \
         } \
         _zz_setpos(fd, newpos); \
+        debug_stream("after", stream); \
         if(need_delim) \
             debug("%s(%p, %p, '%c', [%i]) = %li", __func__, \
                   lineptr, n, delim, fd, (long int)ret); \
         else \
             debug("%s(%p, %p, [%i]) = %li", __func__, \
                   lineptr, n, fd, (long int)ret); \
-        debug_stream("new", stream); \
         break; \
     } while(0)
 
@@ -888,7 +889,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(fgetln)(stream, len);
 
-    debug_stream("old", stream);
+    debug_stream("before", stream);
     oldpos = MYFTELL(stream);
     oldoff = get_stream_off(stream);
     oldcnt = get_stream_cnt(stream);
@@ -913,7 +914,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
             _zz_fuzz(fd, &ch, 1);
             chr = ch;
         }
-        if (newpos > oldpos + oldcnt)
+        if (newpos >= oldpos + oldcnt)
         {
             /* Fuzz the internal stream buffer, if necessary */
             _zz_setpos(fd, newpos - get_stream_off(stream));
@@ -939,8 +940,8 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     *len = i;
     ret = fuzz->tmp;
 
+    debug_stream("after", stream);
     debug("%s([%i], &%li) = %p", __func__, fd, (long int)*len, ret);
-    debug_stream("new", stream);
     return ret;
 }
 #endif
@@ -965,7 +966,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
         fd = fileno(fp); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
             return ORIG(myrefill)(fp); \
-        debug_stream("old", fp); \
+        debug_stream("before", fp); \
         pos = _zz_getpos(fd); \
         _zz_lock(fd); \
         ret = ORIG(myrefill)(fp); \
@@ -1000,13 +1001,13 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
             _zz_addpos(fd, get_stream_cnt(fp) - already_fuzzed); \
         } \
         _zz_setpos(fd, pos); /* FIXME: do we always need to do this? */ \
+        debug_stream("after", fp); \
         if (REFILL_RETURNS_INT) \
             debug("%s([%i]) = %i", __func__, fd, ret); \
         else if (ret == EOF) \
             debug("%s([%i]) = EOF", __func__, fd); \
         else \
             debug("%s([%i]) = '%c'", __func__, fd, ret); \
-        debug_stream("new", fp); \
     } \
     while(0)
 
