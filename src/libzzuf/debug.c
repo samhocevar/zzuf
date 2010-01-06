@@ -187,7 +187,7 @@ static void mydebug(char const *format, va_list args)
         {
             uintptr_t i = va_arg(args, uintptr_t);
             if(!i)
-                append("NULL", 5);
+                append("NULL", 4);
             else
             {
                 append("0x", 2);
