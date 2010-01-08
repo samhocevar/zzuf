@@ -91,13 +91,13 @@ AC_TRY_COMPILE([#include <stdio.h>],
    [ac_v_fp_base=FIXME; ac_v_fp_ptr=__ptr; ac_v_fp_cnt=__cnt],
    [AC_TRY_COMPILE([#include <stdio.h>],
      [FILE *fp; fp->_cnt++; fp->_ptr++],
-     [aac_v_fp_base=FIXME; c_v_fp_ptr=_ptr; ac_v_fp_cnt=_cnt],
+     [aac_v_fp_base=FIXME; ac_v_fp_ptr=_ptr; ac_v_fp_cnt=_cnt],
      [AC_TRY_COMPILE([#include <stdio.h>],
        [FILE *fp; fp->_c++; fp->_p++],
-       [aac_v_fp_base=FIXME; c_v_fp_ptr=_p; ac_v_fp_cnt=_c],
+       [aac_v_fp_base=FIXME; ac_v_fp_ptr=_p; ac_v_fp_cnt=_c],
        [AC_TRY_COMPILE([#include <stdio.h>],
-         [FILE *fp; fp->_r++; fp->_p++],
-         [aac_v_fp_base=FIXME; c_v_fp_ptr=_p; ac_v_fp_cnt=_r])])])])])
+         [FILE *fp; fp->__bf._base++; fp->_r++; fp->_p++],
+         [aac_v_fp_base=__bf._base; ac_v_fp_ptr=_p; ac_v_fp_cnt=_r])])])])])
 AC_MSG_RESULT($ac_v_fp_base/$ac_v_fp_ptr/$ac_v_fp_cnt)
 if test "$ac_cv_have_glibc_fp" != "no"; then
   AC_DEFINE(HAVE_GLIBC_FP, 1, [Define to 1 if FILE has glibc-style members])
