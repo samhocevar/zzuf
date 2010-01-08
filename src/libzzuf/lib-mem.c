@@ -263,7 +263,7 @@ int NEW(posix_memalign)(void **memptr, size_t alignment, size_t size)
 void **maps = NULL;
 int nbmaps = 0;
 
-#define MMAP(mymmap, off_t) \
+#define ZZ_MMAP(mymmap, off_t) \
     do { \
         char *b = MAP_FAILED; \
         LOADSYM(mymmap); \
@@ -319,7 +319,7 @@ int nbmaps = 0;
 void *NEW(mmap)(void *start, size_t length, int prot, int flags,
                 int fd, off_t offset)
 {
-    void *ret; MMAP(mmap, off_t); return ret;
+    void *ret; ZZ_MMAP(mmap, off_t); return ret;
 }
 #endif
 
@@ -327,7 +327,7 @@ void *NEW(mmap)(void *start, size_t length, int prot, int flags,
 void *NEW(mmap64)(void *start, size_t length, int prot, int flags,
                   int fd, off64_t offset)
 {
-    void *ret; MMAP(mmap64, off64_t); return ret;
+    void *ret; ZZ_MMAP(mmap64, off64_t); return ret;
 }
 #endif
 

@@ -146,7 +146,7 @@ static off64_t (*ORIG(__lseek64)) (int fd, off64_t offset, int whence);
 #endif
 static int     (*ORIG(close))   (int fd);
 
-#define OPEN(myopen) \
+#define ZZ_OPEN(myopen) \
     do \
     { \
         int mode = 0; \
@@ -180,20 +180,20 @@ static int     (*ORIG(close))   (int fd);
 
 int NEW(open)(const char *file, int oflag, ...)
 {
-    int ret; OPEN(open); return ret;
+    int ret; ZZ_OPEN(open); return ret;
 }
 
 #if defined HAVE_OPEN64
 int NEW(open64)(const char *file, int oflag, ...)
 {
-    int ret; OPEN(open64); return ret;
+    int ret; ZZ_OPEN(open64); return ret;
 }
 #endif
 
 #if defined HAVE___OPEN64
 int NEW(__open64)(const char *file, int oflag, ...)
 {
-    int ret; OPEN(__open64); return ret;
+    int ret; ZZ_OPEN(__open64); return ret;
 }
 #endif
 
@@ -275,7 +275,7 @@ int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 #   define case_AF_INET6
 #endif
 
-#define CONNECTION(myconnect, addr) \
+#define ZZ_CONNECT(myconnect, addr) \
     do \
     { \
         LOADSYM(myconnect); \
@@ -313,7 +313,7 @@ int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
 #if defined HAVE_BIND
 int NEW(bind)(int sockfd, const struct sockaddr *my_addr, SOCKLEN_T addrlen)
 {
-    int ret; CONNECTION(bind, my_addr); return ret;
+    int ret; ZZ_CONNECT(bind, my_addr); return ret;
 }
 #endif
 
@@ -321,7 +321,7 @@ int NEW(bind)(int sockfd, const struct sockaddr *my_addr, SOCKLEN_T addrlen)
 int NEW(connect)(int sockfd, const struct sockaddr *serv_addr,
                  SOCKLEN_T addrlen)
 {
-    int ret; CONNECTION(connect, serv_addr); return ret;
+    int ret; ZZ_CONNECT(connect, serv_addr); return ret;
 }
 #endif
 
@@ -528,7 +528,7 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
 }
 #endif
 
-#define LSEEK(mylseek, off_t) \
+#define ZZ_LSEEK(mylseek, off_t) \
     do \
     { \
         LOADSYM(mylseek); \
@@ -545,21 +545,21 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
 off_t NEW(lseek)(int fd, off_t offset, int whence)
 {
     off_t ret;
-    LSEEK(lseek, off_t);
+    ZZ_LSEEK(lseek, off_t);
     return ret;
 }
 
 #if defined HAVE_LSEEK64
 off64_t NEW(lseek64)(int fd, off64_t offset, int whence)
 {
-    off64_t ret; LSEEK(lseek64, off64_t); return ret;
+    off64_t ret; ZZ_LSEEK(lseek64, off64_t); return ret;
 }
 #endif
 
 #if defined HAVE___LSEEK64
 off64_t NEW(__lseek64)(int fd, off64_t offset, int whence)
 {
-    off64_t ret; LSEEK(__lseek64, off64_t); return ret;
+    off64_t ret; ZZ_LSEEK(__lseek64, off64_t); return ret;
 }
 #endif
 
