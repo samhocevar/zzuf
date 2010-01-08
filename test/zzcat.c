@@ -53,7 +53,7 @@ static inline unsigned int myrand(void)
     return seed;
 }
 
-#define FOPEN(cmd) \
+#define MY_FOPEN(cmd) \
     do { \
         cmd; \
         if (!f) \
@@ -65,7 +65,7 @@ static inline unsigned int myrand(void)
         p = strchr(p, ')') + 1; \
     } while(0)
 
-#define FCLOSE(cmd) \
+#define MY_FCLOSE(cmd) \
     do { \
         cmd; \
         f = NULL; \
@@ -85,10 +85,10 @@ static inline unsigned int myrand(void)
         retoff += _off; \
     } while(0)
 
-#define FREAD(cmd, buf, cnt) FCALL(cmd, buf, cnt, cnt)
-#define FSEEK(cmd, off) FCALL(cmd, /* unused */ "", 0, off)
+#define MY_FREAD(cmd, buf, cnt) MY_FCALL(cmd, buf, cnt, cnt)
+#define MY_FSEEK(cmd, off) MY_FCALL(cmd, /* unused */ "", 0, off)
 
-#define FCALL(cmd, buf, cnt, off) \
+#define MY_FCALL(cmd, buf, cnt, off) \
     do { \
         if (!f) \
         { \
@@ -104,7 +104,7 @@ static inline unsigned int myrand(void)
         p = strchr(p, ')') + 1; \
     } while(0)
 
-#define FEOF() \
+#define MY_FEOF() \
     do { \
         if (!f) \
         { \
@@ -185,6 +185,8 @@ static int cat_file(char const *p, char const *file)
         int n;
         char ch;
 
+        (void)k;
+
         /* Ignore punctuation */
         if (strchr(" \t,;\r\n", *p))
             p++;
@@ -220,130 +222,130 @@ static int cat_file(char const *p, char const *file)
 
         /* FILE * opening functions */
         else if (PARSECMD("fopen ( )"))
-            FOPEN(f = fopen(file, "r"));
+            MY_FOPEN(f = fopen(file, "r"));
 #if defined HAVE_FOPEN64
         else if (PARSECMD("fopen64 ( )"))
-            FOPEN(f = fopen64(file, "r"));
+            MY_FOPEN(f = fopen64(file, "r"));
 #endif
 #if defined HAVE___FOPEN64
         else if (PARSECMD("__fopen64 ( )"))
-            FOPEN(f = __fopen64(file, "r"));
+            MY_FOPEN(f = __fopen64(file, "r"));
 #endif
         else if (PARSECMD("freopen ( )"))
-            FOPEN(f = freopen(file, "r", f));
+            MY_FOPEN(f = freopen(file, "r", f));
 #if defined HAVE_FREOPEN64
         else if (PARSECMD("freopen64 ( )"))
-            FOPEN(f = freopen64(file, "r", f));
+            MY_FOPEN(f = freopen64(file, "r", f));
 #endif
 #if defined HAVE___FREOPEN64
         else if (PARSECMD("__freopen64 ( )"))
-            FOPEN(f = __freopen64(file, "r", f));
+            MY_FOPEN(f = __freopen64(file, "r", f));
 #endif
 
         /* FILE * EOF detection */
         else if (PARSECMD("feof ( %li )", &l1))
-            FEOF();
+            MY_FEOF();
 
         /* FILE * closing functions */
         else if (PARSECMD("fclose ( )"))
-            FCLOSE(fclose(f));
+            MY_FCLOSE(fclose(f));
 
         /* FILE * reading functions */
         else if (PARSECMD("fread ( %li , %li )", &l1, &l2))
-            FREAD(l = fread(tmp, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
+            MY_FREAD(l = fread(tmp, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
         else if (PARSECMD("getc ( )"))
-            FREAD(ch = (n = getc(f)), &ch, (n != EOF));
+            MY_FREAD(ch = (n = getc(f)), &ch, (n != EOF));
         else if (PARSECMD("fgetc ( )"))
-            FREAD(ch = (n = fgetc(f)), &ch, (n != EOF));
+            MY_FREAD(ch = (n = fgetc(f)), &ch, (n != EOF));
         else if (PARSECMD("fgets ( %li )", &l1))
-            FREAD(s = fgets(tmp, l1, f), tmp, s ? strlen(tmp) : 0);
+            MY_FREAD(s = fgets(tmp, l1, f), tmp, s ? strlen(tmp) : 0);
 #if defined HAVE__IO_GETC
         else if (PARSECMD("_IO_getc ( )"))
-            FREAD(ch = (n = _IO_getc(f)), &ch, (n != EOF));
+            MY_FREAD(ch = (n = _IO_getc(f)), &ch, (n != EOF));
 #endif
 #if defined HAVE_FREAD_UNLOCKED
         else if (PARSECMD("fread_unlocked ( %li , %li )", &l1, &l2))
-            FREAD(l = fread_unlocked(tmp, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
+            MY_FREAD(l = fread_unlocked(tmp, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
 #endif
 #if defined HAVE_FGETS_UNLOCKED
         else if (PARSECMD("fgets_unlocked ( %li )", &l1))
-            FREAD(s = fgets_unlocked(tmp, l1, f), tmp, s ? strlen(tmp) : 0);
+            MY_FREAD(s = fgets_unlocked(tmp, l1, f), tmp, s ? strlen(tmp) : 0);
 #endif
 #if defined HAVE_GETC_UNLOCKED
         else if (PARSECMD("getc_unlocked ( )"))
-            FREAD(ch = (n = getc_unlocked(f)), &ch, (n != EOF));
+            MY_FREAD(ch = (n = getc_unlocked(f)), &ch, (n != EOF));
 #endif
 #if defined HAVE_FGETC_UNLOCKED
         else if (PARSECMD("fgetc_unlocked ( )"))
-            FREAD(ch = (n = fgetc_unlocked(f)), &ch, (n != EOF));
+            MY_FREAD(ch = (n = fgetc_unlocked(f)), &ch, (n != EOF));
 #endif
 
         /* FILE * getdelim functions */
 #if defined HAVE_GETLINE
         else if (PARSECMD("getline ( )"))
-            FREAD(l = getline(&lineptr, &k, f), lineptr, l >= 0 ? l : 0);
+            MY_FREAD(l = getline(&lineptr, &k, f), lineptr, l >= 0 ? l : 0);
 #endif
 #if defined HAVE_GETDELIM
         else if (PARSECMD("getdelim ( '%c' )", &ch))
-            FREAD(l = getdelim(&lineptr, &k, ch, f), lineptr, l >= 0 ? l : 0);
+            MY_FREAD(l = getdelim(&lineptr, &k, ch, f), lineptr, l >= 0 ? l : 0);
         else if (PARSECMD("getdelim ( %i )", &n))
-            FREAD(l = getdelim(&lineptr, &k, n, f), lineptr, l >= 0 ? l : 0);
+            MY_FREAD(l = getdelim(&lineptr, &k, n, f), lineptr, l >= 0 ? l : 0);
 #endif
 #if defined HAVE___GETDELIM
         else if (PARSECMD("__getdelim ( '%c' )", &ch))
-            FREAD(l = __getdelim(&lineptr, &k, ch, f), lineptr, l >= 0 ? l : 0);
+            MY_FREAD(l = __getdelim(&lineptr, &k, ch, f), lineptr, l >= 0 ? l : 0);
         else if (PARSECMD("__getdelim ( %i )", &n))
-            FREAD(l = __getdelim(&lineptr, &k, n, f), lineptr, l >= 0 ? l : 0);
+            MY_FREAD(l = __getdelim(&lineptr, &k, n, f), lineptr, l >= 0 ? l : 0);
 #endif
 
         /* FILE * seeking functions */
         else if (PARSECMD("fseek ( %li , SEEK_CUR )", &l1))
-            FSEEK(l = fseek(f, l1, SEEK_CUR),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = fseek(f, l1, SEEK_CUR),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
         else if (PARSECMD("fseek ( %li , SEEK_SET )", &l1))
-            FSEEK(l = fseek(f, l1, SEEK_SET),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = fseek(f, l1, SEEK_SET),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
         else if (PARSECMD("fseek ( %li , SEEK_END )", &l1))
-            FSEEK(l = fseek(f, l1, SEEK_END),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = fseek(f, l1, SEEK_END),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
 #if defined HAVE_FSEEKO
         else if (PARSECMD("fseeko ( %li , SEEK_CUR )", &l1))
-            FSEEK(l = fseeko(f, l1, SEEK_CUR),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = fseeko(f, l1, SEEK_CUR),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
         else if (PARSECMD("fseeko ( %li , SEEK_SET )", &l1))
-            FSEEK(l = fseeko(f, l1, SEEK_SET),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = fseeko(f, l1, SEEK_SET),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
         else if (PARSECMD("fseeko ( %li , SEEK_END )", &l1))
-            FSEEK(l = fseeko(f, l1, SEEK_END),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = fseeko(f, l1, SEEK_END),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
 #endif
 #if defined HAVE_FSEEKO64
         else if (PARSECMD("fseeko64 ( %li , SEEK_CUR )", &l1))
-            FSEEK(l = fseeko64(f, l1, SEEK_CUR),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = fseeko64(f, l1, SEEK_CUR),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
         else if (PARSECMD("fseeko64 ( %li , SEEK_SET )", &l1))
-            FSEEK(l = fseeko64(f, l1, SEEK_SET),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = fseeko64(f, l1, SEEK_SET),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
         else if (PARSECMD("fseeko64 ( %li , SEEK_END )", &l1))
-            FSEEK(l = fseeko64(f, l1, SEEK_END),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = fseeko64(f, l1, SEEK_END),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
 #endif
 #if defined HAVE___FSEEKO64
         else if (PARSECMD("__fseeko64 ( %li , SEEK_CUR )", &l1))
-            FSEEK(l = __fseeko64(f, l1, SEEK_CUR),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = __fseeko64(f, l1, SEEK_CUR),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
         else if (PARSECMD("__fseeko64 ( %li , SEEK_SET )", &l1))
-            FSEEK(l = __fseeko64(f, l1, SEEK_SET),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = __fseeko64(f, l1, SEEK_SET),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
         else if (PARSECMD("__fseeko64 ( %li , SEEK_END )", &l1))
-            FSEEK(l = __fseeko64(f, l1, SEEK_END),
-                  ftell(f) >= 0 ? ftell(f) - retoff : 0);
+            MY_FSEEK(l = __fseeko64(f, l1, SEEK_END),
+                     ftell(f) >= 0 ? ftell(f) - retoff : 0);
 #endif
         else if (PARSECMD("rewind ( )"))
-            FSEEK(rewind(f), -retlen);
+            MY_FSEEK(rewind(f), -retlen);
         else if (PARSECMD("ungetc ( )"))
-            FSEEK(if(retoff) ungetc((unsigned char)retbuf[retoff - 1], f),
-                  retoff ? -1 : 0);
+            MY_FSEEK(if(retoff) ungetc((unsigned char)retbuf[retoff - 1], f),
+                     retoff ? -1 : 0);
 
         /* Unrecognised sequence */
         else
