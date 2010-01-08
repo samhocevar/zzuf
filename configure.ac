@@ -164,6 +164,7 @@ AC_CONFIG_FILES([
   test/Makefile
 ])
 AC_CONFIG_FILES([
+  doc/zzcat.1
   doc/zzuf.1
   doc/libzzuf.3
 ])
