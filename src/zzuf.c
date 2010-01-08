@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2002, 2007-2009 Sam Hocevar <sam@hocevar.net>
+ *  Copyright (c) 2002, 2007-2010 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -176,7 +176,6 @@ int main(int argc, char *argv[])
             { "max-crashes", 1, NULL, 'C' },
             { "debug",       0, NULL, 'd' },
             { "delay",       1, NULL, 'D' },
-            { "deny",        1, NULL, 'e' },
 #if defined HAVE_REGEX_H
             { "exclude",     1, NULL, 'E' },
 #endif
@@ -245,9 +244,6 @@ int main(int argc, char *argv[])
             if(myoptarg[0] == '=')
                 myoptarg++;
             opts->delay = (int64_t)(atof(myoptarg) * 1000000.0);
-            break;
-        case 'e': /* --deny */
-            opts->deny = myoptarg;
             break;
 #if defined HAVE_REGEX_H
         case 'E': /* --exclude */
@@ -388,15 +384,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    if (opts->deny && !network)
-    {
-        fprintf(stderr, "%s: deny option (-e) requires network fuzzing (-n)\n",
-                argv[0]);
-        printf(MOREINFO, argv[0]);
-        _zz_opts_fini(opts);
-        return EXIT_FAILURE;
-    }
-
     _zz_setratio(opts->minratio, opts->maxratio);
     _zz_setseed(opts->seed);
 
@@ -458,10 +445,10 @@ int main(int argc, char *argv[])
         setenv("ZZUF_LIST", opts->list, 1);
     if(opts->ports)
         setenv("ZZUF_PORTS", opts->ports, 1);
-    if(opts->allow)
+    if(opts->allow && opts->allow[0] == '!')
+        setenv("ZZUF_DENY", opts->allow, 1);
+    else if(opts->allow)
         setenv("ZZUF_ALLOW", opts->allow, 1);
-    if(opts->deny)
-        setenv("ZZUF_DENY", opts->deny, 1);
     if(opts->protect)
         setenv("ZZUF_PROTECT", opts->protect, 1);
     if(opts->refuse)
@@ -940,15 +927,15 @@ static void usage(void)
 #else
     printf("Usage: zzuf [-AdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
 #endif
-    printf("              [-f fuzzing] [-D delay] [-j jobs] [-C crashes] [-B bytes]\n");
-    printf("              [-t seconds] ");
+    printf("              [-f mode] [-D delay] [-j jobs] [-C crashes] [-B bytes] [-a list]\n");
+    printf("              [-t seconds]");
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
-    printf(                           "[-T seconds] ");
+    printf(                          " [-T seconds]");
 #endif
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
-    printf(                                        "[-M mebibytes] ");
+    printf(                                       " [-M mebibytes]");
 #endif
-    printf(                                                       "[-b ranges] [-p ports]\n");
+    printf(                                                      " [-b ranges] [-p ports]\n");
     printf("              [-P protect] [-R refuse] [-l list]");
 #if defined HAVE_REGEX_H
     printf(                                                " [-I include] [-E exclude]");
@@ -961,6 +948,7 @@ static void usage(void)
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
     printf("  -a, --allow <list>        only fuzz network input for IPs in <list>\n");
+    printf("          ... !<list>       do not fuzz network input for IPs in <list>\n");
     printf("  -A, --autoinc             increment seed each time a new file is opened\n");
     printf("  -b, --bytes <ranges>      only fuzz bytes at offsets within <ranges>\n");
     printf("  -B, --max-bytes <n>       kill children that output more than <n> bytes\n");
@@ -968,9 +956,8 @@ static void usage(void)
     printf("  -c, --cmdline             only fuzz files specified in the command line\n");
 #endif
     printf("  -C, --max-crashes <n>     stop after <n> children have crashed (default 1)\n");
-    printf("  -d, --debug               print debug messages\n");
+    printf("  -d, --debug               print debug messages (twice for more verbosity)\n");
     printf("  -D, --delay               delay between forks\n");
-    printf("  -e, --deny <list>         do not fuzz network input for IPs in <list>\n");
 #if defined HAVE_REGEX_H
     printf("  -E, --exclude <regex>     do not fuzz files matching <regex>\n");
 #endif
@@ -990,10 +977,10 @@ static void usage(void)
     printf("  -P, --protect <list>      protect bytes and characters in <list>\n");
     printf("  -q, --quiet               do not print children's messages\n");
     printf("  -r, --ratio <ratio>       bit fuzzing ratio (default %g)\n", DEFAULT_RATIO);
-    printf("      --ratio <start:stop>  specify a ratio range\n");
+    printf("          ... <start:stop>  specify a ratio range\n");
     printf("  -R, --refuse <list>       refuse bytes and characters in <list>\n");
     printf("  -s, --seed <seed>         random seed (default %i)\n", DEFAULT_SEED);
-    printf("      --seed <start:stop>   specify a seed range\n");
+    printf("         ... <start:stop>   specify a seed range\n");
     printf("  -S, --signal              prevent children from diverting crashing signals\n");
     printf("  -t, --max-time <n>        kill children that run for more than <n> seconds\n");
     printf("  -T, --max-cputime <n>     kill children that use more than <n> CPU seconds\n");
