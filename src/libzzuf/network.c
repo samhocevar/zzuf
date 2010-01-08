@@ -204,10 +204,6 @@ static unsigned int get_socket_ip(int sock)
     socklen_t len = sizeof(sin);
     int ret;
 
-    // Probably not a socket descriptor
-    if (sock < 3)
-        return 0;
-
     /* Use a sockaddr instead of sockaddr_in because we don't know whether
      * their alignments are compatible. So, no cast. */
     memset(&s, 0, sizeof(sin));
