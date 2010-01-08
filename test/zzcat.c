@@ -1,6 +1,6 @@
 /*
  *  zzcat - various cat reimplementations for testing purposes
- *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
+ *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -104,6 +104,24 @@ static inline unsigned int myrand(void)
         p = strchr(p, ')') + 1; \
     } while(0)
 
+#define FEOF() \
+    do { \
+        if (!f) \
+        { \
+            f = fopen(file, "r"); \
+            if (!f) \
+            { \
+                fprintf(stderr, "E: zzcat: cannot open `%s'\n", file); \
+                return EXIT_FAILURE; \
+            } \
+        } \
+        if (feof(f)) \
+            feofs++; \
+        if (feofs >= l1) \
+            finish = 1; \
+        p = strchr(p, ')') + 1; \
+    } while(0)
+
 /*
  * Command parser. We rewrite fmt by replacing the last character with
  * '%c' and check that the sscanf() call returns the expected number of
@@ -152,7 +170,7 @@ static int cat_file(char const *p, char const *file)
     char *retbuf = NULL, *tmp;
     FILE *f = NULL;
     size_t retlen = 0, retoff = 0;
-    int nloops = 0, fd = -1;
+    int nloops = 0, fd = -1, feofs = 0, finish = 0;
 
     /* Allocate 32MB for our temporary buffer. Any larger value will crash. */
     tmp = malloc(32 * 1024 * 1024);
@@ -187,7 +205,7 @@ static int cat_file(char const *p, char const *file)
                 return EXIT_FAILURE;
             }
             loops[nloops - 1].count--;
-            if (loops[nloops - 1].count <= 0)
+            if (loops[nloops - 1].count <= 0 || finish)
             {
                 nloops--;
                 p = strchr(p, ')') + 1;
@@ -196,6 +214,8 @@ static int cat_file(char const *p, char const *file)
             {
                 p = loops[nloops - 1].p;
             }
+
+            finish = 0;
         }
 
         /* FILE * opening functions */
@@ -219,6 +239,10 @@ static int cat_file(char const *p, char const *file)
         else if (PARSECMD("__freopen64 ( )"))
             FOPEN(f = __freopen64(file, "r", f));
 #endif
+
+        /* FILE * EOF detection */
+        else if (PARSECMD("feof ( %li )", &l1))
+            FEOF();
 
         /* FILE * closing functions */
         else if (PARSECMD("fclose ( )"))
@@ -333,6 +357,9 @@ static int cat_file(char const *p, char const *file)
         /* Clean up our mess */
         if (lineptr)
             free(lineptr);
+
+        if (finish && !nloops)
+            break;
     }
 
     if (f)

@@ -56,7 +56,7 @@ checkutils()
         # Regression tests for stuff that used to break
         check "$ZZOPTS" "$ZZCAT \"fread(1,33000) fseek(1,SEEK_SET) fread(1,1) fseek(4093,SEEK_CUR) fread(1,1) fseek(1,SEEK_CUR) fread(1,1)\" $file" \
               "eglibc (2.9-21) bug regression"
-        check "$ZZOPTS" "$ZZCAT \"repeat(33000,getc_unlocked() ungetc() getline())\" $file" \
+        check "$ZZOPTS" "$ZZCAT \"repeat(33000,getc_unlocked() ungetc() getline() feof(10))\" $file" \
               "sed getc_unlocked() bug regression"
         # Misc tests
         for n in \
@@ -71,10 +71,10 @@ checkutils()
           "getc_unlocked() ungetc() fread(1,33000)" \
           "fgetc() ungetc() fread(1,33000)" \
           "fgetc_unlocked() ungetc() fread(1,33000)" \
-          "repeat(33000,getc())" \
-          "repeat(33000,getc_unlocked())" \
-          "repeat(33000,fgetc())" \
-          "repeat(33000,fgetc_unlocked())" \
+          "repeat(33000,getc(),feof(10))" \
+          "repeat(33000,getc_unlocked(),feof(10))" \
+          "repeat(33000,fgetc(),feof(10))" \
+          "repeat(33000,fgetc_unlocked(),feof(10))" \
           "repeat(8000,getc()) fread(1,33000)" \
           "repeat(8000,getc_unlocked()) fread(1,33000)" \
           "repeat(8000,fgetc()) fread(1,33000)" \
@@ -88,12 +88,12 @@ checkutils()
           "fread(1,33000) rewind() repeat(10000,fseek(2,SEEK_CUR) fread(1,2))" \
           "fread(1,33000) rewind() repeat(10000,fseek(3,SEEK_CUR) fread(1,3))" \
           "fread(1,33000) rewind() repeat(10000,fseek(4,SEEK_CUR) fread(1,4))" \
-          "repeat(33000,getc() ungetc() getline())" \
-          "repeat(33000,fgetc() ungetc() getline())" \
-          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,fread(1,2))" \
-          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,getc())" \
-          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,fgetc())" \
-          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,getc_unlocked())" \
+          "repeat(33000,getc() ungetc() getline() feof(10))" \
+          "repeat(33000,fgetc() ungetc() getline() feof(10))" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,fread(1,2),feof(10))" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,getc(),feof(10))" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,fgetc(),feof(10))" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,getc_unlocked(),feof(10))" \
           ; do
             check "$ZZOPTS" "$ZZCAT \"$n\" $file" "$n"
         done
