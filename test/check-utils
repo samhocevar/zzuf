@@ -1,4 +1,15 @@
 #!/bin/sh
+#
+#  check-utils - check that zzuf properly fuzzes common utilities
+#  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
+#                All Rights Reserved
+#
+#  This program is free software. It comes without any warranty, to
+#  the extent permitted by applicable law. You can redistribute it
+#  and/or modify it under the terms of the Do What The Fuck You Want
+#  To Public License, Version 2, as published by Sam Hocevar. See
+#  http://sam.zoy.org/wtfpl/COPYING for more details.
+#
 
 . "$(dirname "$0")/functions.inc"
 
@@ -62,31 +73,31 @@ checkutils()
         check "$ZZOPTS" "$ZZCAT -x \"fread(1,33000) fseek(1,SEEK_SET) fread(1,1) fseek(4093,SEEK_CUR) fread(1,1) fseek(1,SEEK_CUR) fread(1,1)\" $file" \
               "eglibc (2.9-21) bug regression"
         if [ "$HAVE_GET_UNLOCKED $HAVE_GETLINE" = "y y" ]; then
-          check "$ZZOPTS" "$ZZCAT -x \"repeat(33000,getc_unlocked() ungetc() getline() feof(10))\" $file" \
+          check "$ZZOPTS" "$ZZCAT -x \"repeat(33000,getc_unlocked(),feof(10),ungetc(),getline()))\" $file" \
                 "sed getc_unlocked() bug regression"
         fi
         # Misc tests
         for n in \
           "fread(1,33000)" \
-          "repeat(33,fread(1,1000))" \
-          "repeat(1000,fread(1,33))" \
+          "repeat(-1,fread(1,1000),feof(1))" \
+          "repeat(-1,fread(1,33),feof(1))" \
           "getc() fread(1,33000)" \
           "fgetc() fread(1,33000)" \
           "getc() ungetc() fread(1,33000)" \
           "fgetc() ungetc() fread(1,33000)" \
-          "repeat(33000,getc(),feof(10))" \
-          "repeat(33000,fgetc(),feof(10))" \
+          "repeat(-1,getc(),feof(10))" \
+          "repeat(-1,fgetc(),feof(10))" \
           "repeat(8000,getc()) fread(1,33000)" \
           "repeat(8000,fgetc()) fread(1,33000)" \
           "fread(1,100) fseek(50,SEEK_SET) fread(1,33000)" \
           "fread(1,100) rewind() fseek(50,SEEK_CUR) fread(1,33000)" \
-          "fread(1,33000) rewind() repeat(10000,fseek(1,SEEK_CUR) fread(1,1))" \
-          "fread(1,33000) rewind() repeat(10000,fseek(2,SEEK_CUR) fread(1,2))" \
-          "fread(1,33000) rewind() repeat(10000,fseek(3,SEEK_CUR) fread(1,3))" \
-          "fread(1,33000) rewind() repeat(10000,fseek(4,SEEK_CUR) fread(1,4))" \
-          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,fread(1,2),feof(10))" \
-          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,getc(),feof(10))" \
-          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,fgetc(),feof(10))" \
+          "fread(1,33000) rewind() repeat(-1,fseek(1,SEEK_CUR),fread(1,1),feof(1))" \
+          "fread(1,33000) rewind() repeat(-1,fseek(2,SEEK_CUR),fread(1,2),feof(1))" \
+          "fread(1,33000) rewind() repeat(-1,fseek(3,SEEK_CUR),fread(1,3),feof(1))" \
+          "fread(1,33000) rewind() repeat(-1,fseek(4,SEEK_CUR),fread(1,4),feof(1))" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,fread(1,2),feof(10))" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,getc(),feof(10))" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,fgetc(),feof(10))" \
           ; do
             check "$ZZOPTS" "$ZZCAT -x \"$n\" $file" "$n"
         done
@@ -94,8 +105,8 @@ checkutils()
         if [ "$HAVE_GETLINE" = "y" ]; then
             for n in \
               "repeat(10,getline()) fread(1,33000)" \
-              "repeat(33000,getc() ungetc() getline() feof(10))" \
-              "repeat(33000,fgetc() ungetc() getline() feof(10))" \
+              "repeat(-1,getc(),feof(10),ungetc(),getline())" \
+              "repeat(-1,fgetc(),feof(10),ungetc(),getline())" \
               ; do
                 check "$ZZOPTS" "$ZZCAT -x \"$n\" $file" "$n"
             done
@@ -112,9 +123,9 @@ checkutils()
             for n in \
               "getc_unlocked() fread(1,33000)" \
               "getc_unlocked() ungetc() fread(1,33000)" \
-              "repeat(33000,getc_unlocked(),feof(10))" \
+              "repeat(-1,getc_unlocked(),feof(10))" \
               "repeat(8000,getc_unlocked()) fread(1,33000)" \
-              "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,getc_unlocked(),feof(10))" \
+              "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,getc_unlocked(),feof(10))" \
               ; do
                 check "$ZZOPTS" "$ZZCAT -x \"$n\" $file" "$n"
             done
@@ -123,7 +134,7 @@ checkutils()
             for n in \
               "fgetc_unlocked() fread(1,33000)" \
               "fgetc_unlocked() ungetc() fread(1,33000)" \
-              "repeat(33000,fgetc_unlocked(),feof(10))" \
+              "repeat(-1,fgetc_unlocked(),feof(10))" \
               "repeat(8000,fgetc_unlocked()) fread(1,33000)" \
               ; do
                 check "$ZZOPTS" "$ZZCAT -x \"$n\" $file" "$n"
