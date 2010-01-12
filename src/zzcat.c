@@ -55,6 +55,7 @@
 #endif
 
 static int run(char const *sequence, char const *file);
+static void output(char const *buf, size_t len);
 
 static void syntax(void);
 static void version(void);
@@ -164,6 +165,43 @@ int main(int argc, char *argv[])
 }
 
 /*
+ * File output method.
+ */
+
+static void output(char const *buf, size_t len)
+{
+    size_t i;
+
+    if (!(escape_tabs || escape_ends || escape_other
+           || number_lines || number_nonblank))
+    {
+        fwrite(buf, len, 1, stdout);
+        return;
+    }
+
+    for (i = 0; i < len; i++)
+    {
+        int ch = (unsigned int)(unsigned char)buf[i];
+
+        if (escape_other && ch >= 0x80)
+        {
+            if (ch - 0x80 < 0x20 || ch - 0x80 == 0x7f)
+                fprintf(stdout, "M-^%c", (ch - 0x80) ^ 0x40);
+            else
+                fprintf(stdout, "M-%c", ch - 0x80);
+        }
+        else if (escape_tabs && ch == '\t')
+            fprintf(stdout, "^I");
+        else if (escape_ends && ch == '\n')
+            puts("$");
+        else if (escape_other && (ch < 0x20 || ch == 0x7f))
+            fprintf(stdout, "^%c", ch ^ 0x40);
+        else
+            putchar(ch);
+    }
+}
+
+/*
  * Command intepreter
  */
 
@@ -186,13 +224,16 @@ int main(int argc, char *argv[])
         sequence = strchr(sequence, ')') + 1; \
     } while(0)
 
+#define ROUNDUP(size) (((size) + 0xfff) & ~0xfff)
+
 #define MERGE(address, cnt, off) \
     do { \
         size_t _cnt = cnt, _off = off; \
         if (_cnt && retoff + _cnt > retlen) \
         { \
             retlen = retoff + _cnt; \
-            retbuf = realloc(retbuf, retlen); \
+            if (ROUNDUP(retlen) != ROUNDUP(retlen - _cnt)) \
+                retbuf = realloc(retbuf, ROUNDUP(retlen)); \
         } \
         if (_cnt > 0) \
             memcpy(retbuf + retoff, address, _cnt); \
@@ -487,36 +528,7 @@ static int run(char const *sequence, char const *file)
     if (fd >= 0)
         close(fd);
 
-    if (escape_tabs || escape_ends || escape_other || number_lines)
-    {
-        size_t i;
-
-        for (i = 0; i < retlen; i++)
-        {
-            int ch = (unsigned int)(unsigned char)retbuf[i];
-
-            if (escape_other && ch >= 0x80)
-            {
-                if (ch - 0x80 < 0x20 || ch - 0x80 == 0x7f)
-                    fprintf(stdout, "M-^%c", (ch - 0x80) ^ 0x40);
-                else
-                    fprintf(stdout, "M-%c", ch - 0x80);
-            }
-            else if (escape_tabs && ch == '\t')
-                fprintf(stdout, "^I");
-            else if (escape_ends && ch == '\n')
-                puts("$");
-            else if (escape_other && (ch < 0x20 || ch == 0x7f))
-                fprintf(stdout, "^%c", ch ^ 0x40);
-            else
-                putchar(ch);
-        }
-    }
-    else
-    {
-        fwrite(retbuf, retlen, 1, stdout);
-    }
-
+    output(retbuf, retlen);
     free(retbuf);
     free(tmp);
 
