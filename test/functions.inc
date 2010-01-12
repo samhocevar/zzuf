@@ -4,7 +4,7 @@
 DIR="$(dirname "$0")"
 ZZUF="$DIR/../src/zzuf -E '[.]ilist$'"
 
-ZZCAT="$DIR/zzcat"
+ZZCAT="$DIR/../src/zzcat"
 if [ ! -f "$ZZCAT" ]; then
   echo "error: test/zzcat is missing"
   exit 1

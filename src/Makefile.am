@@ -1,10 +1,13 @@
 # $Id$
 
-bin_PROGRAMS = zzuf
+bin_PROGRAMS = zzuf zzcat
 pkglib_LTLIBRARIES = libzzuf.la
 
 ZZUF = \
     zzuf.c opts.c opts.h md5.c md5.h timer.c timer.h myfork.c myfork.h
+
+ZZCAT = \
+    zzcat.c
 
 LIBZZUF = \
     libzzuf/libzzuf.c libzzuf/libzzuf.h \
@@ -29,6 +32,8 @@ zzuf_SOURCES = $(ZZUF) $(COMMON) $(GETOPT)
 zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\" -I$(srcdir)/common
 zzuf_LDFLAGS = $(MATH_LIBS) $(WINSOCK2_LIBS)
 zzuf_DEPENDENCIES = libzzuf.la
+
+zzcat_SOURCES = $(ZZCAT) $(GETOPT)
 
 libzzuf_la_SOURCES = $(LIBZZUF) $(COMMON)
 libzzuf_la_CFLAGS = -DLIBZZUF -I$(srcdir)/libzzuf -I$(srcdir)/common
