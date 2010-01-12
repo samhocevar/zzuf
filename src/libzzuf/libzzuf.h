@@ -20,7 +20,7 @@ extern int _zz_disabled;
 extern int _zz_debuglevel;
 extern int _zz_debugfd;
 extern int _zz_signal;
-extern int _zz_memory;
+extern uint64_t _zz_memory;
 extern int _zz_network;
 extern int _zz_autoinc;
 

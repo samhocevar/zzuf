@@ -83,7 +83,7 @@ int _zz_signal = 0;
  * allowed to allocate. Its value is set by the ZZUF_MEMORY environment
  * variable.
  */
-int _zz_memory = 0;
+uint64_t _zz_memory = 0;
 
 /**
  * If set to 1, this boolean will tell libzzuf to fuzz network file
@@ -175,8 +175,8 @@ void _zz_init(void)
         _zz_signal = 1;
 
     tmp = getenv("ZZUF_MEMORY");
-    if(tmp && *tmp == '1')
-        _zz_memory = 1;
+    if(tmp)
+        _zz_memory = atoll(tmp);
 
     tmp = getenv("ZZUF_NETWORK");
     if(tmp && *tmp == '1')

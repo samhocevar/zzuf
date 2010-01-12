@@ -63,6 +63,10 @@
 #if defined HAVE_LIBC_H
 #   include <libc.h>
 #endif
+#if defined HAVE_MACH_TASK_H
+#   include <mach/mach.h>
+#   include <mach/task.h>
+#endif
 
 #include "libzzuf.h"
 #include "lib-load.h"
@@ -125,6 +129,22 @@ static int64_t dummy_offset = 0;
 #define DUMMY_START ((uintptr_t)dummy_buffer)
 #define DUMMY_STOP ((uintptr_t)dummy_buffer + DUMMY_BYTES)
 
+/* setrlimit(RLIMIT_AS) is ignored on OS X, we need to check memory usage
+ * from inside the process. Oh, and getrusage() doesn't work either. */
+static int memory_exceeded(void)
+{
+#if defined HAVE_MACH_TASK_H
+    struct task_basic_info tbi;
+    mach_msg_type_number_t mmtn = TASK_BASIC_INFO_COUNT;
+
+    if (task_info(mach_task_self(), TASK_BASIC_INFO,
+                  (task_info_t)&tbi, &mmtn) == KERN_SUCCESS
+         && tbi.resident_size > _zz_memory)
+        return 1;
+#endif
+    return 0;
+}
+
 void _zz_mem_init(void)
 {
     LOADSYM(free);
@@ -171,7 +191,8 @@ void *NEW(malloc)(size_t size)
         return ret;
     }
     ret = ORIG(malloc)(size);
-    if(ret == NULL && _zz_memory && errno == ENOMEM)
+    if (_zz_memory && ((!ret && errno == ENOMEM)
+                        || (ret && memory_exceeded())))
         raise(SIGKILL);
     return ret;
 }
@@ -216,7 +237,8 @@ void *NEW(realloc)(void *ptr, size_t size)
     }
     LOADSYM(realloc);
     ret = ORIG(realloc)(ptr, size);
-    if(ret == NULL && _zz_memory && errno == ENOMEM)
+    if (_zz_memory && ((!ret && errno == ENOMEM)
+                        || (ret && memory_exceeded())))
         raise(SIGKILL);
     return ret;
 }
@@ -227,7 +249,8 @@ void *NEW(valloc)(size_t size)
     void *ret;
     LOADSYM(valloc);
     ret = ORIG(valloc)(size);
-    if(ret == NULL && _zz_memory && errno == ENOMEM)
+    if (_zz_memory && ((!ret && errno == ENOMEM)
+                        || (ret && memory_exceeded())))
         raise(SIGKILL);
     return ret;
 }
@@ -239,7 +262,8 @@ void *NEW(memalign)(size_t boundary, size_t size)
     void *ret;
     LOADSYM(memalign);
     ret = ORIG(memalign)(boundary, size);
-    if(ret == NULL && _zz_memory && errno == ENOMEM)
+    if (_zz_memory && ((!ret && errno == ENOMEM)
+                        || (ret && memory_exceeded())))
         raise(SIGKILL);
     return ret;
 }
@@ -251,7 +275,8 @@ int NEW(posix_memalign)(void **memptr, size_t alignment, size_t size)
     int ret;
     LOADSYM(posix_memalign);
     ret = ORIG(posix_memalign)(memptr, alignment, size);
-    if(ret == ENOMEM && _zz_memory)
+    if (_zz_memory && ((!ret && errno == ENOMEM)
+                        || (ret && memory_exceeded())))
         raise(SIGKILL);
     return ret;
 }

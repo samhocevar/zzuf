@@ -59,6 +59,7 @@
 /* #undef HAVE_KILL */
 /* #undef HAVE_LIBC_H */
 /* #undef HAVE_LSEEK64 */
+/* #undef HAVE_MACH_TASK_H */
 #define HAVE_MALLOC_H 1
 /* #undef HAVE_MAP_FD */
 /* #undef HAVE_MEMALIGN */
