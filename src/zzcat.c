@@ -60,6 +60,13 @@ static void syntax(void);
 static void version(void);
 static void usage(void);
 
+/* Output parameters */
+static int escape_tabs = 0;
+static int escape_ends = 0;
+static int escape_other = 0;
+static int number_lines = 0;
+static int number_nonblank = 0;
+
 /*
  * Main program.
  */
@@ -71,16 +78,22 @@ int main(int argc, char *argv[])
 
     for (;;)
     {
-#define OPTSTR "+x:lhV"
+#define OPTSTR "+AbeEntTvx:lhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
         {
-            { "execute",     1, NULL, 'x' },
-            { "list",        0, NULL, 'l' },
-            { "help",        0, NULL, 'h' },
-            { "version",     0, NULL, 'V' },
-            { NULL,          0, NULL,  0  }
+            { "show-all",         0, NULL, 'A' },
+            { "number-nonblank",  0, NULL, 'b' },
+            { "show-ends",        0, NULL, 'E' },
+            { "number",           0, NULL, 'n' },
+            { "show-tabs",        0, NULL, 'T' },
+            { "show-nonprinting", 0, NULL, 'v' },
+            { "execute",          1, NULL, 'x' },
+            { "list",             0, NULL, 'l' },
+            { "help",             0, NULL, 'h' },
+            { "version",          0, NULL, 'V' },
+            { NULL,               0, NULL,  0  }
         };
         int c = mygetopt(argc, argv, OPTSTR, long_options, &option_index);
 
@@ -89,6 +102,30 @@ int main(int argc, char *argv[])
 
         switch (c)
         {
+        case 'A': /* --show-all */
+            escape_tabs = escape_ends = escape_other = 1;
+            break;
+        case 'b': /* --number-nonblank */
+            number_lines = 1;
+            break;
+        case 'e':
+            escape_ends = escape_other = 1;
+            break;
+        case 'E': /* --show-ends */
+            escape_ends = 1;
+            break;
+        case 'n': /* --number */
+            number_nonblank = 1;
+            break;
+        case 't':
+            escape_tabs = escape_other = 1;
+            break;
+        case 'T': /* --show-tabs */
+            escape_tabs = 1;
+            break;
+        case 'v': /* --show-nonprinting */
+            escape_tabs = 1;
+            break;
         case 'x': /* --execute */
             if (myoptarg[0] == '=')
                 myoptarg++;
@@ -450,7 +487,35 @@ static int run(char const *sequence, char const *file)
     if (fd >= 0)
         close(fd);
 
-    fwrite(retbuf, retlen, 1, stdout);
+    if (escape_tabs || escape_ends || escape_other || number_lines)
+    {
+        size_t i;
+
+        for (i = 0; i < retlen; i++)
+        {
+            int ch = (unsigned int)(unsigned char)retbuf[i];
+
+            if (escape_other && ch >= 0x80)
+            {
+                if (ch - 0x80 < 0x20 || ch - 0x80 == 0x7f)
+                    fprintf(stdout, "M-^%c", (ch - 0x80) ^ 0x40);
+                else
+                    fprintf(stdout, "M-%c", ch - 0x80);
+            }
+            else if (escape_tabs && ch == '\t')
+                fprintf(stdout, "^I");
+            else if (escape_ends && ch == '\n')
+                puts("$");
+            else if (escape_other && (ch < 0x20 || ch == 0x7f))
+                fprintf(stdout, "^%c", ch ^ 0x40);
+            else
+                putchar(ch);
+        }
+    }
+    else
+    {
+        fwrite(retbuf, retlen, 1, stdout);
+    }
 
     free(retbuf);
     free(tmp);
@@ -660,13 +725,21 @@ static void version(void)
 
 static void usage(void)
 {
-    printf("Usage: zzcat [-x sequence] [FILE...]\n");
+    printf("Usage: zzcat [AbeEntTv] [-x sequence] [FILE...]\n");
     printf("       zzcat -l | --list\n");
     printf("       zzcat -h | --help\n");
     printf("       zzcat -V | --version\n");
     printf("Read FILE using a sequence of various I/O methods.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
+    printf("  -A, --show-all            equivalent to -vET\n");
+    printf("  -b, --number-nonblank     number nonempty output lines\n");
+    printf("  -e                        equivalent to -vE\n");
+    printf("  -E, --show-ends           display $ at end of each line\n");
+    printf("  -n, --number              number all output lines\n");
+    printf("  -t                        equivalent to -vT\n");
+    printf("  -T, --show-tabs           display TAB characters as ^I\n");
+    printf("  -v, --show-nonprinting    use ^ and M- notation, except for LFD and TAB\n");
     printf("  -x, --execute <sequence>  execute commands in <sequence>\n");
     printf("  -l, --list                list available program functions\n");
     printf("  -h, --help                display this help and exit\n");

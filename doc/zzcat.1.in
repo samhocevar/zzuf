@@ -2,7 +2,7 @@
 .SH NAME
 zzcat \- debugging tool for zzuf
 .SH SYNOPSIS
-\fBzzcat\fR [\fB\-x\fR \fIsequence\fR] [\fIFILE\fR]...
+\fBzzcat\fR [\fB\-AbeEntTv\fR] [\fB\-x\fR \fIsequence\fR] [\fIFILE\fR]...
 .br
 \fBzzcat \-l\fR | \fB\-\-list\fR
 .br
@@ -20,6 +20,30 @@ used to seek and read data.
 .PP
 \fB    zzcat -x "fread(1,10000)" /dev/zero\fR
 .SH OPTIONS
+.TP
+\fB\-A\fR, \fB\-\-show\-all\fR
+Equivalent to \fB\-vET\fR.
+.TP
+\fB\-b\fR, \fB\-\-number\-nonblank\fR
+Number nonempty output lines.
+.TP
+\fB\-e\fR
+Equivalent to \fB\-vET\fR.
+.TP
+\fB\-E\fR, \fB\-\-show\-ends\fR
+Display $ at end of each line.
+.TP
+\fB\-n\fR, \fB\-\-number\fR
+Number all output lines.
+.TP
+\fB\-t\fR
+Equivalent to \fB\-vT\fR.
+.TP
+\fB\-T\fR, \fB\-\-show\-tabs\fR
+Display TAB characters as ^I.
+.TP
+\fB\-v\fR, \fB\-\-show\-nonprinting\fR
+Use ^ and M- notation, except for LFD and TAB.
 .TP
 \fB\-x\fR, \fB\-\-execute\fR=\fIsequence\fR
 Read a file or a stream using the instruction sequence specified in
