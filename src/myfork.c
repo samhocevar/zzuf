@@ -156,7 +156,7 @@ static int run_process(struct opts *opts, int pipes[][2])
 #if defined HAVE_FORK
     /* Fork and launch child */
     pid = fork();
-    if(pid < -1)
+    if(pid < 0)
         perror("fork");
     if(pid != 0)
         return pid;
