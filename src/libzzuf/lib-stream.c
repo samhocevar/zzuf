@@ -963,7 +963,8 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
         int fd; \
         LOADSYM(myrefill); \
         fd = fileno(fp); \
-        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
+             || _zz_islocked(fd)) \
             return ORIG(myrefill)(fp); \
         debug_stream("before", fp); \
         pos = _zz_getpos(fd); \
