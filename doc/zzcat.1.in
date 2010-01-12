@@ -2,14 +2,41 @@
 .SH NAME
 zzcat \- debugging tool for zzuf
 .SH SYNOPSIS
-\fBzzcat\fR PROGRAM FILE
+\fBzzcat\fR [\fB\-x\fR \fIsequence\fR] [\fIFILE\fR]...
+.br
+\fBzzcat \-l\fR | \fB\-\-list\fR
+.br
+\fBzzcat \-h\fR | \fB\-\-help\fR
+.br
+\fBzzcat \-V\fR | \fB\-\-version\fR
 .SH DESCRIPTION
 .PP
-\fBzzcat\fR is a tool to read files using various strategies. It is
-primarily used as a debugging tool for \fBzzuf\fR.
+The \fBzzcat\fR utility reads files sequentially, writing them to the
+standard output. The user can decide which sequence of library calls is
+used to seek and read data.
+
+\fBzzcat\fR is primarily used as a debugging tool for \fBzzuf\fR.
 .SH USAGE
 .PP
-\fB    zzcat "fread(1,10000)" /dev/zero\fR
+\fB    zzcat -x "fread(1,10000)" /dev/zero\fR
+.SH OPTIONS
+.TP
+\fB\-x\fR, \fB\-\-execute\fR=\fIsequence\fR
+Read a file or a stream using the instruction sequence specified in
+\fIsequence\fR.
+
+If no sequence is specified, the following default sequence is used:
+
+\fB    repeat(\-1, fgetc(), feof(1))
+.TP
+\fB\-l\fR, \fB\-\-list\fR
+Display the list of supported keywords and functions and exit.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display a short help message and exit.
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Output version information and exit.
 .SH EXAMPLES
 .PP
 To do.
@@ -18,7 +45,7 @@ To do.
 \fBzzuf(3)\fR, \fBlibzzuf(3)\fR
 .SH AUTHOR
 .PP
-Copyright \(co 2002, 2007\-2010 Sam Hocevar <sam@hocevar.net>.
+Copyright \(co 2002\-2010 Sam Hocevar <sam@hocevar.net>.
 .PP
 \fBzzcat\fR and this manual page are free software. They come without any
 warranty, to the extent permitted by applicable law. You can redistribute

@@ -43,15 +43,94 @@
 #include <stdio.h>
 #include <string.h>
 
-static inline unsigned int myrand(void)
+#if !defined HAVE_GETOPT_LONG
+#   include "mygetopt.h"
+#elif defined HAVE_GETOPT_H
+#   include <getopt.h>
+#endif
+
+#if defined HAVE_GETOPT_LONG
+#   define mygetopt getopt_long
+#   define myoptind optind
+#   define myoptarg optarg
+#   define myoption option
+#endif
+
+static int run(char const *sequence, char const *file);
+
+static void syntax(void);
+static void version(void);
+static void usage(void);
+
+/*
+ * Main program.
+ */
+
+int main(int argc, char *argv[])
 {
-    static int seed = 1;
-    int x, y;
-    x = (seed + 0x12345678) << 11;
-    y = (seed + 0xfedcba98) >> 21;
-    seed = x * 1010101 + y * 343434;
-    return seed;
+    char const *sequence = "repeat(-1, fgetc(), feof(1))";
+    int i;
+
+    for (;;)
+    {
+#define OPTSTR "+x:lhV"
+#define MOREINFO "Try `%s --help' for more information.\n"
+        int option_index = 0;
+        static struct myoption long_options[] =
+        {
+            { "execute",     1, NULL, 'x' },
+            { "list",        0, NULL, 'l' },
+            { "help",        0, NULL, 'h' },
+            { "version",     0, NULL, 'V' },
+            { NULL,          0, NULL,  0  }
+        };
+        int c = mygetopt(argc, argv, OPTSTR, long_options, &option_index);
+
+        if (c == -1)
+            break;
+
+        switch (c)
+        {
+        case 'x': /* --execute */
+            if (myoptarg[0] == '=')
+                myoptarg++;
+            sequence = myoptarg;
+            break;
+        case 'l': /* --list */
+            syntax();
+            return 0;
+        case 'h': /* --help */
+            usage();
+            return 0;
+        case 'V': /* --version */
+            version();
+            return 0;
+        default:
+            fprintf(stderr, "%s: invalid option -- %c\n", argv[0], c);
+            printf(MOREINFO, argv[0]);
+            return EXIT_FAILURE;
+        }
+    }
+
+    if (myoptind >= argc)
+    {
+        fprintf(stderr, "E: zzcat: too few arguments\n");
+        return EXIT_FAILURE;
+    }
+
+    for (i = myoptind; i < argc; i++)
+    {
+        int ret = run(sequence, argv[i]);
+        if (ret)
+            return ret;
+    }
+
+    return EXIT_SUCCESS;
 }
+
+/*
+ * Command intepreter
+ */
 
 #define MY_FOPEN(cmd) \
     do { \
@@ -62,14 +141,14 @@ static inline unsigned int myrand(void)
             return EXIT_FAILURE; \
         } \
         retoff = 0; \
-        p = strchr(p, ')') + 1; \
+        sequence = strchr(sequence, ')') + 1; \
     } while(0)
 
 #define MY_FCLOSE(cmd) \
     do { \
         cmd; \
         f = NULL; \
-        p = strchr(p, ')') + 1; \
+        sequence = strchr(sequence, ')') + 1; \
     } while(0)
 
 #define MERGE(address, cnt, off) \
@@ -99,9 +178,10 @@ static inline unsigned int myrand(void)
                 return EXIT_FAILURE; \
             } \
         } \
+        /* fprintf(stderr, "debug: %s\n", #cmd); */ \
         cmd; \
         MERGE(buf, cnt, off); \
-        p = strchr(p, ')') + 1; \
+        sequence = strchr(sequence, ')') + 1; \
     } while(0)
 
 #define MY_FEOF() \
@@ -119,7 +199,7 @@ static inline unsigned int myrand(void)
             feofs++; \
         if (feofs >= l1) \
             finish = 1; \
-        p = strchr(p, ')') + 1; \
+        sequence = strchr(sequence, ')') + 1; \
     } while(0)
 
 /*
@@ -156,15 +236,16 @@ static int make_fmt(struct parser *p, char const *fmt)
 }
 
 #define PARSECMD(fmt, arg...) \
-    make_fmt(&parser, fmt) == sscanf(p, parser.tmpfmt, ##arg, &parser.ch) \
-        && parser.ch == parser.lastch
+    (make_fmt(&parser, fmt) == sscanf(sequence, parser.tmpfmt, \
+                                      ##arg, &parser.ch) \
+         && parser.ch == parser.lastch)
 
 /*
  * File reader. We parse a command line and perform all the operations it
  * contains on the specified file.
  */
 
-static int cat_file(char const *p, char const *file)
+static int run(char const *sequence, char const *file)
 {
     struct { char const *p; int count; } loops[128];
     char *retbuf = NULL, *tmp;
@@ -175,7 +256,7 @@ static int cat_file(char const *p, char const *file)
     /* Allocate 32MB for our temporary buffer. Any larger value will crash. */
     tmp = malloc(32 * 1024 * 1024);
 
-    while (*p)
+    while (*sequence)
     {
         struct parser parser;
         long int l1, l2;
@@ -188,14 +269,14 @@ static int cat_file(char const *p, char const *file)
         (void)k;
 
         /* Ignore punctuation */
-        if (strchr(" \t,;\r\n", *p))
-            p++;
+        if (strchr(" \t,;\r\n", *sequence))
+            sequence++;
 
         /* Loop handling */
         else if (PARSECMD("repeat ( %li ,", &l1))
         {
-            p = strchr(p, ',') + 1;
-            loops[nloops].p = p;
+            sequence = strchr(sequence, ',') + 1;
+            loops[nloops].p = sequence;
             loops[nloops].count = l1;
             nloops++;
         }
@@ -206,15 +287,15 @@ static int cat_file(char const *p, char const *file)
                 fprintf(stderr, "E: zzcat: ')' outside a loop\n");
                 return EXIT_FAILURE;
             }
-            loops[nloops - 1].count--;
-            if (loops[nloops - 1].count <= 0 || finish)
+            if (loops[nloops - 1].count == 1 || finish)
             {
                 nloops--;
-                p = strchr(p, ')') + 1;
+                sequence = strchr(sequence, ')') + 1;
             }
             else
             {
-                p = loops[nloops - 1].p;
+                loops[nloops - 1].count--;
+                sequence = loops[nloops - 1].p;
             }
 
             finish = 0;
@@ -351,7 +432,8 @@ static int cat_file(char const *p, char const *file)
         else
         {
             char buf[16];
-            snprintf(buf, 16, strlen(p) < 16 ? "%s" : "%.12s...", p);
+            snprintf(buf, 16, strlen(sequence) < 16 ? "%s" : "%.12s...",
+                     sequence);
             fprintf(stderr, "E: zzcat: syntax error near `%s'\n", buf);
             return EXIT_FAILURE;
         }
@@ -374,33 +456,6 @@ static int cat_file(char const *p, char const *file)
 
     free(retbuf);
     free(tmp);
-
-    return EXIT_SUCCESS;
-}
-
-/*
- * Main program.
- */
-
-int main(int argc, char *argv[])
-{
-    int i;
-
-    if (argc < 2)
-    {
-        fprintf(stderr, "E: zzcat: too few arguments\n");
-        return EXIT_FAILURE;
-    }
-
-    if (argc == 2)
-        return cat_file("fread(1,33554432)", argv[1]);
-
-    for (i = 2; i < argc; i++)
-    {
-        int ret = cat_file(argv[1], argv[i]);
-        if (ret)
-            return ret;
-    }
 
     return EXIT_SUCCESS;
 }
@@ -500,4 +555,125 @@ static int zzcat_random_mmap(char const *name, unsigned char *data,
 }
 #endif
 #endif
+
+static char const *keyword_list[] =
+{
+    "repeat", "(<int>,<sequence>)", "loop <int> times through <sequence>",
+    "feof", "(<int>)", "break out of loop or sequence after <int> EOFs",
+    NULL
+};
+
+static char const *function_list[] =
+{
+    "fopen", "()", "open file",
+#if defined HAVE_FOPEN64
+    "fopen64", "()", "same as fopen()",
+#endif
+#if defined HAVE___FOPEN64
+    "__fopen64", "()", "same as fopen()",
+#endif
+    "freopen", "()", "reopen file",
+#if defined HAVE_FREOPEN64
+    "freopen64", "()", "same as reopen()",
+#endif
+#if defined HAVE___FREOPEN64
+    "__freopen64", "()", "same as reopen()",
+#endif
+    "fclose", "()", "close file",
+    "fread", "(<inta>,<intb>)", "read <intb> chunks of <inta> bytes",
+    "getc", "()", "get one character (can be a macro)",
+    "fgetc", "()", "get one character",
+    "fgets", "(<int>)", "read one line no longer than <int> bytes",
+#if defined HAVE__IO_GETC
+    "_IO_getc", "()", "get one character",
+#endif
+#if defined HAVE_FREAD_UNLOCKED
+    "fread_unlocked", "(<inta>,<intb>)", "same as fread(), unlocked I/O version",
+#endif
+#if defined HAVE_FGETS_UNLOCKED
+    "fgets_unlocked", "(<int>)", "same as fgets(), unlocked I/O version",
+#endif
+#if defined HAVE_GETC_UNLOCKED
+    "getc_unlocked", "()", "same as getc(), unlocked I/O version",
+#endif
+#if defined HAVE_FGETC_UNLOCKED
+    "fgetc_unlocked", "()", "same as fgetc(), unlocked I/O version",
+#endif
+#if defined HAVE_GETLINE
+    "getline", "()", "read one complete line of text",
+#endif
+#if defined HAVE_GETDELIM
+    "getdelim", "('<char>')", "read all data until delimiter character <char>",
+    "getdelim", "(<int>)", "read all data until delimiter character <int>",
+#endif
+#if defined HAVE___GETDELIM
+    "__getdelim", "('<char>')", "same as getdelim()",
+    "__getdelim", "(<int>)", "same as getdelim()",
+#endif
+    "fseek", "(<int>,<whence>)", "seek using SEEK_CUR, SEEK_SET or SEEK_END",
+#if defined HAVE_FSEEKO
+    "fseeko", "(<int>,<whence>)", "same as fseek()",
+#endif
+#if defined HAVE_FSEEKO64
+    "fseeko64", "(<int>,<whence>)", "same as fseek()",
+#endif
+#if defined HAVE___FSEEKO64
+    "__fseeko64", "(<int>,<whence>)", "same as fseek()",
+#endif
+    "rewind", "()", "rewind to the beginning of the stream",
+    "ungetc", "()", "put one byte back in the stream",
+    NULL
+};
+
+static void print_list(char const **list)
+{
+    static char const spaces[] = "                                ";
+
+    while (*list)
+    {
+        size_t len = printf("  %s%s", list[0], list[1]);
+        if (len < strlen(spaces))
+            printf("%s", spaces + len);
+        printf("%s\n", list[2]);
+        list += 3;
+    }
+}
+
+static void syntax(void)
+{
+    printf("Available control keywords:\n");
+    print_list(keyword_list);
+    printf("\n");
+    printf("Available functions:\n");
+    print_list(function_list);
+}
+
+static void version(void)
+{
+    printf("zzcat %s\n", PACKAGE_VERSION);
+    printf("Copyright (C) 2002-2010 Sam Hocevar <sam@hocevar.net>\n");
+    printf("This program is free software. It comes without any warranty, to the extent\n");
+    printf("permitted by applicable law. You can redistribute it and/or modify it under\n");
+    printf("the terms of the Do What The Fuck You Want To Public License, Version 2, as\n");
+    printf("published by Sam Hocevar. See <http://sam.zoy.org/wtfpl/> for more details.\n");
+    printf("\n");
+    printf("Written by Sam Hocevar. Report bugs to <sam@hocevar.net>.\n");
+}
+
+static void usage(void)
+{
+    printf("Usage: zzcat [-x sequence] [FILE...]\n");
+    printf("       zzcat -l | --list\n");
+    printf("       zzcat -h | --help\n");
+    printf("       zzcat -V | --version\n");
+    printf("Read FILE using a sequence of various I/O methods.\n");
+    printf("\n");
+    printf("Mandatory arguments to long options are mandatory for short options too.\n");
+    printf("  -x, --execute <sequence>  execute commands in <sequence>\n");
+    printf("  -l, --list                list available program functions\n");
+    printf("  -h, --help                display this help and exit\n");
+    printf("  -V, --version             output version information and exit\n");
+    printf("\n");
+    printf("Written by Sam Hocevar. Report bugs to <sam@hocevar.net>.\n");
+}
 

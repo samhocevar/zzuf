@@ -54,9 +54,9 @@ checkutils()
             ;;
         esac
         # Regression tests for stuff that used to break
-        check "$ZZOPTS" "$ZZCAT \"fread(1,33000) fseek(1,SEEK_SET) fread(1,1) fseek(4093,SEEK_CUR) fread(1,1) fseek(1,SEEK_CUR) fread(1,1)\" $file" \
+        check "$ZZOPTS" "$ZZCAT -x \"fread(1,33000) fseek(1,SEEK_SET) fread(1,1) fseek(4093,SEEK_CUR) fread(1,1) fseek(1,SEEK_CUR) fread(1,1)\" $file" \
               "eglibc (2.9-21) bug regression"
-        check "$ZZOPTS" "$ZZCAT \"repeat(33000,getc_unlocked() ungetc() getline() feof(10))\" $file" \
+        check "$ZZOPTS" "$ZZCAT -x \"repeat(33000,getc_unlocked() ungetc() getline() feof(10))\" $file" \
               "sed getc_unlocked() bug regression"
         # Misc tests
         for n in \
@@ -95,7 +95,7 @@ checkutils()
           "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,fgetc(),feof(10))" \
           "fread(1,33000) fseek(1000,SEEK_CUR) repeat(10000,getc_unlocked(),feof(10))" \
           ; do
-            check "$ZZOPTS" "$ZZCAT \"$n\" $file" "$n"
+            check "$ZZOPTS" "$ZZCAT -x \"$n\" $file" "$n"
         done
     done
 }
