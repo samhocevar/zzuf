@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
+ *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
  *  $Id$
@@ -218,7 +218,7 @@ static char const *get_seek_mode_name(int mode)
 
 static inline void debug_stream(char const *prefix, FILE *stream)
 {
-    debug2("... %s stream([%i], %p, %i + %i)", prefix, fileno(stream),
+    debug2("... %s: stream([%i], %p, %i + %i)", prefix, fileno(stream),
            get_stream_ptr(stream), get_stream_off(stream),
            get_stream_cnt(stream));
 }
