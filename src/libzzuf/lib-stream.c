@@ -330,7 +330,8 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         int fd; \
         LOADSYM(myfseek); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
+             || _zz_islocked(fd)) \
             return ORIG(myfseek)(stream, offset, whence); \
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
@@ -361,7 +362,8 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         int fd; \
         LOADSYM(myfsetpos); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
+             || _zz_islocked(fd)) \
             return ORIG(myfsetpos)(stream, pos); \
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
@@ -393,7 +395,8 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         int fd; \
         LOADSYM(rewind); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
+             || _zz_islocked(fd)) \
             return ORIG(rewind)(stream); \
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
@@ -478,7 +481,8 @@ void NEW(rewind)(FILE *stream)
         int fd; \
         LOADSYM(myfread); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
+             || _zz_islocked(fd)) \
             return ORIG(myfread)(ptr, size, nmemb, stream); \
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
@@ -543,7 +547,8 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
         int fd; \
         LOADSYM(myfgetc); \
         fd = fileno(s); \
-        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
+             || _zz_islocked(fd)) \
             return ORIG(myfgetc)(arg); \
         debug_stream("before", s); \
         oldpos = ZZ_FTELL(s); \
@@ -638,7 +643,8 @@ int NEW(fgetc_unlocked)(FILE *stream)
         LOADSYM(myfgets); \
         LOADSYM(myfgetc); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
+             || _zz_islocked(fd)) \
             return ORIG(myfgets)(s, size, stream); \
         debug_stream("before", stream); \
         oldpos = ZZ_FTELL(stream); \
@@ -719,7 +725,8 @@ int NEW(ungetc)(int c, FILE *stream)
 
     LOADSYM(ungetc);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)
+         || _zz_islocked(fd))
         return ORIG(ungetc)(c, stream);
 
     debug_stream("before", stream);
@@ -775,7 +782,8 @@ int NEW(fclose)(FILE *fp)
         LOADSYM(getdelim); \
         LOADSYM(fgetc); \
         fd = fileno(stream); \
-        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)) \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
+             || _zz_islocked(fd)) \
             return ORIG(getdelim)(lineptr, n, delim, stream); \
         debug_stream("before", stream); \
         oldpos = ZZ_FTELL(stream); \
@@ -883,7 +891,8 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     LOADSYM(fgetln);
     LOADSYM(fgetc);
     fd = fileno(stream);
-    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
+    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)
+         || _zz_islocked(fd))
         return ORIG(fgetln)(stream, len);
 
     debug_stream("before", stream);
