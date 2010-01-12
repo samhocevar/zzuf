@@ -1,10 +1,8 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
+ *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
  *                2009 Corentin Delorme <codelorme@gmail.com>
  *                All Rights Reserved
- *
- *  $Id$
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it

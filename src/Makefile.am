@@ -1,4 +1,3 @@
-# $Id$
 
 bin_PROGRAMS = zzuf zzcat
 pkglib_LTLIBRARIES = libzzuf.la

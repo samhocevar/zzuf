@@ -1,7 +1,6 @@
 #! /bin/sh
 
-##  Win32 cross-compilation for zzuf -- Sam Hocevar <sam@zoy.org>
-##  $Id$
+##  Win32 cross-compilation for zzuf -- Sam Hocevar <sam@hocevar.net>
 
 set -x
 set -e

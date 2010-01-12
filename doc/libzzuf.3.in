@@ -135,7 +135,7 @@ functions will be added upon user request.
 \fBzzuf(1)\fR, \fBld.so(8)\fR
 .SH AUTHOR
 .PP
-Copyright \(co 2002, 2007\-2010 Sam Hocevar <sam@hocevar.net>.
+Copyright \(co 2002\-2010 Sam Hocevar <sam@hocevar.net>.
 .PP
 \fBlibzzuf\fR and this manual page are free software. They come without any
 warranty, to the extent permitted by applicable law. You can redistribute

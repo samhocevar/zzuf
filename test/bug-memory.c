@@ -1,9 +1,7 @@
 /*
  *  bug-memory - program exhausting the memory when fuzzed
- *  Copyright (c) 2008 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2008 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
- *
- *  $Id$
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it

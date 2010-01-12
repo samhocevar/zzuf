@@ -1,9 +1,7 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006,2007 Sam Hocevar <sam@zoy.org>
+ *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
- *
- *  $Id$
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it

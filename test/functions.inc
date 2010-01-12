@@ -1,12 +1,23 @@
 # Source this file in shell scripts:
 # . "$(dirname "$0")/functions.inc"
+#
+#  functions.inc - utility functions for shell-based test scripts
+#  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
+#                All Rights Reserved
+#
+#  This program is free software. It comes without any warranty, to
+#  the extent permitted by applicable law. You can redistribute it
+#  and/or modify it under the terms of the Do What The Fuck You Want
+#  To Public License, Version 2, as published by Sam Hocevar. See
+#  http://sam.zoy.org/wtfpl/COPYING for more details.
+#
 
 DIR="$(dirname "$0")"
 ZZUF="$DIR/../src/zzuf -E '[.]ilist$'"
 
 ZZCAT="$DIR/../src/zzcat"
 if [ ! -f "$ZZCAT" ]; then
-  echo "error: test/zzcat is missing"
+  echo "error: src/zzcat is missing"
   exit 1
 fi
 

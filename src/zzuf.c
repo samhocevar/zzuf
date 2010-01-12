@@ -1,9 +1,7 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2002, 2007-2010 Sam Hocevar <sam@hocevar.net>
+ *  Copyright (c) 2002-2010 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
- *
- *  $Id$
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
@@ -911,7 +909,7 @@ static char const *sig2name(int signum)
 static void version(void)
 {
     printf("zzuf %s\n", PACKAGE_VERSION);
-    printf("Copyright (C) 2002, 2007-2009 Sam Hocevar <sam@hocevar.net>\n");
+    printf("Copyright (C) 2002-2010 Sam Hocevar <sam@hocevar.net>\n");
     printf("This program is free software. It comes without any warranty, to the extent\n");
     printf("permitted by applicable law. You can redistribute it and/or modify it under\n");
     printf("the terms of the Do What The Fuck You Want To Public License, Version 2, as\n");

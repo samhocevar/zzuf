@@ -433,7 +433,7 @@ multimedia stream corrupter used to find bugs in the VLC media player.
 \fBlibzzuf(3)\fR, \fBzzcat(1)\fR
 .SH AUTHOR
 .PP
-Copyright \(co 2002, 2007\-2010 Sam Hocevar <sam@hocevar.net>.
+Copyright \(co 2002\-2010 Sam Hocevar <sam@hocevar.net>.
 .PP
 \fBzzuf\fR and this manual page are free software. They come without any
 warranty, to the extent permitted by applicable law. You can redistribute
