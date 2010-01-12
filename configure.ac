@@ -18,7 +18,7 @@ AC_C_FUNC
 AC_MSG_CHECKING(for libzzuf full name)
 case "$shrext_cmds" in
   "") SONAME="libzzuf.so" ;;
-  *) SONAME="libzzuf$shrext_cmds" ;;
+  *) eval SONAME="libzzuf$shrext_cmds" ;;
 esac
 AC_MSG_RESULT($SONAME)
 AC_DEFINE_UNQUOTED(SONAME, "$SONAME", [Define to the libzzuf full name])
