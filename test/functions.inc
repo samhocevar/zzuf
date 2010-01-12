@@ -76,6 +76,5 @@ stop_test() {
         exit 1
     fi
     echo "*** all $TESTED tests OK ***"
-    echo ""
 }
 

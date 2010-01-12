@@ -16,11 +16,7 @@
  *  config.h: MSVC-specific configuration file
  */
 
-#define ATTRIBUTE_PRINTF(x,y)
-
-#define FILE_BASE /* FIXME */
-#define FILE_CNT _cnt
-#define FILE_PTR _ptr
+#define ATTRIBUTE_PRINTF(x,y) /* */
 #define FPOS_CAST(x) (x)
 #define HAVE_ACCEPT 1
 /* #undef HAVE_AIO_H */
@@ -104,7 +100,7 @@
 #define HAVE_WINDOWS_H 1
 #define HAVE_WINSOCK2_H 1
 /* #undef HAVE__IO_GETC */
-#define HAVE__PIPE
+#define HAVE__PIPE 1
 /* #undef HAVE___FILBUF */
 /* #undef HAVE___FOPEN64 */
 /* #undef HAVE___FREOPEN64 */

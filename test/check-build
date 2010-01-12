@@ -23,7 +23,7 @@ msvc_config_h=$(dirname "$0")/../msvc/config.h
 failure=0
 for key in $(sed -ne 's/.*#undef *\([A-Za-z0-9_]*\).*/\1/p' "$config_h_in");
 do
-  if ! grep '[ef] \<'"$key"'\>' "$msvc_config_h" >/dev/null 2>&1; then
+  if ! grep "[ef] $key[ (]" "$msvc_config_h" >/dev/null 2>&1; then
     echo "error: $key missing from msvc/config.h"
     failure=1
   fi
@@ -39,7 +39,7 @@ fi
 #
 failure=0
 for dir in src test; do
-  pushd ../$dir >/dev/null
+  (cd $(dirname "$0")/../$dir
   for x in $(make echo-sources); do
     if grep '[[:space:]]$' "$x" >/dev/null 2>&1; then
       echo "error: $dir/$x contains trailing spaces"
@@ -49,8 +49,7 @@ for dir in src test; do
       echo "error: $dir/$x contains tabs"
       failure=1
     fi
-  done
-  popd >/dev/null
+  done)
 done
 if test "$failure" != "0"; then
   ret=1
