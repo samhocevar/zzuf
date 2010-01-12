@@ -1,6 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
+ *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
  *                2007 Rémi Denis-Courmont <rdenis#simphalempin:com>
  *                2007 Clément Stenac <zorglub#diwi:org>
  *                2007 Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de>
@@ -68,6 +68,7 @@
 #include "libzzuf.h"
 #include "lib-load.h"
 #include "debug.h"
+#include "network.h"
 #include "fuzz.h"
 #include "fd.h"
 
