@@ -73,7 +73,7 @@ static int number_nonblank = 0;
 
 int main(int argc, char *argv[])
 {
-    char const *sequence = "repeat(-1, fgetc(), feof(1))";
+    char const *sequence = "repeat(-1, fread(1,32768), feof(1))";
     int i;
 
     for (;;)

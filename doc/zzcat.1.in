@@ -51,7 +51,7 @@ Read a file or a stream using the instruction sequence specified in
 
 If no sequence is specified, the following default sequence is used:
 
-\fB    repeat(\-1, fgetc(), feof(1))
+\fB    repeat(\-1, fread(1,32768), feof(1))
 .TP
 \fB\-l\fR, \fB\-\-list\fR
 Display the list of supported keywords and functions and exit.
