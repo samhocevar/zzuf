@@ -23,13 +23,6 @@
 /* Needed for getc_unlocked() on OpenSolaris */
 #define __EXTENSIONS__
 
-/* Define if stdio operations use *only* the refill mechanism */
-#if defined HAVE___SREFILL
-#   define HAVE_DARWIN_STDIO
-#elif defined HAVE___FILBUF || defined HAVE___SRGET || defined HAVE___UFLOW
-#   define HAVE_BSD_STDIO
-#endif
-
 /* Define the best ftell() clone */
 #if defined HAVE_FTELLO64
 #   define ZZ_FTELL ftello64
@@ -175,8 +168,10 @@ int            (*ORIG(__filbuf))  (FILE *fp);
 /* Helper functions for refill-like functions */
 static inline uint8_t *get_stream_ptr(FILE *stream)
 {
-#if defined HAVE_BSD_STDIO
-    return (uint8_t *)stream->FILE_PTR;
+#if defined HAVE_GLIBC_FILE
+    return (uint8_t *)stream->_IO_read_ptr;
+#elif defined HAVE_FREEBSD_FILE
+    return (uint8_t *)stream->_p;
 #else
     (void)stream;
     return NULL;
@@ -185,8 +180,11 @@ static inline uint8_t *get_stream_ptr(FILE *stream)
 
 static inline int get_stream_off(FILE *stream)
 {
-#if defined HAVE_BSD_STDIO
-    return (int)((uint8_t *)stream->FILE_PTR - (uint8_t *)stream->FILE_BASE);
+#if defined HAVE_GLIBC_FILE
+    return (int)((uint8_t *)stream->_IO_read_ptr
+                  - (uint8_t *)stream->_IO_read_base);
+#elif defined HAVE_FREEBSD_FILE
+    return (int)((uint8_t *)stream->_p - (uint8_t *)stream->_bf._base);
 #else
     (void)stream;
     return 0;
@@ -195,10 +193,11 @@ static inline int get_stream_off(FILE *stream)
 
 static inline int get_stream_cnt(FILE *stream)
 {
-#if defined HAVE_GLIBC_FP
-    return (int)((uint8_t *)stream->FILE_CNT - (uint8_t *)stream->FILE_PTR);
-#elif defined HAVE_BSD_STDIO
-    return stream->FILE_CNT;
+#if defined HAVE_GLIBC_FILE
+    return (int)((uint8_t *)stream->_IO_read_end
+                  - (uint8_t *)stream->_IO_read_ptr);
+#elif defined HAVE_FREEBSD_FILE
+    return stream->_r;
 #else
     (void)stream;
     return 0;

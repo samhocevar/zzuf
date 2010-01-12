@@ -77,34 +77,25 @@ AC_TRY_COMPILE([#define _XOPEN_SOURCE_EXTENDED
 AC_MSG_RESULT($ac_v_recv_t)
 AC_DEFINE_UNQUOTED(RECV_T, $ac_v_recv_t, [Define to the recv() return type])
 
-AC_MSG_CHECKING(for FILE* internal members)
-ac_cv_have_glibc_fp="no"
-ac_v_fp_base="unknown"
-ac_v_fp_ptr="unknown"
-ac_v_fp_cnt="unknown"
+AC_MSG_CHECKING([for _IO_read_ptr and _IO_read_end in FILE (glibc-style)])
 AC_TRY_COMPILE([#include <stdio.h>],
  [FILE *fp; fp->_IO_read_ptr++; fp->_IO_read_end++],
- [ac_cv_have_glibc_fp=yes; ac_v_fp_base=_IO_read_base
-  ac_v_fp_cnt=_IO_read_end; ac_v_fp_ptr=_IO_read_ptr],
- [AC_TRY_COMPILE([#include <stdio.h>],
-   [FILE *fp; fp->__cnt++; fp->__ptr++],
-   [ac_v_fp_base=FIXME; ac_v_fp_ptr=__ptr; ac_v_fp_cnt=__cnt],
-   [AC_TRY_COMPILE([#include <stdio.h>],
-     [FILE *fp; fp->_cnt++; fp->_ptr++],
-     [ac_v_fp_base=FIXME; ac_v_fp_ptr=_ptr; ac_v_fp_cnt=_cnt],
-     [AC_TRY_COMPILE([#include <stdio.h>],
-       [FILE *fp; fp->_c++; fp->_p++],
-       [ac_v_fp_base=FIXME; ac_v_fp_ptr=_p; ac_v_fp_cnt=_c],
-       [AC_TRY_COMPILE([#include <stdio.h>],
-         [FILE *fp; fp->_bf._base++; fp->_r++; fp->_p++],
-         [ac_v_fp_base=_bf._base; ac_v_fp_ptr=_p; ac_v_fp_cnt=_r])])])])])
-AC_MSG_RESULT($ac_v_fp_base/$ac_v_fp_ptr/$ac_v_fp_cnt)
-if test "$ac_cv_have_glibc_fp" != "no"; then
-  AC_DEFINE(HAVE_GLIBC_FP, 1, [Define to 1 if FILE has glibc-style members])
+ [ac_cv_have_file_io_read_ptr=yes],
+ [ac_cv_have_file_io_read_ptr=no])
+AC_MSG_RESULT($ac_cv_have_file_io_read_ptr)
+if test "$ac_cv_have_file_io_read_ptr" != "no"; then
+  AC_DEFINE(HAVE_GLIBC_FILE, 1, [Define to 1 if FILE has glibc-style members])
 fi
-AC_DEFINE_UNQUOTED(FILE_BASE, $ac_v_fp_base, [Define to the FILE::base member])
-AC_DEFINE_UNQUOTED(FILE_PTR, $ac_v_fp_ptr, [Define to the FILE::ptr member])
-AC_DEFINE_UNQUOTED(FILE_CNT, $ac_v_fp_cnt, [Define to the FILE::cnt member])
+
+AC_MSG_CHECKING([for _bf._base, _r and _p in FILE (FreeBSD-style)])
+AC_TRY_COMPILE([#include <stdio.h>],
+ [FILE *fp; fp->_bf._base++; fp->_r++; fp->_p++],
+ [ac_cv_have_file_bf_base=yes],
+ [ac_cv_have_file_bf_base=no])
+AC_MSG_RESULT($ac_cv_have_file_bf_base)
+if test "$ac_cv_have_file_bf_base" != "no"; then
+  AC_DEFINE(HAVE_FREEBSD_FILE, 1, [Define to 1 if FILE has FreeBSD-style members])
+fi
 
 dnl  On HP-UX, fpos64_t == int64_t, but on Linux it's a compound object.
 AC_MSG_CHECKING(how to access fpos64_t x)

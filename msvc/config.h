@@ -38,6 +38,7 @@
 #define HAVE_FOPEN64 1
 /* #undef HAVE_FORK */
 /* #undef HAVE_FREAD_UNLOCKED */
+/* #undef HAVE_FREEBSD_FILE */
 /* #undef HAVE_FREOPEN64 */
 /* #undef HAVE_FSEEKO */
 /* #undef HAVE_FSEEKO64 */
@@ -52,7 +53,7 @@
 /* #undef HAVE_GETOPT_LONG */
 #define HAVE_GETPAGESIZE 1
 /* #undef HAVE_GETTIMEOFDAY */
-/* #undef HAVE_GLIBC_FP */
+/* #undef HAVE_GLIBC_FILE */
 #define HAVE_INTTYPES_H 1
 #define HAVE_IO_H 1
 /* #undef HAVE_KILL */
