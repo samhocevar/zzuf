@@ -17,6 +17,7 @@
  */
 
 #define ATTRIBUTE_PRINTF(x,y) /* */
+#define CONNECT_USES_STRUCT_SOCKADDR 1
 #define FPOS_CAST(x) (x)
 #define HAVE_ACCEPT 1
 /* #undef HAVE_AIO_H */
