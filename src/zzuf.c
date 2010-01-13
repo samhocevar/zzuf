@@ -158,49 +158,50 @@ int main(int argc, char *argv[])
 #   define OPTSTR_RLIMIT_CPU ""
 #endif
 #define OPTSTR "+" OPTSTR_REGEX OPTSTR_RLIMIT_MEM OPTSTR_RLIMIT_CPU \
-                "a:Ab:B:C:dD:e:f:F:ij:l:mnp:P:qr:R:s:St:vxhV"
+                "a:Ab:B:C:dD:e:f:F:ij:l:mnp:P:qr:R:s:St:U:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
         {
             /* Long option, needs arg, flag, short option */
-            { "allow",      1, NULL, 'a' },
-            { "autoinc",     0, NULL, 'A' },
-            { "bytes",       1, NULL, 'b' },
-            { "max-bytes",   1, NULL, 'B' },
+            { "allow",        1, NULL, 'a' },
+            { "autoinc",      0, NULL, 'A' },
+            { "bytes",        1, NULL, 'b' },
+            { "max-bytes",    1, NULL, 'B' },
 #if defined HAVE_REGEX_H
-            { "cmdline",     0, NULL, 'c' },
+            { "cmdline",      0, NULL, 'c' },
 #endif
-            { "max-crashes", 1, NULL, 'C' },
-            { "debug",       0, NULL, 'd' },
-            { "delay",       1, NULL, 'D' },
+            { "max-crashes",  1, NULL, 'C' },
+            { "debug",        0, NULL, 'd' },
+            { "delay",        1, NULL, 'D' },
 #if defined HAVE_REGEX_H
-            { "exclude",     1, NULL, 'E' },
+            { "exclude",      1, NULL, 'E' },
 #endif
-            { "fuzzing",     1, NULL, 'f' },
-            { "stdin",       0, NULL, 'i' },
+            { "fuzzing",      1, NULL, 'f' },
+            { "stdin",        0, NULL, 'i' },
 #if defined HAVE_REGEX_H
-            { "include",     1, NULL, 'I' },
+            { "include",      1, NULL, 'I' },
 #endif
-            { "jobs",        1, NULL, 'j' },
-            { "list",        1, NULL, 'l' },
-            { "md5",         0, NULL, 'm' },
-            { "max-memory",  1, NULL, 'M' },
-            { "network",     0, NULL, 'n' },
-            { "ports",       1, NULL, 'p' },
-            { "protect",     1, NULL, 'P' },
-            { "quiet",       0, NULL, 'q' },
-            { "ratio",       1, NULL, 'r' },
-            { "refuse",      1, NULL, 'R' },
-            { "seed",        1, NULL, 's' },
-            { "signal",      0, NULL, 'S' },
-            { "max-time",    1, NULL, 't' },
-            { "max-cputime", 1, NULL, 'T' },
-            { "verbose",     0, NULL, 'v' },
-            { "check-exit",  0, NULL, 'x' },
-            { "help",        0, NULL, 'h' },
-            { "version",     0, NULL, 'V' },
-            { NULL,          0, NULL,  0  }
+            { "jobs",         1, NULL, 'j' },
+            { "list",         1, NULL, 'l' },
+            { "md5",          0, NULL, 'm' },
+            { "max-memory",   1, NULL, 'M' },
+            { "network",      0, NULL, 'n' },
+            { "ports",        1, NULL, 'p' },
+            { "protect",      1, NULL, 'P' },
+            { "quiet",        0, NULL, 'q' },
+            { "ratio",        1, NULL, 'r' },
+            { "refuse",       1, NULL, 'R' },
+            { "seed",         1, NULL, 's' },
+            { "signal",       0, NULL, 'S' },
+            { "max-time",     1, NULL, 't' },
+            { "max-cputime",  1, NULL, 'T' },
+            { "max-usertime", 1, NULL, 'U' },
+            { "verbose",      0, NULL, 'v' },
+            { "check-exit",   0, NULL, 'x' },
+            { "help",         0, NULL, 'h' },
+            { "version",      0, NULL, 'V' },
+            { NULL,           0, NULL,  0  }
         };
         int c = mygetopt(argc, argv, OPTSTR, long_options, &option_index);
 
@@ -333,7 +334,7 @@ int main(int argc, char *argv[])
         case 't': /* --max-time */
             if(myoptarg[0] == '=')
                 myoptarg++;
-            opts->maxtime = (int64_t)(atof(myoptarg) * 1000000.0);
+            opts->maxtime = (int64_t)atoll(myoptarg) * 1000000;
             break;
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
         case 'T': /* --max-cputime */
@@ -342,6 +343,11 @@ int main(int argc, char *argv[])
             opts->maxcpu = (int)(atof(myoptarg) + 0.5);
             break;
 #endif
+        case 'U': /* --max-usertime */
+            if(myoptarg[0] == '=')
+                myoptarg++;
+            opts->maxusertime = (int64_t)(atof(myoptarg) * 1000000.0);
+            break;
         case 'x': /* --check-exit */
             opts->checkexit = 1;
             break;
@@ -477,6 +483,10 @@ int main(int argc, char *argv[])
         read_children(opts);
 
         if(opts->maxcrashes && opts->crashes >= opts->maxcrashes
+            && opts->nchild == 0)
+            break;
+
+        if(opts->maxtime && _zz_time() - opts->starttime >= opts->maxtime
             && opts->nchild == 0)
             break;
     }
@@ -632,6 +642,9 @@ static void spawn_children(struct opts *opts)
     if(opts->maxcrashes && opts->crashes >= opts->maxcrashes)
         return; /* all jobs crashed */
 
+    if(opts->maxtime && now - opts->starttime >= opts->maxtime)
+        return; /* run time exceeded */
+
     if(opts->delay > 0 && opts->lastlaunch + opts->delay > now)
         return; /* too early */
 
@@ -695,8 +708,8 @@ static void clean_children(struct opts *opts)
         }
 
         if(opts->child[i].status == STATUS_RUNNING
-            && opts->maxtime >= 0
-            && now > opts->child[i].date + opts->maxtime)
+            && opts->maxusertime >= 0
+            && now > opts->child[i].date + opts->maxusertime)
         {
             if(opts->verbose)
             {
@@ -980,8 +993,9 @@ static void usage(void)
     printf("  -s, --seed <seed>         random seed (default %i)\n", DEFAULT_SEED);
     printf("         ... <start:stop>   specify a seed range\n");
     printf("  -S, --signal              prevent children from diverting crashing signals\n");
-    printf("  -t, --max-time <n>        kill children that run for more than <n> seconds\n");
+    printf("  -t, --max-time <n>        stop spawning children after <n> seconds\n");
     printf("  -T, --max-cputime <n>     kill children that use more than <n> CPU seconds\n");
+    printf("  -U, --max-usertime <n>    kill children that run for more than <n> seconds\n");
     printf("  -v, --verbose             print information during the run\n");
     printf("  -x, --check-exit          report processes that exit with a non-zero status\n");
     printf("  -h, --help                display this help and exit\n");

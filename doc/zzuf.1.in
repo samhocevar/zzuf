@@ -2,15 +2,15 @@
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-AcdimnqSvx\fR] [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR] [\fB\-r\fR \fIratio\fR|\fB\-r\fR \fImin:max\fR]
-.br
-       [\fB\-f\fR \fIfuzzing\fR] [\fB\-D\fR \fIdelay\fR] [\fB\-j\fR \fIjobs\fR] [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR]
-.br
-       [\fB\-t\fR \fIseconds\fR] [\fB\-T\fR \fIseconds\fR] [\fB\-M\fR \fImebibytes\fR] [\fB\-b\fR \fIranges\fR] [\fB\-p\fR \fIports\fR]
-.br
-       [\fB\-P\fR \fIprotect\fR] [\fB\-R\fR \fIrefuse\fR] [\fB\-l\fR \fIlist\fR] [\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR]
-.br
-       [\fIPROGRAM\fR [\fIARGS\fR]...]
+\fBzzuf\fR [\fB\-AcdimnqSvx\fR]
+[\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR]
+[\fB\-r\fR \fIratio\fR|\fB\-r\fR \fImin:max\fR]
+[\fB\-f\fR \fIfuzzing\fR] [\fB\-D\fR \fIdelay\fR] [\fB\-j\fR \fIjobs\fR]
+[\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-t\fR \fIseconds\fR]
+[\fB\-T\fR \fIseconds\fR] [\fB\-U\fR \fIseconds\fR] [\fB\-M\fR \fImebibytes\fR]
+[\fB\-b\fR \fIranges\fR] [\fB\-p\fR \fIports\fR] [\fB\-P\fR \fIprotect\fR]
+[\fB\-R\fR \fIrefuse\fR] [\fB\-l\fR \fIlist\fR] [\fB\-I\fR \fIinclude\fR]
+[\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fIARGS\fR]...]
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
 .br
@@ -63,7 +63,7 @@ This either terminates child processes that output more than \fIn\fR bytes
 on the standard output and standard error channels, or stop reading from
 standard input if no program is being fuzzed.
 
-This is useful to detect infinite loops. See also the \fB\-t\fR and \fB\-T\fR
+This is useful to detect infinite loops. See also the \fB\-U\fR and \fB\-T\fR
 flags.
 .TP
 \fB\-c\fR, \fB\-\-cmdline\fR
@@ -84,12 +84,16 @@ Stop forking when at least \fIn\fR children have crashed. The default value
 is 1, meaning \fBzzuf\fR will stop as soon as one child has crashed. A value
 of 0 tells \fBzzuf\fR to never stop.
 
+Note that \fBzzuf\fR will not kill any remaining children once \fIn\fR is
+reached. To ensure that processes do not last forever, see the \fB\-U\fR
+flag.
+
 A process is considered to have crashed if any signal (such as, but not limited
 to, \fBSIGSEGV\fR) caused it to exit. If the \fB\-x\fR flag is used, this will
 also include processes that exit with a non-zero status.
 
 This option is only relevant if the \fB\-s\fR flag is used with a range
-argument.
+argument. See also the \fB\-t\fR flag.
 .TP
 \fB\-d\fR, \fB\-\-debug\fR
 Activate the display of debug messages. Can be specified multiple times for
@@ -287,9 +291,15 @@ with the \fBlimit coredumpsize\fR command. See your shell's documentation on
 how to set such limits.
 .TP
 \fB\-t\fR, \fB\-\-max\-time\fR=\fIn\fR
-Automatically terminate child processes that run for more than \fIn\fR
-seconds. This is useful to detect infinite loops or processes stuck in other
-situations. See also the \fB\-B\fR and \fB\-T\fR flags.
+Stop forking after \fIn\fR seconds. By default, \fBzzuf\fR runs until the
+end of the seed range is reached.
+
+Note that \fBzzuf\fR will not kill any remaining children once \fIn\fR is
+reached. To ensure that processes do not last forever, see the \fB\-U\fR
+flag.
+
+This option is only relevant if the \fB\-s\fR flag is used with a range
+argument. See also the \fB\-C\fR flag.
 .TP
 \fB\-T\fR, \fB\-\-max\-cputime\fR=\fIn\fR
 Automatically terminate child processes that use more than \fIn\fR seconds
@@ -300,10 +310,15 @@ relies on the operating system's ability to enforce such limitations. If the
 system sends \fBSIGXCPU\fR signals and the application catches that signal,
 it will receive a \fBSIGKILL\fR signal after 5 seconds.
 
-This is more accurate than \fB\-t\fR because the behaviour should be
+This is more accurate than \fB\-U\fR because the behaviour should be
 independent from the system load, but it does not detect processes stuck into
 infinite \fBselect\fR() calls because they use very little CPU time. See also
-the \fB\-B\fR and \fB\-t\fR flags.
+the \fB\-B\fR and \fB\-U\fR flags.
+.TP
+\fB\-U\fR, \fB\-\-max\-usertime\fR=\fIn\fR
+Automatically terminate child processes that run for more than \fIn\fR
+seconds. This is useful to detect infinite loops or processes stuck in other
+situations. See also the \fB\-B\fR and \fB\-T\fR flags.
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR
 Print information during the run, such as the current seed, what processes

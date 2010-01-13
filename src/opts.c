@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #include "common.h"
+#include "timer.h"
 #include "opts.h"
 
 void _zz_opts_init(struct opts *opts)
@@ -43,7 +44,9 @@ void _zz_opts_init(struct opts *opts)
     opts->checkexit = 0;
     opts->verbose = 0;
     opts->maxmem = DEFAULT_MEM;
-    opts->maxtime = -1;
+    opts->starttime = _zz_time();
+    opts->maxtime = 0;
+    opts->maxusertime = -1;
     opts->maxcpu = -1;
     opts->delay = 0;
     opts->lastlaunch = 0;

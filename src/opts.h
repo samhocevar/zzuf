@@ -30,7 +30,9 @@ struct opts
     int checkexit;
     int verbose;
     int maxmem;
+    int64_t starttime;
     int64_t maxtime;
+    int64_t maxusertime;
     int64_t delay;
     int64_t lastlaunch;
 
