@@ -59,6 +59,18 @@ AC_CHECK_TYPES(socklen_t, [], [],
   [#include <sys/types.h>
    #include <sys/socket.h>])
 
+AC_MSG_CHECKING(for connect() second argument)
+AC_TRY_COMPILE([#include <sys/types.h>
+                #include <sys/socket.h>],
+ [#if defined HAVE_SOCKLEN_T
+  int connect(int, const struct sockaddr *, socklen_t);
+  #else
+  int connect(int, const struct sockaddr *, int);
+  #endif],
+ [AC_MSG_RESULT(const struct sockaddr *)
+  AC_DEFINE(CONNECT_USES_STRUCT_SOCKADDR, 1, [Define to 1 if connect() uses struct sockaddr.])],
+ [AC_MSG_RESULT(const void *)])
+
 AC_MSG_CHECKING(for read() prototype)
 AC_TRY_COMPILE([#define _INCLUDE_POSIX_SOURCE
                 #include <unistd.h>],

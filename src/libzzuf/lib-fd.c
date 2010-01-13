@@ -76,6 +76,12 @@
 #   define SOCKLEN_T int
 #endif
 
+#if defined CONNECT_USES_STRUCT_SOCKADDR
+#   define SOCKADDR_T struct sockaddr
+#else
+#   define SOCKADDR_T void
+#endif
+
 /* Local prototypes */
 #if defined HAVE_READV || defined HAVE_RECVMSG
 static void fuzz_iovec   (int fd, const struct iovec *iov, ssize_t ret);
@@ -97,15 +103,15 @@ static int     (*ORIG(dup))     (int oldfd);
 static int     (*ORIG(dup2))    (int oldfd, int newfd);
 #endif
 #if defined HAVE_ACCEPT
-static int     (*ORIG(accept))  (int sockfd, struct sockaddr *addr,
+static int     (*ORIG(accept))  (int sockfd, SOCKADDR_T *addr,
                                  SOCKLEN_T *addrlen);
 #endif
 #if defined HAVE_BIND
-static int     (*ORIG(bind))    (int sockfd, const struct sockaddr *my_addr,
+static int     (*ORIG(bind))    (int sockfd, const SOCKADDR_T *my_addr,
                                  SOCKLEN_T addrlen);
 #endif
 #if defined HAVE_CONNECT
-static int     (*ORIG(connect)) (int sockfd, const struct sockaddr *serv_addr,
+static int     (*ORIG(connect)) (int sockfd, const SOCKADDR_T *serv_addr,
                                  SOCKLEN_T addrlen);
 #endif
 #if defined HAVE_SOCKET
@@ -116,7 +122,7 @@ static RECV_T  (*ORIG(recv))    (int s, void *buf, size_t len, int flags);
 #endif
 #if defined HAVE_RECVFROM
 static RECV_T  (*ORIG(recvfrom))(int s, void *buf, size_t len, int flags,
-                                 struct sockaddr *from, SOCKLEN_T *fromlen);
+                                 SOCKADDR_T *from, SOCKLEN_T *fromlen);
 #endif
 #if defined HAVE_RECVMSG
 static RECV_T  (*ORIG(recvmsg)) (int s,  struct msghdr *hdr, int flags);
@@ -244,7 +250,7 @@ int NEW(dup2)(int oldfd, int newfd)
 #endif
 
 #if defined HAVE_ACCEPT
-int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
+int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
 {
     int ret;
 
@@ -310,14 +316,14 @@ int NEW(accept)(int sockfd, struct sockaddr *addr, SOCKLEN_T *addrlen)
     } while(0);
 
 #if defined HAVE_BIND
-int NEW(bind)(int sockfd, const struct sockaddr *my_addr, SOCKLEN_T addrlen)
+int NEW(bind)(int sockfd, const SOCKADDR_T *my_addr, SOCKLEN_T addrlen)
 {
     int ret; ZZ_CONNECT(bind, my_addr); return ret;
 }
 #endif
 
 #if defined HAVE_CONNECT
-int NEW(connect)(int sockfd, const struct sockaddr *serv_addr,
+int NEW(connect)(int sockfd, const SOCKADDR_T *serv_addr,
                  SOCKLEN_T addrlen)
 {
     int ret; ZZ_CONNECT(connect, serv_addr); return ret;
@@ -379,7 +385,7 @@ RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
 
 #if defined HAVE_RECVFROM
 RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
-                     struct sockaddr *from, SOCKLEN_T *fromlen)
+                     SOCKADDR_T *from, SOCKLEN_T *fromlen)
 {
     int ret;
 
