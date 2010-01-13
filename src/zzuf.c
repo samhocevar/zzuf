@@ -484,11 +484,21 @@ int main(int argc, char *argv[])
 
         if(opts->maxcrashes && opts->crashes >= opts->maxcrashes
             && opts->nchild == 0)
+        {
+            if(opts->verbose)
+                fprintf(stderr,
+                        "zzuf: maximum crash count reached, exiting\n");
             break;
+        }
 
         if(opts->maxtime && _zz_time() - opts->starttime >= opts->maxtime
             && opts->nchild == 0)
+        {
+            if(opts->verbose)
+                fprintf(stderr,
+                        "zzuf: maximum running time reached, exiting\n");
             break;
+        }
     }
 
     /* Clean up */
