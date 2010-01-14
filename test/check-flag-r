@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  check-rng - zzuf RNG statistic tests
+#  check-flag-r - zzuf RNG statistic tests
 #  Copyright (c) 2008-2010 Sam Hocevar <sam@hocevar.net>
 #                All Rights Reserved
 #
@@ -44,7 +44,7 @@ checkflip()
     fi
 }
 
-start_test "zzuf RNG test suite"
+start_test "zzuf -r test"
 
 # if X flips are performed on N bits set to 0, the average number of bits
 # set to 1 is: N / 2 * (1 - pow(1 - 2 / N, X)

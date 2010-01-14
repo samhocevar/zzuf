@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  check-memory - check that zzuf catches excessive memory allocations
+#  check-flag-M - check that zzuf catches excessive memory allocations
 #  Copyright (c) 2008-2010 Sam Hocevar <sam@hocevar.net>
 #                All Rights Reserved
 #
@@ -21,7 +21,7 @@ if [ ! -f "$PROGRAM" ]; then
   exit 1
 fi
 
-start_test "zzuf memory exhaustion test"
+start_test "zzuf -M test"
 
 new_test "bug-memory < /file-00"
 if ! $PROGRAM < "$DIR/file-00"; then
