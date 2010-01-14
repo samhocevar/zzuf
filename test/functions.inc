@@ -45,7 +45,7 @@ FAILED=0
 TESTED=0
 
 if [ -z "$1" ]; then
-  seed=$(date | $ZZUF -m 2>/dev/null | cut -f2 -d' ' | tr -d abcdef | cut -b1-8)
+  seed=$(date | $ZZUF -m 2>/dev/null | sed 's/[^ ]* [abcdef0]*//' | tr -d abcdef | cut -b1-8)
 else
   seed="$1"
 fi
