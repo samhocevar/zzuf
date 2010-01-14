@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
             escape_tabs = escape_ends = escape_other = 1;
             break;
         case 'b': /* --number-nonblank */
-            number_lines = 1;
+            number_nonblank = 1;
             break;
         case 'e':
             escape_ends = escape_other = 1;
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
             escape_ends = 1;
             break;
         case 'n': /* --number */
-            number_nonblank = 1;
+            number_lines = 1;
             break;
         case 't':
             escape_tabs = escape_other = 1;
@@ -171,6 +171,7 @@ int main(int argc, char *argv[])
 static void output(char const *buf, size_t len)
 {
     size_t i;
+    int line = 1, newline = 1;
 
     if (!(escape_tabs || escape_ends || escape_other
            || number_lines || number_nonblank))
@@ -182,6 +183,19 @@ static void output(char const *buf, size_t len)
     for (i = 0; i < len; i++)
     {
         int ch = (unsigned int)(unsigned char)buf[i];
+
+        if (number_lines || number_nonblank)
+        {
+            if (newline)
+            {
+                newline = 0;
+                if (!number_nonblank || ch != '\n')
+                    fprintf(stdout, "% 6i\t", line++);
+            }
+
+            if (ch == '\n')
+                newline = 1;
+        }
 
         if (escape_other && ch >= 0x80)
         {
