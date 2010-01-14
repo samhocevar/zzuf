@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+#  check-flag-f - test "zzuf -f" flag (fuzzing mode)
+#  Copyright (c) 2008-2010 Sam Hocevar <sam@hocevar.net>
+#                All Rights Reserved
+#
+#  This program is free software. It comes without any warranty, to
+#  the extent permitted by applicable law. You can redistribute it
+#  and/or modify it under the terms of the Do What The Fuck You Want
+#  To Public License, Version 2, as published by Sam Hocevar. See
+#  http://sam.zoy.org/wtfpl/COPYING for more details.
+#
+
+. "$(dirname "$0")/functions.inc"
+
+start_test "zzuf -f test"
+
+# Check -f xor: output must always be different
+new_test "zzuf -f xor < file-random"
+m1=$($ZZUF -m -r0 < "$DIR/file-random" | cut -f2 -d' ')
+m2=$($ZZUF -m -f xor < "$DIR/file-random" | cut -f2 -d' ')
+if [ "$m1" != "$m2" ]; then pass_test "ok"; else fail_test "$m1"; fi
+
+new_test "zzuf -f xor < file-00"
+m1=$($ZZUF -m -r0 < "$DIR/file-00" | cut -f2 -d' ')
+m2=$($ZZUF -m -f xor < "$DIR/file-00" | cut -f2 -d' ')
+if [ "$m1" != "$m2" ]; then pass_test "ok"; else fail_test "$m1"; fi
+
+new_test "zzuf -f xor < file-ff"
+m1=$($ZZUF -m -r0 < "$DIR/file-ff" | cut -f2 -d' ')
+m2=$($ZZUF -m -f xor < "$DIR/file-ff" | cut -f2 -d' ')
+if [ "$m1" != "$m2" ]; then pass_test "ok"; else fail_test "$m1"; fi
+
+# Check -f set: output must be different, except for file-ff
+new_test "zzuf -f set < file-random"
+m1=$($ZZUF -m -r0 < "$DIR/file-random" | cut -f2 -d' ')
+m2=$($ZZUF -m -f set < "$DIR/file-random" | cut -f2 -d' ')
+if [ "$m1" != "$m2" ]; then pass_test "ok"; else fail_test "$m1"; fi
+
+new_test "zzuf -f set < file-00"
+m1=$($ZZUF -m -r0 < "$DIR/file-00" | cut -f2 -d' ')
+m2=$($ZZUF -m -f set < "$DIR/file-00" | cut -f2 -d' ')
+if [ "$m1" != "$m2" ]; then pass_test "ok"; else fail_test "$m1"; fi
+
+new_test "zzuf -f set < file-ff"
+m1=$($ZZUF -m -r0 < "$DIR/file-ff" | cut -f2 -d' ')
+m2=$($ZZUF -m -f set < "$DIR/file-ff" | cut -f2 -d' ')
+if [ "$m1" = "$m2" ]; then pass_test "ok"; else fail_test "$m1 != $m2"; fi
+
+# Check -f unset: output must be different, except for file-00
+new_test "zzuf -f unset < file-random"
+m1=$($ZZUF -m -r0 < "$DIR/file-random" | cut -f2 -d' ')
+m2=$($ZZUF -m -f unset < "$DIR/file-random" | cut -f2 -d' ')
+if [ "$m1" != "$m2" ]; then pass_test "ok"; else fail_test "$m1"; fi
+
+new_test "zzuf -f unset < file-00"
+m1=$($ZZUF -m -r0 < "$DIR/file-00" | cut -f2 -d' ')
+m2=$($ZZUF -m -f unset < "$DIR/file-00" | cut -f2 -d' ')
+if [ "$m1" = "$m2" ]; then pass_test "ok"; else fail_test "$m1 != $m2"; fi
+
+new_test "zzuf -f unset < file-ff"
+m1=$($ZZUF -m -r0 < "$DIR/file-ff" | cut -f2 -d' ')
+m2=$($ZZUF -m -f unset < "$DIR/file-ff" | cut -f2 -d' ')
+if [ "$m1" != "$m2" ]; then pass_test "ok"; else fail_test "$m1"; fi
+
+stop_test
+

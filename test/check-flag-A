@@ -17,8 +17,8 @@ start_test "zzuf -A test"
 
 # Check -A with no fuzzing: output must match
 new_test "zzuf -A -r0 zzcat file-random file-random"
-m1=$($ZZUF -m -r0 $ZZCAT "$DIR/file-random" "$DIR/file-random")
-m2=$($ZZUF -m -A -r0 $ZZCAT "$DIR/file-random" "$DIR/file-random")
+m1=$($ZZUF -m -r0 $ZZCAT "$DIR/file-random" "$DIR/file-random" | cut -f2 -d' ')
+m2=$($ZZUF -m -A -r0 $ZZCAT "$DIR/file-random" "$DIR/file-random" | cut -f2 -d' ')
 if [ "$m1" = "$m2" ]; then
     pass_test "ok"
 else
@@ -27,8 +27,8 @@ fi
 
 # Check -A with fuzzing: output must be different
 new_test "zzuf -A -r0.1 zzcat file-random file-random"
-m1=$($ZZUF -m -r0.1 $ZZCAT "$DIR/file-random" "$DIR/file-random")
-m2=$($ZZUF -m -A -r0.1 $ZZCAT "$DIR/file-random" "$DIR/file-random")
+m1=$($ZZUF -m -r0.1 $ZZCAT "$DIR/file-random" "$DIR/file-random" | cut -f2 -d' ')
+m2=$($ZZUF -m -A -r0.1 $ZZCAT "$DIR/file-random" "$DIR/file-random" | cut -f2 -d' ')
 if [ "$m1" != "$m2" ]; then
     pass_test "ok"
 else
