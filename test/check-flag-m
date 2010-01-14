@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  check-md5 - check that zzuf properly computes md5 checksums
+#  check-flag-m - test "zzuf -m" flag (md5 checksums)
 #  Copyright (c) 2008-2010 Sam Hocevar <sam@hocevar.net>
 #                All Rights Reserved
 #
@@ -26,7 +26,7 @@ checkmd5()
     fi
 }
 
-start_test "zzuf MD5 test"
+start_test "zzuf -m test"
 
 checkmd5 "printf ''" d41d8cd98f00b204e9800998ecf8427e
 checkmd5 echo 68b329da9893e34099c7d8ad5cb9c940
