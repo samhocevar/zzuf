@@ -1,6 +1,6 @@
 .TH zzcat 1 "2010-01-07" "zzcat @PACKAGE_VERSION@"
 .SH NAME
-zzcat \- debugging tool for zzuf
+zzcat \- concatenate files using different instruction sequences
 .SH SYNOPSIS
 \fBzzcat\fR [\fB\-AbeEntTv\fR] [\fB\-x\fR \fIsequence\fR] [\fIFILE\fR]...
 .br
@@ -15,10 +15,8 @@ The \fBzzcat\fR utility reads files sequentially, writing them to the
 standard output. The user can decide which sequence of library calls is
 used to seek and read data.
 
-\fBzzcat\fR is primarily used as a debugging tool for \fBzzuf\fR.
-.SH USAGE
-.PP
-\fB    zzcat -x "fread(1,10000)" /dev/zero\fR
+\fBzzcat\fR is primarily used as a debugging tool for \fBzzuf\fR, because
+it can emulate different programs' ways to read files.
 .SH OPTIONS
 .TP
 \fB\-A\fR, \fB\-\-show\-all\fR
@@ -49,9 +47,27 @@ Use ^ and M- notation, except for LFD and TAB.
 Read a file or a stream using the instruction sequence specified in
 \fIsequence\fR.
 
+Instructions are executed sequentially until the end of the program.
+End-of-file is not an exit condition, except where the \fBfeof\fR keyword is
+used:
+
+\fB    fread(1,10); feof(1); fread(1,10)\fR
+
+Loops are permitted using the \fBrepeat\fR keyword. Again, \fBfeof\fR can be
+used to prematurely break out of a loop:
+
+\fB    repeat(10000, fgetc() feof(1))\fR
+
+Instructions can be separated by spaces, commas or semicolons.
+A list of all available instructions and control keywords can be obtained
+using this command:
+
+\fB    zzcat \-l\fR
+
 If no sequence is specified, the following default sequence is used:
 
-\fB    repeat(\-1, fread(1,32768), feof(1))
+\fB    repeat(\-1, fread(1,32768), feof(1))\fR
+
 .TP
 \fB\-l\fR, \fB\-\-list\fR
 Display the list of supported keywords and functions and exit.
@@ -63,7 +79,28 @@ Display a short help message and exit.
 Output version information and exit.
 .SH EXAMPLES
 .PP
-To do.
+Read the first 1000 bytes of f, then exit:
+.PP
+\fB    zzcat \-x \(aqfread(1,1000)\(aq f\fR
+.PP
+Read the first four bytes of f, using four different instructions:
+.PP
+\fB    zzcat \-x \(aqgetc(),fgetc(),getc_unlocked(),_IO_getc()\(aq f\fR
+.PP
+Read f entirely, by calling \fBgetc()\fR repeatedly until end-of-file is
+reached:
+.PP
+\fB    zzcat \-x \(aqrepeat(\-1, getc(), feof(1))\(aq \fRf
+.PP
+Read f entirely, in chunks of 32768 bytes until end-of-file is reached:
+.PP
+\fB    zzcat \-x \(aqrepeat(\-1, fread(1,32768), feof(1))\(aq \fRf
+.\" .PP
+.\" Read only odd bytes, rewind file, then read all even bytes:
+.\" .PP
+.\" \fB    zzcat \-x \(aqrepeat(\-1, getc(), feof(1), fseek(1,SEEK_CUR)),
+.\" \fB              rewind(),
+.\" \fB              repeat(\-1, fseek(1,SEEK_CUR), getc(), feof(1))\(aq
 .SH SEE ALSO
 .PP
 \fBzzuf(3)\fR, \fBlibzzuf(3)\fR
