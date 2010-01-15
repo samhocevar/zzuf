@@ -61,13 +61,18 @@ static void syntax(void);
 static void version(void);
 static void usage(void);
 
-/* Output parameters */
-static int escape_tabs = 0;
-static int escape_ends = 0;
-static int escape_other = 0;
-static int number_lines = 0;
-static int number_nonblank = 0;
-static int squeeze_lines = 0;
+/* Global parameters */
+static char escape_tabs = 0;
+static char escape_ends = 0;
+static char escape_other = 0;
+static char number_lines = 0;
+static char number_nonblank = 0;
+static char squeeze_lines = 0;
+
+/* Global output state */
+static int ncrs = 0;
+static int line = 1;
+static char newline = 1;
 
 /*
  * Main program.
@@ -176,8 +181,8 @@ int main(int argc, char *argv[])
 static void output(char const *buf, size_t len)
 {
     size_t i;
-    int line = 1, newline = 1;
 
+    /* If no special features are requested, output directly */
     if (!(escape_tabs || escape_ends || escape_other
            || number_lines || number_nonblank || squeeze_lines))
     {
@@ -185,13 +190,21 @@ static void output(char const *buf, size_t len)
         return;
     }
 
+    /* If any special feature is active, go through every possibility */
     for (i = 0; i < len; i++)
     {
         int ch = (unsigned int)(unsigned char)buf[i];
 
-        if (squeeze_lines && i > 1
-             && ch == '\n' && buf[i - 1] == '\n' && buf[i - 2] == '\n')
-            continue;
+        if (squeeze_lines)
+        {
+            if (ch == '\n')
+            {
+                if (++ncrs > 2)
+                    continue;
+            }
+            else
+                ncrs = 0;
+        }
 
         if (number_lines || number_nonblank)
         {
@@ -351,6 +364,9 @@ static int run(char const *sequence, char const *file)
     FILE *f = NULL;
     size_t retlen = 0, retoff = 0;
     int nloops = 0, fd = -1, feofs = 0, finish = 0;
+
+    /* Initialise per-file state */
+    /* TODO */
 
     /* Allocate 32MB for our temporary buffer. Any larger value will crash. */
     tmp = malloc(32 * 1024 * 1024);
