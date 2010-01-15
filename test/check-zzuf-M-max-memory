@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  check-flag-M - check that zzuf catches excessive memory allocations
+#  check-zzuf-M-max-memory - check that zzuf catches excessive memory allocs
 #  Copyright (c) 2008-2010 Sam Hocevar <sam@hocevar.net>
 #                All Rights Reserved
 #

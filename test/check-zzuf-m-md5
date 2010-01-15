@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  check-flag-m - test "zzuf -m" flag (md5 checksums)
+#  check-zzuf-m-md5 - test "zzuf -m" flag (md5 checksums)
 #  Copyright (c) 2008-2010 Sam Hocevar <sam@hocevar.net>
 #                All Rights Reserved
 #

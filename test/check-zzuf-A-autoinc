@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  check-flag-A - test "zzuf -A" flag (auto-increment)
+#  check-zzuf-A-autoinc - test "zzuf -A" flag (auto-increment)
 #  Copyright (c) 2008-2010 Sam Hocevar <sam@hocevar.net>
 #                All Rights Reserved
 #

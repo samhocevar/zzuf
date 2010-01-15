@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  check-flag-r - zzuf RNG statistic tests
+#  check-zzuf-r-ratio - zzuf RNG statistic tests
 #  Copyright (c) 2008-2010 Sam Hocevar <sam@hocevar.net>
 #                All Rights Reserved
 #
