@@ -67,6 +67,7 @@ static int escape_ends = 0;
 static int escape_other = 0;
 static int number_lines = 0;
 static int number_nonblank = 0;
+static int squeeze_lines = 0;
 
 /*
  * Main program.
@@ -79,7 +80,7 @@ int main(int argc, char *argv[])
 
     for (;;)
     {
-#define OPTSTR "+AbeEntTvx:lhV"
+#define OPTSTR "+AbeEnstTvx:lhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
@@ -88,6 +89,7 @@ int main(int argc, char *argv[])
             { "number-nonblank",  0, NULL, 'b' },
             { "show-ends",        0, NULL, 'E' },
             { "number",           0, NULL, 'n' },
+            { "squeeze-blank",    0, NULL, 's' },
             { "show-tabs",        0, NULL, 'T' },
             { "show-nonprinting", 0, NULL, 'v' },
             { "execute",          1, NULL, 'x' },
@@ -117,6 +119,9 @@ int main(int argc, char *argv[])
             break;
         case 'n': /* --number */
             number_lines = 1;
+            break;
+        case 's': /* --squeeze-blank */
+            squeeze_lines = 1;
             break;
         case 't':
             escape_tabs = escape_other = 1;
@@ -174,7 +179,7 @@ static void output(char const *buf, size_t len)
     int line = 1, newline = 1;
 
     if (!(escape_tabs || escape_ends || escape_other
-           || number_lines || number_nonblank))
+           || number_lines || number_nonblank || squeeze_lines))
     {
         fwrite(buf, len, 1, stdout);
         return;
@@ -183,6 +188,10 @@ static void output(char const *buf, size_t len)
     for (i = 0; i < len; i++)
     {
         int ch = (unsigned int)(unsigned char)buf[i];
+
+        if (squeeze_lines && i > 1
+             && ch == '\n' && buf[i - 1] == '\n' && buf[i - 2] == '\n')
+            continue;
 
         if (number_lines || number_nonblank)
         {
