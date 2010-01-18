@@ -1,4 +1,12 @@
 
+Changes from zzuf 0.12 to 0.13
+
+ * various fixes for Linux, FreeBSD, OS X and OpenBSD libc calls.
+ * network host filtering support.
+ * support for memory limits on OS X.
+ * massive testsuite improvements.
+ * support most cat options in zzcat, which is now fully programmable.
+
 Changes from zzuf 0.11 to 0.12
 
  * no longer crash when the fuzzed application uses realloc() before all

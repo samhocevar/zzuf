@@ -12,3 +12,9 @@ EXTRA_DIST = bootstrap AUTHORS \
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = foreign dist-bzip2
 
+update-changelog: FORCE
+	git --help >/dev/null 2>&1 \
+	  && test -d .git \
+	  && git log --stat | grep -v '^    \(git-svn-id\|$$\)' > ChangeLog
+
+FORCE:
