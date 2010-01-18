@@ -1,7 +1,7 @@
 
 EXTRA_DIST = $(TESTS) functions.inc file-00 file-ff file-random file-text
 
-noinst_PROGRAMS = zzero zznop bug-overflow bug-memory bug-div0
+noinst_PROGRAMS = zzero zznop zzone bug-overflow bug-memory bug-div0
 
 TESTS = check-zzuf-A-autoinc \
         check-zzuf-f-fuzzing \

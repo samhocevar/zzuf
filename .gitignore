@@ -27,6 +27,7 @@ src/zzuf
 src/zzcat
 test/zzero
 test/zznop
+test/zzone
 test/bug-div0
 test/bug-memory
 test/bug-overflow
