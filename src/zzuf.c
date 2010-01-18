@@ -795,6 +795,15 @@ static void clean_children(struct opts *opts)
             opts->crashes++;
         }
 #endif
+        else if (opts->verbose)
+        {
+            finfo(stderr, opts, opts->child[i].seed);
+            if (WIFSIGNALED(status))
+                fprintf(stderr, "signal %i%s\n",
+                        WTERMSIG(status), sig2name(WTERMSIG(status)));
+            else
+                fprintf(stderr, "exit %i\n", WEXITSTATUS(status));
+        }
 
         for(j = 0; j < 3; j++)
             if(opts->child[i].fd[j] >= 0)
