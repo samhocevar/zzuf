@@ -2,7 +2,8 @@
 .SH NAME
 zzcat \- concatenate files using different instruction sequences
 .SH SYNOPSIS
-\fBzzcat\fR [\fB\-AbeEntTv\fR] [\fB\-x\fR \fIsequence\fR] [\fIFILE\fR]...
+\fBzzcat\fR [\fB\-AbeEntTv\fR] [\fB\-r\fR \fIloops\fR]
+[\fB\-x\fR \fIsequence\fR] [\fIFILE\fR]...
 .br
 \fBzzcat \-l\fR | \fB\-\-list\fR
 .br
@@ -33,6 +34,9 @@ Display $ at end of each line.
 .TP
 \fB\-n\fR, \fB\-\-number\fR
 Number all output lines.
+.TP
+\fB\-r\fR, \fB\-\-repeat\fR=\fIloops\fR
+Concatenate all files \fIloops\fR times.
 .TP
 \fB\-t\fR
 Equivalent to \fB\-vT\fR.

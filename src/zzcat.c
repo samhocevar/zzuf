@@ -62,6 +62,7 @@ static void version(void);
 static void usage(void);
 
 /* Global parameters */
+static int repeat = 1;
 static char escape_tabs = 0;
 static char escape_ends = 0;
 static char escape_other = 0;
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
 
     for (;;)
     {
-#define OPTSTR "+AbeEnstTvx:lhV"
+#define OPTSTR "+AbeEnr:stTvx:lhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
@@ -94,6 +95,7 @@ int main(int argc, char *argv[])
             { "number-nonblank",  0, NULL, 'b' },
             { "show-ends",        0, NULL, 'E' },
             { "number",           0, NULL, 'n' },
+            { "repeat",           1, NULL, 'r' },
             { "squeeze-blank",    0, NULL, 's' },
             { "show-tabs",        0, NULL, 'T' },
             { "show-nonprinting", 0, NULL, 'v' },
@@ -124,6 +126,9 @@ int main(int argc, char *argv[])
             break;
         case 'n': /* --number */
             number_lines = 1;
+            break;
+        case 'r': /* --repeat */
+            repeat = atoi(optarg);
             break;
         case 's': /* --squeeze-blank */
             squeeze_lines = 1;
@@ -164,12 +169,13 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    for (i = myoptind; i < argc; i++)
-    {
-        int ret = run(sequence, argv[i]);
-        if (ret)
-            return ret;
-    }
+    while (repeat-- > 0)
+        for (i = myoptind; i < argc; i++)
+        {
+            int ret = run(sequence, argv[i]);
+            if (ret)
+                return ret;
+        }
 
     return EXIT_SUCCESS;
 }
@@ -788,10 +794,11 @@ static void usage(void)
     printf("  -e                        equivalent to -vE\n");
     printf("  -E, --show-ends           display $ at end of each line\n");
     printf("  -n, --number              number all output lines\n");
+    printf("  -r, --repeat=<loops>      concatenate command line files <loops> times\n");
     printf("  -t                        equivalent to -vT\n");
     printf("  -T, --show-tabs           display TAB characters as ^I\n");
     printf("  -v, --show-nonprinting    use ^ and M- notation, except for LFD and TAB\n");
-    printf("  -x, --execute <sequence>  execute commands in <sequence>\n");
+    printf("  -x, --execute=<sequence>  execute commands in <sequence>\n");
     printf("  -l, --list                list available program functions\n");
     printf("  -h, --help                display this help and exit\n");
     printf("  -V, --version             output version information and exit\n");
