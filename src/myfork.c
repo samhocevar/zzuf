@@ -178,8 +178,8 @@ static int run_process(struct opts *opts, int pipes[][2])
     if(opts->maxmem >= 0)
     {
         struct rlimit rlim;
-        rlim.rlim_cur = opts->maxmem * 1000000;
-        rlim.rlim_max = opts->maxmem * 1000000;
+        rlim.rlim_cur = opts->maxmem * 1048576;
+        rlim.rlim_max = opts->maxmem * 1048576;
         setrlimit(ZZUF_RLIMIT_MEM, &rlim);
     }
 #endif

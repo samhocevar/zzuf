@@ -290,7 +290,6 @@ int main(int argc, char *argv[])
             break;
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
         case 'M': /* --max-memory */
-            setenv("ZZUF_MEMORY", "1", 1);
             if(myoptarg[0] == '=')
                 myoptarg++;
             opts->maxmem = atoi(myoptarg);
@@ -457,6 +456,14 @@ int main(int argc, char *argv[])
         setenv("ZZUF_PROTECT", opts->protect, 1);
     if(opts->refuse)
         setenv("ZZUF_REFUSE", opts->refuse, 1);
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
+    if(opts->maxmem >= 0)
+    {
+        char buf[32];
+        snprintf(buf, 32, "%i", opts->maxmem);
+        setenv("ZZUF_MEMORY", buf, 1);
+    }
+#endif
 
     /* Allocate memory for children handling */
     opts->child = malloc(opts->maxchild * sizeof(struct child));

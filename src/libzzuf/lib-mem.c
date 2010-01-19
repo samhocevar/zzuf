@@ -131,6 +131,10 @@ static int64_t dummy_offset = 0;
 
 /* setrlimit(RLIMIT_AS) is ignored on OS X, we need to check memory usage
  * from inside the process. Oh, and getrusage() doesn't work either. */
+#if defined HAVE_MACH_TASK_H
+vm_size_t mach_page_size;
+#endif
+
 static int memory_exceeded(void)
 {
 #if defined HAVE_MACH_TASK_H
@@ -139,7 +143,8 @@ static int memory_exceeded(void)
 
     if (task_info(mach_task_self(), TASK_BASIC_INFO,
                   (task_info_t)&tbi, &mmtn) == KERN_SUCCESS
-         && tbi.resident_size > _zz_memory)
+         && (int64_t)tbi.resident_size * mach_page_size / 1048576
+                  > (int64_t)_zz_memory)
         return 1;
 #endif
     return 0;
@@ -151,6 +156,10 @@ void _zz_mem_init(void)
     LOADSYM(calloc);
     LOADSYM(malloc);
     LOADSYM(realloc);
+
+#if defined HAVE_MACH_TASK_H
+    host_page_size(mach_host_self(), &mach_page_size);
+#endif
 }
 
 void *NEW(calloc)(size_t nmemb, size_t size)

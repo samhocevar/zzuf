@@ -176,7 +176,7 @@ void _zz_init(void)
 
     tmp = getenv("ZZUF_MEMORY");
     if(tmp)
-        _zz_memory = atoll(tmp);
+        _zz_memory = atoi(tmp);
 
     tmp = getenv("ZZUF_NETWORK");
     if(tmp && *tmp == '1')
