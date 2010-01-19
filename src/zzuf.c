@@ -801,7 +801,6 @@ static void clean_children(struct opts *opts)
                     WTERMSIG(status), sig2name(WTERMSIG(status)), message);
             opts->crashes++;
         }
-#endif
         else if (opts->verbose)
         {
             finfo(stderr, opts, opts->child[i].seed);
@@ -811,6 +810,10 @@ static void clean_children(struct opts *opts)
             else
                 fprintf(stderr, "exit %i\n", WEXITSTATUS(status));
         }
+#else
+        /* waitpid() is not available. Don't kill the process. */
+        continue;
+#endif
 
         for(j = 0; j < 3; j++)
             if(opts->child[i].fd[j] >= 0)
