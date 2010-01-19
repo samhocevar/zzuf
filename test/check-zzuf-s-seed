@@ -15,14 +15,17 @@
 
 start_test "zzuf -s test"
 
-for ratio in 1 0.1 0.01 0.001 0.0001; do
-  if test $ratio = 0.0001; then
-    bytes=1024
-  elif test $ratio = 0.001; then
-    bytes=8192
-  else
-    bytes=32768
-  fi
+t=0
+while : ; do
+  case $t in
+    0) ratio=1; bytes=32768 ;;
+    1) ratio=0.1; bytes=32768 ;;
+    2) ratio=0.01; bytes=32768 ;;
+    3) ratio=0.001; bytes=8192 ;;
+    4) ratio=0.0001; bytes=1024 ;;
+    *) break ;;
+  esac
+  t=$(expr $t + 1)
   new_test "$bytes B of zeroes, ratio $ratio"
   zeroes=$(expr $bytes '*' 4)
   passes=10
@@ -32,7 +35,7 @@ for ratio in 1 0.1 0.01 0.001 0.0001; do
     echo " $zeroes"
     passes=$(expr '(' $passes '*' 7 + 3 ')' / 4)
   done
-  if test $passes -lt 2000000; then
+  if test $passes -lt 200000; then
       pass_test " ok"
   else
       pass_test " FAILED"
