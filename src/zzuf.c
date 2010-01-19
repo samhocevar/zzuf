@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
         case 't': /* --max-time */
             if(myoptarg[0] == '=')
                 myoptarg++;
-            opts->maxtime = (int64_t)atoll(myoptarg) * 1000000;
+            opts->maxtime = (int64_t)atoi(myoptarg) * 1000000;
             break;
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
         case 'T': /* --max-cputime */
