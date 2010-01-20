@@ -170,6 +170,8 @@ static inline uint8_t *get_stream_ptr(FILE *stream)
     return (uint8_t *)stream->_IO_read_ptr;
 #elif defined HAVE_FREEBSD_FILE
     return (uint8_t *)stream->_p;
+#elif defined HAVE_SOLARIS_FILE
+    return (uint8_t *)stream->_ptr;
 #else
     (void)stream;
     return NULL;
@@ -183,6 +185,8 @@ static inline int get_stream_off(FILE *stream)
                   - (uint8_t *)stream->_IO_read_base);
 #elif defined HAVE_FREEBSD_FILE
     return (int)((uint8_t *)stream->_p - (uint8_t *)stream->_bf._base);
+#elif defined HAVE_SOLARIS_FILE
+    return (int)((uint8_t *)stream->_ptr - (uint8_t *)stream->_base);
 #else
     (void)stream;
     return 0;
@@ -196,6 +200,8 @@ static inline int get_stream_cnt(FILE *stream)
                   - (uint8_t *)stream->_IO_read_ptr);
 #elif defined HAVE_FREEBSD_FILE
     return stream->_r;
+#elif defined HAVE_SOLARIS_FILE
+    return stream->_cnt;
 #else
     (void)stream;
     return 0;

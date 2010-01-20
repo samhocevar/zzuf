@@ -92,21 +92,31 @@ AC_DEFINE_UNQUOTED(RECV_T, $ac_v_recv_t, [Define to the recv() return type])
 AC_MSG_CHECKING([for _IO_read_ptr and _IO_read_end in FILE (glibc-style)])
 AC_TRY_COMPILE([#include <stdio.h>],
  [FILE *fp; fp->_IO_read_ptr++; fp->_IO_read_end++],
- [ac_cv_have_file_io_read_ptr=yes],
- [ac_cv_have_file_io_read_ptr=no])
-AC_MSG_RESULT($ac_cv_have_file_io_read_ptr)
-if test "$ac_cv_have_file_io_read_ptr" != "no"; then
+ [ac_cv_have_glibc_file=yes],
+ [ac_cv_have_glibc_file=no])
+AC_MSG_RESULT($ac_cv_have_glibc_file)
+if test "$ac_cv_have_glibc_file" != "no"; then
   AC_DEFINE(HAVE_GLIBC_FILE, 1, [Define to 1 if FILE has glibc-style members])
 fi
 
 AC_MSG_CHECKING([for _bf._base, _r and _p in FILE (FreeBSD-style)])
 AC_TRY_COMPILE([#include <stdio.h>],
  [FILE *fp; fp->_bf._base++; fp->_r++; fp->_p++],
- [ac_cv_have_file_bf_base=yes],
- [ac_cv_have_file_bf_base=no])
-AC_MSG_RESULT($ac_cv_have_file_bf_base)
-if test "$ac_cv_have_file_bf_base" != "no"; then
+ [ac_cv_have_freebsd_file=yes],
+ [ac_cv_have_freebsd_file=no])
+AC_MSG_RESULT($ac_cv_have_freebsd_file)
+if test "$ac_cv_have_freebsd_file" != "no"; then
   AC_DEFINE(HAVE_FREEBSD_FILE, 1, [Define to 1 if FILE has FreeBSD-style members])
+fi
+
+AC_MSG_CHECKING([for _base, _cnt and _ptr in FILE (Solaris-style)])
+AC_TRY_COMPILE([#include <stdio.h>],
+ [FILE *fp; fp->_base++; fp->_cnt++; fp->_ptr++],
+ [ac_cv_have_solaris_file=yes],
+ [ac_cv_have_solaris_file=no])
+AC_MSG_RESULT($ac_cv_have_solaris_file)
+if test "$ac_cv_have_solaris_file" != "no"; then
+  AC_DEFINE(HAVE_SOLARIS_FILE, 1, [Define to 1 if FILE has Solaris-style members])
 fi
 
 dnl  On HP-UX, fpos64_t == int64_t, but on Linux it's a compound object.
@@ -114,11 +124,13 @@ AC_MSG_CHECKING(how to access fpos64_t x)
 ac_v_fpos64_t="unknown"
 AC_TRY_COMPILE(
  [#define _LARGEFILE64_SOURCE
+  #define _LARGEFILE_SOURCE
   #include <stdio.h>],
  [fpos64_t x; long long int y = x.__pos;],
  [ac_v_fpos64_t="(x).__pos"])
 AC_TRY_COMPILE(
  [#define _LARGEFILE64_SOURCE
+  #define _LARGEFILE_SOURCE
   #include <stdio.h>],
  [fpos64_t x; long long int y = (long long int)x;],
  [ac_v_fpos64_t="(x)"])

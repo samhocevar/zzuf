@@ -20,6 +20,8 @@
 #define _GNU_SOURCE
 /* Needed for struct sigaction on HP-UX */
 #define _INCLUDE_POSIX_SOURCE
+/* Needed for struct sigaction on OpenSolaris */
+#define __EXTENSIONS__
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>

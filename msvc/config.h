@@ -82,6 +82,7 @@
 /* #undef HAVE_SIG_T */
 #define HAVE_SOCKET 1
 /* #undef HAVE_SOCKLEN_T */
+/* #undef HAVE_SOLARIS_FILE */
 #define HAVE_STDINT_H 1
 #define HAVE_STDLIB_H 1
 #define HAVE_STRINGS_H 1
