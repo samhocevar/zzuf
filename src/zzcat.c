@@ -22,6 +22,8 @@
 #define _INCLUDE_POSIX_SOURCE
 /* Needed for fgets_unlocked() */
 #define _GNU_SOURCE
+/* Needed for getc_unlocked() on OpenSolaris */
+#define __EXTENSIONS__
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>

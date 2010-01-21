@@ -36,7 +36,7 @@
 /* Need this to include <libc.h> on OS X */
 #define _DARWIN_C_SOURCE
 /* Use this to get posix_memalign */
-#if defined HAVE_POSIX_MEMALIGN
+#if defined HAVE_POSIX_MEMALIGN && !defined __sun
 #   undef _XOPEN_SOURCE
 #   define _XOPEN_SOURCE 600
 #endif
