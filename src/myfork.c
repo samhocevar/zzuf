@@ -141,6 +141,9 @@ static int run_process(struct opts *opts, int pipes[][2])
 #   elif defined __osf__
 #       define EXTRAINFO ":DEFAULT"
 #       define PRELOAD "_RLD_LIST"
+#   elif defined __sun && defined __i386
+#       define EXTRAINFO ""
+#       define PRELOAD "LD_PRELOAD_32"
 #   else
 #       define EXTRAINFO ""
 #       define PRELOAD "LD_PRELOAD"
