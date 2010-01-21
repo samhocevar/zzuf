@@ -13,7 +13,7 @@
 #
 
 DIR="$(dirname "$0")"
-ZZUF="$DIR/../src/zzuf -E '[.]ilist$'"
+ZZUF="$DIR/../src/zzuf -E [.]ilist$"
 
 ZZCAT="$DIR/../src/zzcat"
 if [ ! -f "$ZZCAT" ]; then

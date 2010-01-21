@@ -13,10 +13,10 @@
 
 . "$(dirname "$0")/functions.inc"
 
-HAVE_GETLINE=$("$ZZCAT" -l | grep -q '^  getline(' && echo "y")
-HAVE_GETDELIM=$("$ZZCAT" -l | grep -q '^  getdelim(' && echo "y")
-HAVE_GETC_UNLOCKED=$("$ZZCAT" -l | grep -q '^  getc_unlocked(' && echo "y")
-HAVE_FGETC_UNLOCKED=$("$ZZCAT" -l | grep -q '^  fgetc_unlocked(' && echo "y")
+HAVE_GETLINE=$("$ZZCAT" -l | grep >/dev/null 2>&1 '^  getline(' && echo "y")
+HAVE_GETDELIM=$("$ZZCAT" -l | grep >/dev/null 2>&1 '^  getdelim(' && echo "y")
+HAVE_GETC_UNLOCKED=$("$ZZCAT" -l | grep >/dev/null 2>&1 '^  getc_unlocked(' && echo "y")
+HAVE_FGETC_UNLOCKED=$("$ZZCAT" -l | grep >/dev/null 2>&1 '^  fgetc_unlocked(' && echo "y")
 
 checkutils()
 {
