@@ -268,7 +268,7 @@ static void output(char const *buf, size_t len)
         sequence = strchr(sequence, ')') + 1; \
     } while(0)
 
-#define ROUNDUP(size) (((size) + 0xfff) & ~0xfff)
+#define ROUNDUP(size) (((size) + 0x1000) & ~0xfff)
 
 #define MERGE(address, cnt, off) \
     do { \
@@ -276,7 +276,7 @@ static void output(char const *buf, size_t len)
         if (_cnt && retoff + _cnt > retlen) \
         { \
             retlen = retoff + _cnt; \
-            if (ROUNDUP(retlen) != ROUNDUP(retlen - _cnt)) \
+            if (!retbuf || ROUNDUP(retlen) != ROUNDUP(retlen - _cnt)) \
                 retbuf = realloc(retbuf, ROUNDUP(retlen)); \
         } \
         if (_cnt > 0) \
