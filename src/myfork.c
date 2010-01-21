@@ -48,6 +48,11 @@
 #include "md5.h"
 #include "timer.h"
 
+/* Handle old libtool versions */
+#if !defined LT_OBJDIR
+#   define LT_OBJDIR ".libs/"
+#endif
+
 #if defined RLIMIT_AS
 #   define ZZUF_RLIMIT_MEM RLIMIT_AS
 #elif defined RLIMIT_VMEM
