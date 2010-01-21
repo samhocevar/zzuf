@@ -2,7 +2,7 @@
 .SH NAME
 zzcat \- concatenate files using different instruction sequences
 .SH SYNOPSIS
-\fBzzcat\fR [\fB\-AbeEntTv\fR] [\fB\-r\fR \fIloops\fR]
+\fBzzcat\fR [\fB\-AbdeEntTv\fR] [\fB\-r\fR \fIloops\fR]
 [\fB\-x\fR \fIsequence\fR] [\fIFILE\fR]...
 .br
 \fBzzcat \-l\fR | \fB\-\-list\fR
@@ -25,6 +25,9 @@ Equivalent to \fB\-vET\fR.
 .TP
 \fB\-b\fR, \fB\-\-number\-nonblank\fR
 Number nonempty output lines.
+.TP
+\fB\-d\fR, \fB\-\-debug\fR
+Output debugging information.
 .TP
 \fB\-e\fR
 Equivalent to \fB\-vET\fR.

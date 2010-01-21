@@ -64,6 +64,7 @@ static void version(void);
 static void usage(void);
 
 /* Global parameters */
+static int debug = 0;
 static int repeat = 1;
 static char escape_tabs = 0;
 static char escape_ends = 0;
@@ -88,13 +89,14 @@ int main(int argc, char *argv[])
 
     for (;;)
     {
-#define OPTSTR "+AbeEnr:stTvx:lhV"
+#define OPTSTR "+AbdeEnr:stTvx:lhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
         {
             { "show-all",         0, NULL, 'A' },
             { "number-nonblank",  0, NULL, 'b' },
+            { "debug",            0, NULL, 'd' },
             { "show-ends",        0, NULL, 'E' },
             { "number",           0, NULL, 'n' },
             { "repeat",           1, NULL, 'r' },
@@ -119,6 +121,9 @@ int main(int argc, char *argv[])
             break;
         case 'b': /* --number-nonblank */
             number_nonblank = 1;
+            break;
+        case 'd': /* --debug */
+            debug = 1;
             break;
         case 'e':
             escape_ends = escape_other = 1;
@@ -277,10 +282,20 @@ static void output(char const *buf, size_t len)
         { \
             retlen = retoff + _cnt; \
             if (!retbuf || ROUNDUP(retlen) != ROUNDUP(retlen - _cnt)) \
+            { \
+                if (debug) \
+                    fprintf(stderr, "D: zzcat: allocating %i bytes for %i\n", \
+                            (int)ROUNDUP(retlen), (int)retlen); \
                 retbuf = realloc(retbuf, ROUNDUP(retlen)); \
+            } \
         } \
         if (_cnt > 0) \
+        { \
+            if (debug) \
+                fprintf(stderr, "D: zzcat: writing %i byte%s at offset %i\n", \
+                        (int)_cnt, _cnt == 1 ? "" : "s", (int)retoff); \
             memcpy(retbuf + retoff, address, _cnt); \
+        } \
         retoff += _off; \
     } while(0)
 
@@ -784,7 +799,7 @@ static void version(void)
 
 static void usage(void)
 {
-    printf("Usage: zzcat [AbeEntTv] [-x sequence] [FILE...]\n");
+    printf("Usage: zzcat [AbdeEntTv] [-x sequence] [FILE...]\n");
     printf("       zzcat -l | --list\n");
     printf("       zzcat -h | --help\n");
     printf("       zzcat -V | --version\n");
@@ -793,6 +808,7 @@ static void usage(void)
     printf("Mandatory arguments to long options are mandatory for short options too.\n");
     printf("  -A, --show-all            equivalent to -vET\n");
     printf("  -b, --number-nonblank     number nonempty output lines\n");
+    printf("  -d, --debug               print debugging information\n");
     printf("  -e                        equivalent to -vE\n");
     printf("  -E, --show-ends           display $ at end of each line\n");
     printf("  -n, --number              number all output lines\n");
