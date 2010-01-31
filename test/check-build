@@ -40,7 +40,7 @@ fi
 failure=0
 for dir in src test; do
   (cd $(dirname "$0")/../$dir
-  for x in $(make echo-sources); do
+  for x in $(make -s echo-sources); do
     if grep '[[:space:]]$' "$x" >/dev/null 2>&1; then
       echo "error: $dir/$x contains trailing spaces"
       failure=1
