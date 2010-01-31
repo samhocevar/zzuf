@@ -958,9 +958,9 @@ static void version(void)
 static void usage(void)
 {
 #if defined HAVE_REGEX_H
-    printf("Usage: zzuf [-AcdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
+    printf("Usage: zzuf [-aAcdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
 #else
-    printf("Usage: zzuf [-AdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
+    printf("Usage: zzuf [-aAdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
 #endif
     printf("              [-f mode] [-D delay] [-j jobs] [-C crashes] [-B bytes] [-a list]\n");
     printf("              [-t seconds]");

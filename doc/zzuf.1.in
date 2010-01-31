@@ -1,8 +1,8 @@
-.TH zzuf 1 "2010-01-06" "zzuf @PACKAGE_VERSION@"
+.TH zzuf 1 "2010-01-31" "zzuf @PACKAGE_VERSION@"
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-AcdimnqSvx\fR]
+\fBzzuf\fR [\fB\-aAcdimnqSvx\fR]
 [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR]
 [\fB\-r\fR \fIratio\fR|\fB\-r\fR \fImin:max\fR]
 [\fB\-f\fR \fIfuzzing\fR] [\fB\-D\fR \fIdelay\fR] [\fB\-j\fR \fIjobs\fR]
@@ -39,6 +39,15 @@ if the \fBcat\fR utility had been called:
 .PP
 \fB    zzuf < /dev/zero\fR
 .SH OPTIONS
+.TP
+\fB\-a\fR, \fB\-\-allow\fR=\fIlist\fR
+Only fuzz network input for IPs in \fIlist\fR, a comma-separated list of
+IP addresses. If the list starts with \fB!\fR, the flag meaning is reversed
+and all addresses are fuzzed except the ones in the list.
+
+As of now, this flag only understands INET (IPv4) addresses.
+
+This option requires network fuzzing to be activated using \fB\-n\fR.
 .TP
 \fB\-A\fR, \fB\-\-autoinc\fR
 Increment random seed each time a new file is opened. This is only required
