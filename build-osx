@@ -1,0 +1,44 @@
+#! /bin/sh
+
+##  OS X fat binary compilation for zzuf -- Sam Hocevar <sam@hocevar.net>
+
+set -x
+set -e
+
+I386CC=i686-apple-darwin10-gcc-4.2.1
+
+if ! "${I386CC}" -v >/dev/null 2>&1; then
+  echo "${I386CC} not found, please fix build script"
+fi
+
+# Clean up our working directory
+SRCDIR="`pwd`"
+DIRNAME="zzuf-osx-`sed -ne 's/^AC_INIT(.*, \(.*\)).*/\1/p' configure.ac`"
+INSTALLDIR="`pwd`/${DIRNAME}"
+BUILDDIR="${INSTALLDIR}/build"
+rm -Rf "${INSTALLDIR}"
+rm -f "${INSTALLDIR}.zip"
+mkdir "${INSTALLDIR}"
+mkdir "${INSTALLDIR}/build"
+
+cd "${INSTALLDIR}/build"
+# Build for i386
+"${SRCDIR}/configure" --host=i686-apple-darwin10 CC="${I386CC}"
+(cd src; make libzzuf.la)
+cp src/.libs/libzzuf.dylib src/libzzuf-i386.dylib
+make distclean
+# Build for x86_64
+"${SRCDIR}/configure"
+make
+mv src/.libs/libzzuf.dylib src/libzzuf-x86_64.dylib
+# Create fat binary
+lipo src/libzzuf-i386.dylib src/libzzuf-x86_64.dylib -create -o src/.libs/libzzuf.dylib
+
+make install DESTDIR="${INSTALLDIR}" pkglibdir=/.libs/ pkgdatadir=/ bindir=/ man1dir=/doc man3dir=/doc
+rm -Rf "${INSTALLDIR}/build"
+
+# Pack the directory
+cd "${SRCDIR}"
+tar cvzf "${DIRNAME}.tar.gz" "${DIRNAME}"
+rm -Rf "${INSTALLDIR}"
+
