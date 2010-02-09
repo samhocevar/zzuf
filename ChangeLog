@@ -1,4 +1,54 @@
-commit 1cf8e13087011c754d6e5683d48c48e627d1e526
+Commit: 4357
+Author: sam
+Date:   Tue Feb 9 02:15:06 2010 +0000
+
+    Split check-build into check-source and check-win32.
+
+ Makefile.am       |    2 +
+ test/Makefile.am  |    2 +-
+ test/check-build  |   65 -----------------------------------------------------
+ test/check-source |   37 ++++++++++++++++++++++++++++++
+ test/check-win32  |   30 ++++++++++++++++++++++++
+ 5 files changed, 70 insertions(+), 66 deletions(-)
+
+Commit: 4319
+Author: sam
+Date:   Sun Feb 7 14:21:35 2010 +0000
+
+    Add an OS X build script that generates fat binaries.
+
+ Makefile.am |    2 +-
+ build-osx   |   44 ++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 45 insertions(+), 1 deletions(-)
+
+Commit: 4315
+Author: sam
+Date:   Sat Feb 6 01:39:00 2010 +0000
+
+    Add missing svn:ignore properties.
+
+Commit: 4314
+Author: sam
+Date:   Sat Feb 6 01:37:52 2010 +0000
+
+    On OS X, resident_size is actually in bytes, not pages. Fixing
+    memory check routine.
+
+ src/libzzuf/lib-mem.c |   11 +----------
+ 1 files changed, 1 insertions(+), 10 deletions(-)
+
+Commit: 4311
+Author: sam
+Date:   Sun Jan 31 12:25:16 2010 +0000
+
+    Preparing zzuf-0.13 release.
+
+ ChangeLog    | 1194 +++++++++++++++++++++++++++++++++-------------------------
+ README       |    3 +-
+ configure.ac |    2 +-
+ 3 files changed, 677 insertions(+), 522 deletions(-)
+
+Commit: 4310
 Author: sam
 Date:   Sun Jan 31 12:18:01 2010 +0000
 
@@ -8,7 +58,7 @@ Date:   Sun Jan 31 12:18:01 2010 +0000
  test/check-zzuf-r-ratio |    7 +++++--
  2 files changed, 6 insertions(+), 3 deletions(-)
 
-commit f154d7caf5a624915b7d9d291edc1c68535826e1
+Commit: 4309
 Author: sam
 Date:   Sun Jan 31 12:05:43 2010 +0000
 
@@ -17,7 +67,7 @@ Date:   Sun Jan 31 12:05:43 2010 +0000
  Makefile.am |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit feb30571cbc3055cbeaed817716c63110f790645
+Commit: 4308
 Author: sam
 Date:   Sun Jan 31 12:04:56 2010 +0000
 
@@ -27,7 +77,7 @@ Date:   Sun Jan 31 12:04:56 2010 +0000
  src/zzuf.c    |    4 ++--
  2 files changed, 13 insertions(+), 4 deletions(-)
 
-commit 1da3f6d7d0c8191ff2d064e5053b686dad5d1d14
+Commit: 4291
 Author: sam
 Date:   Thu Jan 21 09:31:47 2010 +0000
 
@@ -38,7 +88,7 @@ Date:   Thu Jan 21 09:31:47 2010 +0000
  src/zzuf.c   |    5 -----
  2 files changed, 5 insertions(+), 5 deletions(-)
 
-commit 7963572419f2979f53e07f4e5eea79fdac91fc43
+Commit: 4290
 Author: sam
 Date:   Thu Jan 21 01:17:27 2010 +0000
 
@@ -47,7 +97,7 @@ Date:   Thu Jan 21 01:17:27 2010 +0000
  src/myfork.c |    3 +++
  1 files changed, 3 insertions(+), 0 deletions(-)
 
-commit bb7c47473da6f1c24834fc75052bdc784b72e2fc
+Commit: 4289
 Author: sam
 Date:   Thu Jan 21 01:17:21 2010 +0000
 
@@ -57,7 +107,7 @@ Date:   Thu Jan 21 01:17:21 2010 +0000
  src/zzcat.c    |   20 ++++++++++++++++++--
  2 files changed, 22 insertions(+), 3 deletions(-)
 
-commit 4226dd097c72166731ac887ed4c793a246f4f413
+Commit: 4288
 Author: sam
 Date:   Thu Jan 21 01:17:15 2010 +0000
 
@@ -66,7 +116,7 @@ Date:   Thu Jan 21 01:17:15 2010 +0000
  src/zzcat.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit b0305c1c00a41e0ee788ce1391032456ec2d9115
+Commit: 4287
 Author: sam
 Date:   Thu Jan 21 01:17:09 2010 +0000
 
@@ -76,7 +126,7 @@ Date:   Thu Jan 21 01:17:09 2010 +0000
  test/functions.inc |    2 +-
  2 files changed, 5 insertions(+), 5 deletions(-)
 
-commit 06822bf92062c9524801082273536b4e915f4dc2
+Commit: 4286
 Author: sam
 Date:   Thu Jan 21 01:17:01 2010 +0000
 
@@ -87,7 +137,7 @@ Date:   Thu Jan 21 01:17:01 2010 +0000
  src/zzcat.c           |    2 ++
  2 files changed, 3 insertions(+), 1 deletions(-)
 
-commit 7d525f87b6a69f36dcb51df5fd97c53e13fd9f0f
+Commit: 4285
 Author: sam
 Date:   Wed Jan 20 07:59:01 2010 +0000
 
@@ -101,7 +151,7 @@ Date:   Wed Jan 20 07:59:01 2010 +0000
  src/libzzuf/lib-stream.c |    6 ++++++
  5 files changed, 31 insertions(+), 8 deletions(-)
 
-commit a85778a01aa08186a42e0131e8cc3aac95c49a24
+Commit: 4284
 Author: sam
 Date:   Tue Jan 19 13:01:45 2010 +0000
 
@@ -110,7 +160,7 @@ Date:   Tue Jan 19 13:01:45 2010 +0000
  src/zzuf.c |    5 ++++-
  1 files changed, 4 insertions(+), 1 deletions(-)
 
-commit b85baac7899c4df8229d6c4562d2f602f3bdfe36
+Commit: 4283
 Author: sam
 Date:   Tue Jan 19 12:44:29 2010 +0000
 
@@ -119,7 +169,7 @@ Date:   Tue Jan 19 12:44:29 2010 +0000
  src/zzuf.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 8b01db7f0ce771a0fd0c1e92244e61b463f6f292
+Commit: 4282
 Author: sam
 Date:   Tue Jan 19 12:44:23 2010 +0000
 
@@ -132,7 +182,7 @@ Date:   Tue Jan 19 12:44:23 2010 +0000
  src/zzuf.c            |    9 ++++++++-
  4 files changed, 21 insertions(+), 5 deletions(-)
 
-commit cac276f0bcc3d8437bb0f815b11b31fb7d3ccd54
+Commit: 4281
 Author: sam
 Date:   Tue Jan 19 12:44:15 2010 +0000
 
@@ -141,7 +191,7 @@ Date:   Tue Jan 19 12:44:15 2010 +0000
  test/check-zzuf-s-seed |   21 ++++++++++++---------
  1 files changed, 12 insertions(+), 9 deletions(-)
 
-commit ffc9980a2b5cb2002091577603b310cf70f13b28
+Commit: 4280
 Author: sam
 Date:   Mon Jan 18 02:19:07 2010 +0000
 
@@ -152,7 +202,7 @@ Date:   Mon Jan 18 02:19:07 2010 +0000
  NEWS        |    8 +
  3 files changed, 3075 insertions(+), 695 deletions(-)
 
-commit b54c5f2b0f43d2c2a445e3b631c9658b9e82382c
+Commit: 4279
 Author: sam
 Date:   Mon Jan 18 02:02:12 2010 +0000
 
@@ -165,7 +215,7 @@ Date:   Mon Jan 18 02:02:12 2010 +0000
  test/zzone.c           |   85 ++++++++++++++++++++++++++++++++++++++++++++++++
  4 files changed, 130 insertions(+), 1 deletions(-)
 
-commit b508a55f625deaa8bb325508b4fcebe06bed6adc
+Commit: 4278
 Author: sam
 Date:   Mon Jan 18 02:02:06 2010 +0000
 
@@ -175,7 +225,7 @@ Date:   Mon Jan 18 02:02:06 2010 +0000
  src/zzcat.c    |   23 +++++++++++++++--------
  2 files changed, 20 insertions(+), 9 deletions(-)
 
-commit afa93520bafdc99561984e9332c4c7a21822e99c
+Commit: 4277
 Author: sam
 Date:   Mon Jan 18 02:02:00 2010 +0000
 
@@ -184,7 +234,7 @@ Date:   Mon Jan 18 02:02:00 2010 +0000
  src/zzuf.c |    9 +++++++++
  1 files changed, 9 insertions(+), 0 deletions(-)
 
-commit f07f9ab9a29d3a2334db11925c81551fbdb915dc
+Commit: 4274
 Author: sam
 Date:   Fri Jan 15 21:14:48 2010 +0000
 
@@ -193,7 +243,7 @@ Date:   Fri Jan 15 21:14:48 2010 +0000
  doc/zzcat.1.in |   51 ++++++++++++++++++++++++++++++++++++++++++++-------
  1 files changed, 44 insertions(+), 7 deletions(-)
 
-commit f683e68d435b9a3c44cded0e8cd16eefe70828ca
+Commit: 4273
 Author: sam
 Date:   Fri Jan 15 21:14:39 2010 +0000
 
@@ -202,7 +252,7 @@ Date:   Fri Jan 15 21:14:39 2010 +0000
  src/zzcat.c |   38 +++++++++++++++++++++++++++-----------
  1 files changed, 27 insertions(+), 11 deletions(-)
 
-commit 44e0cb3d455f9d4da33f3efcec87d6cf6fda28b1
+Commit: 4272
 Author: sam
 Date:   Fri Jan 15 17:03:39 2010 +0000
 
@@ -222,7 +272,7 @@ Date:   Fri Jan 15 17:03:39 2010 +0000
  test/check-zzuf-r-ratio      |   62 ++++++++++++++++++++++++++++++++++++++
  11 files changed, 258 insertions(+), 254 deletions(-)
 
-commit f392a077a0e07b5ac65c7b6fece0fe394d8745ca
+Commit: 4271
 Author: sam
 Date:   Fri Jan 15 00:17:03 2010 +0000
 
@@ -231,7 +281,7 @@ Date:   Fri Jan 15 00:17:03 2010 +0000
  src/zzcat.c |   13 +++++++++++--
  1 files changed, 11 insertions(+), 2 deletions(-)
 
-commit 41a24bdceac45be718c27cc55f2e262ee051a20c
+Commit: 4270
 Author: sam
 Date:   Thu Jan 14 00:27:03 2010 +0000
 
@@ -240,7 +290,7 @@ Date:   Thu Jan 14 00:27:03 2010 +0000
  src/zzcat.c |   18 ++++++++++++++++--
  1 files changed, 16 insertions(+), 2 deletions(-)
 
-commit 5cd5a10354884a9b9b2f022f871cd59272e571ac
+Commit: 4269
 Author: sam
 Date:   Thu Jan 14 00:26:52 2010 +0000
 
@@ -249,7 +299,7 @@ Date:   Thu Jan 14 00:26:52 2010 +0000
  test/functions.inc |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 203602e3582f6c1fa463f80307e120f2000f5d07
+Commit: 4268
 Author: sam
 Date:   Thu Jan 14 00:26:46 2010 +0000
 
@@ -262,7 +312,7 @@ Date:   Thu Jan 14 00:26:46 2010 +0000
  test/check-rng    |   62 -----------------------------------------------------
  5 files changed, 112 insertions(+), 112 deletions(-)
 
-commit 3c9f9c261572ebb2737d01096397195314aa052a
+Commit: 4267
 Author: sam
 Date:   Thu Jan 14 00:26:35 2010 +0000
 
@@ -273,7 +323,7 @@ Date:   Thu Jan 14 00:26:35 2010 +0000
  test/check-flag-f |   67 +++++++++++++++++++++++++++++++++++++++++++++++++++++
  3 files changed, 72 insertions(+), 5 deletions(-)
 
-commit a12b8841432585cc52ec57e0b3fa09cd1ec2a3bc
+Commit: 4266
 Author: sam
 Date:   Thu Jan 14 00:26:21 2010 +0000
 
@@ -285,7 +335,7 @@ Date:   Thu Jan 14 00:26:21 2010 +0000
  test/check-md5    |   36 ------------------------------------
  4 files changed, 77 insertions(+), 38 deletions(-)
 
-commit f46d90b4bd5116c7bd1a612e5aec544aa0d2ff10
+Commit: 4265
 Author: sam
 Date:   Wed Jan 13 01:16:32 2010 +0000
 
@@ -294,7 +344,7 @@ Date:   Wed Jan 13 01:16:32 2010 +0000
  src/zzuf.c |   10 ++++++++++
  1 files changed, 10 insertions(+), 0 deletions(-)
 
-commit 7606a38c040060a9a7de5356211b42b4ed67e322
+Commit: 4264
 Author: sam
 Date:   Wed Jan 13 01:09:30 2010 +0000
 
@@ -307,7 +357,7 @@ Date:   Wed Jan 13 01:09:30 2010 +0000
  src/zzuf.c    |   88 +++++++++++++++++++++++++++++++++------------------------
  4 files changed, 88 insertions(+), 54 deletions(-)
 
-commit 54aa51a6b260c6f34b902b79caa7b82f35bfd3bd
+Commit: 4263
 Author: sam
 Date:   Wed Jan 13 01:09:19 2010 +0000
 
@@ -316,7 +366,7 @@ Date:   Wed Jan 13 01:09:19 2010 +0000
  msvc/config.h |    1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
-commit d536272a8512b931ee2982dd5aef50fcc71b6876
+Commit: 4262
 Author: sam
 Date:   Wed Jan 13 00:11:14 2010 +0000
 
@@ -327,7 +377,7 @@ Date:   Wed Jan 13 00:11:14 2010 +0000
  src/libzzuf/lib-fd.c |   22 ++++++++++++++--------
  2 files changed, 26 insertions(+), 8 deletions(-)
 
-commit d1cc0b5febcdecaba2cf6ad84fb39d8359810622
+Commit: 4261
 Author: sam
 Date:   Tue Jan 12 23:54:49 2010 +0000
 
@@ -338,7 +388,7 @@ Date:   Tue Jan 12 23:54:49 2010 +0000
  test/functions.inc |    1 -
  3 files changed, 5 insertions(+), 11 deletions(-)
 
-commit 15a181415a91d2f6d40241e09b7e556bf29b5373
+Commit: 4260
 Author: sam
 Date:   Tue Jan 12 23:54:43 2010 +0000
 
@@ -349,7 +399,7 @@ Date:   Tue Jan 12 23:54:43 2010 +0000
  src/libzzuf/lib-stream.c |   27 ++++++++++++++++++---------
  1 files changed, 18 insertions(+), 9 deletions(-)
 
-commit 2b8d6cf18e8e8f82668574379a8d16bc3a77e392
+Commit: 4259
 Author: sam
 Date:   Tue Jan 12 23:54:38 2010 +0000
 
@@ -358,7 +408,7 @@ Date:   Tue Jan 12 23:54:38 2010 +0000
  src/zzcat.c |   74 ++++++++++++++++++++++++++++++++++------------------------
  1 files changed, 43 insertions(+), 31 deletions(-)
 
-commit 955da3af00c3bb50d56a9bf60b39d1903f05e826
+Commit: 4258
 Author: sam
 Date:   Tue Jan 12 23:54:31 2010 +0000
 
@@ -373,7 +423,7 @@ Date:   Tue Jan 12 23:54:31 2010 +0000
  src/libzzuf/libzzuf.h |    2 +-
  5 files changed, 36 insertions(+), 10 deletions(-)
 
-commit dfcd86cb5acf39f0d4bca34d8c4954c757d78013
+Commit: 4257
 Author: sam
 Date:   Tue Jan 12 23:54:25 2010 +0000
 
@@ -382,7 +432,7 @@ Date:   Tue Jan 12 23:54:25 2010 +0000
  src/myfork.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 4fe0e85e3df24eaf4eab09e20590ee9a3a84ffc5
+Commit: 4256
 Author: sam
 Date:   Tue Jan 12 23:54:20 2010 +0000
 
@@ -391,7 +441,7 @@ Date:   Tue Jan 12 23:54:20 2010 +0000
  configure.ac |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 87416981d9d1163c811990f289a9af19e4b027ce
+Commit: 4255
 Author: sam
 Date:   Tue Jan 12 23:54:15 2010 +0000
 
@@ -401,7 +451,7 @@ Date:   Tue Jan 12 23:54:15 2010 +0000
  src/zzcat.c    |    2 +-
  2 files changed, 2 insertions(+), 2 deletions(-)
 
-commit 28039c1ad9f9ac0a694390f052722d34099c6cca
+Commit: 4254
 Author: sam
 Date:   Tue Jan 12 23:54:09 2010 +0000
 
@@ -411,7 +461,7 @@ Date:   Tue Jan 12 23:54:09 2010 +0000
  src/zzcat.c    |   89 +++++++++++++++++++++++++++++++++++++++++++++++++++-----
  2 files changed, 106 insertions(+), 9 deletions(-)
 
-commit c90602a87650ede164564f5f06a56c19e92544e0
+Commit: 4253
 Author: sam
 Date:   Tue Jan 12 23:54:02 2010 +0000
 
@@ -473,7 +523,7 @@ Date:   Tue Jan 12 23:54:02 2010 +0000
  test/zznop.c             |    4 +---
  54 files changed, 118 insertions(+), 125 deletions(-)
 
-commit c5be81a9757694803abf3e8e614612aab066b7d3
+Commit: 4252
 Author: sam
 Date:   Tue Jan 12 23:53:56 2010 +0000
 
@@ -482,7 +532,7 @@ Date:   Tue Jan 12 23:53:56 2010 +0000
  test/check-utils |   45 ++++++++++++++++++++++++++++-----------------
  1 files changed, 28 insertions(+), 17 deletions(-)
 
-commit 1e92503b6ae9a4dd354b4b209cf559a99e9b9e04
+Commit: 4251
 Author: sam
 Date:   Tue Jan 12 23:53:50 2010 +0000
 
@@ -491,7 +541,7 @@ Date:   Tue Jan 12 23:53:50 2010 +0000
  src/libzzuf/lib-fd.c |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit 7bea831632419e1ce2432669c1360186ce182e17
+Commit: 4250
 Author: sam
 Date:   Tue Jan 12 23:53:43 2010 +0000
 
@@ -500,7 +550,7 @@ Date:   Tue Jan 12 23:53:43 2010 +0000
  src/libzzuf/lib-stream.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit a2c90737f2c16544a5a50f468fc025efa0d2861d
+Commit: 4249
 Author: sam
 Date:   Tue Jan 12 23:53:38 2010 +0000
 
@@ -510,7 +560,7 @@ Date:   Tue Jan 12 23:53:38 2010 +0000
  src/libzzuf/lib-stream.c |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit dbbf5f83649a1dc62a5a2c6167bf4259cf8fc6bc
+Commit: 4248
 Author: sam
 Date:   Tue Jan 12 23:53:30 2010 +0000
 
@@ -521,7 +571,7 @@ Date:   Tue Jan 12 23:53:30 2010 +0000
  src/libzzuf/lib-stream.c |   29 ++++++++++++++---------------
  3 files changed, 32 insertions(+), 41 deletions(-)
 
-commit 7cc9aba77af397ffd97f2b89c22f048157a3b984
+Commit: 4247
 Author: sam
 Date:   Tue Jan 12 23:53:24 2010 +0000
 
@@ -530,7 +580,7 @@ Date:   Tue Jan 12 23:53:24 2010 +0000
  test/check-utils |   64 ++++++++++++++++++++++++++++++++++++++++-------------
  1 files changed, 48 insertions(+), 16 deletions(-)
 
-commit ed586706653ba51108051f8d97b1aeda3916ad66
+Commit: 4246
 Author: sam
 Date:   Tue Jan 12 23:53:18 2010 +0000
 
@@ -542,7 +592,7 @@ Date:   Tue Jan 12 23:53:18 2010 +0000
  test/check-utils |    6 +-
  3 files changed, 262 insertions(+), 59 deletions(-)
 
-commit 6ea704bd68f2deb755a059ccce175b8aa84979b2
+Commit: 4245
 Author: sam
 Date:   Tue Jan 12 23:53:09 2010 +0000
 
@@ -557,7 +607,7 @@ Date:   Tue Jan 12 23:53:09 2010 +0000
  test/zzcat.c       |  503 ----------------------------------------------------
  6 files changed, 511 insertions(+), 507 deletions(-)
 
-commit 9e7ee535826131dad3016e6e90e8011658dbd026
+Commit: 4244
 Author: sam
 Date:   Fri Jan 8 01:28:02 2010 +0000
 
@@ -571,7 +621,7 @@ Date:   Fri Jan 8 01:28:02 2010 +0000
  test/Makefile.am |    3 ++-
  6 files changed, 38 insertions(+), 4 deletions(-)
 
-commit 0e3d5ea6dcc6af6419576c0137e9f68580130fd4
+Commit: 4243
 Author: sam
 Date:   Fri Jan 8 01:17:23 2010 +0000
 
@@ -580,7 +630,7 @@ Date:   Fri Jan 8 01:17:23 2010 +0000
  test/zzcat.c |  112 +++++++++++++++++++++++++++++----------------------------
  1 files changed, 57 insertions(+), 55 deletions(-)
 
-commit 983650ff13026fce345fd64b823560f08ec0450a
+Commit: 4242
 Author: sam
 Date:   Fri Jan 8 01:17:17 2010 +0000
 
@@ -589,7 +639,7 @@ Date:   Fri Jan 8 01:17:17 2010 +0000
  configure.ac |    8 ++++----
  1 files changed, 4 insertions(+), 4 deletions(-)
 
-commit 804222408ab096d5491457931e10c12f38d3889e
+Commit: 4241
 Author: sam
 Date:   Fri Jan 8 01:06:18 2010 +0000
 
@@ -598,7 +648,7 @@ Date:   Fri Jan 8 01:06:18 2010 +0000
  configure.ac |    8 ++++----
  1 files changed, 4 insertions(+), 4 deletions(-)
 
-commit e70616f25816ee263c015e2df2d03671354b2927
+Commit: 4240
 Author: sam
 Date:   Fri Jan 8 00:48:33 2010 +0000
 
@@ -608,7 +658,7 @@ Date:   Fri Jan 8 00:48:33 2010 +0000
  test/zzcat.c     |   33 ++++++++++++++++++++++++++++++---
  2 files changed, 41 insertions(+), 14 deletions(-)
 
-commit 4c2f756d8328d7772ea1ee00e98f1f9c1bdb80e4
+Commit: 4239
 Author: sam
 Date:   Fri Jan 8 00:48:27 2010 +0000
 
@@ -619,7 +669,7 @@ Date:   Fri Jan 8 00:48:27 2010 +0000
  src/zzuf.c |   39 +++++++++++++--------------------------
  3 files changed, 17 insertions(+), 30 deletions(-)
 
-commit c58729850b7b814815744935c5f1d739c87f7ef8
+Commit: 4238
 Author: sam
 Date:   Fri Jan 8 00:48:21 2010 +0000
 
@@ -630,7 +680,7 @@ Date:   Fri Jan 8 00:48:21 2010 +0000
  src/libzzuf/lib-stream.c |  118 +++++++++++++++++++++++-----------------------
  3 files changed, 73 insertions(+), 73 deletions(-)
 
-commit 3bfa7eb046c0f6033973d8d5efc7241fed8130f8
+Commit: 4237
 Author: sam
 Date:   Fri Jan 8 00:48:12 2010 +0000
 
@@ -639,7 +689,7 @@ Date:   Fri Jan 8 00:48:12 2010 +0000
  src/libzzuf/network.c |    4 ----
  1 files changed, 0 insertions(+), 4 deletions(-)
 
-commit 23afecd2068b362f23b92a617fcead772499c4d9
+Commit: 4236
 Author: sam
 Date:   Wed Jan 6 22:46:49 2010 +0000
 
@@ -654,7 +704,7 @@ Date:   Wed Jan 6 22:46:49 2010 +0000
  doc/zzuf.1.in    |  446 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
  7 files changed, 603 insertions(+), 596 deletions(-)
 
-commit 4d98ba9e88e087bc853a7d7e21f2eec4a977c50c
+Commit: 4233
 Author: sam
 Date:   Wed Jan 6 02:00:49 2010 +0000
 
@@ -663,7 +713,7 @@ Date:   Wed Jan 6 02:00:49 2010 +0000
  test/check-utils |    7 ++++++-
  1 files changed, 6 insertions(+), 1 deletions(-)
 
-commit 76da749a383bdbf5a14ea9244ca99f5117637948
+Commit: 4232
 Author: sam
 Date:   Wed Jan 6 02:00:41 2010 +0000
 
@@ -673,7 +723,7 @@ Date:   Wed Jan 6 02:00:41 2010 +0000
  src/libzzuf/lib-stream.c |   67 +++++++++++++++++++++++----------------------
  2 files changed, 36 insertions(+), 34 deletions(-)
 
-commit 562229f865220c2e260d368ae8715fccae75217b
+Commit: 4231
 Author: sam
 Date:   Wed Jan 6 00:48:47 2010 +0000
 
@@ -682,7 +732,7 @@ Date:   Wed Jan 6 00:48:47 2010 +0000
  src/libzzuf/debug.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 21c0be9ff78400900e8736a13e6c9aa7336174f7
+Commit: 4230
 Author: sam
 Date:   Wed Jan 6 00:35:49 2010 +0000
 
@@ -691,7 +741,7 @@ Date:   Wed Jan 6 00:35:49 2010 +0000
  src/libzzuf/lib-stream.c |   16 ++++++++++++++--
  1 files changed, 14 insertions(+), 2 deletions(-)
 
-commit 4e510f2307d5f2bd417fb71ba3b2891afc5fdbd2
+Commit: 4224
 Author: sam
 Date:   Mon Jan 4 23:59:14 2010 +0000
 
@@ -700,7 +750,7 @@ Date:   Mon Jan 4 23:59:14 2010 +0000
  src/libzzuf/network.c |   57 +++++++++++++++++++++++++-----------------------
  1 files changed, 30 insertions(+), 27 deletions(-)
 
-commit 4ccbf1103a23bdfa43f8f1f8b998ccf2659bd4dc
+Commit: 4153
 Author: sam
 Date:   Sun Dec 20 12:25:02 2009 +0000
 
@@ -710,7 +760,7 @@ Date:   Sun Dec 20 12:25:02 2009 +0000
  src/libzzuf/lib-stream.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit caca642b3374e013ad23f9b096f3e52d1c452864
+Commit: 4152
 Author: sam
 Date:   Sun Dec 20 12:24:56 2009 +0000
 
@@ -722,7 +772,7 @@ Date:   Sun Dec 20 12:24:56 2009 +0000
  src/libzzuf/libzzuf.h  |    9 +++++++++
  3 files changed, 29 insertions(+), 10 deletions(-)
 
-commit 54840d4459608fc1ebe8730b45d71f50fe5cecd5
+Commit: 4151
 Author: sam
 Date:   Sun Dec 20 12:24:50 2009 +0000
 
@@ -732,7 +782,7 @@ Date:   Sun Dec 20 12:24:50 2009 +0000
  src/libzzuf/debug.c |   89 +++++++++++++++++++++++++++++++++------------------
  1 files changed, 58 insertions(+), 31 deletions(-)
 
-commit 73d322ebfae3e93fd1b1d805b425af2be59c4b9f
+Commit: 4150
 Author: sam
 Date:   Sun Dec 20 12:24:41 2009 +0000
 
@@ -741,7 +791,7 @@ Date:   Sun Dec 20 12:24:41 2009 +0000
  src/libzzuf/lib-mem.c |   25 ++++++++++++++++++++-----
  1 files changed, 20 insertions(+), 5 deletions(-)
 
-commit 6aae7aec70ce9c4339e9b8f19205c6ba693e6f10
+Commit: 4137
 Author: sam
 Date:   Wed Dec 16 16:15:40 2009 +0000
 
@@ -753,7 +803,7 @@ Date:   Wed Dec 16 16:15:40 2009 +0000
  src/myfork.c         |   59 ++++++++++++++++++++++++++++----------------------
  4 files changed, 80 insertions(+), 72 deletions(-)
 
-commit c06746132549b71c919b5da10b70178ed3ec454c
+Commit: 4124
 Author: sam
 Date:   Mon Dec 14 16:10:15 2009 +0000
 
@@ -762,7 +812,7 @@ Date:   Mon Dec 14 16:10:15 2009 +0000
  test/check-utils |   71 ++++++++++++++++++++++++++++-------------------------
  1 files changed, 37 insertions(+), 34 deletions(-)
 
-commit 11dd26f4ce7c7824b885222ca34d031dfa025c6e
+Commit: 4122
 Author: sam
 Date:   Mon Dec 14 03:33:53 2009 +0000
 
@@ -772,7 +822,7 @@ Date:   Mon Dec 14 03:33:53 2009 +0000
  src/zzuf.c   |    2 +-
  2 files changed, 20 insertions(+), 1 deletions(-)
 
-commit 684cf4445bcf901155b1322e3ce918eac73e2ff3
+Commit: 4121
 Author: sam
 Date:   Mon Dec 14 02:55:31 2009 +0000
 
@@ -782,7 +832,7 @@ Date:   Mon Dec 14 02:55:31 2009 +0000
  test/zzcat.c     |  518 ++++++++++++++++++++++++++++++++----------------------
  2 files changed, 343 insertions(+), 218 deletions(-)
 
-commit 139bc9a9691839dd6a7aceb92656f7c716f2e1dd
+Commit: 4120
 Author: sam
 Date:   Mon Dec 14 02:55:25 2009 +0000
 
@@ -796,7 +846,7 @@ Date:   Mon Dec 14 02:55:25 2009 +0000
  test/functions.inc  |    2 +-
  5 files changed, 11 insertions(+), 11 deletions(-)
 
-commit 287c7ed695c54903bdc7915827fa0c35744346e8
+Commit: 4119
 Author: sam
 Date:   Mon Dec 14 02:55:20 2009 +0000
 
@@ -807,7 +857,7 @@ Date:   Mon Dec 14 02:55:20 2009 +0000
  test/check-overflow |    2 ++
  3 files changed, 6 insertions(+), 0 deletions(-)
 
-commit addfee30692937e1ba03b27c748c6e33054e2f75
+Commit: 4118
 Author: sam
 Date:   Mon Dec 14 02:55:11 2009 +0000
 
@@ -817,7 +867,7 @@ Date:   Mon Dec 14 02:55:11 2009 +0000
  src/Makefile.am |    1 +
  2 files changed, 8 insertions(+), 1 deletions(-)
 
-commit 4599769be84dd2bdab266a893d49deba22915aa0
+Commit: 4117
 Author: sam
 Date:   Sat Dec 12 22:20:22 2009 +0000
 
@@ -826,7 +876,7 @@ Date:   Sat Dec 12 22:20:22 2009 +0000
  src/libzzuf/lib-stream.c |  563 +++++++++++++++++++++++-----------------------
  1 files changed, 283 insertions(+), 280 deletions(-)
 
-commit 815ca09e59430b7e3ca56306a27f1d14046890e8
+Commit: 4116
 Author: sam
 Date:   Sat Dec 12 22:20:16 2009 +0000
 
@@ -835,7 +885,7 @@ Date:   Sat Dec 12 22:20:16 2009 +0000
  src/myfork.c |  169 +++++++++++++++++++++++++++++++++++++---------------------
  1 files changed, 108 insertions(+), 61 deletions(-)
 
-commit 3aebddd3c02f443b8800140e00425e48a32adf3a
+Commit: 4115
 Author: sam
 Date:   Sat Dec 12 22:20:11 2009 +0000
 
@@ -848,7 +898,7 @@ Date:   Sat Dec 12 22:20:11 2009 +0000
  src/zzuf.c          |  361 +-------------------------------------------
  5 files changed, 451 insertions(+), 358 deletions(-)
 
-commit efada73dc578a7feb9dbbec1bb34fcaa74d02e94
+Commit: 4114
 Author: sam
 Date:   Sat Dec 12 22:20:04 2009 +0000
 
@@ -857,7 +907,7 @@ Date:   Sat Dec 12 22:20:04 2009 +0000
  src/libzzuf/lib-stream.c |   48 +++++++++++++++++++++++----------------------
  1 files changed, 25 insertions(+), 23 deletions(-)
 
-commit ddb0f49a1015d6f9a33baa8fb90a318bfcb45158
+Commit: 4113
 Author: sam
 Date:   Sat Dec 12 22:19:57 2009 +0000
 
@@ -866,7 +916,7 @@ Date:   Sat Dec 12 22:19:57 2009 +0000
  src/libzzuf/lib-stream.c |    3 +++
  1 files changed, 3 insertions(+), 0 deletions(-)
 
-commit ed17a0a811a5a876b676c1d66421e2fa1d50ae1c
+Commit: 4112
 Author: sam
 Date:   Sat Dec 12 22:19:47 2009 +0000
 
@@ -921,7 +971,7 @@ Date:   Sat Dec 12 22:19:47 2009 +0000
  src/zzuf.c               |    4 +-
  46 files changed, 4122 insertions(+), 4079 deletions(-)
 
-commit ada1acd264f2a6f41cd87797a42acded79c6ec79
+Commit: 4111
 Author: sam
 Date:   Wed Dec 9 00:28:28 2009 +0000
 
@@ -931,7 +981,7 @@ Date:   Wed Dec 9 00:28:28 2009 +0000
  src/zzuf.c |   47 +++++++++++++++++++++++++++++++++++++----------
  1 files changed, 37 insertions(+), 10 deletions(-)
 
-commit b40d78ea7504f57e2d8cbbc7d8be14eff7ca8673
+Commit: 4109
 Author: sam
 Date:   Tue Dec 8 01:41:35 2009 +0000
 
@@ -940,7 +990,7 @@ Date:   Tue Dec 8 01:41:35 2009 +0000
  src/zzuf.c |   70 +++++++++++++++++++++++++++++++++++++++--------------------
  1 files changed, 46 insertions(+), 24 deletions(-)
 
-commit feec4cfe753e55fb0c5eb420eb52012ae03ddd8d
+Commit: 4108
 Author: sam
 Date:   Mon Dec 7 21:12:22 2009 +0000
 
@@ -949,7 +999,7 @@ Date:   Mon Dec 7 21:12:22 2009 +0000
  src/sys.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit d05780ce7caff0d5a807b3b827ab66f2425cd09b
+Commit: 4107
 Author: sam
 Date:   Mon Dec 7 18:35:45 2009 +0000
 
@@ -960,7 +1010,7 @@ Date:   Mon Dec 7 18:35:45 2009 +0000
  test/zznop.c |    2 +-
  2 files changed, 4 insertions(+), 2 deletions(-)
 
-commit f7b3b44bcce6d184819122a23f018d1e0d033c11
+Commit: 4106
 Author: sam
 Date:   Mon Dec 7 18:34:21 2009 +0000
 
@@ -969,7 +1019,7 @@ Date:   Mon Dec 7 18:34:21 2009 +0000
  src/zzuf.c |   34 ++++++++++++++++++++--------------
  1 files changed, 20 insertions(+), 14 deletions(-)
 
-commit a3dd18b6114b03cf1164024a1bcbfb7666b1f6c5
+Commit: 4100
 Author: sam
 Date:   Mon Dec 7 12:36:15 2009 +0000
 
@@ -982,7 +1032,7 @@ Date:   Mon Dec 7 12:36:15 2009 +0000
  src/zzuf.c           |    2 +-
  5 files changed, 34 insertions(+), 34 deletions(-)
 
-commit 93657c4f29fea4e63740d6c8949212ab8374b7bf
+Commit: 4043
 Author: sam
 Date:   Thu Nov 26 01:19:08 2009 +0000
 
@@ -993,7 +1043,7 @@ Date:   Thu Nov 26 01:19:08 2009 +0000
  test/check-build |    4 +---
  3 files changed, 5 insertions(+), 3 deletions(-)
 
-commit 156beb34328c59908174959af900f48e75ce40aa
+Commit: 4042
 Author: sam
 Date:   Thu Nov 26 01:14:05 2009 +0000
 
@@ -1002,7 +1052,7 @@ Date:   Thu Nov 26 01:14:05 2009 +0000
  src/lib-stream.c |    6 ++++++
  1 files changed, 6 insertions(+), 0 deletions(-)
 
-commit b6d021faddaf57dfdfd65ac66207a2365f67c11a
+Commit: 4041
 Author: sam
 Date:   Thu Nov 26 01:13:58 2009 +0000
 
@@ -1013,7 +1063,7 @@ Date:   Thu Nov 26 01:13:58 2009 +0000
  src/lib-stream.c |   33 ++++++++++++++++++++++-----------
  3 files changed, 26 insertions(+), 12 deletions(-)
 
-commit ed2659d9a4695d27ecd231c9982312fec6661a86
+Commit: 4032
 Author: sam
 Date:   Wed Nov 25 00:42:32 2009 +0000
 
@@ -1022,7 +1072,7 @@ Date:   Wed Nov 25 00:42:32 2009 +0000
  src/lib-stream.c |   38 ++++++++++++++++++++------------------
  1 files changed, 20 insertions(+), 18 deletions(-)
 
-commit 2eb818de7f684e1bd9ac8c041b81e2e2b748cf5d
+Commit: 4031
 Author: sam
 Date:   Wed Nov 25 00:42:25 2009 +0000
 
@@ -1031,7 +1081,7 @@ Date:   Wed Nov 25 00:42:25 2009 +0000
  msvc/config.h |    1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
-commit f836c42a3f4068b46e7878f463626652321ada58
+Commit: 4030
 Author: sam
 Date:   Wed Nov 25 00:42:17 2009 +0000
 
@@ -1041,7 +1091,7 @@ Date:   Wed Nov 25 00:42:17 2009 +0000
  test/zzcat.c     |   66 ++++++++++++++++++++++++++++++++++++++---------------
  2 files changed, 49 insertions(+), 21 deletions(-)
 
-commit 1db4ee0685ad29d9f2859374bed5b22b22944b3c
+Commit: 4029
 Author: sam
 Date:   Tue Nov 24 01:25:44 2009 +0000
 
@@ -1052,7 +1102,7 @@ Date:   Tue Nov 24 01:25:44 2009 +0000
  src/lib-stream.c |    9 +++++++++
  2 files changed, 19 insertions(+), 7 deletions(-)
 
-commit 2f12140d66f826b316547428763c59217fd1c1c3
+Commit: 4028
 Author: sam
 Date:   Tue Nov 24 01:25:37 2009 +0000
 
@@ -1062,7 +1112,7 @@ Date:   Tue Nov 24 01:25:37 2009 +0000
  test/zzcat.c     |   34 +++++++++++++++++++++++++++++-----
  2 files changed, 31 insertions(+), 8 deletions(-)
 
-commit 2bb489f9dfd643a10e960981814ee415297bcaf4
+Commit: 4015
 Author: sam
 Date:   Mon Nov 23 11:16:03 2009 +0000
 
@@ -1071,7 +1121,7 @@ Date:   Mon Nov 23 11:16:03 2009 +0000
  src/network.c |   16 +++++++++-------
  1 files changed, 9 insertions(+), 7 deletions(-)
 
-commit 33f79082747ad53ab1ef5a4c08656032dfe72156
+Commit: 4013
 Author: sam
 Date:   Mon Nov 23 01:35:23 2009 +0000
 
@@ -1082,7 +1132,7 @@ Date:   Mon Nov 23 01:35:23 2009 +0000
  src/lib-stream.c |  248 +++++++++++++++++++++++++++++++++---------------------
  3 files changed, 168 insertions(+), 112 deletions(-)
 
-commit 3d76a8f8a4f2d5186f8e9707a5d93f4ceef19604
+Commit: 4012
 Author: sam
 Date:   Mon Nov 23 00:27:11 2009 +0000
 
@@ -1091,7 +1141,7 @@ Date:   Mon Nov 23 00:27:11 2009 +0000
  src/lib-stream.c |   26 ++++++++++++++++++--------
  1 files changed, 18 insertions(+), 8 deletions(-)
 
-commit b82078657ea89483e22bcc9b77578f016e616208
+Commit: 4011
 Author: sam
 Date:   Mon Nov 23 00:27:05 2009 +0000
 
@@ -1103,7 +1153,7 @@ Date:   Mon Nov 23 00:27:05 2009 +0000
  src/lib-stream.c |  105 +++++++++++++++++++++++++++++++++++++++++++++--------
  3 files changed, 108 insertions(+), 27 deletions(-)
 
-commit 716baa81d6755469f99682b8574cd9c58b73ef8e
+Commit: 4010
 Author: sam
 Date:   Mon Nov 23 00:26:59 2009 +0000
 
@@ -1113,7 +1163,7 @@ Date:   Mon Nov 23 00:26:59 2009 +0000
  test/zzcat.c     |   96 +++++++++++++++++++++++++++---------------------------
  2 files changed, 51 insertions(+), 51 deletions(-)
 
-commit 57ce7df8ab4df315ea59b9a1c8adb3a6a36a35f4
+Commit: 4009
 Author: sam
 Date:   Mon Nov 23 00:26:53 2009 +0000
 
@@ -1130,7 +1180,7 @@ Date:   Mon Nov 23 00:26:53 2009 +0000
  src/zzuf.c    |    7 +++++--
  9 files changed, 65 insertions(+), 25 deletions(-)
 
-commit 4f5269ec8bb1fc8fb680a93e1afc53f2960f574b
+Commit: 4007
 Author: sam
 Date:   Sun Nov 22 18:54:49 2009 +0000
 
@@ -1140,7 +1190,7 @@ Date:   Sun Nov 22 18:54:49 2009 +0000
  test/zzcat.c     |  115 ++++++++++++++++++++++++++++++++----------------------
  2 files changed, 74 insertions(+), 48 deletions(-)
 
-commit 7881694ba55e4340da03f5a63885220c3662407a
+Commit: 4006
 Author: sam
 Date:   Sun Nov 22 18:54:43 2009 +0000
 
@@ -1153,7 +1203,7 @@ Date:   Sun Nov 22 18:54:43 2009 +0000
  msvc/config.h |    3 ++-
  4 files changed, 12 insertions(+), 7 deletions(-)
 
-commit 9158d8813e0e17750a04b5170fc90dc2072f6a73
+Commit: 4005
 Author: sam
 Date:   Sun Nov 22 18:54:37 2009 +0000
 
@@ -1162,7 +1212,7 @@ Date:   Sun Nov 22 18:54:37 2009 +0000
  src/lib-mem.c |   21 ++++++++++++---------
  1 files changed, 12 insertions(+), 9 deletions(-)
 
-commit 432650728200e047452278b00a9057c2024c8980
+Commit: 4004
 Author: sam
 Date:   Sun Nov 22 18:54:31 2009 +0000
 
@@ -1171,7 +1221,7 @@ Date:   Sun Nov 22 18:54:31 2009 +0000
  test/zzcat.c |  363 ++++++++++++++++++++++++++++++++++------------------------
  1 files changed, 211 insertions(+), 152 deletions(-)
 
-commit d66c310fd6aea200c7d33d0b502fc1589b364272
+Commit: 4003
 Author: sam
 Date:   Sun Nov 22 18:54:25 2009 +0000
 
@@ -1180,7 +1230,7 @@ Date:   Sun Nov 22 18:54:25 2009 +0000
  test/check-build |   40 +++++++++++++++++++++++++++++++++++++---
  1 files changed, 37 insertions(+), 3 deletions(-)
 
-commit 908414e0ba8b35ba650e8915be39c58edf864d13
+Commit: 4002
 Author: sam
 Date:   Sun Nov 22 18:54:17 2009 +0000
 
@@ -1190,7 +1240,7 @@ Date:   Sun Nov 22 18:54:17 2009 +0000
  test/zzcat.c     |   22 +++++++++++++++-------
  2 files changed, 16 insertions(+), 8 deletions(-)
 
-commit f6e215d095375e729c53406a69098fbcf58cd758
+Commit: 3982
 Author: sam
 Date:   Fri Nov 20 22:47:38 2009 +0000
 
@@ -1199,7 +1249,7 @@ Date:   Fri Nov 20 22:47:38 2009 +0000
  msvc/config.h |  102 +++++++++++++++++++++++++++++++++++++++++++++++++++++++--
  1 files changed, 99 insertions(+), 3 deletions(-)
 
-commit 723756ba73da601939f2360b4356200ce3ffd113
+Commit: 3981
 Author: sam
 Date:   Fri Nov 20 22:47:31 2009 +0000
 
@@ -1208,7 +1258,7 @@ Date:   Fri Nov 20 22:47:31 2009 +0000
  src/lib-stream.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 210fc1dc9b1a1520cdbe91be10d80997dc1f3108
+Commit: 3980
 Author: sam
 Date:   Fri Nov 20 17:38:06 2009 +0000
 
@@ -1217,7 +1267,7 @@ Date:   Fri Nov 20 17:38:06 2009 +0000
  .gitignore |    6 ++++++
  1 files changed, 6 insertions(+), 0 deletions(-)
 
-commit 7843e251b729d846622c338734b7c77fa2f1bee8
+Commit: 3979
 Author: sam
 Date:   Fri Nov 20 17:38:00 2009 +0000
 
@@ -1229,7 +1279,7 @@ Date:   Fri Nov 20 17:38:00 2009 +0000
  test/zznop.c     |    1 +
  4 files changed, 27 insertions(+), 27 deletions(-)
 
-commit f46f0b97beab01fa9b7a5c345dde0e9919b16a59
+Commit: 3976
 Author: sam
 Date:   Fri Nov 20 13:00:28 2009 +0000
 
@@ -1237,7 +1287,7 @@ Date:   Fri Nov 20 13:00:28 2009 +0000
 
  0 files changed, 0 insertions(+), 0 deletions(-)
 
-commit 01ee3d44a41e8f396bcaf129d6bebe0ce7b8b3c8
+Commit: 3971
 Author: sam
 Date:   Fri Nov 20 12:06:17 2009 +0000
 
@@ -1254,7 +1304,7 @@ Date:   Fri Nov 20 12:06:17 2009 +0000
  test/zznop.c         |   37 +++++++++++++++++
  7 files changed, 182 insertions(+), 4 deletions(-)
 
-commit 02f219d9ed2b740171a957a4e1a41827a50b4866
+Commit: 3951
 Author: sam
 Date:   Thu Nov 19 00:51:32 2009 +0000
 
@@ -1264,7 +1314,7 @@ Date:   Thu Nov 19 00:51:32 2009 +0000
  src/Makefile.am |    2 +-
  2 files changed, 10 insertions(+), 1 deletions(-)
 
-commit c85589a5bc453d5bbee55725fe50f9133e2937c0
+Commit: 3933
 Author: sam
 Date:   Wed Nov 18 13:23:58 2009 +0000
 
@@ -1277,7 +1327,7 @@ Date:   Wed Nov 18 13:23:58 2009 +0000
  src/network.c        |   29 +++++++++--
  5 files changed, 308 insertions(+), 5 deletions(-)
 
-commit 6cc8ebddbede962855c60bc011b88d6d0827382c
+Commit: 3742
 Author: sam
 Date:   Tue Oct 27 23:10:22 2009 +0000
 
@@ -1286,7 +1336,7 @@ Date:   Tue Oct 27 23:10:22 2009 +0000
  test/zzcat.c |    6 ++++++
  1 files changed, 6 insertions(+), 0 deletions(-)
 
-commit 22a436ff6220df0ae9c0e39575f1c46665438d21
+Commit: 3741
 Author: sam
 Date:   Tue Oct 27 23:08:16 2009 +0000
 
@@ -1295,7 +1345,7 @@ Date:   Tue Oct 27 23:08:16 2009 +0000
  test/zzcat.c |    6 ++++--
  1 files changed, 4 insertions(+), 2 deletions(-)
 
-commit e367560dd6ce11baa96fd8d25e8e296b0d110e0b
+Commit: 3734
 Author: sam
 Date:   Tue Oct 27 22:44:09 2009 +0000
 
@@ -1305,13 +1355,13 @@ Date:   Tue Oct 27 22:44:09 2009 +0000
  test/zzcat.c     |   22 ++++++++++++++++++++++
  2 files changed, 23 insertions(+), 1 deletions(-)
 
-commit 5803d475bac91a3e5cf872ae2b14658ab6bb547e
+Commit: 3697
 Author: sam
 Date:   Tue Oct 27 00:07:10 2009 +0000
 
     Add missing svn:ignore properties.
 
-commit ebba6073b91c8948a1b184cf8387484399e4a532
+Commit: 3696
 Author: sam
 Date:   Tue Oct 27 00:01:25 2009 +0000
 
@@ -1320,7 +1370,7 @@ Date:   Tue Oct 27 00:01:25 2009 +0000
  src/lib-mem.c |    1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
-commit 92a20da100751e733d33a78504c4905c6b2651ae
+Commit: 3637
 Author: sam
 Date:   Fri Aug 7 00:24:31 2009 +0000
 
@@ -1329,7 +1379,7 @@ Date:   Fri Aug 7 00:24:31 2009 +0000
  src/zzuf.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit aca4f83dc0d6756bba15b57e33ae88e3cbf96e6a
+Commit: 3636
 Author: sam
 Date:   Fri Aug 7 00:09:03 2009 +0000
 
@@ -1338,7 +1388,7 @@ Date:   Fri Aug 7 00:09:03 2009 +0000
  src/zzuf.c |    5 +++++
  1 files changed, 5 insertions(+), 0 deletions(-)
 
-commit 9f43b7f3794e2cb730ea1811e717db05f5e6e5f8
+Commit: 3635
 Author: sam
 Date:   Thu Aug 6 21:17:00 2009 +0000
 
@@ -1358,7 +1408,7 @@ Date:   Thu Aug 6 21:17:00 2009 +0000
  src/zzuf.c      |   44 +++++++++++--
  12 files changed, 295 insertions(+), 43 deletions(-)
 
-commit 98152b7812b4b0a596f6079b2782ddaa490c4b95
+Commit: 3634
 Author: sam
 Date:   Thu Aug 6 20:40:35 2009 +0000
 
@@ -1367,7 +1417,7 @@ Date:   Thu Aug 6 20:40:35 2009 +0000
  src/lib-fd.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 6b72d7b1bf8afcadd612ad84adef91e30c091096
+Commit: 3633
 Author: sam
 Date:   Thu Aug 6 20:37:05 2009 +0000
 
@@ -1376,7 +1426,7 @@ Date:   Thu Aug 6 20:37:05 2009 +0000
  src/lib-fd.c |   16 +++++++++++-----
  1 files changed, 11 insertions(+), 5 deletions(-)
 
-commit e0fa5736fd4bc4d7b127c6394ab907b20a6bb3d9
+Commit: 3632
 Author: sam
 Date:   Thu Aug 6 20:36:58 2009 +0000
 
@@ -1385,7 +1435,7 @@ Date:   Thu Aug 6 20:36:58 2009 +0000
  src/lib-mem.c |    2 ++
  1 files changed, 2 insertions(+), 0 deletions(-)
 
-commit 9fcbf8d052e147a7e7f5b220a1a45e898812f6c9
+Commit: 3631
 Author: sam
 Date:   Thu Aug 6 20:36:49 2009 +0000
 
@@ -1394,7 +1444,7 @@ Date:   Thu Aug 6 20:36:49 2009 +0000
  src/zzuf.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit f91d4dabf3f8db99c2c031a006e05b50b4d00416
+Commit: 3408
 Author: sam
 Date:   Fri Mar 20 23:28:51 2009 +0000
 
@@ -1404,7 +1454,7 @@ Date:   Fri Mar 20 23:28:51 2009 +0000
  src/lib-fd.c |    7 +++++--
  1 files changed, 5 insertions(+), 2 deletions(-)
 
-commit deee1cb593b754ff422b50608b303f62910a3465
+Commit: 3001
 Author: sam
 Date:   Sat Oct 18 22:01:43 2008 +0000
 
@@ -1414,7 +1464,7 @@ Date:   Sat Oct 18 22:01:43 2008 +0000
  src/zzuf.c |    6 +++---
  2 files changed, 4 insertions(+), 4 deletions(-)
 
-commit fd22eba728232247c03d38f03766796e27213763
+Commit: 2818
 Author: sam
 Date:   Wed Sep 17 22:17:23 2008 +0000
 
@@ -1423,7 +1473,7 @@ Date:   Wed Sep 17 22:17:23 2008 +0000
  src/zzuf.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit a9a3a0d2c5007322b181a81ac4f96003bab1a303
+Commit: 2817
 Author: sam
 Date:   Wed Sep 17 22:17:17 2008 +0000
 
@@ -1433,7 +1483,7 @@ Date:   Wed Sep 17 22:17:17 2008 +0000
  src/zzuf.c |   18 ++++++++++++++++++
  1 files changed, 18 insertions(+), 0 deletions(-)
 
-commit 5ec6ff56218311f7b8bb2d2189d4efba54a63839
+Commit: 2816
 Author: sam
 Date:   Mon Sep 15 19:39:44 2008 +0000
 
@@ -1442,7 +1492,7 @@ Date:   Mon Sep 15 19:39:44 2008 +0000
  doc/zzuf.1 |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit aaffb8146d01b82cd4c263a82790626ba18f513f
+Commit: 2771
 Author: sam
 Date:   Mon Aug 25 19:28:25 2008 +0000
 
@@ -1451,7 +1501,7 @@ Date:   Mon Aug 25 19:28:25 2008 +0000
  doc/zzuf.1 |    6 ++++++
  1 files changed, 6 insertions(+), 0 deletions(-)
 
-commit fb049778087c4ac76ad88ce6022eebb23cb70736
+Commit: 2584
 Author: sam
 Date:   Wed Jul 23 23:40:13 2008 +0000
 
@@ -1463,7 +1513,7 @@ Date:   Wed Jul 23 23:40:13 2008 +0000
  src/lib-stream.c |   59 +++++++++++++++++++++++++++++++++++++++++++----------
  3 files changed, 83 insertions(+), 13 deletions(-)
 
-commit b85a74d4bd64ed234a0eb79bd3a56867efc75310
+Commit: 2583
 Author: sam
 Date:   Wed Jul 23 23:40:06 2008 +0000
 
@@ -1474,7 +1524,7 @@ Date:   Wed Jul 23 23:40:06 2008 +0000
  src/zzuf.c |   15 +++++++++++++--
  2 files changed, 21 insertions(+), 5 deletions(-)
 
-commit db2cb805f4155817533425178686109f5e197f75
+Commit: 2579
 Author: sam
 Date:   Sun Jul 20 11:20:47 2008 +0000
 
@@ -1483,7 +1533,7 @@ Date:   Sun Jul 20 11:20:47 2008 +0000
  test/Makefile.am |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 770e33d025947087fcaf19c3cfac9662d3e67416
+Commit: 2578
 Author: sam
 Date:   Sun Jul 20 11:16:06 2008 +0000
 
@@ -1492,7 +1542,7 @@ Date:   Sun Jul 20 11:16:06 2008 +0000
  configure.ac |    4 +++-
  1 files changed, 3 insertions(+), 1 deletions(-)
 
-commit cccea932cd305837e48ee71c60844db6dfc97917
+Commit: 2577
 Author: sam
 Date:   Sun Jul 20 11:11:27 2008 +0000
 
@@ -1502,7 +1552,7 @@ Date:   Sun Jul 20 11:11:27 2008 +0000
  src/debug.h  |    3 +--
  2 files changed, 9 insertions(+), 2 deletions(-)
 
-commit d9782c3e58fdfddddb5018fc64ac088709a5b698
+Commit: 2576
 Author: sam
 Date:   Sun Jul 20 10:19:06 2008 +0000
 
@@ -1511,7 +1561,7 @@ Date:   Sun Jul 20 10:19:06 2008 +0000
  test/bug-div0.c |    4 ++++
  1 files changed, 4 insertions(+), 0 deletions(-)
 
-commit 804761bea1033ce0298965bc78ef9a9c54df61f5
+Commit: 2575
 Author: sam
 Date:   Sun Jul 20 10:10:35 2008 +0000
 
@@ -1521,7 +1571,7 @@ Date:   Sun Jul 20 10:10:35 2008 +0000
  src/fuzz.c |    5 +----
  1 files changed, 1 insertions(+), 4 deletions(-)
 
-commit 4287ca73d5f30e5d85027d28def3e583192ea122
+Commit: 2574
 Author: sam
 Date:   Sun Jul 20 10:10:31 2008 +0000
 
@@ -1532,7 +1582,7 @@ Date:   Sun Jul 20 10:10:31 2008 +0000
  src/lib-mem.c |    2 ++
  1 files changed, 2 insertions(+), 0 deletions(-)
 
-commit 1fcfed4f4525fd3b01851bb316c66f8c3acd7e33
+Commit: 2573
 Author: sam
 Date:   Sun Jul 20 09:57:58 2008 +0000
 
@@ -1547,7 +1597,7 @@ Date:   Sun Jul 20 09:57:58 2008 +0000
  test/functions.inc  |   70 +++++++++++++++++++++++++++++++++++++++++++++++++++
  7 files changed, 125 insertions(+), 195 deletions(-)
 
-commit 00e8b59a16a2f136a086b16cd59d9397f6d2a994
+Commit: 2572
 Author: sam
 Date:   Sun Jul 20 09:57:52 2008 +0000
 
@@ -1557,7 +1607,7 @@ Date:   Sun Jul 20 09:57:52 2008 +0000
  src/lib-stream.c |    6 +++---
  1 files changed, 3 insertions(+), 3 deletions(-)
 
-commit bcb26d97fc0596e7d749d9600bd4b3dee7e64184
+Commit: 2571
 Author: sam
 Date:   Sun Jul 20 01:29:45 2008 +0000
 
@@ -1566,7 +1616,7 @@ Date:   Sun Jul 20 01:29:45 2008 +0000
  src/lib-stream.c |    5 ++++-
  1 files changed, 4 insertions(+), 1 deletions(-)
 
-commit 6b04aea92600dccf68d7435d4a26e40f3c8c1bf4
+Commit: 2570
 Author: sam
 Date:   Sun Jul 20 01:22:46 2008 +0000
 
@@ -1576,7 +1626,7 @@ Date:   Sun Jul 20 01:22:46 2008 +0000
  src/lib-stream.c |   26 +++++++++++++++++---------
  1 files changed, 17 insertions(+), 9 deletions(-)
 
-commit 14f58c33416be08ceb88946ccdaa8848c2a786d3
+Commit: 2569
 Author: sam
 Date:   Fri Jul 18 09:28:30 2008 +0000
 
@@ -1587,7 +1637,7 @@ Date:   Fri Jul 18 09:28:30 2008 +0000
  src/lib-stream.c |   90 ++++++++++++++++++++++++-----------------------------
  3 files changed, 53 insertions(+), 58 deletions(-)
 
-commit 8834098cdb66c0911795b7d3ad0912b1a3fd9d36
+Commit: 2568
 Author: sam
 Date:   Fri Jul 18 09:28:26 2008 +0000
 
@@ -1596,7 +1646,7 @@ Date:   Fri Jul 18 09:28:26 2008 +0000
  src/lib-stream.c |    1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
-commit 295df163935ae915c7bcfe31ce3c189cdf357642
+Commit: 2567
 Author: sam
 Date:   Fri Jul 18 09:28:22 2008 +0000
 
@@ -1606,7 +1656,7 @@ Date:   Fri Jul 18 09:28:22 2008 +0000
  test/check-utils |    6 +-----
  1 files changed, 1 insertions(+), 5 deletions(-)
 
-commit 404b10dabdde4ff5d9c42a2a5d9c0f5e993ce0ad
+Commit: 2566
 Author: sam
 Date:   Fri Jul 18 09:28:18 2008 +0000
 
@@ -1615,7 +1665,7 @@ Date:   Fri Jul 18 09:28:18 2008 +0000
  src/lib-stream.c |   25 +++++++++++++------------
  1 files changed, 13 insertions(+), 12 deletions(-)
 
-commit d8f0dcfb6e03e3a1be97787838a1c7008b25baff
+Commit: 2565
 Author: sam
 Date:   Fri Jul 18 09:28:14 2008 +0000
 
@@ -1624,7 +1674,7 @@ Date:   Fri Jul 18 09:28:14 2008 +0000
  src/lib-mem.c |    6 +++---
  1 files changed, 3 insertions(+), 3 deletions(-)
 
-commit 5eda5620ebf36acd5ccc987bafe2e57bcaaa5da7
+Commit: 2564
 Author: sam
 Date:   Fri Jul 18 09:28:10 2008 +0000
 
@@ -1633,7 +1683,7 @@ Date:   Fri Jul 18 09:28:10 2008 +0000
  test/check-rng |    7 +++----
  1 files changed, 3 insertions(+), 4 deletions(-)
 
-commit 6f2f52bfb78398e8e52000b38f5caa75fd505eb0
+Commit: 2563
 Author: sam
 Date:   Fri Jul 18 09:28:06 2008 +0000
 
@@ -1643,7 +1693,7 @@ Date:   Fri Jul 18 09:28:06 2008 +0000
  test/zzcat.c     |   35 +++++++++++++++++++++++++++++------
  2 files changed, 30 insertions(+), 7 deletions(-)
 
-commit fcaf431a1a6703e18a5768c449906cf0f28008b8
+Commit: 2562
 Author: sam
 Date:   Fri Jul 18 09:28:02 2008 +0000
 
@@ -1657,7 +1707,7 @@ Date:   Fri Jul 18 09:28:02 2008 +0000
  src/lib-load.h |    9 ---------
  5 files changed, 16 insertions(+), 10 deletions(-)
 
-commit 262d6951eb4f970c8c113f21a7158b8f8ba7202e
+Commit: 2561
 Author: sam
 Date:   Fri Jul 18 09:27:56 2008 +0000
 
@@ -1667,7 +1717,7 @@ Date:   Fri Jul 18 09:27:56 2008 +0000
  test/zzcat.c     |   38 +++++++++++++++++++++++++++++++++++---
  2 files changed, 36 insertions(+), 4 deletions(-)
 
-commit 2b62ccde943114ad2c8792fcba0f1c6eb0423474
+Commit: 2560
 Author: sam
 Date:   Wed Jul 16 23:24:06 2008 +0000
 
@@ -1676,7 +1726,7 @@ Date:   Wed Jul 16 23:24:06 2008 +0000
  test/bug-memory.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit c82abbd41abd4b662792f4e9b3ed7789b49463fa
+Commit: 2559
 Author: sam
 Date:   Wed Jul 16 23:17:12 2008 +0000
 
@@ -1686,7 +1736,7 @@ Date:   Wed Jul 16 23:17:12 2008 +0000
  src/lib-stream.c |    5 ++---
  2 files changed, 18 insertions(+), 3 deletions(-)
 
-commit e7e28cbfc3f3f028b1ef978c8a18b68042795da3
+Commit: 2558
 Author: sam
 Date:   Wed Jul 16 23:17:07 2008 +0000
 
@@ -1695,7 +1745,7 @@ Date:   Wed Jul 16 23:17:07 2008 +0000
  test/zzcat.c |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit ca581ef8ed4183916053a489637ef989e9a59902
+Commit: 2557
 Author: sam
 Date:   Wed Jul 16 21:54:35 2008 +0000
 
@@ -1704,7 +1754,7 @@ Date:   Wed Jul 16 21:54:35 2008 +0000
  src/lib-stream.c |    2 ++
  1 files changed, 2 insertions(+), 0 deletions(-)
 
-commit 6058c733cbd11bdd1906d0f979067bbd7f5d35d4
+Commit: 2556
 Author: sam
 Date:   Wed Jul 16 21:45:44 2008 +0000
 
@@ -1713,7 +1763,7 @@ Date:   Wed Jul 16 21:45:44 2008 +0000
  src/lib-mem.c |    4 ++++
  1 files changed, 4 insertions(+), 0 deletions(-)
 
-commit 68adcf186a09133abe2565a81db38bd283878ef6
+Commit: 2555
 Author: sam
 Date:   Wed Jul 16 21:45:40 2008 +0000
 
@@ -1722,7 +1772,7 @@ Date:   Wed Jul 16 21:45:40 2008 +0000
  src/zzuf.c |    6 +++---
  1 files changed, 3 insertions(+), 3 deletions(-)
 
-commit 0b9c8b4d1aefa9aeb37a6060c702a4976a3f8985
+Commit: 2554
 Author: sam
 Date:   Wed Jul 16 21:41:27 2008 +0000
 
@@ -1731,7 +1781,7 @@ Date:   Wed Jul 16 21:41:27 2008 +0000
  src/lib-stream.c |   10 +++++-----
  1 files changed, 5 insertions(+), 5 deletions(-)
 
-commit f413e837f4e5ac9add7593ad824a7b4624cb06be
+Commit: 2553
 Author: sam
 Date:   Wed Jul 16 21:37:12 2008 +0000
 
@@ -1742,7 +1792,7 @@ Date:   Wed Jul 16 21:37:12 2008 +0000
  src/lib-stream.c |   10 +++++-----
  2 files changed, 21 insertions(+), 5 deletions(-)
 
-commit d412fe7381eb4bf31bc69bc371077513cab4d65d
+Commit: 2552
 Author: sam
 Date:   Wed Jul 16 21:24:09 2008 +0000
 
@@ -1753,7 +1803,7 @@ Date:   Wed Jul 16 21:24:09 2008 +0000
  src/lib-stream.c |   65 +++++++++++++++++++++++++++++++++++++++++------------
  3 files changed, 54 insertions(+), 16 deletions(-)
 
-commit aa047c898566278482244718d3745baca57a8eef
+Commit: 2551
 Author: sam
 Date:   Wed Jul 16 21:03:37 2008 +0000
 
@@ -1762,7 +1812,7 @@ Date:   Wed Jul 16 21:03:37 2008 +0000
  test/check-utils |   15 +++++++++++----
  1 files changed, 11 insertions(+), 4 deletions(-)
 
-commit 04576c27a78cc24f3e763d576fed2ebd4a37eff9
+Commit: 2550
 Author: sam
 Date:   Wed Jul 16 20:53:14 2008 +0000
 
@@ -1773,7 +1823,7 @@ Date:   Wed Jul 16 20:53:14 2008 +0000
  test/check-utils |    4 ++--
  2 files changed, 22 insertions(+), 14 deletions(-)
 
-commit fcc51f964d5c44865bd78ce6298e4a0eeab68b4b
+Commit: 2549
 Author: sam
 Date:   Wed Jul 16 20:36:58 2008 +0000
 
@@ -1782,7 +1832,7 @@ Date:   Wed Jul 16 20:36:58 2008 +0000
  test/check-md5 |   38 ++++++++++++++++++++++++++++++++++++++
  1 files changed, 38 insertions(+), 0 deletions(-)
 
-commit fa18351b05735031a4234ce1f66a62cfbf5c6b6b
+Commit: 2548
 Author: sam
 Date:   Wed Jul 16 20:36:14 2008 +0000
 
@@ -1796,7 +1846,7 @@ Date:   Wed Jul 16 20:36:14 2008 +0000
  test/check-utils    |    1 -
  6 files changed, 20 insertions(+), 29 deletions(-)
 
-commit c628f4cfc8ebab4e3e3e26d52ed7fca6842d1647
+Commit: 2545
 Author: sam
 Date:   Wed Jul 16 17:23:37 2008 +0000
 
@@ -1817,7 +1867,7 @@ Date:   Wed Jul 16 17:23:37 2008 +0000
  test/utils          |  127 ---------------------------------------------------
  12 files changed, 478 insertions(+), 206 deletions(-)
 
-commit 51aa538c8f2935cb3064ba8662fe63a58cd2e372
+Commit: 2544
 Author: sam
 Date:   Wed Jul 16 17:23:33 2008 +0000
 
@@ -1826,7 +1876,7 @@ Date:   Wed Jul 16 17:23:33 2008 +0000
  src/mygetopt.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 17aa5a43d22484586b2b09753446507611d0f0e4
+Commit: 2542
 Author: sam
 Date:   Wed Jul 16 17:23:29 2008 +0000
 
@@ -1837,7 +1887,7 @@ Date:   Wed Jul 16 17:23:29 2008 +0000
  src/lib-stream.c |   13 +++++++------
  3 files changed, 11 insertions(+), 7 deletions(-)
 
-commit eac7a73aef04249c393a9cef54d7ce01fc053b75
+Commit: 2541
 Author: sam
 Date:   Wed Jul 16 17:23:24 2008 +0000
 
@@ -1849,7 +1899,7 @@ Date:   Wed Jul 16 17:23:24 2008 +0000
  test/utils        |  127 +++++++++++++++++++++++++++++++++++++
  4 files changed, 206 insertions(+), 184 deletions(-)
 
-commit e902607b945acdc11edbb4ab9376dfa9df9bc28a
+Commit: 2534
 Author: sam
 Date:   Wed Jul 16 09:52:08 2008 +0000
 
@@ -1861,7 +1911,7 @@ Date:   Wed Jul 16 09:52:08 2008 +0000
  src/zzuf.c      |   11 ++++-------
  3 files changed, 8 insertions(+), 9 deletions(-)
 
-commit 22bbfe7ffc1967b0e3b9a8202888386360b43df4
+Commit: 2533
 Author: sam
 Date:   Wed Jul 16 09:52:02 2008 +0000
 
@@ -1872,7 +1922,7 @@ Date:   Wed Jul 16 09:52:02 2008 +0000
  src/lib-stream.c |   93 +++++++++++++++++++++++++++++++++++++++++++++++++-----
  3 files changed, 87 insertions(+), 11 deletions(-)
 
-commit 7166d404d50ee43c2b2e74fd5a643a932cf59f3f
+Commit: 2532
 Author: sam
 Date:   Wed Jul 16 09:51:58 2008 +0000
 
@@ -1881,7 +1931,7 @@ Date:   Wed Jul 16 09:51:58 2008 +0000
  test/zzcat.c |    6 +++++-
  1 files changed, 5 insertions(+), 1 deletions(-)
 
-commit 4db4da9e2c366cf783a372241d033857c6e3a593
+Commit: 2531
 Author: sam
 Date:   Wed Jul 16 09:51:53 2008 +0000
 
@@ -1890,7 +1940,7 @@ Date:   Wed Jul 16 09:51:53 2008 +0000
  test/testsuite.sh |   10 +++++++---
  1 files changed, 7 insertions(+), 3 deletions(-)
 
-commit 47230d033a3047ecf6b2677378e4c489c49d1637
+Commit: 2530
 Author: sam
 Date:   Tue Jul 15 21:34:14 2008 +0000
 
@@ -1905,7 +1955,7 @@ Date:   Tue Jul 15 21:34:14 2008 +0000
  test/zzcat.c     |    5 ++++-
  6 files changed, 18 insertions(+), 3 deletions(-)
 
-commit a657d8d193bb487ddc59b339b7b68347f3b8e4ad
+Commit: 2529
 Author: sam
 Date:   Tue Jul 15 20:16:15 2008 +0000
 
@@ -1914,7 +1964,7 @@ Date:   Tue Jul 15 20:16:15 2008 +0000
  test/testsuite.sh |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 2634a32904d2a7a1f3e1aa378207eabe43dc7908
+Commit: 2528
 Author: sam
 Date:   Tue Jul 15 20:16:11 2008 +0000
 
@@ -1927,7 +1977,7 @@ Date:   Tue Jul 15 20:16:11 2008 +0000
  src/lib-stream.c |   78 +++++++++++++++++++++++++++++++++++++----------------
  4 files changed, 83 insertions(+), 31 deletions(-)
 
-commit b4cd604e3aa988483a247cc24f0fbf58ba009637
+Commit: 2527
 Author: sam
 Date:   Tue Jul 15 20:16:06 2008 +0000
 
@@ -1943,7 +1993,7 @@ Date:   Tue Jul 15 20:16:06 2008 +0000
  src/libzzuf.c |    6 ++++++
  5 files changed, 44 insertions(+), 8 deletions(-)
 
-commit 7b961d0884058ac0c14ce4a1c3079824f2292925
+Commit: 2526
 Author: sam
 Date:   Tue Jul 15 20:16:02 2008 +0000
 
@@ -1953,7 +2003,7 @@ Date:   Tue Jul 15 20:16:02 2008 +0000
  configure.ac |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 2b528b9ae5421f5cbee784bec0c970f93d8e1049
+Commit: 2525
 Author: sam
 Date:   Tue Jul 15 20:15:58 2008 +0000
 
@@ -1962,7 +2012,7 @@ Date:   Tue Jul 15 20:15:58 2008 +0000
  src/zzuf.c |    8 ++++----
  1 files changed, 4 insertions(+), 4 deletions(-)
 
-commit 043173308b71665026159f0799306381176e39f6
+Commit: 2524
 Author: sam
 Date:   Tue Jul 15 20:15:53 2008 +0000
 
@@ -1971,7 +2021,7 @@ Date:   Tue Jul 15 20:15:53 2008 +0000
  src/lib-stream.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit aa632fa705e4385a517d273e6934923890ac314a
+Commit: 2523
 Author: sam
 Date:   Tue Jul 15 20:15:47 2008 +0000
 
@@ -1982,7 +2032,7 @@ Date:   Tue Jul 15 20:15:47 2008 +0000
  src/lib-mem.c |    5 +++++
  2 files changed, 6 insertions(+), 1 deletions(-)
 
-commit f693089193adcbcce1d64c3a36a1c3ccf8b67104
+Commit: 2522
 Author: sam
 Date:   Tue Jul 15 20:15:43 2008 +0000
 
@@ -1991,7 +2041,7 @@ Date:   Tue Jul 15 20:15:43 2008 +0000
  build-win32 |    8 ++++----
  1 files changed, 4 insertions(+), 4 deletions(-)
 
-commit 67e7ce4cfca6a7c3884cc47c2651db647dd21c86
+Commit: 2521
 Author: sam
 Date:   Tue Jul 15 20:15:35 2008 +0000
 
@@ -2003,7 +2053,7 @@ Date:   Tue Jul 15 20:15:35 2008 +0000
  src/zzuf.c    |    2 +-
  4 files changed, 12 insertions(+), 4 deletions(-)
 
-commit c62aa102d10b9efd52c832551bd234d1104e4a63
+Commit: 2520
 Author: sam
 Date:   Wed Jul 9 10:50:43 2008 +0000
 
@@ -2012,7 +2062,7 @@ Date:   Wed Jul 9 10:50:43 2008 +0000
  TODO |    5 +++++
  1 files changed, 5 insertions(+), 0 deletions(-)
 
-commit acb2eeefb22d770a90c4e947f9e3c9acedc4958a
+Commit: 2462
 Author: sam
 Date:   Fri Jun 20 06:05:25 2008 +0000
 
@@ -2021,7 +2071,7 @@ Date:   Fri Jun 20 06:05:25 2008 +0000
  test/Makefile.am |    2 ++
  1 files changed, 2 insertions(+), 0 deletions(-)
 
-commit db8463a010d4f045b6efd8bed00238d748c1e151
+Commit: 2461
 Author: sam
 Date:   Fri Jun 20 06:05:13 2008 +0000
 
@@ -2031,7 +2081,7 @@ Date:   Fri Jun 20 06:05:13 2008 +0000
  src/zzuf.c |   21 ++++++++++++---------
  1 files changed, 12 insertions(+), 9 deletions(-)
 
-commit 4445e4d91ca716e58d17f7c8ac36e335dfbe393d
+Commit: 2366
 Author: sam
 Date:   Fri Jun 13 09:31:21 2008 +0000
 
@@ -2043,7 +2093,7 @@ Date:   Fri Jun 13 09:31:21 2008 +0000
  configure.ac |    2 +-
  3 files changed, 782 insertions(+), 669 deletions(-)
 
-commit 9bdfb23af5611f775928a3d59cf9c2c5d485c6e1
+Commit: 2365
 Author: sam
 Date:   Fri Jun 13 09:31:17 2008 +0000
 
@@ -2052,7 +2102,7 @@ Date:   Fri Jun 13 09:31:17 2008 +0000
  doc/libzzuf.3 |   65 +++++++++++++++++++++++++++++++++-----------------------
  1 files changed, 38 insertions(+), 27 deletions(-)
 
-commit b2a9bd1e49519ef729cf08fd2c334b05aad31cf6
+Commit: 2355
 Author: sam
 Date:   Tue Jun 10 16:21:22 2008 +0000
 
@@ -2062,7 +2112,7 @@ Date:   Tue Jun 10 16:21:22 2008 +0000
  src/lib-mem.c |    6 +++++-
  1 files changed, 5 insertions(+), 1 deletions(-)
 
-commit e7512ba9002aac3da85786e416945b9b2271c1af
+Commit: 2354
 Author: sam
 Date:   Tue Jun 10 16:21:17 2008 +0000
 
@@ -2074,7 +2124,7 @@ Date:   Tue Jun 10 16:21:17 2008 +0000
  src/libzzuf.c |    6 +++---
  2 files changed, 10 insertions(+), 4 deletions(-)
 
-commit cec5bf9acf967ac2819c3a6c57366586af225040
+Commit: 2353
 Author: sam
 Date:   Tue Jun 10 16:21:11 2008 +0000
 
@@ -2085,7 +2135,7 @@ Date:   Tue Jun 10 16:21:11 2008 +0000
  doc/zzuf.1      |   48 +--------------------
  3 files changed, 128 insertions(+), 47 deletions(-)
 
-commit f24ef88ab39ca93640531ca5b794d62be66e088e
+Commit: 2345
 Author: sam
 Date:   Mon May 19 11:25:05 2008 +0000
 
@@ -2097,7 +2147,7 @@ Date:   Mon May 19 11:25:05 2008 +0000
  src/zzuf.c    |    2 +-
  3 files changed, 10 insertions(+), 9 deletions(-)
 
-commit 6fb1534dd3fb8a0aa70f002c69a335f8715df4a6
+Commit: 2344
 Author: sam
 Date:   Mon May 19 11:25:01 2008 +0000
 
@@ -2107,7 +2157,7 @@ Date:   Mon May 19 11:25:01 2008 +0000
  src/zzuf.c |   17 ++++++++++-------
  2 files changed, 15 insertions(+), 12 deletions(-)
 
-commit 165cb3e1d88729e5e7c9b741d83a2d0a6b18918e
+Commit: 2343
 Author: sam
 Date:   Mon May 19 11:24:56 2008 +0000
 
@@ -2118,7 +2168,7 @@ Date:   Mon May 19 11:24:56 2008 +0000
  src/zzuf.c |    4 +++-
  2 files changed, 6 insertions(+), 2 deletions(-)
 
-commit 17f520620875c356ef8fefa8643b51717cc9a338
+Commit: 2342
 Author: sam
 Date:   Mon May 19 11:24:51 2008 +0000
 
@@ -2127,7 +2177,7 @@ Date:   Mon May 19 11:24:51 2008 +0000
  doc/zzuf.1 |    8 +++++---
  1 files changed, 5 insertions(+), 3 deletions(-)
 
-commit 72a58bd7258b83ebdca6065a4159f713109d0d82
+Commit: 2341
 Author: sam
 Date:   Mon May 19 11:24:46 2008 +0000
 
@@ -2136,7 +2186,7 @@ Date:   Mon May 19 11:24:46 2008 +0000
  src/zzuf.c |   29 +++++++++++++++--------------
  1 files changed, 15 insertions(+), 14 deletions(-)
 
-commit 0d13041f540a4825962cf2fce0ff63686b6749e7
+Commit: 2340
 Author: sam
 Date:   Mon May 19 11:24:41 2008 +0000
 
@@ -2146,7 +2196,7 @@ Date:   Mon May 19 11:24:41 2008 +0000
  src/lib-fd.c |   11 +++++++++--
  1 files changed, 9 insertions(+), 2 deletions(-)
 
-commit d8cdd907bbb6d0b45fa0303401378c4dccfe9dfd
+Commit: 2338
 Author: sam
 Date:   Sun May 18 19:56:52 2008 +0000
 
@@ -2158,7 +2208,7 @@ Date:   Sun May 18 19:56:52 2008 +0000
  configure.ac |    2 +-
  3 files changed, 3123 insertions(+), 2746 deletions(-)
 
-commit 8a012199697a3ea4a97b88c44de199be5b9b2b47
+Commit: 2337
 Author: sam
 Date:   Sun May 18 19:56:48 2008 +0000
 
@@ -2167,7 +2217,7 @@ Date:   Sun May 18 19:56:48 2008 +0000
  src/fuzz.c |   10 +++++-----
  1 files changed, 5 insertions(+), 5 deletions(-)
 
-commit 55d6b282fe64d620c78b8758e02ad0ba394c4ae1
+Commit: 2336
 Author: sam
 Date:   Sun May 18 18:13:45 2008 +0000
 
@@ -2178,7 +2228,7 @@ Date:   Sun May 18 18:13:45 2008 +0000
  src/libzzuf.c |   46 +++++++++++++++++++++++++++++++++++++++++++---
  3 files changed, 59 insertions(+), 12 deletions(-)
 
-commit b23e6f6d1ffe319bab701461046ab1b16ac86d87
+Commit: 2335
 Author: sam
 Date:   Sun May 18 12:38:37 2008 +0000
 
@@ -2187,7 +2237,7 @@ Date:   Sun May 18 12:38:37 2008 +0000
  test/testsuite.sh |   24 ++++++++++++------------
  1 files changed, 12 insertions(+), 12 deletions(-)
 
-commit 6878caf0233304a9840890f4611841644d4c451b
+Commit: 2334
 Author: sam
 Date:   Sun May 18 12:38:32 2008 +0000
 
@@ -2197,7 +2247,7 @@ Date:   Sun May 18 12:38:32 2008 +0000
  src/lib-stream.c |   42 ++++++++++++++++++++++++++++++------------
  2 files changed, 35 insertions(+), 16 deletions(-)
 
-commit 2195331d79b1d0f13bd1a7d0ac3368e46eb5b68c
+Commit: 2333
 Author: sam
 Date:   Sun May 18 09:45:53 2008 +0000
 
@@ -2206,7 +2256,7 @@ Date:   Sun May 18 09:45:53 2008 +0000
  src/zzuf.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit 0310e6df18691d5cdf233ddd8705e81de34ce30c
+Commit: 2332
 Author: sam
 Date:   Sun May 18 09:45:48 2008 +0000
 
@@ -2216,7 +2266,7 @@ Date:   Sun May 18 09:45:48 2008 +0000
  src/lib-stream.c |   18 +++++++++---------
  1 files changed, 9 insertions(+), 9 deletions(-)
 
-commit 4f90c5cac54429a342cd3d89158c3ede9aa96a7a
+Commit: 2331
 Author: sam
 Date:   Sat May 17 23:10:47 2008 +0000
 
@@ -2226,7 +2276,7 @@ Date:   Sat May 17 23:10:47 2008 +0000
  src/lib-stream.c |  224 +++++++++++++++++++++++++++++++-----------------------
  2 files changed, 131 insertions(+), 96 deletions(-)
 
-commit 366d3e34344bbc1ca7375911f37e2885c5a0c36b
+Commit: 2330
 Author: sam
 Date:   Sat May 17 23:10:41 2008 +0000
 
@@ -2236,7 +2286,7 @@ Date:   Sat May 17 23:10:41 2008 +0000
  src/lib-stream.c |   20 ++++++++++++++++++++
  2 files changed, 21 insertions(+), 1 deletions(-)
 
-commit 77696046ec0212a67e66fbcffc52480ea8fbe212
+Commit: 2328
 Author: sam
 Date:   Sat May 17 13:40:45 2008 +0000
 
@@ -2245,7 +2295,7 @@ Date:   Sat May 17 13:40:45 2008 +0000
  doc/zzuf.1 |   19 ++++++++++---------
  1 files changed, 10 insertions(+), 9 deletions(-)
 
-commit fe0175caa122801c8bc52b125289e6ec953edacb
+Commit: 2327
 Author: sam
 Date:   Sat May 17 13:40:40 2008 +0000
 
@@ -2255,7 +2305,7 @@ Date:   Sat May 17 13:40:40 2008 +0000
  src/zzuf.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 173639a25168855517211031178d4c8ceda416b5
+Commit: 2326
 Author: sam
 Date:   Fri May 16 22:01:18 2008 +0000
 
@@ -2267,7 +2317,7 @@ Date:   Fri May 16 22:01:18 2008 +0000
  src/zzuf.c   |    4 ++--
  4 files changed, 9 insertions(+), 9 deletions(-)
 
-commit 85038d0d052fa2021440d33d36e24c460c4a8229
+Commit: 2325
 Author: sam
 Date:   Fri May 16 22:01:11 2008 +0000
 
@@ -2280,7 +2330,7 @@ Date:   Fri May 16 22:01:11 2008 +0000
  test/zzero.c      |   36 ++++++++++++
  4 files changed, 153 insertions(+), 43 deletions(-)
 
-commit 3a16d81e016363d774124358758799a578fa9cdf
+Commit: 2324
 Author: sam
 Date:   Fri May 16 22:01:07 2008 +0000
 
@@ -2290,7 +2340,7 @@ Date:   Fri May 16 22:01:07 2008 +0000
  src/fuzz.c |   12 ++++++++++--
  1 files changed, 10 insertions(+), 2 deletions(-)
 
-commit ec33640c4c482a2516dad74e9167b160213505a1
+Commit: 2323
 Author: sam
 Date:   Fri May 16 22:01:03 2008 +0000
 
@@ -2299,7 +2349,7 @@ Date:   Fri May 16 22:01:03 2008 +0000
  TODO |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 598a079e5c5cad2ee24f49b6d6831e09be3189a7
+Commit: 2322
 Author: sam
 Date:   Fri May 16 22:00:58 2008 +0000
 
@@ -2308,7 +2358,7 @@ Date:   Fri May 16 22:00:58 2008 +0000
  doc/zzuf.1 |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit 2fcd5443c4ae9410d253b6854e718d6b09618398
+Commit: 2320
 Author: sam
 Date:   Sat Apr 26 12:24:57 2008 +0000
 
@@ -2321,7 +2371,7 @@ Date:   Sat Apr 26 12:24:57 2008 +0000
  src/lib-fd.c |   53 +++++++++++++++++++++++++++++++++++++++++++++++++++++
  4 files changed, 60 insertions(+), 4 deletions(-)
 
-commit 167c4bd6a0d95be6dc517ccbb4bbc55b45ab62ca
+Commit: 2319
 Author: sam
 Date:   Sat Apr 26 11:30:45 2008 +0000
 
@@ -2332,7 +2382,7 @@ Date:   Sat Apr 26 11:30:45 2008 +0000
  src/zzuf.c   |    2 +-
  3 files changed, 24 insertions(+), 7 deletions(-)
 
-commit afa62fb3427277fface10233dfbb74f447fd4e21
+Commit: 2272
 Author: sam
 Date:   Sat Apr 12 07:44:34 2008 +0000
 
@@ -2343,7 +2393,7 @@ Date:   Sat Apr 12 07:44:34 2008 +0000
  src/libzzuf.h |    5 +++--
  2 files changed, 5 insertions(+), 4 deletions(-)
 
-commit 154aeba35277db385d46a94330f696f2785b790e
+Commit: 2271
 Author: sam
 Date:   Wed Apr 9 09:49:16 2008 +0000
 
@@ -2352,7 +2402,7 @@ Date:   Wed Apr 9 09:49:16 2008 +0000
  src/debug.c |   16 ++++++++++++++++
  1 files changed, 16 insertions(+), 0 deletions(-)
 
-commit d362b379676d6fb028d1620ceed5e5991d2353ef
+Commit: 1867
 Author: sam
 Date:   Sat Nov 3 00:24:46 2007 +0000
 
@@ -2364,7 +2414,7 @@ Date:   Sat Nov 3 00:24:46 2007 +0000
  configure.ac |    4 +-
  3 files changed, 112 insertions(+), 2 deletions(-)
 
-commit c43c65bc41859913b7ed93dacd49d3d16cbbc1de
+Commit: 1866
 Author: sam
 Date:   Sat Nov 3 00:22:58 2007 +0000
 
@@ -2373,7 +2423,7 @@ Date:   Sat Nov 3 00:22:58 2007 +0000
  src/Makefile.am |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 3a67614e84d77eda502fa99b97bf18c67e50fcea
+Commit: 1865
 Author: sam
 Date:   Sat Nov 3 00:14:40 2007 +0000
 
@@ -2382,7 +2432,7 @@ Date:   Sat Nov 3 00:14:40 2007 +0000
  doc/zzuf.1 |   32 +++++++++++++++++++++-----------
  1 files changed, 21 insertions(+), 11 deletions(-)
 
-commit 5e4355d4f7b887b1b19e6ea648fbbfa98b29b85d
+Commit: 1864
 Author: sam
 Date:   Sat Nov 3 00:08:43 2007 +0000
 
@@ -2391,7 +2441,7 @@ Date:   Sat Nov 3 00:08:43 2007 +0000
  src/lib-fd.c |   16 +++++-----------
  1 files changed, 5 insertions(+), 11 deletions(-)
 
-commit 2b366b6aeb34fc47f6ef4dceb6a85fb5e541411d
+Commit: 1863
 Author: sam
 Date:   Fri Nov 2 23:34:22 2007 +0000
 
@@ -2402,7 +2452,7 @@ Date:   Fri Nov 2 23:34:22 2007 +0000
  src/lib-fd.c |  110 +++++++++++++++++++++------------------------------------
  1 files changed, 41 insertions(+), 69 deletions(-)
 
-commit f724eaddbc5935c45c66f665c2810a17242a22b0
+Commit: 1862
 Author: sam
 Date:   Fri Nov 2 23:23:25 2007 +0000
 
@@ -2411,7 +2461,7 @@ Date:   Fri Nov 2 23:23:25 2007 +0000
  src/lib-fd.c |   46 ++++++++++++++++++++++++++++++++++++++++++++++
  1 files changed, 46 insertions(+), 0 deletions(-)
 
-commit 36a1d6d638e666c43d233668b5b4a322887e1f88
+Commit: 1861
 Author: sam
 Date:   Fri Nov 2 23:22:11 2007 +0000
 
@@ -2420,7 +2470,7 @@ Date:   Fri Nov 2 23:22:11 2007 +0000
  configure.ac |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit 641fb3dfef07b1be67a3a2813ce95670db52feb7
+Commit: 1860
 Author: sam
 Date:   Fri Nov 2 23:07:41 2007 +0000
 
@@ -2429,7 +2479,7 @@ Date:   Fri Nov 2 23:07:41 2007 +0000
  doc/zzuf.1 |   41 +++++++++++++++++++++++++++--------------
  1 files changed, 27 insertions(+), 14 deletions(-)
 
-commit b6158f9d44b968f08e3cda0abd91e5f5b35d1336
+Commit: 1859
 Author: sam
 Date:   Fri Nov 2 23:01:09 2007 +0000
 
@@ -2440,7 +2490,7 @@ Date:   Fri Nov 2 23:01:09 2007 +0000
  src/lib-fd.c |    3 ---
  2 files changed, 7 insertions(+), 7 deletions(-)
 
-commit a9af95e4e80ba477a0b08fd9f0c1b4f3040419d5
+Commit: 1858
 Author: sam
 Date:   Fri Nov 2 22:45:54 2007 +0000
 
@@ -2458,7 +2508,7 @@ Date:   Fri Nov 2 22:45:54 2007 +0000
  src/zzuf.c    |   42 +++++++++++++++++++++++++++++++-----------
  9 files changed, 95 insertions(+), 28 deletions(-)
 
-commit b5ac0ce54cd7ab10062c23edb5844450f7a71be0
+Commit: 1857
 Author: sam
 Date:   Fri Nov 2 21:50:08 2007 +0000
 
@@ -2467,7 +2517,7 @@ Date:   Fri Nov 2 21:50:08 2007 +0000
  configure.ac |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit ee8bae2f341cdf5155812858d0e01b444594ebe8
+Commit: 1856
 Author: sam
 Date:   Fri Nov 2 21:40:38 2007 +0000
 
@@ -2476,7 +2526,7 @@ Date:   Fri Nov 2 21:40:38 2007 +0000
  src/debug.c |    6 +++---
  1 files changed, 3 insertions(+), 3 deletions(-)
 
-commit a30236149611e24259264a01e372d0878b4d268f
+Commit: 1855
 Author: sam
 Date:   Fri Nov 2 21:32:18 2007 +0000
 
@@ -2485,7 +2535,7 @@ Date:   Fri Nov 2 21:32:18 2007 +0000
  src/lib-fd.c |   39 +++++++++++++++++++++++++++++++++------
  1 files changed, 33 insertions(+), 6 deletions(-)
 
-commit a37583961ae5c6bab6d4d8b42cc5df19e050066c
+Commit: 1854
 Author: sam
 Date:   Fri Nov 2 21:16:57 2007 +0000
 
@@ -2494,7 +2544,7 @@ Date:   Fri Nov 2 21:16:57 2007 +0000
  configure.ac |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit 8015cefe33b79545c06eede75c5b818f32ada822
+Commit: 1804
 Author: sam
 Date:   Tue Jul 10 15:55:35 2007 +0000
 
@@ -2505,7 +2555,7 @@ Date:   Tue Jul 10 15:55:35 2007 +0000
  NEWS      |    1 +
  2 files changed, 57 insertions(+), 0 deletions(-)
 
-commit 82109307cb1fd2798602fba824ce3d80d40a290a
+Commit: 1803
 Author: sam
 Date:   Tue Jul 10 15:42:37 2007 +0000
 
@@ -2514,7 +2564,7 @@ Date:   Tue Jul 10 15:42:37 2007 +0000
  doc/zzuf.1 |   22 ++++++++++++++++++----
  1 files changed, 18 insertions(+), 4 deletions(-)
 
-commit 84dd6b2f10b1d9661c63113e6a5bce20525ba940
+Commit: 1802
 Author: sam
 Date:   Tue Jul 10 15:31:40 2007 +0000
 
@@ -2523,7 +2573,7 @@ Date:   Tue Jul 10 15:31:40 2007 +0000
  src/zzuf.c |   12 ++++++------
  1 files changed, 6 insertions(+), 6 deletions(-)
 
-commit ea7d338f1ccb0350bc143233f77f572bb3544170
+Commit: 1801
 Author: sam
 Date:   Tue Jul 10 15:23:18 2007 +0000
 
@@ -2534,7 +2584,7 @@ Date:   Tue Jul 10 15:23:18 2007 +0000
  src/zzuf.c |   58 ++++++++++++++++++++++++++++++++++++++++++++++------------
  3 files changed, 48 insertions(+), 12 deletions(-)
 
-commit 48d7ef78d2e06445061eaaaabad7346f92db3198
+Commit: 1800
 Author: sam
 Date:   Tue Jul 10 14:30:13 2007 +0000
 
@@ -2544,7 +2594,7 @@ Date:   Tue Jul 10 14:30:13 2007 +0000
  src/zzuf.c |   12 ++++++------
  2 files changed, 9 insertions(+), 9 deletions(-)
 
-commit 6480d28eec195c23a5d14c2fe9a0a8371b9b6ab8
+Commit: 1799
 Author: sam
 Date:   Tue Jul 10 14:26:08 2007 +0000
 
@@ -2554,7 +2604,7 @@ Date:   Tue Jul 10 14:26:08 2007 +0000
  src/zzuf.c |   32 +++++++++++++++++++-------------
  1 files changed, 19 insertions(+), 13 deletions(-)
 
-commit a8a75acfa14c896c72cd7dbf7bc56e051aa39f6b
+Commit: 1798
 Author: sam
 Date:   Tue Jul 10 09:01:12 2007 +0000
 
@@ -2563,7 +2613,7 @@ Date:   Tue Jul 10 09:01:12 2007 +0000
  doc/zzuf.1 |    5 +++--
  1 files changed, 3 insertions(+), 2 deletions(-)
 
-commit a013023cbccb3d2bfe20e6a7d17e43b162078b99
+Commit: 1797
 Author: sam
 Date:   Tue Jul 10 00:24:35 2007 +0000
 
@@ -2575,7 +2625,7 @@ Date:   Tue Jul 10 00:24:35 2007 +0000
  configure.ac |    4 +-
  3 files changed, 84 insertions(+), 2 deletions(-)
 
-commit dba3ff6a2103046dd2dba4ee263498634850938a
+Commit: 1796
 Author: sam
 Date:   Mon Jul 9 23:51:49 2007 +0000
 
@@ -2585,7 +2635,7 @@ Date:   Mon Jul 9 23:51:49 2007 +0000
  src/zzuf.c |   28 ++++++++++++++++++++++------
  2 files changed, 23 insertions(+), 7 deletions(-)
 
-commit fa5646275d2e28dfd1c467c180a42787565d3c45
+Commit: 1794
 Author: sam
 Date:   Fri Jul 6 20:47:51 2007 +0000
 
@@ -2596,7 +2646,7 @@ Date:   Fri Jul 6 20:47:51 2007 +0000
  src/ranges.c |    8 ++++----
  3 files changed, 11 insertions(+), 10 deletions(-)
 
-commit 0698e4c74384530019b888948aeda8d270c0328d
+Commit: 1793
 Author: sam
 Date:   Fri Jul 6 20:47:38 2007 +0000
 
@@ -2605,7 +2655,7 @@ Date:   Fri Jul 6 20:47:38 2007 +0000
  doc/zzuf.1 |   18 +++++++++++++++++-
  1 files changed, 17 insertions(+), 1 deletions(-)
 
-commit 2a9e992aa5d22c23a685a59bd28513eacdebd6ce
+Commit: 1792
 Author: sam
 Date:   Fri Jul 6 14:39:39 2007 +0000
 
@@ -2618,7 +2668,7 @@ Date:   Fri Jul 6 14:39:39 2007 +0000
  src/ranges.h    |   21 +++++++++++++
  5 files changed, 118 insertions(+), 84 deletions(-)
 
-commit 13e400ace8a560f60d43d06de1b1fec602726af8
+Commit: 1791
 Author: sam
 Date:   Fri Jul 6 13:40:55 2007 +0000
 
@@ -2637,7 +2687,7 @@ Date:   Fri Jul 6 13:40:55 2007 +0000
  src/zzuf.c       |   16 ++++++++++--
  11 files changed, 119 insertions(+), 26 deletions(-)
 
-commit 51c22666edd63a7dc60412de9df931dfe2622b33
+Commit: 1790
 Author: sam
 Date:   Fri Jul 6 13:34:38 2007 +0000
 
@@ -2647,7 +2697,7 @@ Date:   Fri Jul 6 13:34:38 2007 +0000
  src/debug.h |    6 +++++-
  1 files changed, 5 insertions(+), 1 deletions(-)
 
-commit 4500fde8e6b7184faa5d64cb2e025e952c678345
+Commit: 1789
 Author: sam
 Date:   Fri Jul 6 13:31:23 2007 +0000
 
@@ -2656,7 +2706,7 @@ Date:   Fri Jul 6 13:31:23 2007 +0000
  src/Makefile.am |    1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
-commit a0f92cc7a9753cdfa9b3d680b5edf0fecb746ef2
+Commit: 1764
 Author: sam
 Date:   Thu Mar 1 23:57:14 2007 +0000
 
@@ -2668,7 +2718,7 @@ Date:   Thu Mar 1 23:57:14 2007 +0000
  configure.ac |    4 ++--
  3 files changed, 48 insertions(+), 2 deletions(-)
 
-commit 3ff283422d19673ac90aebd32ed76fcafba373da
+Commit: 1763
 Author: sam
 Date:   Thu Mar 1 23:53:51 2007 +0000
 
@@ -2677,7 +2727,7 @@ Date:   Thu Mar 1 23:53:51 2007 +0000
  src/lib-fd.c |    5 ++++-
  1 files changed, 4 insertions(+), 1 deletions(-)
 
-commit 5f538eeb17ec50904618e34a695ef3d852cd82d6
+Commit: 1762
 Author: sam
 Date:   Thu Mar 1 23:52:00 2007 +0000
 
@@ -2686,7 +2736,7 @@ Date:   Thu Mar 1 23:52:00 2007 +0000
  src/zzuf.c |    1 -
  1 files changed, 0 insertions(+), 1 deletions(-)
 
-commit b1c4e08f1fa877bd97dcb37c11ba71f8d00268ed
+Commit: 1761
 Author: sam
 Date:   Sat Feb 24 17:37:46 2007 +0000
 
@@ -2698,7 +2748,7 @@ Date:   Sat Feb 24 17:37:46 2007 +0000
  src/md5.c    |  118 +++++++++++++++++++++++++++++----------------------------
  2 files changed, 61 insertions(+), 59 deletions(-)
 
-commit 53b3e8017e9de57b45fb438f2484ed5d52408c02
+Commit: 1760
 Author: sam
 Date:   Sat Feb 24 16:37:12 2007 +0000
 
@@ -2710,7 +2760,7 @@ Date:   Sat Feb 24 16:37:12 2007 +0000
  configure.ac |    4 +-
  3 files changed, 207 insertions(+), 2 deletions(-)
 
-commit 7399adbe977b9c09d5e1e3eb34afccc817b04802
+Commit: 1759
 Author: sam
 Date:   Sat Feb 24 16:32:54 2007 +0000
 
@@ -2719,7 +2769,7 @@ Date:   Sat Feb 24 16:32:54 2007 +0000
  COPYING |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 3e8348887a61ce7bbf751120cbb3510cf9927de0
+Commit: 1758
 Author: sam
 Date:   Sat Feb 24 16:20:42 2007 +0000
 
@@ -2728,7 +2778,7 @@ Date:   Sat Feb 24 16:20:42 2007 +0000
  src/zzuf.c |   29 +++++++++++++++--------------
  1 files changed, 15 insertions(+), 14 deletions(-)
 
-commit aadd0d1a56d6b246294875cd1aa6f5dfd0bf7359
+Commit: 1751
 Author: sam
 Date:   Tue Feb 20 18:18:27 2007 +0000
 
@@ -2737,7 +2787,7 @@ Date:   Tue Feb 20 18:18:27 2007 +0000
  src/lib-mem.c |    4 ++++
  1 files changed, 4 insertions(+), 0 deletions(-)
 
-commit 79f35f770e0326c476ec08ab2c20308baa6ec239
+Commit: 1749
 Author: sam
 Date:   Mon Feb 19 10:28:16 2007 +0000
 
@@ -2747,7 +2797,7 @@ Date:   Mon Feb 19 10:28:16 2007 +0000
  src/lib-mem.c |   20 +++++++++++++++-----
  1 files changed, 15 insertions(+), 5 deletions(-)
 
-commit 68c3ce62371e6745e1e413e4a1290deed9d885f7
+Commit: 1748
 Author: sam
 Date:   Mon Feb 19 10:26:41 2007 +0000
 
@@ -2756,7 +2806,7 @@ Date:   Mon Feb 19 10:26:41 2007 +0000
  configure.ac |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 6c37047b5153af8d41b6fdd715d0cf4053ce4fb4
+Commit: 1747
 Author: sam
 Date:   Mon Feb 19 10:25:54 2007 +0000
 
@@ -2766,7 +2816,7 @@ Date:   Mon Feb 19 10:25:54 2007 +0000
  test/zzcat.c |   18 ++++++++++++++----
  1 files changed, 14 insertions(+), 4 deletions(-)
 
-commit 555502122bd0bcb99c667b14f340033c460e7af4
+Commit: 1746
 Author: sam
 Date:   Mon Feb 19 09:28:52 2007 +0000
 
@@ -2775,7 +2825,7 @@ Date:   Mon Feb 19 09:28:52 2007 +0000
  test/zzcat.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit a482e0becc8f63917dcf466cf8153cf45c243d20
+Commit: 1745
 Author: sam
 Date:   Mon Feb 19 09:16:10 2007 +0000
 
@@ -2785,7 +2835,7 @@ Date:   Mon Feb 19 09:16:10 2007 +0000
  test/zzcat.c      |   22 ++++++++++++++++++++++
  2 files changed, 25 insertions(+), 2 deletions(-)
 
-commit d4c5389b2bdc703ded03b2b15090af48792bc156
+Commit: 1744
 Author: sam
 Date:   Fri Feb 9 01:52:59 2007 +0000
 
@@ -2794,7 +2844,7 @@ Date:   Fri Feb 9 01:52:59 2007 +0000
  src/zzuf.c |    7 ++++---
  1 files changed, 4 insertions(+), 3 deletions(-)
 
-commit 3b059b7987e8f1ad852aa73b5084580079025a12
+Commit: 1743
 Author: sam
 Date:   Fri Feb 9 01:33:02 2007 +0000
 
@@ -2804,7 +2854,7 @@ Date:   Fri Feb 9 01:33:02 2007 +0000
  src/zzuf.c    |  148 +++++++++++++++++++++++++++++----------------------------
  2 files changed, 79 insertions(+), 75 deletions(-)
 
-commit f75d9ac051b4d8162c9abf905d9f8ae645cf0021
+Commit: 1742
 Author: sam
 Date:   Thu Feb 8 23:08:38 2007 +0000
 
@@ -2813,7 +2863,7 @@ Date:   Thu Feb 8 23:08:38 2007 +0000
  src/zzuf.c |   15 +++++++++++++--
  1 files changed, 13 insertions(+), 2 deletions(-)
 
-commit 5c36363504617bb94c43977ada24de0f6daa4309
+Commit: 1741
 Author: sam
 Date:   Thu Feb 8 21:51:37 2007 +0000
 
@@ -2823,7 +2873,7 @@ Date:   Thu Feb 8 21:51:37 2007 +0000
  src/zzuf.c |    2 ++
  2 files changed, 3 insertions(+), 2 deletions(-)
 
-commit ffb7d8acf3f83e3aa3e75007997c32ac948934c2
+Commit: 1740
 Author: sam
 Date:   Thu Feb 8 17:23:48 2007 +0000
 
@@ -2833,7 +2883,7 @@ Date:   Thu Feb 8 17:23:48 2007 +0000
  src/zzuf.c |   10 +++++++++-
  2 files changed, 11 insertions(+), 2 deletions(-)
 
-commit 7c708caf85faaf4a7c539739bd691c583bc0567f
+Commit: 1736
 Author: sam
 Date:   Fri Feb 2 11:58:06 2007 +0000
 
@@ -2846,7 +2896,7 @@ Date:   Fri Feb 2 11:58:06 2007 +0000
  src/zzuf.c     |    6 +++---
  5 files changed, 11 insertions(+), 10 deletions(-)
 
-commit 35095929e22fca97ca4c3e54ca9023fc5c00ce88
+Commit: 1735
 Author: sam
 Date:   Fri Feb 2 11:29:27 2007 +0000
 
@@ -2855,7 +2905,7 @@ Date:   Fri Feb 2 11:29:27 2007 +0000
  src/debug.c |   23 ++++++++++-------------
  1 files changed, 10 insertions(+), 13 deletions(-)
 
-commit 0a6d1d5c0047086a86d7195cf70adfc96f1faa5b
+Commit: 1734
 Author: sam
 Date:   Thu Feb 1 22:50:34 2007 +0000
 
@@ -2864,7 +2914,7 @@ Date:   Thu Feb 1 22:50:34 2007 +0000
  msvc/zzuf.vcproj |    6 ++++++
  1 files changed, 6 insertions(+), 0 deletions(-)
 
-commit 7ca5ac191fafa696003ab2005a7cae7ae0a7727f
+Commit: 1733
 Author: sam
 Date:   Thu Feb 1 22:33:07 2007 +0000
 
@@ -2878,7 +2928,7 @@ Date:   Thu Feb 1 22:33:07 2007 +0000
  src/zzuf.c      |  141 ++++++++++++++++++------------------------------------
  5 files changed, 212 insertions(+), 97 deletions(-)
 
-commit c4bc06ccc4fb12b17c657a1bb89bf3feb68b2f2a
+Commit: 1732
 Author: sam
 Date:   Thu Feb 1 22:20:48 2007 +0000
 
@@ -2889,7 +2939,7 @@ Date:   Thu Feb 1 22:20:48 2007 +0000
  src/libzzuf.h |    2 +-
  3 files changed, 5 insertions(+), 5 deletions(-)
 
-commit 03ac083b79a6486a46eb390c80e6c0d81bbd43d6
+Commit: 1731
 Author: sam
 Date:   Thu Feb 1 19:27:21 2007 +0000
 
@@ -2898,7 +2948,7 @@ Date:   Thu Feb 1 19:27:21 2007 +0000
  configure.ac |  166 +++++++++++++++++++++++++++++-----------------------------
  1 files changed, 83 insertions(+), 83 deletions(-)
 
-commit b2bfc3cc1c03786104b4f06b692ac49005a06b97
+Commit: 1730
 Author: sam
 Date:   Thu Feb 1 18:19:03 2007 +0000
 
@@ -2916,7 +2966,7 @@ Date:   Thu Feb 1 18:19:03 2007 +0000
  src/libzzuf.c    |    3 +
  9 files changed, 108 insertions(+), 100 deletions(-)
 
-commit ce794ecefcbea23e4958077c690e266c7f37ab27
+Commit: 1729
 Author: sam
 Date:   Thu Feb 1 16:41:54 2007 +0000
 
@@ -2929,7 +2979,7 @@ Date:   Thu Feb 1 16:41:54 2007 +0000
  src/zzuf.c          |   13 ++--
  5 files changed, 448 insertions(+), 6 deletions(-)
 
-commit 5ecc0cd95aae02de6702af8df7baa7acc8e8e132
+Commit: 1728
 Author: sam
 Date:   Thu Feb 1 16:08:33 2007 +0000
 
@@ -2945,7 +2995,7 @@ Date:   Thu Feb 1 16:08:33 2007 +0000
  test/zzcat.c     |    4 +++-
  8 files changed, 20 insertions(+), 8 deletions(-)
 
-commit fda34eaef8e033e5d6996c303133595f1fae7430
+Commit: 1727
 Author: sam
 Date:   Thu Feb 1 15:57:10 2007 +0000
 
@@ -2956,7 +3006,7 @@ Date:   Thu Feb 1 15:57:10 2007 +0000
  src/zzuf.c   |    1 -
  3 files changed, 4 insertions(+), 3 deletions(-)
 
-commit 88bd22bb3f3d007d70f99980dc716878775cc188
+Commit: 1726
 Author: sam
 Date:   Sun Jan 28 01:17:49 2007 +0000
 
@@ -2968,7 +3018,7 @@ Date:   Sun Jan 28 01:17:49 2007 +0000
  configure.ac |    4 +-
  3 files changed, 130 insertions(+), 2 deletions(-)
 
-commit 0867c50fbe1856118459e194964e89975a2c4a20
+Commit: 1725
 Author: sam
 Date:   Sun Jan 28 00:53:19 2007 +0000
 
@@ -2981,7 +3031,7 @@ Date:   Sun Jan 28 00:53:19 2007 +0000
  test/zzcat.c      |  111 +++++++++++++++++++++++++++++++++++++++++++++++++++++
  5 files changed, 118 insertions(+), 161 deletions(-)
 
-commit 21a27a53177eac9270b93fa40c35e218d286e2de
+Commit: 1724
 Author: sam
 Date:   Sun Jan 28 00:50:53 2007 +0000
 
@@ -2990,7 +3040,7 @@ Date:   Sun Jan 28 00:50:53 2007 +0000
  src/lib-stream.c |    8 ++++----
  1 files changed, 4 insertions(+), 4 deletions(-)
 
-commit 0ea0389f79de7785206506c5737e99633acb44fb
+Commit: 1723
 Author: sam
 Date:   Sun Jan 28 00:22:23 2007 +0000
 
@@ -2999,7 +3049,7 @@ Date:   Sun Jan 28 00:22:23 2007 +0000
  src/lib-stream.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit 1e5d26591bb85d1a33b6dcd60bbc56b7d3b37f2e
+Commit: 1722
 Author: sam
 Date:   Sun Jan 28 00:21:58 2007 +0000
 
@@ -3008,7 +3058,7 @@ Date:   Sun Jan 28 00:21:58 2007 +0000
  src/lib-stream.c |   11 +++++++++--
  1 files changed, 9 insertions(+), 2 deletions(-)
 
-commit 7aacef91a13851a3bb1fb81725a0fa622dbe522d
+Commit: 1721
 Author: sam
 Date:   Sat Jan 27 21:40:31 2007 +0000
 
@@ -3022,7 +3072,7 @@ Date:   Sat Jan 27 21:40:31 2007 +0000
  test/testsuite.sh |   44 +-----
  6 files changed, 459 insertions(+), 38 deletions(-)
 
-commit 5aaac19407fde552b9b4d7188931c48092b61069
+Commit: 1720
 Author: sam
 Date:   Sat Jan 27 19:05:46 2007 +0000
 
@@ -3036,7 +3086,7 @@ Date:   Sat Jan 27 19:05:46 2007 +0000
  src/zzuf.c |   22 ++++++++++++++++------
  6 files changed, 73 insertions(+), 13 deletions(-)
 
-commit c253e61cee6f2004901eec04b9b807773d0b1068
+Commit: 1719
 Author: sam
 Date:   Sat Jan 27 15:13:34 2007 +0000
 
@@ -3049,7 +3099,7 @@ Date:   Sat Jan 27 15:13:34 2007 +0000
  src/libzzuf.h    |    1 +
  4 files changed, 20 insertions(+), 12 deletions(-)
 
-commit 7bb45612e2bbf36c78b9cdc95563ee4c9e0dae6d
+Commit: 1718
 Author: sam
 Date:   Thu Jan 25 22:34:28 2007 +0000
 
@@ -3062,7 +3112,7 @@ Date:   Thu Jan 25 22:34:28 2007 +0000
  src/zzuf.c    |    6 +++++-
  5 files changed, 35 insertions(+), 34 deletions(-)
 
-commit 9c75d64d33cc8960e22aac2600afb5ac8edc7058
+Commit: 1717
 Author: sam
 Date:   Thu Jan 25 22:07:23 2007 +0000
 
@@ -3072,7 +3122,7 @@ Date:   Thu Jan 25 22:07:23 2007 +0000
  src/libzzuf.c |    4 +++-
  1 files changed, 3 insertions(+), 1 deletions(-)
 
-commit 2cad7c8c277a0b948f74b3b6a28e323dc1f5c99c
+Commit: 1716
 Author: sam
 Date:   Thu Jan 25 21:43:37 2007 +0000
 
@@ -3082,7 +3132,7 @@ Date:   Thu Jan 25 21:43:37 2007 +0000
  src/lib-mem.c |    7 +++++++
  1 files changed, 7 insertions(+), 0 deletions(-)
 
-commit 211870d75e2e86c9804c1ddc2b366be3ee52b70d
+Commit: 1715
 Author: sam
 Date:   Thu Jan 25 20:18:34 2007 +0000
 
@@ -3091,7 +3141,7 @@ Date:   Thu Jan 25 20:18:34 2007 +0000
  NEWS |    1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
-commit 0227f9b36ea5a3456d7f980b7fcacb55569ff358
+Commit: 1714
 Author: sam
 Date:   Thu Jan 25 19:55:20 2007 +0000
 
@@ -3103,7 +3153,7 @@ Date:   Thu Jan 25 19:55:20 2007 +0000
  src/libzzuf.h |    3 +++
  3 files changed, 13 insertions(+), 1 deletions(-)
 
-commit 7bc4184eb259c03bee220bebf9b4f22c81da314a
+Commit: 1713
 Author: sam
 Date:   Thu Jan 25 16:56:22 2007 +0000
 
@@ -3115,7 +3165,7 @@ Date:   Thu Jan 25 16:56:22 2007 +0000
  configure.ac |    4 ++--
  3 files changed, 38 insertions(+), 2 deletions(-)
 
-commit 2cfd6dc543da53a2b3005bfdd18a8f8116a9d74e
+Commit: 1712
 Author: sam
 Date:   Thu Jan 25 15:33:22 2007 +0000
 
@@ -3124,7 +3174,7 @@ Date:   Thu Jan 25 15:33:22 2007 +0000
  src/lib-stream.c |   15 +++++++++++++--
  1 files changed, 13 insertions(+), 2 deletions(-)
 
-commit f5a48c25b141d5fb0b827fafb39a4d1660aff20d
+Commit: 1711
 Author: sam
 Date:   Thu Jan 25 15:28:24 2007 +0000
 
@@ -3133,7 +3183,7 @@ Date:   Thu Jan 25 15:28:24 2007 +0000
  src/lib-stream.c |    5 ++++-
  1 files changed, 4 insertions(+), 1 deletions(-)
 
-commit d603953fb925367cf2d282d6ec7939da96e59fbf
+Commit: 1710
 Author: sam
 Date:   Thu Jan 25 14:56:18 2007 +0000
 
@@ -3142,7 +3192,7 @@ Date:   Thu Jan 25 14:56:18 2007 +0000
  src/zzuf.c |   24 ++++++++++++------------
  1 files changed, 12 insertions(+), 12 deletions(-)
 
-commit 126441f91deaf5fea92aefdc79714f2984daf489
+Commit: 1709
 Author: sam
 Date:   Thu Jan 25 13:28:40 2007 +0000
 
@@ -3155,7 +3205,7 @@ Date:   Thu Jan 25 13:28:40 2007 +0000
  src/zzuf.c   |   72 ++++++++-----
  4 files changed, 385 insertions(+), 32 deletions(-)
 
-commit a3b6f5242d5f303d0f6617b2d9d9a0e826492637
+Commit: 1708
 Author: sam
 Date:   Thu Jan 25 12:15:47 2007 +0000
 
@@ -3164,7 +3214,7 @@ Date:   Thu Jan 25 12:15:47 2007 +0000
  doc/zzuf.1 |    7 +++++++
  1 files changed, 7 insertions(+), 0 deletions(-)
 
-commit 2cb2bb91d3ff787231c353637692098af07dc287
+Commit: 1707
 Author: sam
 Date:   Thu Jan 25 11:59:33 2007 +0000
 
@@ -3174,7 +3224,7 @@ Date:   Thu Jan 25 11:59:33 2007 +0000
  src/zzuf.c |   13 +++++++------
  2 files changed, 9 insertions(+), 7 deletions(-)
 
-commit 051665e7ccaccc5a9d3c70de4c1841912d9051e5
+Commit: 1706
 Author: sam
 Date:   Thu Jan 25 11:47:44 2007 +0000
 
@@ -3183,7 +3233,7 @@ Date:   Thu Jan 25 11:47:44 2007 +0000
  src/zzuf.c |    7 ++-----
  1 files changed, 2 insertions(+), 5 deletions(-)
 
-commit 0f0620a7e8840aa153052a705c432b5716e6f507
+Commit: 1705
 Author: sam
 Date:   Thu Jan 25 11:40:27 2007 +0000
 
@@ -3198,7 +3248,7 @@ Date:   Thu Jan 25 11:40:27 2007 +0000
  src/zzuf.c    |   30 +++++++++++++++++++++-------
  7 files changed, 114 insertions(+), 30 deletions(-)
 
-commit 5b9cc9ef26d5f4dfbe04835f0ea884f903143004
+Commit: 1704
 Author: sam
 Date:   Thu Jan 25 02:16:00 2007 +0000
 
@@ -3207,7 +3257,7 @@ Date:   Thu Jan 25 02:16:00 2007 +0000
  src/zzuf.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit abfa806d1873d1e13e23e1e07e8f7a8315f37519
+Commit: 1703
 Author: sam
 Date:   Thu Jan 25 01:10:10 2007 +0000
 
@@ -3216,7 +3266,7 @@ Date:   Thu Jan 25 01:10:10 2007 +0000
  TODO |    5 +++++
  1 files changed, 5 insertions(+), 0 deletions(-)
 
-commit 49aca7e7e5b3b511d3d259c180a8375c0f3e0bd8
+Commit: 1702
 Author: sam
 Date:   Wed Jan 24 15:06:17 2007 +0000
 
@@ -3230,7 +3280,7 @@ Date:   Wed Jan 24 15:06:17 2007 +0000
  src/zzuf.c      |  334 ++++++++++++++++++++++++++++++++++++++++++++-----------
  6 files changed, 309 insertions(+), 71 deletions(-)
 
-commit 0a51b0d9cf032da94b1d6ee3b500f5555fb98d54
+Commit: 1701
 Author: sam
 Date:   Tue Jan 23 15:38:18 2007 +0000
 
@@ -3247,7 +3297,7 @@ Date:   Tue Jan 23 15:38:18 2007 +0000
  src/zzuf.c      |    4 ++
  9 files changed, 222 insertions(+), 18 deletions(-)
 
-commit dbba79b87a77149178da7d64f45db5b63736e7da
+Commit: 1700
 Author: sam
 Date:   Tue Jan 23 12:16:50 2007 +0000
 
@@ -3256,7 +3306,7 @@ Date:   Tue Jan 23 12:16:50 2007 +0000
  src/fd.c |    7 +++++++
  1 files changed, 7 insertions(+), 0 deletions(-)
 
-commit 8c133628484a390c6f8ddc9069e9ad9125c70ea9
+Commit: 1699
 Author: sam
 Date:   Tue Jan 23 08:45:47 2007 +0000
 
@@ -3271,7 +3321,7 @@ Date:   Tue Jan 23 08:45:47 2007 +0000
  src/zzuf.c       |    3 +
  6 files changed, 174 insertions(+), 162 deletions(-)
 
-commit 43989d8729a927d9b0b3ea8c6d7cf1f3c8b3b9c7
+Commit: 1698
 Author: sam
 Date:   Thu Jan 18 21:04:34 2007 +0000
 
@@ -3281,7 +3331,7 @@ Date:   Thu Jan 18 21:04:34 2007 +0000
  src/zzuf.c |    4 ++--
  2 files changed, 6 insertions(+), 6 deletions(-)
 
-commit 2ee5f1dae7f12321fad014532ed1b4d477aea0c7
+Commit: 1697
 Author: sam
 Date:   Thu Jan 18 18:45:58 2007 +0000
 
@@ -3291,7 +3341,7 @@ Date:   Thu Jan 18 18:45:58 2007 +0000
  src/lib-stream.c |    4 +---
  2 files changed, 8 insertions(+), 9 deletions(-)
 
-commit 27e5de91475bf2abfa81c051be04c40d1ed723ef
+Commit: 1696
 Author: sam
 Date:   Thu Jan 18 12:32:31 2007 +0000
 
@@ -3301,7 +3351,7 @@ Date:   Thu Jan 18 12:32:31 2007 +0000
  src/lib-fd.c |   12 ++++++------
  2 files changed, 15 insertions(+), 6 deletions(-)
 
-commit b09372fe8d0f5ce9291ba390ee01b510b48d250a
+Commit: 1695
 Author: sam
 Date:   Thu Jan 18 00:21:07 2007 +0000
 
@@ -3319,7 +3369,7 @@ Date:   Thu Jan 18 00:21:07 2007 +0000
  src/zzuf.c       |   84 ++++++++++++++++++++++++++++++++++++++++++++---------
  9 files changed, 232 insertions(+), 73 deletions(-)
 
-commit 37c26496b451f74cdab930ab7ee21a1f002e5f5f
+Commit: 1694
 Author: sam
 Date:   Wed Jan 17 21:52:44 2007 +0000
 
@@ -3334,7 +3384,7 @@ Date:   Wed Jan 17 21:52:44 2007 +0000
  src/libzzuf.c    |    1 -
  6 files changed, 90 insertions(+), 48 deletions(-)
 
-commit cdf161608c05122bc57c38bdf2eacac0494786a9
+Commit: 1693
 Author: sam
 Date:   Wed Jan 17 21:12:27 2007 +0000
 
@@ -3347,7 +3397,7 @@ Date:   Wed Jan 17 21:12:27 2007 +0000
  src/lib-fd.c |   52 +++++++++++++++++++++++++++++++++++++++++++++++++++-
  4 files changed, 55 insertions(+), 5 deletions(-)
 
-commit 616829f8634dc509b8debb7d30c282be89ccb3bb
+Commit: 1692
 Author: sam
 Date:   Wed Jan 17 19:48:23 2007 +0000
 
@@ -3359,7 +3409,7 @@ Date:   Wed Jan 17 19:48:23 2007 +0000
  src/zzuf.c      |  363 ++++++++++++++++++++++++++-----------------------------
  4 files changed, 297 insertions(+), 193 deletions(-)
 
-commit 25e26576e3cafe6ccfbd46fac35b10e29a198ebb
+Commit: 1691
 Author: sam
 Date:   Wed Jan 17 17:14:22 2007 +0000
 
@@ -3371,7 +3421,7 @@ Date:   Wed Jan 17 17:14:22 2007 +0000
  src/lib-fd.c |   83 ++++++++++++++++++++++++++++++++++++++-------------------
  3 files changed, 60 insertions(+), 32 deletions(-)
 
-commit 6391dda196b9ed90e36b303fb2304904d4d3e17b
+Commit: 1690
 Author: sam
 Date:   Wed Jan 17 16:32:45 2007 +0000
 
@@ -3381,7 +3431,7 @@ Date:   Wed Jan 17 16:32:45 2007 +0000
  src/lib-fd.c |   47 ++++++++++++++++++++++++++++++++++++++++-------
  1 files changed, 40 insertions(+), 7 deletions(-)
 
-commit 1f207fbdd82bcb9f454de6060f9076c0a3fccb64
+Commit: 1689
 Author: sam
 Date:   Wed Jan 17 16:26:40 2007 +0000
 
@@ -3390,7 +3440,7 @@ Date:   Wed Jan 17 16:26:40 2007 +0000
  src/debug.c |    5 +++++
  1 files changed, 5 insertions(+), 0 deletions(-)
 
-commit 0a9f3051c622db53352dbc95e01545e20212a366
+Commit: 1688
 Author: sam
 Date:   Wed Jan 17 15:31:40 2007 +0000
 
@@ -3400,7 +3450,7 @@ Date:   Wed Jan 17 15:31:40 2007 +0000
  src/lib-stream.c |   12 +++---------
  2 files changed, 9 insertions(+), 9 deletions(-)
 
-commit 10f5871609a410b7b225e14a51a18efac3dc6381
+Commit: 1687
 Author: sam
 Date:   Wed Jan 17 15:21:09 2007 +0000
 
@@ -3413,7 +3463,7 @@ Date:   Wed Jan 17 15:21:09 2007 +0000
  src/lib-stream.c |   33 +++++++++++++++++----------------
  5 files changed, 61 insertions(+), 49 deletions(-)
 
-commit c6aa547ceb74a0226f47359be971ca09f87cb506
+Commit: 1686
 Author: sam
 Date:   Wed Jan 17 15:07:35 2007 +0000
 
@@ -3424,7 +3474,7 @@ Date:   Wed Jan 17 15:07:35 2007 +0000
  src/lib-fd.c |   33 +++++++++++++++++++++++++++++++++
  3 files changed, 35 insertions(+), 1 deletions(-)
 
-commit 831c29045116d3a3690a363785e508364bd5818d
+Commit: 1685
 Author: sam
 Date:   Wed Jan 17 15:02:05 2007 +0000
 
@@ -3433,7 +3483,7 @@ Date:   Wed Jan 17 15:02:05 2007 +0000
  src/debug.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit c00ae0099af84dd8711e6cedc426128ecd8199a6
+Commit: 1684
 Author: sam
 Date:   Wed Jan 17 14:35:12 2007 +0000
 
@@ -3443,7 +3493,7 @@ Date:   Wed Jan 17 14:35:12 2007 +0000
  test/testsuite.sh |   15 +++++++++++++--
  2 files changed, 22 insertions(+), 2 deletions(-)
 
-commit 2a5326a69ef6ce86b261970ed352d920dd534d64
+Commit: 1683
 Author: sam
 Date:   Wed Jan 17 13:46:38 2007 +0000
 
@@ -3462,7 +3512,7 @@ Date:   Wed Jan 17 13:46:38 2007 +0000
  src/load.h        |   29 ---
  11 files changed, 1348 insertions(+), 1348 deletions(-)
 
-commit f685c88375b666876ed034a9cf15458497ea6b96
+Commit: 1682
 Author: sam
 Date:   Wed Jan 17 13:42:18 2007 +0000
 
@@ -3471,7 +3521,7 @@ Date:   Wed Jan 17 13:42:18 2007 +0000
  doc/zzuf.1 |   20 +++++++++++---------
  1 files changed, 11 insertions(+), 9 deletions(-)
 
-commit 10d4511b58547dcac91305c206e670a60bb6a1be
+Commit: 1681
 Author: sam
 Date:   Wed Jan 17 07:22:10 2007 +0000
 
@@ -3480,7 +3530,7 @@ Date:   Wed Jan 17 07:22:10 2007 +0000
  src/zzuf.c |    1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
-commit f757f49d51d49b3277f51676be6af2a717413d7d
+Commit: 1680
 Author: sam
 Date:   Wed Jan 17 07:21:40 2007 +0000
 
@@ -3490,7 +3540,7 @@ Date:   Wed Jan 17 07:21:40 2007 +0000
  src/zzuf.c |    6 ++++--
  2 files changed, 7 insertions(+), 4 deletions(-)
 
-commit 4bcb10325a090f40ec7115136b797922417fb811
+Commit: 1679
 Author: sam
 Date:   Tue Jan 16 14:36:33 2007 +0000
 
@@ -3505,7 +3555,7 @@ Date:   Tue Jan 16 14:36:33 2007 +0000
  src/load.h        |    5 -----
  6 files changed, 11 insertions(+), 103 deletions(-)
 
-commit 090bcb800f3ed266136bbd1807c8a4db9e147f31
+Commit: 1678
 Author: sam
 Date:   Tue Jan 16 14:21:28 2007 +0000
 
@@ -3516,7 +3566,7 @@ Date:   Tue Jan 16 14:21:28 2007 +0000
  src/load-fd.c |   37 +++++++++++++++++++++++++++++++++++++
  3 files changed, 40 insertions(+), 2 deletions(-)
 
-commit d228086399957bba9a211649e4b8a03fb9a9c39f
+Commit: 1677
 Author: sam
 Date:   Tue Jan 16 14:06:57 2007 +0000
 
@@ -3525,7 +3575,7 @@ Date:   Tue Jan 16 14:06:57 2007 +0000
  src/load-fd.c |    5 +++--
  1 files changed, 3 insertions(+), 2 deletions(-)
 
-commit fbc569c967df2506411454607eb10fd6d5b8f39c
+Commit: 1676
 Author: sam
 Date:   Tue Jan 16 13:54:34 2007 +0000
 
@@ -3536,7 +3586,7 @@ Date:   Tue Jan 16 13:54:34 2007 +0000
  src/load-fd.c |   53 +++++++++++++++++++++++++++++++++++++++++++++--------
  3 files changed, 53 insertions(+), 11 deletions(-)
 
-commit f07251d9f2876021e32806c95582b99aa0318313
+Commit: 1675
 Author: sam
 Date:   Mon Jan 15 13:28:19 2007 +0000
 
@@ -3546,7 +3596,7 @@ Date:   Mon Jan 15 13:28:19 2007 +0000
  doc/zzuf.1 |    4 +---
  1 files changed, 1 insertions(+), 3 deletions(-)
 
-commit 7233748dd9cfe1ebc7e959a6ecb2372d228e6f7d
+Commit: 1674
 Author: sam
 Date:   Sun Jan 14 23:56:39 2007 +0000
 
@@ -3559,7 +3609,7 @@ Date:   Sun Jan 14 23:56:39 2007 +0000
  configure.ac |    4 +-
  4 files changed, 188 insertions(+), 3 deletions(-)
 
-commit f4f8f289173d4f4f97f1b82cebaa8dd4786c9c59
+Commit: 1673
 Author: sam
 Date:   Sun Jan 14 23:42:34 2007 +0000
 
@@ -3568,7 +3618,7 @@ Date:   Sun Jan 14 23:42:34 2007 +0000
  doc/zzuf.1 |   14 +++++++-------
  1 files changed, 7 insertions(+), 7 deletions(-)
 
-commit e75edd4cdcc7f00172b5e19e3d925d851d67f27c
+Commit: 1672
 Author: sam
 Date:   Sun Jan 14 23:41:03 2007 +0000
 
@@ -3583,7 +3633,7 @@ Date:   Sun Jan 14 23:41:03 2007 +0000
  src/zzuf.c      |  131 ++++++++++++++++++++++++++++++-------------------------
  7 files changed, 134 insertions(+), 83 deletions(-)
 
-commit 50685b028b1aca810e99992a2b6e41cec18f2f15
+Commit: 1671
 Author: sam
 Date:   Sun Jan 14 20:47:18 2007 +0000
 
@@ -3595,7 +3645,7 @@ Date:   Sun Jan 14 20:47:18 2007 +0000
  src/zzuf.c    |    6 +++---
  4 files changed, 7 insertions(+), 7 deletions(-)
 
-commit c376af60fc3be24137e11df9b3bc3cef5e013e6b
+Commit: 1670
 Author: sam
 Date:   Sun Jan 14 20:28:09 2007 +0000
 
@@ -3605,7 +3655,7 @@ Date:   Sun Jan 14 20:28:09 2007 +0000
  src/zzuf.c |    2 +-
  2 files changed, 5 insertions(+), 1 deletions(-)
 
-commit e394452529ee65c790683b7bdc58b10ea2906d32
+Commit: 1669
 Author: sam
 Date:   Sun Jan 14 20:18:31 2007 +0000
 
@@ -3615,7 +3665,7 @@ Date:   Sun Jan 14 20:18:31 2007 +0000
  src/zzuf.c |   19 ++++++++-----------
  2 files changed, 9 insertions(+), 12 deletions(-)
 
-commit 1dec769822103e275fdab027720a719b9f092bae
+Commit: 1668
 Author: sam
 Date:   Sun Jan 14 20:17:45 2007 +0000
 
@@ -3627,7 +3677,7 @@ Date:   Sun Jan 14 20:17:45 2007 +0000
  src/zzuf.c    |   38 ++++++++++++++++++++++++++------------
  3 files changed, 40 insertions(+), 18 deletions(-)
 
-commit 1ba41a8a18beb7ffb091a4e9f7bd3a0abb9903ee
+Commit: 1667
 Author: sam
 Date:   Sun Jan 14 17:47:01 2007 +0000
 
@@ -3637,7 +3687,7 @@ Date:   Sun Jan 14 17:47:01 2007 +0000
  src/zzuf.c |   21 ++++++++++++++-------
  2 files changed, 22 insertions(+), 11 deletions(-)
 
-commit daa02f8b5c5f027cd339fcbbbd474505d285a633
+Commit: 1666
 Author: sam
 Date:   Sun Jan 14 11:03:37 2007 +0000
 
@@ -3647,7 +3697,7 @@ Date:   Sun Jan 14 11:03:37 2007 +0000
  src/zzuf.c |   14 +++++++-------
  2 files changed, 9 insertions(+), 9 deletions(-)
 
-commit 3bc06e53d6f4112a6e2450f755543402483759bd
+Commit: 1665
 Author: sam
 Date:   Sun Jan 14 01:03:44 2007 +0000
 
@@ -3658,7 +3708,7 @@ Date:   Sun Jan 14 01:03:44 2007 +0000
  src/zzuf.c |   45 +++++++++++++++++++++++++++++++++++++++++----
  1 files changed, 41 insertions(+), 4 deletions(-)
 
-commit f74c5b1beb463313f8f0dd323cecd96d41f29ce8
+Commit: 1664
 Author: sam
 Date:   Sat Jan 13 22:47:56 2007 +0000
 
@@ -3667,7 +3717,7 @@ Date:   Sat Jan 13 22:47:56 2007 +0000
  doc/zzuf.1 |    5 +++++
  1 files changed, 5 insertions(+), 0 deletions(-)
 
-commit ad0461ffac346dc50039c8b14a53c002d88d367a
+Commit: 1663
 Author: sam
 Date:   Sat Jan 13 19:33:48 2007 +0000
 
@@ -3683,7 +3733,7 @@ Date:   Sat Jan 13 19:33:48 2007 +0000
  src/zzuf.c    |   16 +++++++++++-----
  8 files changed, 83 insertions(+), 41 deletions(-)
 
-commit 0efc21cdd92450880bfdeb98690a37aef4d88deb
+Commit: 1662
 Author: sam
 Date:   Sat Jan 13 18:00:03 2007 +0000
 
@@ -3692,7 +3742,7 @@ Date:   Sat Jan 13 18:00:03 2007 +0000
  src/libzzuf.c |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit 7db0ab13de04d69d68caa6d36b2763ffca9d9b92
+Commit: 1661
 Author: sam
 Date:   Sat Jan 13 10:59:07 2007 +0000
 
@@ -3702,7 +3752,7 @@ Date:   Sat Jan 13 10:59:07 2007 +0000
  src/zzuf.c |    6 +++++-
  1 files changed, 5 insertions(+), 1 deletions(-)
 
-commit f47c46a3c183a44a0577c02c341bfa00d7e25252
+Commit: 1660
 Author: sam
 Date:   Sat Jan 13 10:50:38 2007 +0000
 
@@ -3712,7 +3762,7 @@ Date:   Sat Jan 13 10:50:38 2007 +0000
  src/zzuf.c |   26 ++++++++++++++++++--------
  2 files changed, 30 insertions(+), 15 deletions(-)
 
-commit 1d68bc784499bab0eaf8b9b03d3b4a6c3c115e9c
+Commit: 1659
 Author: sam
 Date:   Fri Jan 12 18:01:27 2007 +0000
 
@@ -3721,7 +3771,7 @@ Date:   Fri Jan 12 18:01:27 2007 +0000
  src/zzuf.c |  146 ++++++++++++++++++++++++++++++++++--------------------------
  1 files changed, 83 insertions(+), 63 deletions(-)
 
-commit e95d9f9895dc432f67e543a3f3af46f800a40b96
+Commit: 1658
 Author: sam
 Date:   Fri Jan 12 16:20:14 2007 +0000
 
@@ -3731,7 +3781,7 @@ Date:   Fri Jan 12 16:20:14 2007 +0000
  src/zzuf.c |    4 ++--
  2 files changed, 6 insertions(+), 6 deletions(-)
 
-commit fb41a81ee65d8e5e3f1ad3a9484a9ee35511143c
+Commit: 1657
 Author: sam
 Date:   Fri Jan 12 15:47:48 2007 +0000
 
@@ -3745,7 +3795,7 @@ Date:   Fri Jan 12 15:47:48 2007 +0000
  src/zzuf.c      |   21 ++++++++++-----------
  5 files changed, 72 insertions(+), 12 deletions(-)
 
-commit 23e202c336b6e02094aa3dd584555f629eec3cfa
+Commit: 1656
 Author: sam
 Date:   Fri Jan 12 14:19:55 2007 +0000
 
@@ -3756,7 +3806,7 @@ Date:   Fri Jan 12 14:19:55 2007 +0000
  doc/zzuf.1 |   16 ++++++++--------
  3 files changed, 12 insertions(+), 12 deletions(-)
 
-commit 2b50cdc843cc385de13c2cffd525c98228355299
+Commit: 1655
 Author: sam
 Date:   Fri Jan 12 10:09:22 2007 +0000
 
@@ -3765,7 +3815,7 @@ Date:   Fri Jan 12 10:09:22 2007 +0000
  src/zzuf.c |   15 +++++++++++----
  1 files changed, 11 insertions(+), 4 deletions(-)
 
-commit bd1e4b6781341bb61a82f7daeef3085cedf9903d
+Commit: 1654
 Author: sam
 Date:   Thu Jan 11 23:36:28 2007 +0000
 
@@ -3777,7 +3827,7 @@ Date:   Thu Jan 11 23:36:28 2007 +0000
  configure.ac |    4 +-
  3 files changed, 269 insertions(+), 2 deletions(-)
 
-commit a9f04fa129c0fd2aae92d8e61b33e734befe61c7
+Commit: 1653
 Author: sam
 Date:   Thu Jan 11 23:30:29 2007 +0000
 
@@ -3787,7 +3837,7 @@ Date:   Thu Jan 11 23:30:29 2007 +0000
  src/fd.c |   41 ++++++++++++++++++++++++++++++-----------
  1 files changed, 30 insertions(+), 11 deletions(-)
 
-commit 6b7641f3f1976376ec01c3b69ed4000045ee73ab
+Commit: 1652
 Author: sam
 Date:   Thu Jan 11 22:43:45 2007 +0000
 
@@ -3797,7 +3847,7 @@ Date:   Thu Jan 11 22:43:45 2007 +0000
  src/libzzuf.h |    2 +-
  2 files changed, 12 insertions(+), 9 deletions(-)
 
-commit f65031ae6191d4092e3a47167d8d08b5b85bf7ea
+Commit: 1651
 Author: sam
 Date:   Thu Jan 11 22:11:56 2007 +0000
 
@@ -3806,7 +3856,7 @@ Date:   Thu Jan 11 22:11:56 2007 +0000
  src/fd.c |   26 ++++++++------------------
  1 files changed, 8 insertions(+), 18 deletions(-)
 
-commit 98790fa3337e016ce4b3876a9a0b89cc8afed52a
+Commit: 1650
 Author: sam
 Date:   Thu Jan 11 22:11:28 2007 +0000
 
@@ -3815,7 +3865,7 @@ Date:   Thu Jan 11 22:11:28 2007 +0000
  src/zzuf.c |    4 +++-
  1 files changed, 3 insertions(+), 1 deletions(-)
 
-commit c332680bd51b8a687e89c704597528f4d4a8c4d1
+Commit: 1649
 Author: sam
 Date:   Thu Jan 11 10:21:11 2007 +0000
 
@@ -3824,7 +3874,7 @@ Date:   Thu Jan 11 10:21:11 2007 +0000
  src/load-mem.c |   34 +++++++++++++++++++---------------
  1 files changed, 19 insertions(+), 15 deletions(-)
 
-commit 7e56dd05cb59e50fc345bf9d5bde11371d3bb955
+Commit: 1648
 Author: sam
 Date:   Thu Jan 11 00:39:59 2007 +0000
 
@@ -3838,7 +3888,7 @@ Date:   Thu Jan 11 00:39:59 2007 +0000
  src/load.h        |    3 ++-
  6 files changed, 37 insertions(+), 65 deletions(-)
 
-commit 55f7d73be390948f51e0af94ef7d7b0adc30746d
+Commit: 1647
 Author: sam
 Date:   Thu Jan 11 00:27:47 2007 +0000
 
@@ -3847,7 +3897,7 @@ Date:   Thu Jan 11 00:27:47 2007 +0000
  doc/zzuf.1 |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 001af9af7dd65aa864e8757ad9d53c5c65fb09d8
+Commit: 1646
 Author: sam
 Date:   Wed Jan 10 18:11:13 2007 +0000
 
@@ -3856,7 +3906,7 @@ Date:   Wed Jan 10 18:11:13 2007 +0000
  src/load-mem.c |   27 ++++++++++++++++++---------
  1 files changed, 18 insertions(+), 9 deletions(-)
 
-commit 070fc46970445248a950de1046388c3822d9811c
+Commit: 1645
 Author: sam
 Date:   Wed Jan 10 17:31:58 2007 +0000
 
@@ -3866,7 +3916,7 @@ Date:   Wed Jan 10 17:31:58 2007 +0000
  src/load-mem.c |   31 ++-----------------------------
  2 files changed, 3 insertions(+), 31 deletions(-)
 
-commit c1876592decd9758791db414bf004a8e90affb43
+Commit: 1644
 Author: sam
 Date:   Wed Jan 10 17:25:09 2007 +0000
 
@@ -3875,7 +3925,7 @@ Date:   Wed Jan 10 17:25:09 2007 +0000
  src/load-mem.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit 715e645c8b73e3faf1a032867b875dc86145b62c
+Commit: 1643
 Author: sam
 Date:   Wed Jan 10 17:23:23 2007 +0000
 
@@ -3885,7 +3935,7 @@ Date:   Wed Jan 10 17:23:23 2007 +0000
  src/load-mem.c |   16 +++++++++++++++-
  2 files changed, 16 insertions(+), 2 deletions(-)
 
-commit 4ee193c73e09ebdf8726d77edd8afd7d24ab2433
+Commit: 1642
 Author: sam
 Date:   Wed Jan 10 17:19:48 2007 +0000
 
@@ -3895,7 +3945,7 @@ Date:   Wed Jan 10 17:19:48 2007 +0000
  src/load-mem.c |    4 +++-
  2 files changed, 4 insertions(+), 2 deletions(-)
 
-commit 078a7afa1bc7654ebaf3872863478f32955e2ba8
+Commit: 1641
 Author: sam
 Date:   Wed Jan 10 17:17:26 2007 +0000
 
@@ -3909,7 +3959,7 @@ Date:   Wed Jan 10 17:17:26 2007 +0000
  src/zzuf.c     |   30 +++++++++--
  5 files changed, 197 insertions(+), 19 deletions(-)
 
-commit 5ec99810046ad4cdf899d5127daca0864633c175
+Commit: 1640
 Author: sam
 Date:   Wed Jan 10 15:22:09 2007 +0000
 
@@ -3920,7 +3970,7 @@ Date:   Wed Jan 10 15:22:09 2007 +0000
  test/testsuite.sh |    2 +-
  3 files changed, 9 insertions(+), 9 deletions(-)
 
-commit 906f0afaeef813a2d5161cfa9cceb09752fe4082
+Commit: 1639
 Author: sam
 Date:   Wed Jan 10 14:57:22 2007 +0000
 
@@ -3933,7 +3983,7 @@ Date:   Wed Jan 10 14:57:22 2007 +0000
  src/load.h      |    1 +
  5 files changed, 198 insertions(+), 148 deletions(-)
 
-commit 90576cb680f2ae583f5dd56c8f8cc19b5ca33164
+Commit: 1638
 Author: sam
 Date:   Tue Jan 9 16:39:07 2007 +0000
 
@@ -3942,7 +3992,7 @@ Date:   Tue Jan 9 16:39:07 2007 +0000
  src/load-fd.c |    6 ++++--
  1 files changed, 4 insertions(+), 2 deletions(-)
 
-commit 11dc8b6c6d8fda3819c5bc38d547bbf78f9d91ad
+Commit: 1637
 Author: sam
 Date:   Tue Jan 9 16:16:00 2007 +0000
 
@@ -3952,7 +4002,7 @@ Date:   Tue Jan 9 16:16:00 2007 +0000
  src/load-fd.c |   60 +++++++++++++++++++++++++++++++++++++++++---------------
  1 files changed, 44 insertions(+), 16 deletions(-)
 
-commit d0875b55aab3a2b6b5ec530f36ef6d4982a59ebd
+Commit: 1636
 Author: sam
 Date:   Tue Jan 9 16:14:31 2007 +0000
 
@@ -3961,7 +4011,7 @@ Date:   Tue Jan 9 16:14:31 2007 +0000
  src/debug.c |    9 ++++++++-
  1 files changed, 8 insertions(+), 1 deletions(-)
 
-commit 53e72a22152c296c1ec2062c53eda030b29dd3ea
+Commit: 1635
 Author: sam
 Date:   Tue Jan 9 15:40:08 2007 +0000
 
@@ -3970,7 +4020,7 @@ Date:   Tue Jan 9 15:40:08 2007 +0000
  src/load-fd.c |    5 ++++-
  1 files changed, 4 insertions(+), 1 deletions(-)
 
-commit 9bdff8ac519ee512cd1fb8b95642e50311989c71
+Commit: 1634
 Author: sam
 Date:   Tue Jan 9 11:22:09 2007 +0000
 
@@ -3981,7 +4031,7 @@ Date:   Tue Jan 9 11:22:09 2007 +0000
  src/zzuf.c |   21 ++++++++++++++-------
  2 files changed, 20 insertions(+), 8 deletions(-)
 
-commit fcd22b6474faeb7958a05a300115a6b87f1cf69e
+Commit: 1633
 Author: sam
 Date:   Tue Jan 9 10:07:35 2007 +0000
 
@@ -3991,7 +4041,7 @@ Date:   Tue Jan 9 10:07:35 2007 +0000
  src/zzuf.c |   20 ++++++++++----------
  2 files changed, 18 insertions(+), 18 deletions(-)
 
-commit f68cbe55dbf24f2606121ac83bae44d4378bd05f
+Commit: 1632
 Author: sam
 Date:   Tue Jan 9 10:05:47 2007 +0000
 
@@ -4001,7 +4051,7 @@ Date:   Tue Jan 9 10:05:47 2007 +0000
  src/zzuf.c |   20 ++++++++++----------
  2 files changed, 18 insertions(+), 18 deletions(-)
 
-commit 3b9f2db74356e526ec742f18a49641607010aa40
+Commit: 1631
 Author: sam
 Date:   Tue Jan 9 10:02:57 2007 +0000
 
@@ -4012,7 +4062,7 @@ Date:   Tue Jan 9 10:02:57 2007 +0000
  src/load-fd.c |   41 +++++++++++++++++++++++++++++++++++++++++
  3 files changed, 46 insertions(+), 2 deletions(-)
 
-commit fe028ec8789593c59a2fe1d37a5f3dacdeceb04f
+Commit: 1630
 Author: sam
 Date:   Mon Jan 8 21:51:06 2007 +0000
 
@@ -4021,7 +4071,7 @@ Date:   Mon Jan 8 21:51:06 2007 +0000
  test/testsuite.sh |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 4f9c0e7244ec358ef878e91d1159b9e898a02449
+Commit: 1629
 Author: sam
 Date:   Mon Jan 8 21:49:57 2007 +0000
 
@@ -4030,7 +4080,7 @@ Date:   Mon Jan 8 21:49:57 2007 +0000
  src/zzuf.c |   20 +++++++++++++++-----
  1 files changed, 15 insertions(+), 5 deletions(-)
 
-commit a6695e0ad2353b9fa586cdc3255e416204aedf2e
+Commit: 1628
 Author: sam
 Date:   Mon Jan 8 21:48:39 2007 +0000
 
@@ -4039,7 +4089,7 @@ Date:   Mon Jan 8 21:48:39 2007 +0000
  configure.ac |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit 3769d13e84dc220ca7288ce8109bb23515a06b15
+Commit: 1627
 Author: sam
 Date:   Mon Jan 8 21:05:05 2007 +0000
 
@@ -4048,7 +4098,7 @@ Date:   Mon Jan 8 21:05:05 2007 +0000
  src/load-signal.c |    2 ++
  1 files changed, 2 insertions(+), 0 deletions(-)
 
-commit 9329ed73f8994cd61e43db61933025b291ae8af1
+Commit: 1626
 Author: sam
 Date:   Mon Jan 8 21:03:32 2007 +0000
 
@@ -4058,7 +4108,7 @@ Date:   Mon Jan 8 21:03:32 2007 +0000
  src/load-fd.c |   10 ++++++++--
  2 files changed, 10 insertions(+), 2 deletions(-)
 
-commit f5d3a826750368ad51a4055aebea1a8856f25e29
+Commit: 1625
 Author: sam
 Date:   Mon Jan 8 18:15:49 2007 +0000
 
@@ -4067,7 +4117,7 @@ Date:   Mon Jan 8 18:15:49 2007 +0000
  test/testsuite.sh |   35 ++++++++++++-----------------------
  1 files changed, 12 insertions(+), 23 deletions(-)
 
-commit ec6d5434ced3886050b63accc9e6d7d0b0c613db
+Commit: 1624
 Author: sam
 Date:   Mon Jan 8 17:54:16 2007 +0000
 
@@ -4077,7 +4127,7 @@ Date:   Mon Jan 8 17:54:16 2007 +0000
  src/zzuf.c |    2 +-
  2 files changed, 3 insertions(+), 3 deletions(-)
 
-commit 214cddf57e3703e8b2cbc37f2c47ef84e308c3f0
+Commit: 1623
 Author: sam
 Date:   Mon Jan 8 17:50:34 2007 +0000
 
@@ -4090,7 +4140,7 @@ Date:   Mon Jan 8 17:50:34 2007 +0000
  src/zzuf.c      |   97 +++++++++++++++++------
  5 files changed, 341 insertions(+), 31 deletions(-)
 
-commit 42429f94660a75d563f696f024eb7448d2632064
+Commit: 1622
 Author: sam
 Date:   Sun Jan 7 21:29:37 2007 +0000
 
@@ -4102,7 +4152,7 @@ Date:   Sun Jan 7 21:29:37 2007 +0000
  configure.ac |    4 +-
  3 files changed, 379 insertions(+), 2 deletions(-)
 
-commit 0faa467a258d37ab98e4a4080d5e56c3e9c4908c
+Commit: 1621
 Author: sam
 Date:   Sun Jan 7 21:14:26 2007 +0000
 
@@ -4117,7 +4167,7 @@ Date:   Sun Jan 7 21:14:26 2007 +0000
  src/load-stream.c |    1 -
  7 files changed, 29 insertions(+), 18 deletions(-)
 
-commit 1cd450310fc616192e76a7bd179ede3be1ca0338
+Commit: 1620
 Author: sam
 Date:   Sun Jan 7 21:13:31 2007 +0000
 
@@ -4127,7 +4177,7 @@ Date:   Sun Jan 7 21:13:31 2007 +0000
  src/load-stream.c |    4 ----
  2 files changed, 5 insertions(+), 9 deletions(-)
 
-commit a1b86adf916e4a7341c958cd66fe62eaf62a3d57
+Commit: 1619
 Author: sam
 Date:   Sun Jan 7 20:50:49 2007 +0000
 
@@ -4137,7 +4187,7 @@ Date:   Sun Jan 7 20:50:49 2007 +0000
  src/load-stream.c |   33 +++++++++++++++++++++++++++++++++
  2 files changed, 36 insertions(+), 2 deletions(-)
 
-commit 372d7e494656c57e735fe0d260a33642f02e4eff
+Commit: 1618
 Author: sam
 Date:   Sun Jan 7 20:24:03 2007 +0000
 
@@ -4146,7 +4196,7 @@ Date:   Sun Jan 7 20:24:03 2007 +0000
  src/load-stream.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 8541bae1e254afd9d66b82d1a05690177dd157bf
+Commit: 1617
 Author: sam
 Date:   Sun Jan 7 19:12:35 2007 +0000
 
@@ -4155,7 +4205,7 @@ Date:   Sun Jan 7 19:12:35 2007 +0000
  bootstrap |    9 +++++----
  1 files changed, 5 insertions(+), 4 deletions(-)
 
-commit 5def4f865c855fde1c859bc976921782870071be
+Commit: 1616
 Author: sam
 Date:   Sun Jan 7 18:45:00 2007 +0000
 
@@ -4166,7 +4216,7 @@ Date:   Sun Jan 7 18:45:00 2007 +0000
  test/testsuite.sh |    3 ++-
  3 files changed, 10 insertions(+), 4 deletions(-)
 
-commit f7d235fa90ae47f77bc2ecdbcf57f9ee1206baaf
+Commit: 1615
 Author: sam
 Date:   Sun Jan 7 18:36:19 2007 +0000
 
@@ -4175,7 +4225,7 @@ Date:   Sun Jan 7 18:36:19 2007 +0000
  src/Makefile.am |    8 ++++----
  1 files changed, 4 insertions(+), 4 deletions(-)
 
-commit cd2b38ca23091b4988fb5d72f0eae0c5ddf1d584
+Commit: 1614
 Author: sam
 Date:   Sun Jan 7 18:34:50 2007 +0000
 
@@ -4191,7 +4241,7 @@ Date:   Sun Jan 7 18:34:50 2007 +0000
  src/zzuf.c      |    9 +---
  8 files changed, 106 insertions(+), 152 deletions(-)
 
-commit 3f1e7f93c0c6100c85ef2542f8e38144f1937f17
+Commit: 1613
 Author: sam
 Date:   Sun Jan 7 18:18:50 2007 +0000
 
@@ -4212,7 +4262,7 @@ Date:   Sun Jan 7 18:18:50 2007 +0000
  src/zzuf.c        |   61 ++++++++++++--
  13 files changed, 418 insertions(+), 254 deletions(-)
 
-commit f03ddbd8356e0abb947a32d17c91f532d535a47e
+Commit: 1612
 Author: sam
 Date:   Sun Jan 7 17:12:53 2007 +0000
 
@@ -4221,7 +4271,7 @@ Date:   Sun Jan 7 17:12:53 2007 +0000
  test/testsuite.sh |   26 ++++++++++++++++----------
  1 files changed, 16 insertions(+), 10 deletions(-)
 
-commit ae749302ce43777106bfab96281dde67ea04115f
+Commit: 1611
 Author: sam
 Date:   Sun Jan 7 16:31:33 2007 +0000
 
@@ -4230,7 +4280,7 @@ Date:   Sun Jan 7 16:31:33 2007 +0000
  src/load-stream.c |    3 +++
  1 files changed, 3 insertions(+), 0 deletions(-)
 
-commit ad39f0638d3c500171db5b0f7360f9b908653085
+Commit: 1610
 Author: sam
 Date:   Sun Jan 7 16:29:25 2007 +0000
 
@@ -4239,7 +4289,7 @@ Date:   Sun Jan 7 16:29:25 2007 +0000
  doc/zzuf.1 |    2 ++
  1 files changed, 2 insertions(+), 0 deletions(-)
 
-commit bb9d97f50940ccd07348cf9d52fc03438948b386
+Commit: 1609
 Author: sam
 Date:   Sun Jan 7 16:27:59 2007 +0000
 
@@ -4248,7 +4298,7 @@ Date:   Sun Jan 7 16:27:59 2007 +0000
  src/load-stream.c |    8 +++++---
  1 files changed, 5 insertions(+), 3 deletions(-)
 
-commit 8f8b7e2a0adb774939fd6c16632443690dc38b05
+Commit: 1608
 Author: sam
 Date:   Sun Jan 7 16:09:13 2007 +0000
 
@@ -4257,7 +4307,7 @@ Date:   Sun Jan 7 16:09:13 2007 +0000
  src/load-stream.c |    4 ++++
  1 files changed, 4 insertions(+), 0 deletions(-)
 
-commit eaf5c617b5b15112c965881c852b0e299edca175
+Commit: 1607
 Author: sam
 Date:   Sun Jan 7 15:55:24 2007 +0000
 
@@ -4266,7 +4316,7 @@ Date:   Sun Jan 7 15:55:24 2007 +0000
  doc/zzuf.1 |   42 +++++++++++++++++++++---------------------
  1 files changed, 21 insertions(+), 21 deletions(-)
 
-commit d1b0512986c0b304a9791af91a6bf8052ea86670
+Commit: 1606
 Author: sam
 Date:   Sun Jan 7 15:55:00 2007 +0000
 
@@ -4275,7 +4325,7 @@ Date:   Sun Jan 7 15:55:00 2007 +0000
  src/load-stream.c |   82 ++++++++++++++++++++++++++++++++++------------------
  1 files changed, 53 insertions(+), 29 deletions(-)
 
-commit ab9d811fd9c2e8ded61526a9743c585d4c75be01
+Commit: 1605
 Author: sam
 Date:   Sun Jan 7 14:22:34 2007 +0000
 
@@ -4284,7 +4334,7 @@ Date:   Sun Jan 7 14:22:34 2007 +0000
  src/load-stream.c |    6 ++++--
  1 files changed, 4 insertions(+), 2 deletions(-)
 
-commit d367550fc99b1448984977bc43e5674ebb50c109
+Commit: 1604
 Author: sam
 Date:   Sun Jan 7 14:16:46 2007 +0000
 
@@ -4293,7 +4343,7 @@ Date:   Sun Jan 7 14:16:46 2007 +0000
  src/load-stream.c |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit ace4bfa13ab850ebcd9859b308af03b951108628
+Commit: 1603
 Author: sam
 Date:   Sun Jan 7 14:16:06 2007 +0000
 
@@ -4302,7 +4352,7 @@ Date:   Sun Jan 7 14:16:06 2007 +0000
  src/load-stream.c |    8 ++++++--
  1 files changed, 6 insertions(+), 2 deletions(-)
 
-commit 10f17f48197f8d206c05765688910da985829bcc
+Commit: 1602
 Author: sam
 Date:   Sun Jan 7 14:14:19 2007 +0000
 
@@ -4311,7 +4361,7 @@ Date:   Sun Jan 7 14:14:19 2007 +0000
  src/load-stream.c |   61 +++++++++++++++++++++++++++++++++++++++++++---------
  1 files changed, 50 insertions(+), 11 deletions(-)
 
-commit ae18bb2f87ea1878cb22d35b77606cfe10a858f7
+Commit: 1601
 Author: sam
 Date:   Sun Jan 7 14:13:29 2007 +0000
 
@@ -4320,7 +4370,7 @@ Date:   Sun Jan 7 14:13:29 2007 +0000
  test/testsuite.sh |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 5dd97f8469452ba7971303c651869ff9cc9f932d
+Commit: 1600
 Author: sam
 Date:   Sun Jan 7 13:20:04 2007 +0000
 
@@ -4329,7 +4379,7 @@ Date:   Sun Jan 7 13:20:04 2007 +0000
  src/load-stream.c |    2 ++
  1 files changed, 2 insertions(+), 0 deletions(-)
 
-commit f93d1dd3146996eb0915d79a6661481795d4c9b8
+Commit: 1599
 Author: sam
 Date:   Sun Jan 7 13:18:36 2007 +0000
 
@@ -4338,7 +4388,7 @@ Date:   Sun Jan 7 13:18:36 2007 +0000
  src/load-stream.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit f2e805e0f0e4bce2256a3f1d78b48a9e4abfff6f
+Commit: 1598
 Author: sam
 Date:   Sun Jan 7 13:16:43 2007 +0000
 
@@ -4348,7 +4398,7 @@ Date:   Sun Jan 7 13:16:43 2007 +0000
  src/load-stream.c |   26 +++++++++++++++++++++++++-
  2 files changed, 26 insertions(+), 2 deletions(-)
 
-commit 7ee4debd47ae53fa62676075fe5bbc120e5862fb
+Commit: 1597
 Author: sam
 Date:   Sun Jan 7 12:39:30 2007 +0000
 
@@ -4357,7 +4407,7 @@ Date:   Sun Jan 7 12:39:30 2007 +0000
  doc/zzuf.1 |    8 ++++++++
  1 files changed, 8 insertions(+), 0 deletions(-)
 
-commit 7fe0ef7de94bb9defd6860ccfb01f0b34d1c957a
+Commit: 1596
 Author: sam
 Date:   Sun Jan 7 12:06:07 2007 +0000
 
@@ -4366,7 +4416,7 @@ Date:   Sun Jan 7 12:06:07 2007 +0000
  test/testsuite.sh |    5 +++++
  1 files changed, 5 insertions(+), 0 deletions(-)
 
-commit eaf692461a6c6fd9d81b64ddc9ffc0b7d56f806e
+Commit: 1595
 Author: sam
 Date:   Sun Jan 7 10:34:45 2007 +0000
 
@@ -4380,7 +4430,7 @@ Date:   Sun Jan 7 10:34:45 2007 +0000
  test/testsuite.sh |   10 ++++++----
  5 files changed, 37 insertions(+), 25 deletions(-)
 
-commit a4797afc4529301c72dac2a56bd1064b1234ee24
+Commit: 1594
 Author: sam
 Date:   Sun Jan 7 09:34:42 2007 +0000
 
@@ -4391,7 +4441,7 @@ Date:   Sun Jan 7 09:34:42 2007 +0000
  src/load-stream.c |   74 +++++++++++++++++++++++++++++++++--------------------
  3 files changed, 49 insertions(+), 31 deletions(-)
 
-commit 190511294a27f63c1dd40374bd6c06ef2e3dc8f6
+Commit: 1593
 Author: sam
 Date:   Sat Jan 6 22:17:09 2007 +0000
 
@@ -4401,7 +4451,7 @@ Date:   Sat Jan 6 22:17:09 2007 +0000
  src/load-stream.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit cf5ca3a3c1be1e65c3064affd371d207f3a27e7a
+Commit: 1592
 Author: sam
 Date:   Sat Jan 6 21:54:02 2007 +0000
 
@@ -4410,7 +4460,7 @@ Date:   Sat Jan 6 21:54:02 2007 +0000
  test/testsuite.sh |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit 7beda020ce6ff05e10514d7a02c9a248bf7b334b
+Commit: 1591
 Author: sam
 Date:   Sat Jan 6 21:38:33 2007 +0000
 
@@ -4419,7 +4469,7 @@ Date:   Sat Jan 6 21:38:33 2007 +0000
  src/load-stream.c |   27 +++++++++++++--------------
  1 files changed, 13 insertions(+), 14 deletions(-)
 
-commit f693e7287dcebbdf66c79eb098a74f00d3b9b665
+Commit: 1590
 Author: sam
 Date:   Sat Jan 6 21:37:42 2007 +0000
 
@@ -4431,7 +4481,7 @@ Date:   Sat Jan 6 21:37:42 2007 +0000
  src/Makefile.am |    2 +-
  2 files changed, 5 insertions(+), 14 deletions(-)
 
-commit 9e0e4cb76770fd17c88f5e02bfabc75efa501a01
+Commit: 1589
 Author: sam
 Date:   Sat Jan 6 21:25:56 2007 +0000
 
@@ -4440,7 +4490,7 @@ Date:   Sat Jan 6 21:25:56 2007 +0000
  test/testsuite.sh |   31 ++++++++++++++++++++-----------
  1 files changed, 20 insertions(+), 11 deletions(-)
 
-commit 883aa413bf1a71e27e13969100268b48c9e06bde
+Commit: 1588
 Author: sam
 Date:   Sat Jan 6 20:59:28 2007 +0000
 
@@ -4449,7 +4499,7 @@ Date:   Sat Jan 6 20:59:28 2007 +0000
  src/load-stream.c |    2 ++
  1 files changed, 2 insertions(+), 0 deletions(-)
 
-commit 2b202a471ac870b87151e7f3455e54b83af57d37
+Commit: 1587
 Author: sam
 Date:   Sat Jan 6 20:24:54 2007 +0000
 
@@ -4458,7 +4508,7 @@ Date:   Sat Jan 6 20:24:54 2007 +0000
  test/testsuite.sh |   17 +++++++++--------
  1 files changed, 9 insertions(+), 8 deletions(-)
 
-commit b372bdaafadf5726dec46dd6ef266c7ec3ce5c89
+Commit: 1586
 Author: sam
 Date:   Sat Jan 6 20:20:15 2007 +0000
 
@@ -4467,7 +4517,7 @@ Date:   Sat Jan 6 20:20:15 2007 +0000
  test/testsuite.sh |    4 ++++
  1 files changed, 4 insertions(+), 0 deletions(-)
 
-commit 24946cc39474f4b2bc53be5b2ed6fc590654fbba
+Commit: 1585
 Author: sam
 Date:   Sat Jan 6 20:08:31 2007 +0000
 
@@ -4476,7 +4526,7 @@ Date:   Sat Jan 6 20:08:31 2007 +0000
  src/load-fd.c |    1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
-commit 1a2d2faaa70ce6bf2edcd6f9036e0bef0b04a8bd
+Commit: 1584
 Author: sam
 Date:   Sat Jan 6 20:02:01 2007 +0000
 
@@ -4485,7 +4535,7 @@ Date:   Sat Jan 6 20:02:01 2007 +0000
  doc/zzuf.1 |   15 +++++++--------
  1 files changed, 7 insertions(+), 8 deletions(-)
 
-commit fc2c562801d977e225142225dc59abbece3fe7c5
+Commit: 1583
 Author: sam
 Date:   Sat Jan 6 20:01:51 2007 +0000
 
@@ -4494,7 +4544,7 @@ Date:   Sat Jan 6 20:01:51 2007 +0000
  configure.ac |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 943a0278b5a56bd4a48ae945c73853f1412c169b
+Commit: 1582
 Author: sam
 Date:   Sat Jan 6 20:01:25 2007 +0000
 
@@ -4503,7 +4553,7 @@ Date:   Sat Jan 6 20:01:25 2007 +0000
  src/load-fd.c |   86 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
  1 files changed, 85 insertions(+), 1 deletions(-)
 
-commit 76ce44308ce68ace44e87e175a76295313e32292
+Commit: 1581
 Author: sam
 Date:   Sat Jan 6 20:01:15 2007 +0000
 
@@ -4512,7 +4562,7 @@ Date:   Sat Jan 6 20:01:15 2007 +0000
  src/load-stream.c |   25 +++++++++++++++++++++++++
  1 files changed, 25 insertions(+), 0 deletions(-)
 
-commit 00b1f1a1ebbcdda7da9bb79e563441c729c2d02a
+Commit: 1580
 Author: sam
 Date:   Sat Jan 6 15:54:14 2007 +0000
 
@@ -4522,7 +4572,7 @@ Date:   Sat Jan 6 15:54:14 2007 +0000
  test/testsuite.sh |   11 +++++++----
  2 files changed, 12 insertions(+), 5 deletions(-)
 
-commit 65d07c22d424d3d77780d37bf9c9714e2ec52dc6
+Commit: 1579
 Author: sam
 Date:   Sat Jan 6 14:03:07 2007 +0000
 
@@ -4531,7 +4581,7 @@ Date:   Sat Jan 6 14:03:07 2007 +0000
  doc/zzuf.1 |    5 +++--
  1 files changed, 3 insertions(+), 2 deletions(-)
 
-commit c3f925484173f40c9710c5f3111f326024f2a9d0
+Commit: 1578
 Author: sam
 Date:   Sat Jan 6 14:02:51 2007 +0000
 
@@ -4541,7 +4591,7 @@ Date:   Sat Jan 6 14:02:51 2007 +0000
  src/zzuf.c  |    1 +
  2 files changed, 12 insertions(+), 8 deletions(-)
 
-commit 280ea46a38cd8d11b3edde9ddddb8291fca76967
+Commit: 1577
 Author: sam
 Date:   Sat Jan 6 10:51:44 2007 +0000
 
@@ -4551,7 +4601,7 @@ Date:   Sat Jan 6 10:51:44 2007 +0000
  src/zzuf.c |   13 +++++++++----
  2 files changed, 11 insertions(+), 6 deletions(-)
 
-commit cc0823a88153ad61662bf3fa0183f87881e32ad3
+Commit: 1576
 Author: sam
 Date:   Sat Jan 6 00:40:51 2007 +0000
 
@@ -4564,7 +4614,7 @@ Date:   Sat Jan 6 00:40:51 2007 +0000
  src/zzuf.c   |    6 +-
  5 files changed, 923 insertions(+), 9 deletions(-)
 
-commit 951a1b7ad55de644bf4addabcbf3c4b393163cec
+Commit: 1575
 Author: sam
 Date:   Sat Jan 6 00:26:39 2007 +0000
 
@@ -4573,7 +4623,7 @@ Date:   Sat Jan 6 00:26:39 2007 +0000
  doc/zzuf.1 |    5 +++++
  1 files changed, 5 insertions(+), 0 deletions(-)
 
-commit b9e12a232b078844e63fd3949aad923415f83b38
+Commit: 1574
 Author: sam
 Date:   Sat Jan 6 00:10:46 2007 +0000
 
@@ -4582,7 +4632,7 @@ Date:   Sat Jan 6 00:10:46 2007 +0000
  src/zzuf.c |   78 ++++++++++++++++++++++++++++++------------------------------
  1 files changed, 39 insertions(+), 39 deletions(-)
 
-commit a906f8bc784702385bc6f559729cbb099701b8b8
+Commit: 1573
 Author: sam
 Date:   Sat Jan 6 00:08:16 2007 +0000
 
@@ -4594,7 +4644,7 @@ Date:   Sat Jan 6 00:08:16 2007 +0000
  src/zzuf.c |   92 ++++++++++++++++++++++++++++++++++--------------------------
  2 files changed, 68 insertions(+), 45 deletions(-)
 
-commit 7af80dac2e51b5eeb8d3c0e8c35306bf51eaf7e7
+Commit: 1572
 Author: sam
 Date:   Fri Jan 5 23:15:29 2007 +0000
 
@@ -4603,7 +4653,7 @@ Date:   Fri Jan 5 23:15:29 2007 +0000
  src/zzuf.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 8b38085f751cc71819075d636f2e4f086c268f1d
+Commit: 1571
 Author: sam
 Date:   Fri Jan 5 23:14:37 2007 +0000
 
@@ -4613,7 +4663,7 @@ Date:   Fri Jan 5 23:14:37 2007 +0000
  src/zzuf.c |    4 ++--
  2 files changed, 3 insertions(+), 3 deletions(-)
 
-commit 721f5d9d2cbeb6b5ff7872d5deaf0e694bcaaaae
+Commit: 1570
 Author: sam
 Date:   Fri Jan 5 21:36:13 2007 +0000
 
@@ -4622,7 +4672,7 @@ Date:   Fri Jan 5 21:36:13 2007 +0000
  doc/zzuf.1 |   14 ++++++++------
  1 files changed, 8 insertions(+), 6 deletions(-)
 
-commit 6a12dc31a020c268b7bde1553fedb00ad328bcc2
+Commit: 1569
 Author: sam
 Date:   Fri Jan 5 21:33:28 2007 +0000
 
@@ -4632,7 +4682,7 @@ Date:   Fri Jan 5 21:33:28 2007 +0000
  doc/zzuf.1 |   56 +++++++++++++++++++++++++++++++++++++-------------------
  1 files changed, 37 insertions(+), 19 deletions(-)
 
-commit ba16f0dc550b316c054ff98bd22c904c9abc9748
+Commit: 1568
 Author: sam
 Date:   Fri Jan 5 17:34:10 2007 +0000
 
@@ -4641,7 +4691,7 @@ Date:   Fri Jan 5 17:34:10 2007 +0000
  src/load-stream.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit d3ac2577c43c733938af5fb1dd5d463b3676af00
+Commit: 1567
 Author: sam
 Date:   Fri Jan 5 16:03:04 2007 +0000
 
@@ -4650,7 +4700,7 @@ Date:   Fri Jan 5 16:03:04 2007 +0000
  src/load-stream.c |   22 ++++++++++++----------
  1 files changed, 12 insertions(+), 10 deletions(-)
 
-commit fdaa9cfef83dbd783b6b5476862eb9bf7a5bef40
+Commit: 1566
 Author: sam
 Date:   Fri Jan 5 14:36:39 2007 +0000
 
@@ -4662,7 +4712,7 @@ Date:   Fri Jan 5 14:36:39 2007 +0000
  src/load-stream.c |   50 ++++++++++++++++++++++++++++++++++++++++++++++++++
  4 files changed, 61 insertions(+), 1 deletions(-)
 
-commit 5340742077256c95afa8d90a741098b895d8569a
+Commit: 1565
 Author: sam
 Date:   Fri Jan 5 11:01:49 2007 +0000
 
@@ -4672,7 +4722,7 @@ Date:   Fri Jan 5 11:01:49 2007 +0000
  test/testsuite.sh |   52 ++++++++++++++++++++++++++++++----------------------
  1 files changed, 30 insertions(+), 22 deletions(-)
 
-commit 708ee4d029e82d7270312f4df67a822d8d9b51d4
+Commit: 1564
 Author: sam
 Date:   Fri Jan 5 10:49:12 2007 +0000
 
@@ -4681,7 +4731,7 @@ Date:   Fri Jan 5 10:49:12 2007 +0000
  doc/zzuf.1 |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 8b24c6b5e0296e990d4c348b822f6ede88fa9511
+Commit: 1563
 Author: sam
 Date:   Fri Jan 5 10:28:07 2007 +0000
 
@@ -4692,7 +4742,7 @@ Date:   Fri Jan 5 10:28:07 2007 +0000
  src/libzzuf.c |   10 ++++++++--
  2 files changed, 31 insertions(+), 23 deletions(-)
 
-commit dd964972484febd3cd940740166deca44f2a6b21
+Commit: 1562
 Author: sam
 Date:   Fri Jan 5 08:01:06 2007 +0000
 
@@ -4702,7 +4752,7 @@ Date:   Fri Jan 5 08:01:06 2007 +0000
  src/zzuf.c |   14 +++++++-------
  2 files changed, 9 insertions(+), 9 deletions(-)
 
-commit 5627236611eca3e22f6942b747dd204aec6ee581
+Commit: 1561
 Author: sam
 Date:   Fri Jan 5 07:57:41 2007 +0000
 
@@ -4711,7 +4761,7 @@ Date:   Fri Jan 5 07:57:41 2007 +0000
  doc/zzuf.1 |    8 ++++----
  1 files changed, 4 insertions(+), 4 deletions(-)
 
-commit b5df66bf0dfa156f911331634b46f2f812562ada
+Commit: 1560
 Author: sam
 Date:   Fri Jan 5 07:52:30 2007 +0000
 
@@ -4724,7 +4774,7 @@ Date:   Fri Jan 5 07:52:30 2007 +0000
  src/zzuf.c    |   18 ++++++++++++------
  5 files changed, 69 insertions(+), 12 deletions(-)
 
-commit f99b21a0d8b8d7024f8a3aa3ef7d470720c79ebb
+Commit: 1559
 Author: sam
 Date:   Fri Jan 5 00:24:43 2007 +0000
 
@@ -4733,7 +4783,7 @@ Date:   Fri Jan 5 00:24:43 2007 +0000
  doc/zzuf.1 |   99 ++++++++++++++++++++++-------------------------------------
  1 files changed, 37 insertions(+), 62 deletions(-)
 
-commit 8ab98ef880431ac281a605a4f3f4d94272295996
+Commit: 1558
 Author: sam
 Date:   Thu Jan 4 13:33:33 2007 +0000
 
@@ -4742,7 +4792,7 @@ Date:   Thu Jan 4 13:33:33 2007 +0000
  doc/zzuf.1 |    5 +++--
  1 files changed, 3 insertions(+), 2 deletions(-)
 
-commit 9072f7022a919d73189a03331cfc5987bc632170
+Commit: 1557
 Author: sam
 Date:   Thu Jan 4 13:28:35 2007 +0000
 
@@ -4751,7 +4801,7 @@ Date:   Thu Jan 4 13:28:35 2007 +0000
  doc/zzuf.1 |   90 ++++++++++++++++++++++++++++++++++++++++--------------------
  1 files changed, 60 insertions(+), 30 deletions(-)
 
-commit d02551154b4f350dab88964de580068faf9863bc
+Commit: 1555
 Author: sam
 Date:   Thu Jan 4 08:59:05 2007 +0000
 
@@ -4764,7 +4814,7 @@ Date:   Thu Jan 4 08:59:05 2007 +0000
  src/zzuf.c    |   17 ++++++++++++-----
  5 files changed, 56 insertions(+), 16 deletions(-)
 
-commit f930ad29221b0715dbd0415615fa5ac7de779ea0
+Commit: 1554
 Author: sam
 Date:   Thu Jan 4 01:09:04 2007 +0000
 
@@ -4777,7 +4827,7 @@ Date:   Thu Jan 4 01:09:04 2007 +0000
  src/zzuf.c    |   22 ++++++++++++-----
  5 files changed, 134 insertions(+), 12 deletions(-)
 
-commit faae881c76b5eac291c3d6142aa7a539174172a8
+Commit: 1553
 Author: sam
 Date:   Wed Jan 3 22:51:36 2007 +0000
 
@@ -4791,7 +4841,7 @@ Date:   Wed Jan 3 22:51:36 2007 +0000
  src/load-stream.c |   18 +++++++++++++++++-
  4 files changed, 23 insertions(+), 5 deletions(-)
 
-commit b9eed7bf9daa4c0b1008e1cb74d3e5b643107d0a
+Commit: 1552
 Author: sam
 Date:   Wed Jan 3 22:25:45 2007 +0000
 
@@ -4802,7 +4852,7 @@ Date:   Wed Jan 3 22:25:45 2007 +0000
  src/load-stream.c |    7 +++++--
  2 files changed, 8 insertions(+), 3 deletions(-)
 
-commit ab943738876fa48f4970871bb81da9e807c3f8e0
+Commit: 1551
 Author: sam
 Date:   Wed Jan 3 22:12:02 2007 +0000
 
@@ -4811,7 +4861,7 @@ Date:   Wed Jan 3 22:12:02 2007 +0000
  src/load-stream.c |   30 ++++++++++++++++++------------
  1 files changed, 18 insertions(+), 12 deletions(-)
 
-commit 871f9d27dc093bc19be25fc632f4ec1cd1687a6a
+Commit: 1550
 Author: sam
 Date:   Wed Jan 3 22:10:57 2007 +0000
 
@@ -4820,7 +4870,7 @@ Date:   Wed Jan 3 22:10:57 2007 +0000
  src/debug.c |    9 +++++++--
  1 files changed, 7 insertions(+), 2 deletions(-)
 
-commit 875b8c5a24833ff8a5ff94f05520ecd7de588d4d
+Commit: 1549
 Author: sam
 Date:   Wed Jan 3 21:53:03 2007 +0000
 
@@ -4829,7 +4879,7 @@ Date:   Wed Jan 3 21:53:03 2007 +0000
  test/testsuite.sh |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 8aad11b56d7e2506091f8e0212a5bf803697a3a5
+Commit: 1548
 Author: sam
 Date:   Wed Jan 3 21:51:11 2007 +0000
 
@@ -4841,7 +4891,7 @@ Date:   Wed Jan 3 21:51:11 2007 +0000
  test/testsuite.sh |    4 +++-
  3 files changed, 30 insertions(+), 12 deletions(-)
 
-commit 40cd2ff92bfd475f7c63330a6a0196e7784b71bd
+Commit: 1547
 Author: sam
 Date:   Wed Jan 3 21:20:22 2007 +0000
 
@@ -4851,7 +4901,7 @@ Date:   Wed Jan 3 21:20:22 2007 +0000
  src/random.c |   16 +++++++++++-----
  1 files changed, 11 insertions(+), 5 deletions(-)
 
-commit 8440679beb5a497ede45783cf962b288eaec7983
+Commit: 1546
 Author: sam
 Date:   Wed Jan 3 20:43:47 2007 +0000
 
@@ -4860,7 +4910,7 @@ Date:   Wed Jan 3 20:43:47 2007 +0000
  src/zzuf.c |  281 ++++++++++++++++++++++++++++++++----------------------------
  1 files changed, 150 insertions(+), 131 deletions(-)
 
-commit c262e3b04a65442545fdd07bff7043cfb26405c5
+Commit: 1545
 Author: sam
 Date:   Wed Jan 3 17:58:11 2007 +0000
 
@@ -4869,7 +4919,7 @@ Date:   Wed Jan 3 17:58:11 2007 +0000
  test/testsuite.sh |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit 475565b81fbe33886887e21ec29d8132b9a3f784
+Commit: 1544
 Author: sam
 Date:   Wed Jan 3 17:57:52 2007 +0000
 
@@ -4879,7 +4929,7 @@ Date:   Wed Jan 3 17:57:52 2007 +0000
  src/zzuf.c      |   14 ++++++++------
  2 files changed, 9 insertions(+), 7 deletions(-)
 
-commit 2ff341f08885ca980ecc2954f49b41be10b16f13
+Commit: 1543
 Author: sam
 Date:   Wed Jan 3 09:09:41 2007 +0000
 
@@ -4894,7 +4944,7 @@ Date:   Wed Jan 3 09:09:41 2007 +0000
  test/fdcat.c      |    2 ++
  7 files changed, 72 insertions(+), 13 deletions(-)
 
-commit 2d48100d1abd051770b22b52db858b6f5c615591
+Commit: 1542
 Author: sam
 Date:   Wed Jan 3 09:04:01 2007 +0000
 
@@ -4903,7 +4953,7 @@ Date:   Wed Jan 3 09:04:01 2007 +0000
  test/testsuite.sh |    6 +++---
  1 files changed, 3 insertions(+), 3 deletions(-)
 
-commit 25e2e334d951027b678159bda263215254334ada
+Commit: 1541
 Author: sam
 Date:   Wed Jan 3 01:28:02 2007 +0000
 
@@ -4912,7 +4962,7 @@ Date:   Wed Jan 3 01:28:02 2007 +0000
  test/testsuite.sh |    4 +++-
  1 files changed, 3 insertions(+), 1 deletions(-)
 
-commit d229f69f87d0a9c4be891b23d9524f94fc084534
+Commit: 1540
 Author: sam
 Date:   Tue Jan 2 18:26:56 2007 +0000
 
@@ -4921,7 +4971,7 @@ Date:   Tue Jan 2 18:26:56 2007 +0000
  src/zzuf.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit cad778250cda8be8c82b8233d690610bbbf9ce81
+Commit: 1539
 Author: sam
 Date:   Tue Jan 2 17:15:34 2007 +0000
 
@@ -4930,7 +4980,7 @@ Date:   Tue Jan 2 17:15:34 2007 +0000
  doc/zzuf.1 |  370 ++++++++++++++++++++++--------------------------------------
  1 files changed, 134 insertions(+), 236 deletions(-)
 
-commit 0b6c094b887e16809793af3eb94b49baab396e38
+Commit: 1538
 Author: sam
 Date:   Tue Jan 2 14:51:55 2007 +0000
 
@@ -4939,7 +4989,7 @@ Date:   Tue Jan 2 14:51:55 2007 +0000
  src/zzuf.c |   12 +++++++-----
  1 files changed, 7 insertions(+), 5 deletions(-)
 
-commit acdb9fdcec5ed793cb391cbb83cdd3f0aea736bc
+Commit: 1537
 Author: sam
 Date:   Tue Jan 2 13:26:32 2007 +0000
 
@@ -4948,7 +4998,7 @@ Date:   Tue Jan 2 13:26:32 2007 +0000
  src/zzuf.c |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit 52350c75832e804c346efde298988b5c4d2f2a7a
+Commit: 1536
 Author: sam
 Date:   Tue Jan 2 10:45:19 2007 +0000
 
@@ -4957,7 +5007,7 @@ Date:   Tue Jan 2 10:45:19 2007 +0000
  doc/zzuf.1 |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 8b3d23095aa377dd42f54fdb66f42fc3edd3339e
+Commit: 1535
 Author: sam
 Date:   Tue Jan 2 01:13:05 2007 +0000
 
@@ -4971,7 +5021,7 @@ Date:   Tue Jan 2 01:13:05 2007 +0000
  src/zzuf.c    |   76 +++++++++++++++++++++++++++-----------------------------
  4 files changed, 52 insertions(+), 45 deletions(-)
 
-commit a54d904955b15916ddf020be960a7333941e91c8
+Commit: 1534
 Author: sam
 Date:   Tue Jan 2 00:27:33 2007 +0000
 
@@ -4981,7 +5031,7 @@ Date:   Tue Jan 2 00:27:33 2007 +0000
  src/debug.c |   93 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
  1 files changed, 91 insertions(+), 2 deletions(-)
 
-commit a48b358b768e77666390d24315428bbea8568d95
+Commit: 1533
 Author: sam
 Date:   Mon Jan 1 21:55:48 2007 +0000
 
@@ -4990,7 +5040,7 @@ Date:   Mon Jan 1 21:55:48 2007 +0000
  README |   41 ++---------------------------------------
  1 files changed, 2 insertions(+), 39 deletions(-)
 
-commit 5b8dae09456d1c1a739c3eacdcf14d97e71f8bd9
+Commit: 1532
 Author: sam
 Date:   Mon Jan 1 21:35:54 2007 +0000
 
@@ -5006,7 +5056,7 @@ Date:   Mon Jan 1 21:35:54 2007 +0000
  src/zzuf.c        |   26 +++++++----
  7 files changed, 213 insertions(+), 25 deletions(-)
 
-commit 0f4ce45838f3f8a6066019fdc933c64081d082bf
+Commit: 1531
 Author: sam
 Date:   Mon Jan 1 19:49:57 2007 +0000
 
@@ -5016,7 +5066,7 @@ Date:   Mon Jan 1 19:49:57 2007 +0000
  src/zzuf.c |   40 ++++++++++----------
  2 files changed, 82 insertions(+), 82 deletions(-)
 
-commit 5b072e01aeed09473923df8a7c2273ba5e20521f
+Commit: 1530
 Author: sam
 Date:   Mon Jan 1 19:14:55 2007 +0000
 
@@ -5026,7 +5076,7 @@ Date:   Mon Jan 1 19:14:55 2007 +0000
  doc/zzuf.1 |   18 +++++++++---------
  2 files changed, 18 insertions(+), 18 deletions(-)
 
-commit afe6d97bc7ce8b9734f032b2356033bd008ebc47
+Commit: 1529
 Author: sam
 Date:   Mon Jan 1 18:56:13 2007 +0000
 
@@ -5039,7 +5089,7 @@ Date:   Mon Jan 1 18:56:13 2007 +0000
  src/zzuf.c    |   97 ++++++++++++++++++++++++++++++++++++++++++++++++--------
  3 files changed, 108 insertions(+), 18 deletions(-)
 
-commit c2e64f1d37c050a7c08f96c65fa3cdfdfa0df3f2
+Commit: 1528
 Author: sam
 Date:   Fri Dec 29 18:13:42 2006 +0000
 
@@ -5049,7 +5099,7 @@ Date:   Fri Dec 29 18:13:42 2006 +0000
  src/zzuf.c |   49 +++++++++++++++++++++++++++++++------------------
  1 files changed, 31 insertions(+), 18 deletions(-)
 
-commit 1891f39b0b59f09519b28372aacd5965799db178
+Commit: 1527
 Author: sam
 Date:   Fri Dec 29 17:49:11 2006 +0000
 
@@ -5063,7 +5113,7 @@ Date:   Fri Dec 29 17:49:11 2006 +0000
  src/load-stream.c |   32 +++++++++++---------------------
  6 files changed, 49 insertions(+), 56 deletions(-)
 
-commit 0f14107de892b1c622b6c95dfd37179c99a88746
+Commit: 1526
 Author: sam
 Date:   Fri Dec 29 17:22:11 2006 +0000
 
@@ -5075,7 +5125,7 @@ Date:   Fri Dec 29 17:22:11 2006 +0000
  test/testsuite.sh |   25 ++++++++++++++++---------
  4 files changed, 38 insertions(+), 16 deletions(-)
 
-commit 62a0e8821e229dfc5e90b88555cb6232daf1b143
+Commit: 1525
 Author: sam
 Date:   Fri Dec 29 16:46:06 2006 +0000
 
@@ -5086,7 +5136,7 @@ Date:   Fri Dec 29 16:46:06 2006 +0000
  src/zzuf.c |   22 +++++++++++-----------
  3 files changed, 20 insertions(+), 20 deletions(-)
 
-commit 944b9bdf9fef1ff8a1cfaacf2c89cfb881d87948
+Commit: 1524
 Author: sam
 Date:   Thu Dec 28 20:32:21 2006 +0000
 
@@ -5099,7 +5149,7 @@ Date:   Thu Dec 28 20:32:21 2006 +0000
  src/load-stream.c |   34 +++++++++++++++++-----------------
  5 files changed, 50 insertions(+), 52 deletions(-)
 
-commit 18f824112152ea395fa29541701a8f4bc7b2823a
+Commit: 1523
 Author: sam
 Date:   Thu Dec 28 20:22:32 2006 +0000
 
@@ -5119,7 +5169,7 @@ Date:   Thu Dec 28 20:22:32 2006 +0000
  src/random.h      |    4 +-
  11 files changed, 193 insertions(+), 124 deletions(-)
 
-commit cf6685d6b3ac0991b7d4e4af14a6539510371ffd
+Commit: 1522
 Author: sam
 Date:   Thu Dec 28 17:48:05 2006 +0000
 
@@ -5130,7 +5180,7 @@ Date:   Thu Dec 28 17:48:05 2006 +0000
  src/load-stream.c |   33 ++++++++++++++++++++++-----------
  2 files changed, 25 insertions(+), 22 deletions(-)
 
-commit 3c1c5e12fabc9101ff0164d82dccfada6597b28c
+Commit: 1521
 Author: sam
 Date:   Thu Dec 28 17:47:26 2006 +0000
 
@@ -5143,7 +5193,7 @@ Date:   Thu Dec 28 17:47:26 2006 +0000
  test/testsuite.sh |    4 +++
  5 files changed, 144 insertions(+), 2 deletions(-)
 
-commit d32d5babf16d53d29d0fa8ebca3ef1ccbac9f732
+Commit: 1520
 Author: sam
 Date:   Thu Dec 28 15:51:43 2006 +0000
 
@@ -5156,7 +5206,7 @@ Date:   Thu Dec 28 15:51:43 2006 +0000
  src/load-stream.c |   36 ++++++++++++++++++------------------
  5 files changed, 45 insertions(+), 43 deletions(-)
 
-commit 5863e7b925aa5ac7fdeba863ac8fa195cbf31bed
+Commit: 1519
 Author: sam
 Date:   Thu Dec 28 15:48:10 2006 +0000
 
@@ -5169,7 +5219,7 @@ Date:   Thu Dec 28 15:48:10 2006 +0000
  src/load-stream.c |   42 ++++++++++++++++++------------------------
  5 files changed, 100 insertions(+), 57 deletions(-)
 
-commit ffb2b21de1ff8599ab20a09578784cdfc00242fc
+Commit: 1518
 Author: sam
 Date:   Thu Dec 28 15:44:28 2006 +0000
 
@@ -5178,7 +5228,7 @@ Date:   Thu Dec 28 15:44:28 2006 +0000
  ChangeLog |   49 +++++++++++++++++++++++++++++++++++++++++++++++++
  1 files changed, 49 insertions(+), 0 deletions(-)
 
-commit 4f48479e11e401d96948976cef9f283fe2f3921c
+Commit: 1517
 Author: sam
 Date:   Thu Dec 28 15:44:13 2006 +0000
 
@@ -5187,7 +5237,7 @@ Date:   Thu Dec 28 15:44:13 2006 +0000
  src/Makefile.am |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 5f348bee9696613ee9ee69ee2736dd529f4931f2
+Commit: 1516
 Author: sam
 Date:   Thu Dec 28 15:43:28 2006 +0000
 
@@ -5196,7 +5246,7 @@ Date:   Thu Dec 28 15:43:28 2006 +0000
  README |   13 +++++++++----
  1 files changed, 9 insertions(+), 4 deletions(-)
 
-commit ff246c746cc0093bfdf7c5ed190f14255096e2e7
+Commit: 1515
 Author: sam
 Date:   Sat Dec 23 19:12:52 2006 +0000
 
@@ -5205,7 +5255,7 @@ Date:   Sat Dec 23 19:12:52 2006 +0000
  Makefile.am |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-commit abe0757d55551c30d8b93f9b525dca8c206f6766
+Commit: 1514
 Author: sam
 Date:   Sat Dec 23 18:40:28 2006 +0000
 
@@ -5214,7 +5264,7 @@ Date:   Sat Dec 23 18:40:28 2006 +0000
  src/Makefile.am |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit d54d8db8c340ce46d6ac2d6d76b8e333ba42f9f6
+Commit: 1513
 Author: sam
 Date:   Sat Dec 23 18:37:52 2006 +0000
 
@@ -5226,7 +5276,7 @@ Date:   Sat Dec 23 18:37:52 2006 +0000
  configure.ac |    4 ++--
  4 files changed, 15 insertions(+), 2 deletions(-)
 
-commit b4c0935ccf7eb7d019581f5917c85c2f1f1e5b34
+Commit: 1512
 Author: sam
 Date:   Fri Dec 22 23:40:03 2006 +0000
 
@@ -5235,7 +5285,7 @@ Date:   Fri Dec 22 23:40:03 2006 +0000
  README |   17 ++++++-----------
  1 files changed, 6 insertions(+), 11 deletions(-)
 
-commit 077054a3cc4e4a064561d648f8f37573c78dfae0
+Commit: 1511
 Author: sam
 Date:   Fri Dec 22 23:36:04 2006 +0000
 
@@ -5245,7 +5295,7 @@ Date:   Fri Dec 22 23:36:04 2006 +0000
  src/zzuf.c |   14 +++++++-------
  2 files changed, 26 insertions(+), 12 deletions(-)
 
-commit d1f8b10b4406ecfa68c2be1981de3825ef63eb3b
+Commit: 1510
 Author: sam
 Date:   Fri Dec 22 17:01:16 2006 +0000
 
@@ -5255,7 +5305,7 @@ Date:   Fri Dec 22 17:01:16 2006 +0000
  src/zzuf.c |    6 +-----
  1 files changed, 1 insertions(+), 5 deletions(-)
 
-commit b53d285afd7fdc85097223e19d98a92b03565247
+Commit: 1509
 Author: sam
 Date:   Fri Dec 22 16:54:55 2006 +0000
 
@@ -5265,7 +5315,7 @@ Date:   Fri Dec 22 16:54:55 2006 +0000
  test/testsuite.sh |   16 ++++++++++------
  1 files changed, 10 insertions(+), 6 deletions(-)
 
-commit e1adfc44fd1f9f1f903e5b190d3e9a2f092b8743
+Commit: 1508
 Author: sam
 Date:   Fri Dec 22 16:36:47 2006 +0000
 
@@ -5274,7 +5324,7 @@ Date:   Fri Dec 22 16:36:47 2006 +0000
  src/zzuf.c |   15 ++++++++-------
  1 files changed, 8 insertions(+), 7 deletions(-)
 
-commit d98b13bf9b3a3c123f09c76d37122139ab367038
+Commit: 1507
 Author: sam
 Date:   Fri Dec 22 16:36:30 2006 +0000
 
@@ -5286,7 +5336,7 @@ Date:   Fri Dec 22 16:36:30 2006 +0000
  doc/zzuf.1      |  206 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
  4 files changed, 214 insertions(+), 1 deletions(-)
 
-commit 7a64c123daa17f5aeaf4b8cefaf0fc14ea3cfb69
+Commit: 1506
 Author: sam
 Date:   Fri Dec 22 15:06:21 2006 +0000
 
@@ -5295,7 +5345,7 @@ Date:   Fri Dec 22 15:06:21 2006 +0000
  src/zzuf.c |  161 ++++++++++++++++++++++++++++++++++++++++++++----------------
  1 files changed, 118 insertions(+), 43 deletions(-)
 
-commit 5a856cd864e8da9ec398266fd2da62c1c34a4148
+Commit: 1505
 Author: sam
 Date:   Fri Dec 22 13:53:58 2006 +0000
 
@@ -5306,7 +5356,7 @@ Date:   Fri Dec 22 13:53:58 2006 +0000
  src/zzuf.c |  284 +++++++++++++++++++++++++++++++++++++++++++-----------------
  1 files changed, 206 insertions(+), 78 deletions(-)
 
-commit 4d714909cd2fd4c476adb37ea18fd89cd88ef711
+Commit: 1504
 Author: sam
 Date:   Fri Dec 22 13:18:13 2006 +0000
 
@@ -5315,7 +5365,7 @@ Date:   Fri Dec 22 13:18:13 2006 +0000
  src/debug.c |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
-commit 0525ddd7c02676049dab2cadf357310a155acee7
+Commit: 1503
 Author: sam
 Date:   Thu Dec 21 19:56:22 2006 +0000
 
@@ -5324,7 +5374,7 @@ Date:   Thu Dec 21 19:56:22 2006 +0000
  src/zzuf.c |  111 +++++++++++++++++++++++++++++++++++++++++++++++++----------
  1 files changed, 92 insertions(+), 19 deletions(-)
 
-commit 343875108d71916e2ce7b865767129d64780e1b6
+Commit: 1502
 Author: sam
 Date:   Mon Dec 18 13:23:56 2006 +0000
 
@@ -5333,7 +5383,7 @@ Date:   Mon Dec 18 13:23:56 2006 +0000
  src/zzuf.c |   37 ++++++++++++++++++++++++++++++-------
  1 files changed, 30 insertions(+), 7 deletions(-)
 
-commit f0e3700a62d7af44414dea3f82d8dbc6a3b0739b
+Commit: 1501
 Author: sam
 Date:   Mon Dec 18 12:58:47 2006 +0000
 
@@ -5342,7 +5392,7 @@ Date:   Mon Dec 18 12:58:47 2006 +0000
  TODO |   24 ++++++++++++++----------
  1 files changed, 14 insertions(+), 10 deletions(-)
 
-commit b05f2326f7ba1383c541a8c4bf7d6eb76c934ed0
+Commit: 1500
 Author: sam
 Date:   Mon Dec 18 12:48:49 2006 +0000
 
@@ -5351,7 +5401,7 @@ Date:   Mon Dec 18 12:48:49 2006 +0000
  test/testsuite.sh |   53 ++++++++++++++++++++++++++++++++++++++++-------------
  1 files changed, 40 insertions(+), 13 deletions(-)
 
-commit cf7c6a6353b7b918a4208b956ea48fa35f90bcef
+Commit: 1499
 Author: sam
 Date:   Mon Dec 18 11:07:42 2006 +0000
 
@@ -5360,7 +5410,7 @@ Date:   Mon Dec 18 11:07:42 2006 +0000
  test/testsuite.sh |   44 ++++++++++++++++++++++++++++++++++++--------
  1 files changed, 36 insertions(+), 8 deletions(-)
 
-commit f5ef4d4d49a81de0f2d6c9a7a4f411af3cc781d5
+Commit: 1498
 Author: sam
 Date:   Sun Dec 17 23:58:23 2006 +0000
 
@@ -5373,7 +5423,7 @@ Date:   Sun Dec 17 23:58:23 2006 +0000
  src/load-stream.c |    3 ++
  5 files changed, 49 insertions(+), 23 deletions(-)
 
-commit 9a3253a9c8de7a325b1b186cae0ac19c1f14c3cc
+Commit: 1497
 Author: sam
 Date:   Sun Dec 17 22:14:13 2006 +0000
 
@@ -5383,7 +5433,7 @@ Date:   Sun Dec 17 22:14:13 2006 +0000
  src/load-stream.c |  218 +++++++++++++++++++++++++++++++++++++++++++++++------
  1 files changed, 196 insertions(+), 22 deletions(-)
 
-commit d90c8d8d34d7657f15bdd0ca4d0849a80709423b
+Commit: 1496
 Author: sam
 Date:   Sun Dec 17 22:12:11 2006 +0000
 
@@ -5392,7 +5442,7 @@ Date:   Sun Dec 17 22:12:11 2006 +0000
  test/testsuite.sh |   27 ++++++++++++++++++++-------
  1 files changed, 20 insertions(+), 7 deletions(-)
 
-commit 2a44223aaa5b90a48e1f9bb044500574dc69e51e
+Commit: 1495
 Author: sam
 Date:   Sun Dec 17 17:33:02 2006 +0000
 
@@ -5404,7 +5454,7 @@ Date:   Sun Dec 17 17:33:02 2006 +0000
  test/testsuite.sh |   12 ++++++++++++
  4 files changed, 17 insertions(+), 1 deletions(-)
 
-commit e34777b38d84bfbd997d6b72dd23ff57f5f59652
+Commit: 1494
 Author: sam
 Date:   Sun Dec 17 17:17:31 2006 +0000
 
@@ -5420,7 +5470,7 @@ Date:   Sun Dec 17 17:17:31 2006 +0000
  src/preload.h     |   20 ----
  8 files changed, 391 insertions(+), 346 deletions(-)
 
-commit bdf9b43116c6c01e31f097ce8cfe780e7735e370
+Commit: 1493
 Author: sam
 Date:   Sat Dec 16 10:37:41 2006 +0000
 
@@ -5429,7 +5479,7 @@ Date:   Sat Dec 16 10:37:41 2006 +0000
  README |   21 +++++++++++----------
  1 files changed, 11 insertions(+), 10 deletions(-)
 
-commit f0e76579671d435ec92b73d70a31b1a22dba49fa
+Commit: 1492
 Author: sam
 Date:   Fri Dec 15 20:42:27 2006 +0000
 
@@ -5439,7 +5489,7 @@ Date:   Fri Dec 15 20:42:27 2006 +0000
  Makefile.am |    2 +-
  2 files changed, 2 insertions(+), 1 deletions(-)
 
-commit e76e830dc0ed123f7d4872ca5000f983dc2c55c7
+Commit: 1491
 Author: sam
 Date:   Fri Dec 15 18:49:33 2006 +0000
 
@@ -5448,7 +5498,7 @@ Date:   Fri Dec 15 18:49:33 2006 +0000
  TODO |    8 +++++++-
  1 files changed, 7 insertions(+), 1 deletions(-)
 
-commit 01648ee6aad054d2e6deaee48e7e18715b35a270
+Commit: 1490
 Author: sam
 Date:   Fri Dec 15 18:48:24 2006 +0000
 
@@ -5460,7 +5510,7 @@ Date:   Fri Dec 15 18:48:24 2006 +0000
  src/preload.h |    2 +-
  4 files changed, 12 insertions(+), 14 deletions(-)
 
-commit 309d2231c7acfcffe5caf939a92210d8abc84181
+Commit: 1489
 Author: sam
 Date:   Fri Dec 15 17:48:17 2006 +0000
 
@@ -5469,7 +5519,7 @@ Date:   Fri Dec 15 17:48:17 2006 +0000
  README |   46 +++++++++++++++++++++++++++++++++++++++++++---
  1 files changed, 43 insertions(+), 3 deletions(-)
 
-commit 9ce2cf73b4b3fa3c28a65851ef32aca83ebd78f1
+Commit: 1488
 Author: sam
 Date:   Fri Dec 15 17:47:59 2006 +0000
 
@@ -5479,7 +5529,7 @@ Date:   Fri Dec 15 17:47:59 2006 +0000
  src/libzzuf.c |    2 +-
  2 files changed, 6 insertions(+), 6 deletions(-)
 
-commit b7342aa9932677c6d764c9d9171d1b41f6b27d46
+Commit: 1487
 Author: sam
 Date:   Fri Dec 15 17:44:20 2006 +0000
 
@@ -5489,7 +5539,7 @@ Date:   Fri Dec 15 17:44:20 2006 +0000
  src/zzuf.c      |    3 +--
  2 files changed, 2 insertions(+), 2 deletions(-)
 
-commit b5bd3458d137034333562b7c3d1819cb3bed9e1e
+Commit: 1486
 Author: sam
 Date:   Fri Dec 15 16:10:56 2006 +0000
 
@@ -5503,7 +5553,7 @@ Date:   Fri Dec 15 16:10:56 2006 +0000
  src/zzuf.c    |   20 ++++++++++----------
  6 files changed, 48 insertions(+), 37 deletions(-)
 
-commit a1f60e0d7cf32a4ebd2448d5dafe143ecd44e61d
+Commit: 1485
 Author: sam
 Date:   Fri Dec 15 15:07:38 2006 +0000
 
@@ -5512,7 +5562,7 @@ Date:   Fri Dec 15 15:07:38 2006 +0000
  src/libzzuf.c |    5 ++---
  1 files changed, 2 insertions(+), 3 deletions(-)
 
-commit 178c82d46b051b0db720c5fc156fee542dd05b0d
+Commit: 1484
 Author: sam
 Date:   Fri Dec 15 14:57:59 2006 +0000
 
@@ -5522,7 +5572,7 @@ Date:   Fri Dec 15 14:57:59 2006 +0000
  src/random.h |    4 ++--
  2 files changed, 6 insertions(+), 9 deletions(-)
 
-commit 909599959425f63adab5164980baafcd7891d0bd
+Commit: 1483
 Author: sam
 Date:   Fri Dec 15 14:07:46 2006 +0000
 
@@ -5532,7 +5582,7 @@ Date:   Fri Dec 15 14:07:46 2006 +0000
  src/fuzz.c |   20 +++++++++-----------
  1 files changed, 9 insertions(+), 11 deletions(-)
 
-commit 934366dd7667ab3e43b12d06df62d39278397ede
+Commit: 1482
 Author: sam
 Date:   Fri Dec 15 13:20:01 2006 +0000
 
@@ -5541,7 +5591,7 @@ Date:   Fri Dec 15 13:20:01 2006 +0000
  src/preload.c |   59 +++++++++++++++++++++++++++++++++++---------------------
  1 files changed, 37 insertions(+), 22 deletions(-)
 
-commit 5b04ac93c83e199cbad58c15ce487cde13ff80f6
+Commit: 1481
 Author: sam
 Date:   Fri Dec 15 13:12:44 2006 +0000
 
@@ -5551,7 +5601,7 @@ Date:   Fri Dec 15 13:12:44 2006 +0000
  src/fuzz.c |   17 +++++++++--------
  1 files changed, 9 insertions(+), 8 deletions(-)
 
-commit 8e3241bb8ee503869d323fbd4d704ca66c843084
+Commit: 1480
 Author: sam
 Date:   Fri Dec 15 10:18:57 2006 +0000
 
@@ -5560,7 +5610,7 @@ Date:   Fri Dec 15 10:18:57 2006 +0000
  src/debug.h |    4 +++-
  1 files changed, 3 insertions(+), 1 deletions(-)
 
-commit 2d6bfa0f77176df301fe6f1d0c919627d452ab6c
+Commit: 1479
 Author: sam
 Date:   Fri Dec 15 10:07:53 2006 +0000
 
@@ -5569,7 +5619,7 @@ Date:   Fri Dec 15 10:07:53 2006 +0000
  src/preload.c |   11 ++---------
  1 files changed, 2 insertions(+), 9 deletions(-)
 
-commit 784d34c471e815d82d3a4c586fbd5daa598ee0bc
+Commit: 1478
 Author: sam
 Date:   Fri Dec 15 10:06:30 2006 +0000
 
@@ -5579,7 +5629,7 @@ Date:   Fri Dec 15 10:06:30 2006 +0000
  src/preload.c |   93 ++++++++++++++++++++++++++++++++++++++++++++++++++++----
  2 files changed, 88 insertions(+), 8 deletions(-)
 
-commit fd9825dd5225c902205f2fc996fc870f1231cefa
+Commit: 1477
 Author: sam
 Date:   Fri Dec 15 09:08:52 2006 +0000
 
@@ -5588,7 +5638,7 @@ Date:   Fri Dec 15 09:08:52 2006 +0000
  src/preload.c |   26 +++++++++++++-------------
  1 files changed, 13 insertions(+), 13 deletions(-)
 
-commit cac118f089b178c7bf70bbde6fc218391684ed97
+Commit: 1476
 Author: sam
 Date:   Fri Dec 15 09:03:48 2006 +0000
 
@@ -5597,7 +5647,7 @@ Date:   Fri Dec 15 09:03:48 2006 +0000
  src/preload.c |   31 ++++++++++++++++++++++++++++++-
  1 files changed, 30 insertions(+), 1 deletions(-)
 
-commit 3cb1ef3522349aea991b000793a28b8e18522d5a
+Commit: 1475
 Author: sam
 Date:   Fri Dec 15 09:01:46 2006 +0000
 
@@ -5606,7 +5656,7 @@ Date:   Fri Dec 15 09:01:46 2006 +0000
  src/zzuf.c |    6 +++++-
  1 files changed, 5 insertions(+), 1 deletions(-)
 
-commit 00e5aea1cd4ad4a08d6f732eae718e32c90727a3
+Commit: 1474
 Author: sam
 Date:   Fri Dec 15 08:42:27 2006 +0000
 
@@ -5619,7 +5669,7 @@ Date:   Fri Dec 15 08:42:27 2006 +0000
  src/zzuf.c    |   12 ++++++++----
  4 files changed, 43 insertions(+), 25 deletions(-)
 
-commit 7ad3a52b86b2e4139d0d71d175f1f47fe9f76403
+Commit: 1473
 Author: sam
 Date:   Fri Dec 15 08:14:38 2006 +0000
 
@@ -5631,7 +5681,7 @@ Date:   Fri Dec 15 08:14:38 2006 +0000
  src/preload.c |   30 +++++++++++++++++++++++++++---
  3 files changed, 34 insertions(+), 6 deletions(-)
 
-commit 1ec3fd16599603a8dfaba0348f2582b464362fd3
+Commit: 1472
 Author: sam
 Date:   Fri Dec 15 07:53:09 2006 +0000
 
@@ -5645,7 +5695,7 @@ Date:   Fri Dec 15 07:53:09 2006 +0000
  src/zzuf.c    |   28 ++++++++++++++--------------
  6 files changed, 47 insertions(+), 21 deletions(-)
 
-commit 2d3ab7f839efeb4072e25b55754053ce1c73f785
+Commit: 1471
 Author: sam
 Date:   Fri Dec 15 00:43:39 2006 +0000
 
@@ -5654,7 +5704,7 @@ Date:   Fri Dec 15 00:43:39 2006 +0000
  src/preload.c |   49 ++++++++++++++++++++++++++++---------------------
  1 files changed, 28 insertions(+), 21 deletions(-)
 
-commit c2094bbdbab3ffb1f4aef791a6e176081db53851
+Commit: 1470
 Author: sam
 Date:   Fri Dec 15 00:26:01 2006 +0000
 
@@ -5674,7 +5724,7 @@ Date:   Fri Dec 15 00:26:01 2006 +0000
  src/zzuf.c      |  114 ++++++++++++++++-------------------------
  12 files changed, 469 insertions(+), 140 deletions(-)
 
-commit 51b336492c39af8634f99928b29eae48e3bd44e9
+Commit: 1467
 Author: sam
 Date:   Thu Dec 14 16:11:14 2006 +0000
 
@@ -5683,7 +5733,7 @@ Date:   Thu Dec 14 16:11:14 2006 +0000
  src/libzzuf.c |   28 ++++++++++++++++++----------
  1 files changed, 18 insertions(+), 10 deletions(-)
 
-commit de6f4e24a1b7425a79415d79ca1b587bbe7d049c
+Commit: 1466
 Author: sam
 Date:   Thu Dec 14 15:55:18 2006 +0000
 
@@ -5694,7 +5744,7 @@ Date:   Thu Dec 14 15:55:18 2006 +0000
  src/libzzuf.c   |  109 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
  3 files changed, 115 insertions(+), 0 deletions(-)
 
-commit e13ce91133e5a6a1d261b7951d735807e31f4479
+Commit: 1465
 Author: sam
 Date:   Thu Dec 14 14:25:10 2006 +0000
 
@@ -5703,7 +5753,7 @@ Date:   Thu Dec 14 14:25:10 2006 +0000
  src/zzuf.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-commit 3d0ee5546b4ffe3fa704d1a9c4e756517fb80f5f
+Commit: 1464
 Author: sam
 Date:   Thu Dec 14 14:23:07 2006 +0000
 
@@ -5716,7 +5766,7 @@ Date:   Thu Dec 14 14:23:07 2006 +0000
  src/zzuf.c      |  189 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-
  5 files changed, 257 insertions(+), 3 deletions(-)
 
-commit e876a1102d893c6c40dcee474811ec07deed2b6e
+Commit: 1463
 Author: sam
 Date:   Wed Dec 13 20:17:27 2006 +0000
 
