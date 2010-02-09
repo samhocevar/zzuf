@@ -18,4 +18,6 @@ update-changelog: FORCE
 	  && git log --stat | grep -v '^    \(git-svn-id\|$$\)' \
 	      | sed '/^Author:/s/ <.*@.*>//' > ChangeLog
 
+echo-dirs: ; echo src test
+
 FORCE:

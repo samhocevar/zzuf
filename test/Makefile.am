@@ -8,7 +8,7 @@ TESTS = check-zzuf-A-autoinc \
         check-zzuf-m-md5 \
         check-zzuf-M-max-memory \
         check-zzuf-r-ratio \
-        check-build check-overflow check-div0 check-utils
+        check-source check-win32 check-overflow check-div0 check-utils
 
 echo-sources: ; echo $(SOURCES)
 
