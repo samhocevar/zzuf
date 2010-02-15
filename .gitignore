@@ -24,13 +24,13 @@ m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
 src/zzuf
-src/zzcat
+src/zzat
 test/zzero
 test/zznop
 test/zzone
 test/bug-div0
 test/bug-memory
 test/bug-overflow
-doc/zzcat.1
+doc/zzat.1
 doc/zzuf.1
 doc/libzzuf.3

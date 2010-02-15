@@ -15,9 +15,9 @@
 DIR="$(dirname "$0")"
 ZZUF="$DIR/../src/zzuf -E [.]ilist$"
 
-ZZCAT="$DIR/../src/zzcat"
-if [ ! -f "$ZZCAT" ]; then
-  echo "error: src/zzcat is missing"
+ZZAT="$DIR/../src/zzat"
+if [ ! -f "$ZZAT" ]; then
+  echo "error: src/zzat is missing"
   exit 1
 fi
 

@@ -1,5 +1,5 @@
 /*
- *  zzcat - various cat reimplementations for testing purposes
+ *  zzat - various cat reimplementations for testing purposes
  *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
  *                All Rights Reserved
  *
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 
     if (myoptind >= argc)
     {
-        fprintf(stderr, "E: zzcat: too few arguments\n");
+        fprintf(stderr, "E: zzat: too few arguments\n");
         return EXIT_FAILURE;
     }
 
@@ -259,7 +259,7 @@ static void output(char const *buf, size_t len)
         cmd; \
         if (!f) \
         { \
-            fprintf(stderr, "E: zzcat: cannot open `%s'\n", file); \
+            fprintf(stderr, "E: zzat: cannot open `%s'\n", file); \
             return EXIT_FAILURE; \
         } \
         retoff = 0; \
@@ -284,7 +284,7 @@ static void output(char const *buf, size_t len)
             if (!retbuf || ROUNDUP(retlen) != ROUNDUP(retlen - _cnt)) \
             { \
                 if (debug) \
-                    fprintf(stderr, "D: zzcat: allocating %i bytes for %i\n", \
+                    fprintf(stderr, "D: zzat: allocating %i bytes for %i\n", \
                             (int)ROUNDUP(retlen), (int)retlen); \
                 retbuf = realloc(retbuf, ROUNDUP(retlen)); \
             } \
@@ -292,7 +292,7 @@ static void output(char const *buf, size_t len)
         if (_cnt > 0) \
         { \
             if (debug) \
-                fprintf(stderr, "D: zzcat: writing %i byte%s at offset %i\n", \
+                fprintf(stderr, "D: zzat: writing %i byte%s at offset %i\n", \
                         (int)_cnt, _cnt == 1 ? "" : "s", (int)retoff); \
             memcpy(retbuf + retoff, address, _cnt); \
         } \
@@ -309,7 +309,7 @@ static void output(char const *buf, size_t len)
             f = fopen(file, "r"); \
             if (!f) \
             { \
-                fprintf(stderr, "E: zzcat: cannot open `%s'\n", file); \
+                fprintf(stderr, "E: zzat: cannot open `%s'\n", file); \
                 return EXIT_FAILURE; \
             } \
         } \
@@ -326,7 +326,7 @@ static void output(char const *buf, size_t len)
             f = fopen(file, "r"); \
             if (!f) \
             { \
-                fprintf(stderr, "E: zzcat: cannot open `%s'\n", file); \
+                fprintf(stderr, "E: zzat: cannot open `%s'\n", file); \
                 return EXIT_FAILURE; \
             } \
         } \
@@ -422,7 +422,7 @@ static int run(char const *sequence, char const *file)
         {
             if (nloops == 0)
             {
-                fprintf(stderr, "E: zzcat: ')' outside a loop\n");
+                fprintf(stderr, "E: zzat: ')' outside a loop\n");
                 return EXIT_FAILURE;
             }
             if (loops[nloops - 1].count == 1 || finish)
@@ -572,7 +572,7 @@ static int run(char const *sequence, char const *file)
             char buf[16];
             snprintf(buf, 16, strlen(sequence) < 16 ? "%s" : "%.12s...",
                      sequence);
-            fprintf(stderr, "E: zzcat: syntax error near `%s'\n", buf);
+            fprintf(stderr, "E: zzat: syntax error near `%s'\n", buf);
             return EXIT_FAILURE;
         }
 
@@ -599,7 +599,7 @@ static int run(char const *sequence, char const *file)
 
 #if 0
 /* Only read() calls */
-static int zzcat_read(char const *name, unsigned char *data, int64_t len,
+static int zzat_read(char const *name, unsigned char *data, int64_t len,
                       int64_t chunk)
 {
     int i, fd = open(name, O_RDONLY);
@@ -612,7 +612,7 @@ static int zzcat_read(char const *name, unsigned char *data, int64_t len,
 }
 
 /* Socket seeks and reads */
-static int zzcat_random_socket(char const *name, unsigned char *data,
+static int zzat_random_socket(char const *name, unsigned char *data,
                                int64_t len)
 {
     int i, j, fd = open(name, O_RDONLY);
@@ -634,7 +634,7 @@ static int zzcat_random_socket(char const *name, unsigned char *data,
 }
 
 /* Standard stream seeks and reads */
-static int zzcat_random_stream(char const *name, unsigned char *data,
+static int zzat_random_stream(char const *name, unsigned char *data,
                                int64_t len)
 {
     FILE *stream = fopen(name, "r");
@@ -662,8 +662,8 @@ static int zzcat_random_stream(char const *name, unsigned char *data,
 
 #ifdef HAVE_MMAP
 /* mmap() followed by random memory reads */
-static int zzcat_random_mmap(char const *name, unsigned char *data,
-                               int64_t len)
+static int zzat_random_mmap(char const *name, unsigned char *data,
+                            int64_t len)
 {
     int i, j, fd = open(name, O_RDONLY);
     if(fd < 0)
@@ -787,7 +787,7 @@ static void syntax(void)
 
 static void version(void)
 {
-    printf("zzcat %s\n", PACKAGE_VERSION);
+    printf("zzat %s\n", PACKAGE_VERSION);
     printf("Copyright (C) 2002-2010 Sam Hocevar <sam@hocevar.net>\n");
     printf("This program is free software. It comes without any warranty, to the extent\n");
     printf("permitted by applicable law. You can redistribute it and/or modify it under\n");
@@ -799,10 +799,10 @@ static void version(void)
 
 static void usage(void)
 {
-    printf("Usage: zzcat [AbdeEntTv] [-x sequence] [FILE...]\n");
-    printf("       zzcat -l | --list\n");
-    printf("       zzcat -h | --help\n");
-    printf("       zzcat -V | --version\n");
+    printf("Usage: zzat [AbdeEntTv] [-x sequence] [FILE...]\n");
+    printf("       zzat -l | --list\n");
+    printf("       zzat -h | --help\n");
+    printf("       zzat -V | --version\n");
     printf("Read FILE using a sequence of various I/O methods.\n");
     printf("\n");
     printf("Mandatory arguments to long options are mandatory for short options too.\n");

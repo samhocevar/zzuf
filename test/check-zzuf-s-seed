@@ -31,7 +31,7 @@ while : ; do
   passes=10
   while test $zeroes -gt 0 -a $passes -lt 200000; do
     printf " doing $passes passes..."
-    zeroes=$($ZZUF -r $ratio -s $seed -A $ZZCAT -r $passes -x "fread(1,$bytes)" /dev/zero | $DIR/zzone $bytes $passes)
+    zeroes=$($ZZUF -r $ratio -s $seed -A $ZZAT -r $passes -x "fread(1,$bytes)" /dev/zero | $DIR/zzone $bytes $passes)
     echo " $zeroes"
     passes=$(expr '(' $passes '*' 7 + 3 ')' / 4)
   done

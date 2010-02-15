@@ -13,10 +13,10 @@
 
 . "$(dirname "$0")/functions.inc"
 
-HAVE_GETLINE=$("$ZZCAT" -l | grep >/dev/null 2>&1 '^  getline(' && echo "y")
-HAVE_GETDELIM=$("$ZZCAT" -l | grep >/dev/null 2>&1 '^  getdelim(' && echo "y")
-HAVE_GETC_UNLOCKED=$("$ZZCAT" -l | grep >/dev/null 2>&1 '^  getc_unlocked(' && echo "y")
-HAVE_FGETC_UNLOCKED=$("$ZZCAT" -l | grep >/dev/null 2>&1 '^  fgetc_unlocked(' && echo "y")
+HAVE_GETLINE=$("$ZZAT" -l | grep >/dev/null 2>&1 '^  getline(' && echo "y")
+HAVE_GETDELIM=$("$ZZAT" -l | grep >/dev/null 2>&1 '^  getdelim(' && echo "y")
+HAVE_GETC_UNLOCKED=$("$ZZAT" -l | grep >/dev/null 2>&1 '^  getc_unlocked(' && echo "y")
+HAVE_FGETC_UNLOCKED=$("$ZZAT" -l | grep >/dev/null 2>&1 '^  fgetc_unlocked(' && echo "y")
 
 checkutils()
 {
@@ -70,10 +70,10 @@ checkutils()
             ;;
         esac
         # Regression tests for stuff that used to break
-        check "$ZZOPTS" "$ZZCAT -x \"fread(1,33000) fseek(1,SEEK_SET) fread(1,1) fseek(4093,SEEK_CUR) fread(1,1) fseek(1,SEEK_CUR) fread(1,1)\" $file" \
+        check "$ZZOPTS" "$ZZAT -x \"fread(1,33000) fseek(1,SEEK_SET) fread(1,1) fseek(4093,SEEK_CUR) fread(1,1) fseek(1,SEEK_CUR) fread(1,1)\" $file" \
               "eglibc (2.9-21) bug regression"
         if [ "$HAVE_GET_UNLOCKED $HAVE_GETLINE" = "y y" ]; then
-          check "$ZZOPTS" "$ZZCAT -x \"repeat(33000,getc_unlocked(),feof(10),ungetc(),getline()))\" $file" \
+          check "$ZZOPTS" "$ZZAT -x \"repeat(33000,getc_unlocked(),feof(10),ungetc(),getline()))\" $file" \
                 "sed getc_unlocked() bug regression"
         fi
         # Misc tests
@@ -99,7 +99,7 @@ checkutils()
           "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,getc(),feof(10))" \
           "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,fgetc(),feof(10))" \
           ; do
-            check "$ZZOPTS" "$ZZCAT -x \"$n\" $file" "$n"
+            check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
         done
         # Platform-specific tests
         if [ "$HAVE_GETLINE" = "y" ]; then
@@ -108,7 +108,7 @@ checkutils()
               "repeat(-1,getc(),feof(10),ungetc(),getline())" \
               "repeat(-1,fgetc(),feof(10),ungetc(),getline())" \
               ; do
-                check "$ZZOPTS" "$ZZCAT -x \"$n\" $file" "$n"
+                check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
             done
         fi
         if [ "$HAVE_GETDELIM" = "y" ]; then
@@ -116,7 +116,7 @@ checkutils()
               "repeat(10,getdelim(0)) fread(1,33000)" \
               "repeat(10,getdelim(' ')) fread(1,33000)" \
               ; do
-                check "$ZZOPTS" "$ZZCAT -x \"$n\" $file" "$n"
+                check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
             done
         fi
         if [ "$HAVE_GETC_UNLOCKED" = "y" ]; then
@@ -127,7 +127,7 @@ checkutils()
               "repeat(8000,getc_unlocked()) fread(1,33000)" \
               "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,getc_unlocked(),feof(10))" \
               ; do
-                check "$ZZOPTS" "$ZZCAT -x \"$n\" $file" "$n"
+                check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
             done
         fi
         if [ "$HAVE_FGETC_UNLOCKED" = "y" ]; then
@@ -137,7 +137,7 @@ checkutils()
               "repeat(-1,fgetc_unlocked(),feof(10))" \
               "repeat(8000,fgetc_unlocked()) fread(1,33000)" \
               ; do
-                check "$ZZOPTS" "$ZZCAT -x \"$n\" $file" "$n"
+                check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
             done
         fi
     done

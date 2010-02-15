@@ -1,22 +1,22 @@
-.TH zzcat 1 "2010-01-07" "zzcat @PACKAGE_VERSION@"
+.TH zzat 1 "2010-01-07" "zzat @PACKAGE_VERSION@"
 .SH NAME
-zzcat \- concatenate files using different instruction sequences
+zzat \- concatenate files using different instruction sequences
 .SH SYNOPSIS
-\fBzzcat\fR [\fB\-AbdeEntTv\fR] [\fB\-r\fR \fIloops\fR]
+\fBzzat\fR [\fB\-AbdeEntTv\fR] [\fB\-r\fR \fIloops\fR]
 [\fB\-x\fR \fIsequence\fR] [\fIFILE\fR]...
 .br
-\fBzzcat \-l\fR | \fB\-\-list\fR
+\fBzzat \-l\fR | \fB\-\-list\fR
 .br
-\fBzzcat \-h\fR | \fB\-\-help\fR
+\fBzzat \-h\fR | \fB\-\-help\fR
 .br
-\fBzzcat \-V\fR | \fB\-\-version\fR
+\fBzzat \-V\fR | \fB\-\-version\fR
 .SH DESCRIPTION
 .PP
-The \fBzzcat\fR utility reads files sequentially, writing them to the
+The \fBzzat\fR utility reads files sequentially, writing them to the
 standard output. The user can decide which sequence of library calls is
 used to seek and read data.
 
-\fBzzcat\fR is primarily used as a debugging tool for \fBzzuf\fR, because
+\fBzzat\fR is primarily used as a debugging tool for \fBzzuf\fR, because
 it can emulate different programs' ways to read files.
 .SH OPTIONS
 .TP
@@ -69,7 +69,7 @@ Instructions can be separated by spaces, commas or semicolons.
 A list of all available instructions and control keywords can be obtained
 using this command:
 
-\fB    zzcat \-l\fR
+\fB    zzat \-l\fR
 
 If no sequence is specified, the following default sequence is used:
 
@@ -88,24 +88,24 @@ Output version information and exit.
 .PP
 Read the first 1000 bytes of f, then exit:
 .PP
-\fB    zzcat \-x \(aqfread(1,1000)\(aq f\fR
+\fB    zzat \-x \(aqfread(1,1000)\(aq f\fR
 .PP
 Read the first four bytes of f, using four different instructions:
 .PP
-\fB    zzcat \-x \(aqgetc(),fgetc(),getc_unlocked(),_IO_getc()\(aq f\fR
+\fB    zzat \-x \(aqgetc(),fgetc(),getc_unlocked(),_IO_getc()\(aq f\fR
 .PP
 Read f entirely, by calling \fBgetc()\fR repeatedly until end-of-file is
 reached:
 .PP
-\fB    zzcat \-x \(aqrepeat(\-1, getc(), feof(1))\(aq \fRf
+\fB    zzat \-x \(aqrepeat(\-1, getc(), feof(1))\(aq \fRf
 .PP
 Read f entirely, in chunks of 32768 bytes until end-of-file is reached:
 .PP
-\fB    zzcat \-x \(aqrepeat(\-1, fread(1,32768), feof(1))\(aq \fRf
+\fB    zzat \-x \(aqrepeat(\-1, fread(1,32768), feof(1))\(aq \fRf
 .\" .PP
 .\" Read only odd bytes, rewind file, then read all even bytes:
 .\" .PP
-.\" \fB    zzcat \-x \(aqrepeat(\-1, getc(), feof(1), fseek(1,SEEK_CUR)),
+.\" \fB    zzat \-x \(aqrepeat(\-1, getc(), feof(1), fseek(1,SEEK_CUR)),
 .\" \fB              rewind(),
 .\" \fB              repeat(\-1, fseek(1,SEEK_CUR), getc(), feof(1))\(aq
 .SH SEE ALSO
@@ -115,7 +115,7 @@ Read f entirely, in chunks of 32768 bytes until end-of-file is reached:
 .PP
 Copyright \(co 2002\-2010 Sam Hocevar <sam@hocevar.net>.
 .PP
-\fBzzcat\fR and this manual page are free software. They come without any
+\fBzzat\fR and this manual page are free software. They come without any
 warranty, to the extent permitted by applicable law. You can redistribute
 them and/or modify them under the terms of the Do What The Fuck You Want
 To Public License, Version 2, as published by Sam Hocevar. See
