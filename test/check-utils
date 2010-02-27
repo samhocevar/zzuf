@@ -17,6 +17,7 @@ HAVE_GETLINE=$("$ZZAT" -l | grep >/dev/null 2>&1 '^  getline(' && echo "y")
 HAVE_GETDELIM=$("$ZZAT" -l | grep >/dev/null 2>&1 '^  getdelim(' && echo "y")
 HAVE_GETC_UNLOCKED=$("$ZZAT" -l | grep >/dev/null 2>&1 '^  getc_unlocked(' && echo "y")
 HAVE_FGETC_UNLOCKED=$("$ZZAT" -l | grep >/dev/null 2>&1 '^  fgetc_unlocked(' && echo "y")
+HAVE___FREAD_CHK=$("$ZZAT" -l | grep >/dev/null 2>&1 '^  __fread_chk(' && echo "y")
 
 checkutils()
 {
@@ -75,6 +76,10 @@ checkutils()
         if [ "$HAVE_GETC_UNLOCKED $HAVE_GETLINE" = "y y" ]; then
           check "$ZZOPTS" "$ZZAT -x \"repeat(33000,getc_unlocked(),feof(10),ungetc(),getline())\" $file" \
                 "sed getc_unlocked() bug regression"
+        fi
+        if [ "$HAVE___FREAD_CHK" = "y" ]; then
+          check "$ZZOPTS" "$ZZAT -x \"repeat(-1,__fread_chk(1,1000),feof(1))\" $file" \
+                "Gentoo __fread_chk() bug regression"
         fi
         # Misc tests
         for n in \
