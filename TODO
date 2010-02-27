@@ -4,6 +4,8 @@
       - fscanf
       - fgetws, fgetwc, ungetwc
       - pipe
+      - pread/pread64
+      - gets/__gets_chk (insecure!)
     + zlib functions (eg. libpng)
     + divert crc checks or recompute checksums (yeah)
 
