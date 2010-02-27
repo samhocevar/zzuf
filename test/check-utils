@@ -72,8 +72,8 @@ checkutils()
         # Regression tests for stuff that used to break
         check "$ZZOPTS" "$ZZAT -x \"fread(1,33000) fseek(1,SEEK_SET) fread(1,1) fseek(4093,SEEK_CUR) fread(1,1) fseek(1,SEEK_CUR) fread(1,1)\" $file" \
               "eglibc (2.9-21) bug regression"
-        if [ "$HAVE_GET_UNLOCKED $HAVE_GETLINE" = "y y" ]; then
-          check "$ZZOPTS" "$ZZAT -x \"repeat(33000,getc_unlocked(),feof(10),ungetc(),getline()))\" $file" \
+        if [ "$HAVE_GETC_UNLOCKED $HAVE_GETLINE" = "y y" ]; then
+          check "$ZZOPTS" "$ZZAT -x \"repeat(33000,getc_unlocked(),feof(10),ungetc(),getline())\" $file" \
                 "sed getc_unlocked() bug regression"
         fi
         # Misc tests
