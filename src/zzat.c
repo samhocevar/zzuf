@@ -478,17 +478,33 @@ static int run(char const *sequence, char const *file)
             MY_FREAD(ch = (n = fgetc(f)), &ch, (n != EOF));
         else if (PARSECMD("fgets ( %li )", &l1))
             MY_FREAD(s = fgets(tmp, l1, f), tmp, s ? strlen(tmp) : 0);
+#if defined HAVE___FGETS_CHK
+        else if (PARSECMD("__fgets_chk ( %li )", &l1))
+            MY_FREAD(s = __fgets_chk(tmp, l1, l1, f), tmp, s ? strlen(tmp) : 0);
+#endif
 #if defined HAVE__IO_GETC
         else if (PARSECMD("_IO_getc ( )"))
             MY_FREAD(ch = (n = _IO_getc(f)), &ch, (n != EOF));
+#endif
+#if defined HAVE___FREAD_CHK
+        else if (PARSECMD("__fread_chk ( %li , %li )", &l1, &l2))
+            MY_FREAD(l = __fread_chk(tmp, l1 * l2, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
 #endif
 #if defined HAVE_FREAD_UNLOCKED
         else if (PARSECMD("fread_unlocked ( %li , %li )", &l1, &l2))
             MY_FREAD(l = fread_unlocked(tmp, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
 #endif
+#if defined HAVE___FREAD_UNLOCKED_CHK
+        else if (PARSECMD("__fread_unlocked_chk ( %li , %li )", &l1, &l2))
+            MY_FREAD(l = __fread_unlocked_chk(tmp, l1 * l2, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
+#endif
 #if defined HAVE_FGETS_UNLOCKED
         else if (PARSECMD("fgets_unlocked ( %li )", &l1))
             MY_FREAD(s = fgets_unlocked(tmp, l1, f), tmp, s ? strlen(tmp) : 0);
+#endif
+#if defined HAVE___FGETS_UNLOCKED_CHK
+        else if (PARSECMD("__fgets_unlocked_chk ( %li )", &l1))
+            MY_FREAD(s = __fgets_unlocked_chk(tmp, l1, l1, f), tmp, s ? strlen(tmp) : 0);
 #endif
 #if defined HAVE_GETC_UNLOCKED
         else if (PARSECMD("getc_unlocked ( )"))
@@ -721,14 +737,26 @@ static char const *function_list[] =
     "getc", "()", "get one character (can be a macro)",
     "fgetc", "()", "get one character",
     "fgets", "(<int>)", "read one line no longer than <int> bytes",
+#if defined HAVE___FGETS_CHK
+    "__fgets_chk", "(<int>)", "same as fgets(), fortified version",
+#endif
 #if defined HAVE__IO_GETC
     "_IO_getc", "()", "get one character",
+#endif
+#if defined HAVE___FREAD_CHK
+    "__fread_chk", "(<inta>,<intb>)", "same as fread(), fortified version",
 #endif
 #if defined HAVE_FREAD_UNLOCKED
     "fread_unlocked", "(<inta>,<intb>)", "same as fread(), unlocked I/O version",
 #endif
+#if defined HAVE___FREAD_UNLOCKED_CHK
+    "__fread_unlocked_chk", "(<inta>,<intb>)", "same as fread_unlocked(), fortified version",
+#endif
 #if defined HAVE_FGETS_UNLOCKED
     "fgets_unlocked", "(<int>)", "same as fgets(), unlocked I/O version",
+#endif
+#if defined HAVE___FGETS__UNLOCKED_CHK
+    "__fgets_unlocked_chk", "(<int>)", "same as fgets_unlocked(), fortified version",
 #endif
 #if defined HAVE_GETC_UNLOCKED
     "getc_unlocked", "()", "same as getc(), unlocked I/O version",
