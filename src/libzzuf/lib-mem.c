@@ -153,6 +153,7 @@ void _zz_mem_init(void)
     LOADSYM(realloc);
 }
 
+#undef calloc
 void *NEW(calloc)(size_t nmemb, size_t size)
 {
     void *ret;
@@ -176,6 +177,7 @@ void *NEW(calloc)(size_t nmemb, size_t size)
     return ret;
 }
 
+#undef malloc
 void *NEW(malloc)(size_t size)
 {
     void *ret;
@@ -197,6 +199,7 @@ void *NEW(malloc)(size_t size)
     return ret;
 }
 
+#undef free
 void NEW(free)(void *ptr)
 {
     if((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
@@ -213,6 +216,7 @@ void NEW(free)(void *ptr)
     ORIG(free)(ptr);
 }
 
+#undef realloc
 void *NEW(realloc)(void *ptr, size_t size)
 {
     void *ret;
@@ -244,6 +248,7 @@ void *NEW(realloc)(void *ptr, size_t size)
 }
 
 #if defined HAVE_VALLOC
+#undef valloc
 void *NEW(valloc)(size_t size)
 {
     void *ret;
@@ -257,6 +262,7 @@ void *NEW(valloc)(size_t size)
 #endif
 
 #if defined HAVE_MEMALIGN
+#undef memalign
 void *NEW(memalign)(size_t boundary, size_t size)
 {
     void *ret;
@@ -270,6 +276,7 @@ void *NEW(memalign)(size_t boundary, size_t size)
 #endif
 
 #if defined HAVE_POSIX_MEMALIGN
+#undef posix_memalign
 int NEW(posix_memalign)(void **memptr, size_t alignment, size_t size)
 {
     int ret;
@@ -339,6 +346,7 @@ int nbmaps = 0;
     } while(0)
 
 #if defined HAVE_MMAP
+#undef mmap
 void *NEW(mmap)(void *start, size_t length, int prot, int flags,
                 int fd, off_t offset)
 {
@@ -347,6 +355,7 @@ void *NEW(mmap)(void *start, size_t length, int prot, int flags,
 #endif
 
 #if defined HAVE_MMAP64
+#undef mmap64
 void *NEW(mmap64)(void *start, size_t length, int prot, int flags,
                   int fd, off64_t offset)
 {
@@ -355,6 +364,7 @@ void *NEW(mmap64)(void *start, size_t length, int prot, int flags,
 #endif
 
 #if defined HAVE_MUNMAP
+#undef munmap
 int NEW(munmap)(void *start, size_t length)
 {
     int ret, i;
@@ -378,6 +388,7 @@ int NEW(munmap)(void *start, size_t length)
 #endif
 
 #if defined HAVE_MAP_FD
+#undef map_fd
 kern_return_t NEW(map_fd)(int fd, vm_offset_t offset, vm_offset_t *addr,
                           boolean_t find_space, vm_size_t numbytes)
 {

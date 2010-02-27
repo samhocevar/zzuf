@@ -195,12 +195,14 @@ static int     (*ORIG(close))   (int fd);
         } \
     } while(0)
 
+#undef open
 int NEW(open)(const char *file, int oflag, ...)
 {
     int ret; ZZ_OPEN(open); return ret;
 }
 
 #if defined HAVE_OPEN64
+#undef open64
 int NEW(open64)(const char *file, int oflag, ...)
 {
     int ret; ZZ_OPEN(open64); return ret;
@@ -208,6 +210,7 @@ int NEW(open64)(const char *file, int oflag, ...)
 #endif
 
 #if defined HAVE___OPEN64
+#undef __open64
 int NEW(__open64)(const char *file, int oflag, ...)
 {
     int ret; ZZ_OPEN(__open64); return ret;
@@ -215,6 +218,7 @@ int NEW(__open64)(const char *file, int oflag, ...)
 #endif
 
 #if defined HAVE_DUP
+#undef dup
 int NEW(dup)(int oldfd)
 {
     int ret;
@@ -236,6 +240,7 @@ int NEW(dup)(int oldfd)
 #endif
 
 #if defined HAVE_DUP2
+#undef dup2
 int NEW(dup2)(int oldfd, int newfd)
 {
     int ret;
@@ -262,6 +267,7 @@ int NEW(dup2)(int oldfd, int newfd)
 #endif
 
 #if defined HAVE_ACCEPT
+#undef accept
 int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
 {
     int ret;
@@ -328,6 +334,7 @@ int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
     } while(0);
 
 #if defined HAVE_BIND
+#undef bind
 int NEW(bind)(int sockfd, const SOCKADDR_T *my_addr, SOCKLEN_T addrlen)
 {
     int ret; ZZ_CONNECT(bind, my_addr); return ret;
@@ -335,6 +342,7 @@ int NEW(bind)(int sockfd, const SOCKADDR_T *my_addr, SOCKLEN_T addrlen)
 #endif
 
 #if defined HAVE_CONNECT
+#undef connect
 int NEW(connect)(int sockfd, const SOCKADDR_T *serv_addr,
                  SOCKLEN_T addrlen)
 {
@@ -343,6 +351,7 @@ int NEW(connect)(int sockfd, const SOCKADDR_T *serv_addr,
 #endif
 
 #if defined HAVE_SOCKET
+#undef socket
 int NEW(socket)(int domain, int type, int protocol)
 {
     int ret;
@@ -389,6 +398,7 @@ int NEW(socket)(int domain, int type, int protocol)
     } while(0);
 
 #if defined HAVE_RECV
+#undef recv
 RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
 {
     int ret; ZZ_RECV(recv); return ret;
@@ -396,6 +406,7 @@ RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
 #endif
 
 #if defined HAVE___RECV_CHK
+#undef __recv_chk
 RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, int flags)
 {
     int ret; ZZ_RECV(__recv_chk); return ret;
@@ -435,6 +446,7 @@ RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, int flags)
     } while(0)
 
 #if defined HAVE_RECVFROM
+#undef recvfrom
 RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
                      SOCKADDR_T *from, SOCKLEN_T *fromlen)
 {
@@ -443,6 +455,7 @@ RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
 #endif
 
 #if defined HAVE___RECVFROM_CHK
+#undef __recvfrom_chk
 RECV_T NEW(__recvfrom_chk)(int s, void *buf, size_t len, int flags,
                            SOCKADDR_T *from, SOCKLEN_T *fromlen)
 {
@@ -451,6 +464,7 @@ RECV_T NEW(__recvfrom_chk)(int s, void *buf, size_t len, int flags,
 #endif
 
 #if defined HAVE_RECVMSG
+#undef recvmsg
 RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
 {
     ssize_t ret;
@@ -495,11 +509,13 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
     } while(0)
 
 #if defined READ_USES_SSIZE_T
+#undef read
 ssize_t NEW(read)(int fd, void *buf, size_t count)
 {
     int ret; ZZ_READ(read); return (ssize_t)ret;
 }
 #else
+#undef read
 int NEW(read)(int fd, void *buf, unsigned int count)
 {
     int ret; ZZ_READ(read); return ret;
@@ -507,6 +523,7 @@ int NEW(read)(int fd, void *buf, unsigned int count)
 #endif
 
 #if defined HAVE___READ_CHK
+#undef __read_chk
 ssize_t NEW(__read_chk)(int fd, void *buf, size_t count)
 {
     int ret; ZZ_READ(__read_chk); return (ssize_t)ret;
@@ -514,6 +531,7 @@ ssize_t NEW(__read_chk)(int fd, void *buf, size_t count)
 #endif
 
 #if defined HAVE_READV
+#undef readv
 ssize_t NEW(readv)(int fd, const struct iovec *iov, int count)
 {
     ssize_t ret;
@@ -533,6 +551,7 @@ ssize_t NEW(readv)(int fd, const struct iovec *iov, int count)
 #endif
 
 #if defined HAVE_PREAD
+#undef pread
 ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
 {
     int ret;
@@ -582,6 +601,7 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
             _zz_setpos(fd, ret); \
     } while(0)
 
+#undef lseek
 off_t NEW(lseek)(int fd, off_t offset, int whence)
 {
     off_t ret;
@@ -590,6 +610,7 @@ off_t NEW(lseek)(int fd, off_t offset, int whence)
 }
 
 #if defined HAVE_LSEEK64
+#undef lseek64
 off64_t NEW(lseek64)(int fd, off64_t offset, int whence)
 {
     off64_t ret; ZZ_LSEEK(lseek64, off64_t); return ret;
@@ -597,6 +618,7 @@ off64_t NEW(lseek64)(int fd, off64_t offset, int whence)
 #endif
 
 #if defined HAVE___LSEEK64
+#undef __lseek64
 off64_t NEW(__lseek64)(int fd, off64_t offset, int whence)
 {
     off64_t ret; ZZ_LSEEK(__lseek64, off64_t); return ret;
@@ -604,6 +626,7 @@ off64_t NEW(__lseek64)(int fd, off64_t offset, int whence)
 #endif
 
 #if defined HAVE_AIO_READ
+#undef aio_read
 int NEW(aio_read)(struct aiocb *aiocbp)
 {
     int ret;
@@ -623,6 +646,7 @@ int NEW(aio_read)(struct aiocb *aiocbp)
     return ret;
 }
 
+#undef aio_return
 ssize_t NEW(aio_return)(struct aiocb *aiocbp)
 {
     ssize_t ret;
@@ -652,6 +676,7 @@ ssize_t NEW(aio_return)(struct aiocb *aiocbp)
 }
 #endif
 
+#undef close
 int NEW(close)(int fd)
 {
     int ret;

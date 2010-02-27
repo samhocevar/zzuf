@@ -53,18 +53,22 @@
 #include "fd.h"
 
 #if defined HAVE___SREFILL
+#undef __srefill
 int NEW(__srefill)(FILE *fp);
 #endif
 
 #if defined HAVE___FILBUF
+#undef __filbuf
 int NEW(__filbuf)(FILE *fp);
 #endif
 
 #if defined HAVE___SRGET && !defined HAVE___SREFILL
+#undef __srget
 int NEW(__srget)(FILE *fp);
 #endif
 
 #if defined HAVE___UFLOW
+#undef __uflow
 int NEW(__uflow)(FILE *fp);
 #endif
 
@@ -293,12 +297,14 @@ static inline void debug_stream(char const *prefix, FILE *stream)
                   path, mode, fd0, fd1); \
     } while(0)
 
+#undef fopen
 FILE *NEW(fopen)(const char *path, const char *mode)
 {
     FILE *ret; ZZ_FOPEN(fopen); return ret;
 }
 
 #if defined HAVE_FOPEN64
+#undef fopen64
 FILE *NEW(fopen64)(const char *path, const char *mode)
 {
     FILE *ret; ZZ_FOPEN(fopen64); return ret;
@@ -306,18 +312,21 @@ FILE *NEW(fopen64)(const char *path, const char *mode)
 #endif
 
 #if defined HAVE___FOPEN64
+#undef __fopen64
 FILE *NEW(__fopen64)(const char *path, const char *mode)
 {
     FILE *ret; ZZ_FOPEN(__fopen64); return ret;
 }
 #endif
 
+#undef freopen
 FILE *NEW(freopen)(const char *path, const char *mode, FILE *stream)
 {
     FILE *ret; ZZ_FREOPEN(freopen); return ret;
 }
 
 #if defined HAVE_FREOPEN64
+#undef freopen64
 FILE *NEW(freopen64)(const char *path, const char *mode, FILE *stream)
 {
     FILE *ret; ZZ_FREOPEN(freopen64); return ret;
@@ -325,6 +334,7 @@ FILE *NEW(freopen64)(const char *path, const char *mode, FILE *stream)
 #endif
 
 #if defined HAVE___FREOPEN64
+#undef __freopen64
 FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
 {
     FILE *ret; ZZ_FREOPEN(__freopen64); return ret;
@@ -438,12 +448,14 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         debug("%s([%i])", __func__, fd); \
     } while(0)
 
+#undef fseek
 int NEW(fseek)(FILE *stream, long offset, int whence)
 {
     int ret; ZZ_FSEEK(fseek); return ret;
 }
 
 #if defined HAVE_FSEEKO
+#undef fseeko
 int NEW(fseeko)(FILE *stream, off_t offset, int whence)
 {
     int ret; ZZ_FSEEK(fseeko); return ret;
@@ -451,6 +463,7 @@ int NEW(fseeko)(FILE *stream, off_t offset, int whence)
 #endif
 
 #if defined HAVE_FSEEKO64
+#undef fseeko64
 int NEW(fseeko64)(FILE *stream, off64_t offset, int whence)
 {
     int ret; ZZ_FSEEK(fseeko64); return ret;
@@ -458,6 +471,7 @@ int NEW(fseeko64)(FILE *stream, off64_t offset, int whence)
 #endif
 
 #if defined HAVE___FSEEKO64
+#undef __fseeko64
 int NEW(__fseeko64)(FILE *stream, off64_t offset, int whence)
 {
     int ret; ZZ_FSEEK(__fseeko64); return ret;
@@ -465,6 +479,7 @@ int NEW(__fseeko64)(FILE *stream, off64_t offset, int whence)
 #endif
 
 #if defined HAVE_FSETPOS64
+#undef fsetpos64
 int NEW(fsetpos64)(FILE *stream, const fpos64_t *pos)
 {
     int ret; ZZ_FSETPOS(fsetpos64); return ret;
@@ -472,12 +487,14 @@ int NEW(fsetpos64)(FILE *stream, const fpos64_t *pos)
 #endif
 
 #if defined HAVE___FSETPOS64
+#undef __fsetpos64
 int NEW(__fsetpos64)(FILE *stream, const fpos64_t *pos)
 {
     int ret; ZZ_FSETPOS(__fsetpos64); return ret;
 }
 #endif
 
+#undef rewind
 void NEW(rewind)(FILE *stream)
 {
     ZZ_REWIND(rewind);
@@ -538,13 +555,14 @@ void NEW(rewind)(FILE *stream)
                   (long int)size, (long int)nmemb, fd, (long int)ret); \
     } while(0)
 
+#undef fread
 size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t ret; ZZ_FREAD(fread); return ret;
 }
 
 #if defined HAVE_FREAD_UNLOCKED
-#undef fread_unlocked /* can be a macro; we don’t want that */
+#undef fread_unlocked
 size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t ret; ZZ_FREAD(fread_unlocked); return ret;
@@ -618,24 +636,26 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t size, size_t nmemb,
             debug("%s([%i]) = '%c'", __func__, fd, ret); \
     } while(0)
 
-#undef getc /* can be a macro; we don’t want that */
+#undef getc
 int NEW(getc)(FILE *stream)
 {
     int ret; ZZ_FGETC(getc, stream, stream); return ret;
 }
 
-#undef getchar /* can be a macro; we don’t want that */
+#undef getchar
 int NEW(getchar)(void)
 {
     int ret; ZZ_FGETC(getchar, stdin, /* empty */); return ret;
 }
 
+#undef fgetc
 int NEW(fgetc)(FILE *stream)
 {
     int ret; ZZ_FGETC(fgetc, stream, stream); return ret;
 }
 
 #if defined HAVE__IO_GETC
+#undef _IO_fgetc
 int NEW(_IO_getc)(FILE *stream)
 {
     int ret; ZZ_FGETC(_IO_getc, stream, stream); return ret;
@@ -643,7 +663,7 @@ int NEW(_IO_getc)(FILE *stream)
 #endif
 
 #if defined HAVE_GETC_UNLOCKED
-#undef getc_unlocked /* can be a macro; we don’t want that */
+#undef getc_unlocked
 int NEW(getc_unlocked)(FILE *stream)
 {
     int ret; ZZ_FGETC(getc_unlocked, stream, stream); return ret;
@@ -651,7 +671,7 @@ int NEW(getc_unlocked)(FILE *stream)
 #endif
 
 #if defined HAVE_GETCHAR_UNLOCKED
-#undef getchar_unlocked /* can be a macro; we don’t want that */
+#undef getchar_unlocked
 int NEW(getchar_unlocked)(void)
 {
     int ret; ZZ_FGETC(getchar_unlocked, stdin, /* empty */); return ret;
@@ -659,7 +679,7 @@ int NEW(getchar_unlocked)(void)
 #endif
 
 #if defined HAVE_FGETC_UNLOCKED
-#undef fgetc_unlocked /* can be a macro; we don’t want that */
+#undef fgetc_unlocked
 int NEW(fgetc_unlocked)(FILE *stream)
 {
     int ret; ZZ_FGETC(fgetc_unlocked, stream, stream); return ret;
@@ -740,12 +760,14 @@ int NEW(fgetc_unlocked)(FILE *stream)
         debug("%s(%p, %i, [%i]) = %p", __func__, s, size, fd, ret); \
     } while(0)
 
+#undef fgets
 char *NEW(fgets)(char *s, int size, FILE *stream)
 {
     char *ret; ZZ_FGETS(fgets, fgetc); return ret;
 }
 
 #if defined HAVE_FGETS_UNLOCKED
+#undef fgets_unlocked
 char *NEW(fgets_unlocked)(char *s, int size, FILE *stream)
 {
     char *ret; ZZ_FGETS(fgets_unlocked, fgetc_unlocked); return ret;
@@ -753,6 +775,7 @@ char *NEW(fgets_unlocked)(char *s, int size, FILE *stream)
 #endif
 
 #if defined HAVE___FGETS_CHK
+#undef __fgets_chk
 char *NEW(__fgets_chk)(char *s, int size, FILE *stream)
 {
     char *ret; ZZ_FGETS(__fgets_chk, fgetc); return ret;
@@ -760,6 +783,7 @@ char *NEW(__fgets_chk)(char *s, int size, FILE *stream)
 #endif
 
 #if defined HAVE___FGETS_UNLOCKED_CHK
+#undef __fgets_unlocked_chk
 char *NEW(__fgets_unlocked_chk)(char *s, int size, FILE *stream)
 {
     char *ret; ZZ_FGETS(__fgets_unlocked_chk, fgetc_unlocked); return ret;
@@ -770,6 +794,7 @@ char *NEW(__fgets_unlocked_chk)(char *s, int size, FILE *stream)
  * ungetc
  */
 
+#undef ungetc
 int NEW(ungetc)(int c, FILE *stream)
 {
     int oldpos, ret, fd;
@@ -799,6 +824,7 @@ int NEW(ungetc)(int c, FILE *stream)
  * fclose
  */
 
+#undef fclose
 int NEW(fclose)(FILE *fp)
 {
     int ret, fd;
@@ -906,6 +932,7 @@ int NEW(fclose)(FILE *fp)
     } while(0)
 
 #if defined HAVE_GETLINE
+#undef getline
 ssize_t NEW(getline)(char **lineptr, size_t *n, FILE *stream)
 {
     ssize_t ret; ZZ_GETDELIM(getline, '\n', 0); return ret;
@@ -913,6 +940,7 @@ ssize_t NEW(getline)(char **lineptr, size_t *n, FILE *stream)
 #endif
 
 #if defined HAVE_GETDELIM
+#undef getdelim
 ssize_t NEW(getdelim)(char **lineptr, size_t *n, int delim, FILE *stream)
 {
     ssize_t ret; ZZ_GETDELIM(getdelim, delim, 1); return ret;
@@ -920,6 +948,7 @@ ssize_t NEW(getdelim)(char **lineptr, size_t *n, int delim, FILE *stream)
 #endif
 
 #if defined HAVE___GETDELIM
+#undef __getdelim
 ssize_t NEW(__getdelim)(char **lineptr, size_t *n, int delim, FILE *stream)
 {
     ssize_t ret; ZZ_GETDELIM(__getdelim, delim, 1); return ret;
@@ -931,6 +960,7 @@ ssize_t NEW(__getdelim)(char **lineptr, size_t *n, int delim, FILE *stream)
  */
 
 #if defined HAVE_FGETLN
+#undef fgetln
 char *NEW(fgetln)(FILE *stream, size_t *len)
 {
     int64_t oldpos, newpos;
@@ -1070,6 +1100,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     while(0)
 
 #if defined HAVE___SREFILL
+#undef __srefill
 int NEW(__srefill)(FILE *fp)
 {
     int ret; ZZ_REFILL(__srefill, 0); return ret;
@@ -1077,6 +1108,7 @@ int NEW(__srefill)(FILE *fp)
 #endif
 
 #if defined HAVE___SRGET && !defined HAVE___SREFILL
+#undef __srget
 int NEW(__srget)(FILE *fp)
 {
     int ret; ZZ_REFILL(__srget, 1); return ret;
@@ -1084,6 +1116,7 @@ int NEW(__srget)(FILE *fp)
 #endif
 
 #if defined HAVE___FILBUF
+#undef __filbuf
 int NEW(__filbuf)(FILE *fp)
 {
     int ret; ZZ_REFILL(__filbuf, 1); return ret;
@@ -1091,6 +1124,7 @@ int NEW(__filbuf)(FILE *fp)
 #endif
 
 #if defined HAVE___UFLOW
+#undef __uflow
 int NEW(__uflow)(FILE *fp)
 {
     int ret; ZZ_REFILL(__uflow, 1); return ret;

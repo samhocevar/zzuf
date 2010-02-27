@@ -90,6 +90,7 @@ static int isfatal(int signum)
     }
 }
 
+#undef signal
 SIG_T NEW(signal)(int signum, SIG_T handler)
 {
     SIG_T ret;
@@ -107,6 +108,7 @@ SIG_T NEW(signal)(int signum, SIG_T handler)
 }
 
 #if defined HAVE_SIGACTION
+#undef sigaction
 int NEW(sigaction)(int signum, const struct sigaction *act,
                    struct sigaction *oldact)
 {
