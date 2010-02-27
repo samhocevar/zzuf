@@ -103,8 +103,12 @@
 #define HAVE_WINSOCK2_H 1
 /* #undef HAVE__IO_GETC */
 #define HAVE__PIPE 1
+/* #undef HAVE___FGETS_CHK */
+/* #undef HAVE___FGETS_UNLOCKED_CHK */
 /* #undef HAVE___FILBUF */
 /* #undef HAVE___FOPEN64 */
+/* #undef HAVE___FREAD_CHK */
+/* #undef HAVE___FREAD_UNLOCKED_CHK */
 /* #undef HAVE___FREOPEN64 */
 /* #undef HAVE___FSEEKO64 */
 /* #undef HAVE___FSETPOS64 */
@@ -112,6 +116,9 @@
 /* #undef HAVE___GETDELIM */
 /* #undef HAVE___LSEEK64 */
 /* #undef HAVE___OPEN64 */
+/* #undef HAVE___READ_CHK */
+/* #undef HAVE___RECVFROM_CHK */
+/* #undef HAVE___RECV_CHK */
 /* #undef HAVE___SREFILL */
 /* #undef HAVE___SRGET */
 /* #undef HAVE___UFLOW */

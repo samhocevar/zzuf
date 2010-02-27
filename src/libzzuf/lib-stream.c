@@ -109,6 +109,14 @@ static size_t  (*ORIG(fread))    (void *ptr, size_t size, size_t nmemb,
 static size_t  (*ORIG(fread_unlocked))  (void *ptr, size_t size, size_t nmemb,
                                          FILE *stream);
 #endif
+#if defined HAVE___FREAD_CHK
+static size_t  (*ORIG(__fread_chk))  (void *ptr, size_t size, size_t nmemb,
+                                      FILE *stream);
+#endif
+#if defined HAVE___FREAD_UNLOCKED_CHK
+static size_t  (*ORIG(__fread_unlocked_chk))  (void *ptr, size_t size,
+                                               size_t nmemb, FILE *stream);
+#endif
 static int     (*ORIG(getc))     (FILE *stream);
 static int     (*ORIG(getchar))  (void);
 static int     (*ORIG(fgetc))    (FILE *stream);
@@ -127,6 +135,12 @@ static int     (*ORIG(fgetc_unlocked))   (FILE *stream);
 static char *  (*ORIG(fgets))    (char *s, int size, FILE *stream);
 #if defined HAVE_FGETS_UNLOCKED
 static char *  (*ORIG(fgets_unlocked))   (char *s, int size, FILE *stream);
+#endif
+#if defined HAVE___FGETS_CHK
+static char *  (*ORIG(__fgets_chk))    (char *s, int size, FILE *stream);
+#endif
+#if defined HAVE___FGETS_UNLOCKED_CHK
+static char *  (*ORIG(__fgets_unlocked_chk)) (char *s, int size, FILE *stream);
 #endif
 static int     (*ORIG(ungetc))   (int c, FILE *stream);
 static int     (*ORIG(fclose))   (FILE *fp);
@@ -537,6 +551,23 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 }
 #endif
 
+#if defined HAVE___FREAD_CHK
+#undef __fread_chk
+size_t NEW(__fread_chk)(void *ptr, size_t size, size_t nmemb, FILE *stream)
+{
+    size_t ret; ZZ_FREAD(__fread_chk); return ret;
+}
+#endif
+
+#if defined HAVE___FREAD_UNLOCKED_CHK
+#undef __fread_unlocked_chk
+size_t NEW(__fread_unlocked_chk)(void *ptr, size_t size, size_t nmemb,
+                                 FILE *stream)
+{
+    size_t ret; ZZ_FREAD(__fread_unlocked_chk); return ret;
+}
+#endif
+
 /*
  * getc, getchar, fgetc etc.
  *
@@ -718,6 +749,20 @@ char *NEW(fgets)(char *s, int size, FILE *stream)
 char *NEW(fgets_unlocked)(char *s, int size, FILE *stream)
 {
     char *ret; ZZ_FGETS(fgets_unlocked, fgetc_unlocked); return ret;
+}
+#endif
+
+#if defined HAVE___FGETS_CHK
+char *NEW(__fgets_chk)(char *s, int size, FILE *stream)
+{
+    char *ret; ZZ_FGETS(__fgets_chk, fgetc); return ret;
+}
+#endif
+
+#if defined HAVE___FGETS_UNLOCKED_CHK
+char *NEW(__fgets_unlocked_chk)(char *s, int size, FILE *stream)
+{
+    char *ret; ZZ_FGETS(__fgets_unlocked_chk, fgetc_unlocked); return ret;
 }
 #endif
 

@@ -122,9 +122,16 @@ static int     (*ORIG(socket))  (int domain, int type, int protocol);
 #if defined HAVE_RECV
 static RECV_T  (*ORIG(recv))    (int s, void *buf, size_t len, int flags);
 #endif
+#if defined HAVE___RECV_CHK
+static RECV_T  (*ORIG(__recv_chk)) (int s, void *buf, size_t len, int flags);
+#endif
 #if defined HAVE_RECVFROM
 static RECV_T  (*ORIG(recvfrom))(int s, void *buf, size_t len, int flags,
                                  SOCKADDR_T *from, SOCKLEN_T *fromlen);
+#endif
+#if defined HAVE___RECVFROM_CHK
+static RECV_T  (*ORIG(__recvfrom_chk))(int s, void *buf, size_t len, int flags,
+                                       SOCKADDR_T *from, SOCKLEN_T *fromlen);
 #endif
 #if defined HAVE_RECVMSG
 static RECV_T  (*ORIG(recvmsg)) (int s,  struct msghdr *hdr, int flags);
@@ -133,6 +140,9 @@ static RECV_T  (*ORIG(recvmsg)) (int s,  struct msghdr *hdr, int flags);
 static ssize_t (*ORIG(read))    (int fd, void *buf, size_t count);
 #else
 static int     (*ORIG(read))    (int fd, void *buf, unsigned int count);
+#endif
+#if defined HAVE___READ_CHK
+static ssize_t (*ORIG(__read_chk)) (int fd, void *buf, size_t count);
 #endif
 #if defined HAVE_READV
 static ssize_t (*ORIG(readv))   (int fd, const struct iovec *iov, int count);
@@ -352,78 +362,91 @@ int NEW(socket)(int domain, int type, int protocol)
 }
 #endif
 
+#define ZZ_RECV(myrecv) \
+    do \
+    { \
+        LOADSYM(myrecv); \
+        ret = ORIG(myrecv)(s, buf, len, flags); \
+        if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
+             || _zz_islocked(s) || !_zz_isactive(s)) \
+            return ret; \
+        if(ret > 0) \
+        { \
+            char *b = buf; \
+            _zz_fuzz(s, buf, ret); \
+            _zz_addpos(s, ret); \
+            if(ret >= 4) \
+                debug("%s(%i, %p, %li, 0x%x) = %i \"%c%c%c%c...", __func__, \
+                      s, buf, (long int)len, flags, ret, \
+                      b[0], b[1], b[2], b[3]); \
+            else \
+                debug("%s(%i, %p, %li, 0x%x) = %i \"%c...", __func__, \
+                      s, buf, (long int)len, flags, ret, b[0]); \
+        } \
+        else \
+            debug("%s(%i, %p, %li, 0x%x) = %i", __func__, \
+                  s, buf, (long int)len, flags, ret); \
+    } while(0);
+
 #if defined HAVE_RECV
 RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
 {
-    int ret;
-
-    LOADSYM(recv);
-    ret = ORIG(recv)(s, buf, len, flags);
-    if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s)
-         || _zz_islocked(s) || !_zz_isactive(s))
-        return ret;
-
-    if(ret > 0)
-    {
-        char *b = buf;
-
-        _zz_fuzz(s, buf, ret);
-        _zz_addpos(s, ret);
-
-        if(ret >= 4)
-            debug("%s(%i, %p, %li, 0x%x) = %i \"%c%c%c%c...", __func__,
-                  s, buf, (long int)len, flags, ret, b[0], b[1], b[2], b[3]);
-        else
-            debug("%s(%i, %p, %li, 0x%x) = %i \"%c...", __func__,
-                  s, buf, (long int)len, flags, ret, b[0]);
-    }
-    else
-        debug("%s(%i, %p, %li, 0x%x) = %i", __func__,
-              s, buf, (long int)len, flags, ret);
-
-    return ret;
+    int ret; ZZ_RECV(recv); return ret;
 }
 #endif
+
+#if defined HAVE___RECV_CHK
+RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, int flags)
+{
+    int ret; ZZ_RECV(__recv_chk); return ret;
+}
+#endif
+
+#define ZZ_RECVFROM(myrecvfrom) \
+    do \
+    { \
+        LOADSYM(myrecvfrom); \
+        ret = ORIG(myrecvfrom)(s, buf, len, flags, from, fromlen); \
+        if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
+             || _zz_islocked(s) || !_zz_isactive(s)) \
+            return ret; \
+        if(ret > 0) \
+        { \
+            char tmp[128]; \
+            char *b = buf; \
+            _zz_fuzz(s, buf, ret); \
+            _zz_addpos(s, ret); \
+            if (fromlen) \
+                sprintf(tmp, "&%i", (int)*fromlen); \
+            else \
+                strcpy(tmp, "NULL"); \
+            if (ret >= 4) \
+                debug("%s(%i, %p, %li, 0x%x, %p, %s) = %i \"%c%c%c%c...", \
+                      __func__, s, buf, (long int)len, flags, from, tmp, \
+                      ret, b[0], b[1], b[2], b[3]); \
+            else \
+                debug("%s(%i, %p, %li, 0x%x, %p, %s) = %i \"%c...", \
+                      __func__, s, buf, (long int)len, flags, from, tmp, \
+                      ret, b[0]); \
+        } \
+        else \
+            debug("%s(%i, %p, %li, 0x%x, %p, %p) = %i", __func__, \
+                  s, buf, (long int)len, flags, from, fromlen, ret); \
+    } while(0)
 
 #if defined HAVE_RECVFROM
 RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
                      SOCKADDR_T *from, SOCKLEN_T *fromlen)
 {
-    int ret;
+    int ret; ZZ_RECVFROM(recvfrom); return ret;
+}
+#endif
 
-    LOADSYM(recvfrom);
-    ret = ORIG(recvfrom)(s, buf, len, flags, from, fromlen);
-    if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s)
-         || _zz_islocked(s) || !_zz_isactive(s))
-        return ret;
-
-    if(ret > 0)
-    {
-        char tmp[128];
-        char *b = buf;
-
-        _zz_fuzz(s, buf, ret);
-        _zz_addpos(s, ret);
-
-        if (fromlen)
-            sprintf(tmp, "&%i", (int)*fromlen);
-        else
-            strcpy(tmp, "NULL");
-
-        if (ret >= 4)
-            debug("%s(%i, %p, %li, 0x%x, %p, %s) = %i \"%c%c%c%c...",
-                  __func__, s, buf, (long int)len, flags, from, tmp,
-                  ret, b[0], b[1], b[2], b[3]);
-        else
-            debug("%s(%i, %p, %li, 0x%x, %p, %s) = %i \"%c...",
-                  __func__, s, buf, (long int)len, flags, from, tmp,
-                  ret, b[0]);
-    }
-    else
-        debug("%s(%i, %p, %li, 0x%x, %p, %p) = %i", __func__,
-              s, buf, (long int)len, flags, from, fromlen, ret);
-
-    return ret;
+#if defined HAVE___RECVFROM_CHK
+RECV_T NEW(__recvfrom_chk)(int s, void *buf, size_t len, int flags,
+                           SOCKADDR_T *from, SOCKLEN_T *fromlen)
+{
+    int ret; ZZ_RECVFROM(__recvfrom_chk); return ret;
 }
 #endif
 
@@ -445,40 +468,50 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
 }
 #endif
 
+#define ZZ_READ(myread) \
+    do \
+    { \
+        LOADSYM(myread); \
+        ret = ORIG(read)(fd, buf, count); \
+        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_hostwatched(fd) \
+             || _zz_islocked(fd) || !_zz_isactive(fd)) \
+            return ret; \
+        if(ret > 0) \
+        { \
+            char *b = buf; \
+            _zz_fuzz(fd, buf, ret); \
+            _zz_addpos(fd, ret); \
+            if(ret >= 4) \
+                debug("%s(%i, %p, %li) = %i \"%c%c%c%c...", __func__, fd, \
+                      buf, (long int)count, ret, b[0], b[1], b[2], b[3]); \
+            else \
+                debug("%s(%i, %p, %li) = %i \"%c...", __func__, fd, \
+                      buf, (long int)count, ret, b[0]); \
+        } \
+        else \
+            debug("%s(%i, %p, %li) = %i", __func__, fd, \
+                  buf, (long int)count, ret); \
+        offset_check(fd); \
+    } while(0)
+
 #if defined READ_USES_SSIZE_T
 ssize_t NEW(read)(int fd, void *buf, size_t count)
+{
+    int ret; ZZ_READ(read); return (ssize_t)ret;
+}
 #else
 int NEW(read)(int fd, void *buf, unsigned int count)
-#endif
 {
-    int ret;
-
-    LOADSYM(read);
-    ret = ORIG(read)(fd, buf, count);
-    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_hostwatched(fd)
-         || _zz_islocked(fd) || !_zz_isactive(fd))
-        return ret;
-
-    if(ret > 0)
-    {
-        char *b = buf;
-
-        _zz_fuzz(fd, buf, ret);
-        _zz_addpos(fd, ret);
-
-        if(ret >= 4)
-            debug("%s(%i, %p, %li) = %i \"%c%c%c%c...", __func__, fd, buf,
-                  (long int)count, ret, b[0], b[1], b[2], b[3]);
-        else
-            debug("%s(%i, %p, %li) = %i \"%c...", __func__, fd, buf,
-                  (long int)count, ret, b[0]);
-    }
-    else
-        debug("%s(%i, %p, %li) = %i", __func__, fd, buf, (long int)count, ret);
-
-    offset_check(fd);
-    return ret;
+    int ret; ZZ_READ(read); return ret;
 }
+#endif
+
+#if defined HAVE___READ_CHK
+ssize_t NEW(__read_chk)(int fd, void *buf, size_t count)
+{
+    int ret; ZZ_READ(__read_chk); return (ssize_t)ret;
+}
+#endif
 
 #if defined HAVE_READV
 ssize_t NEW(readv)(int fd, const struct iovec *iov, int count)
