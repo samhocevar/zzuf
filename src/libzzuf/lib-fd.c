@@ -123,14 +123,16 @@ static int     (*ORIG(socket))  (int domain, int type, int protocol);
 static RECV_T  (*ORIG(recv))    (int s, void *buf, size_t len, int flags);
 #endif
 #if defined HAVE___RECV_CHK
-static RECV_T  (*ORIG(__recv_chk)) (int s, void *buf, size_t len, int flags);
+static RECV_T  (*ORIG(__recv_chk)) (int s, void *buf, size_t len,
+                                    size_t buflen, int flags);
 #endif
 #if defined HAVE_RECVFROM
 static RECV_T  (*ORIG(recvfrom))(int s, void *buf, size_t len, int flags,
                                  SOCKADDR_T *from, SOCKLEN_T *fromlen);
 #endif
 #if defined HAVE___RECVFROM_CHK
-static RECV_T  (*ORIG(__recvfrom_chk))(int s, void *buf, size_t len, int flags,
+static RECV_T  (*ORIG(__recvfrom_chk))(int s, void *buf, size_t len,
+                                       size_t buflen, int flags,
                                        SOCKADDR_T *from, SOCKLEN_T *fromlen);
 #endif
 #if defined HAVE_RECVMSG
@@ -142,7 +144,8 @@ static ssize_t (*ORIG(read))    (int fd, void *buf, size_t count);
 static int     (*ORIG(read))    (int fd, void *buf, unsigned int count);
 #endif
 #if defined HAVE___READ_CHK
-static ssize_t (*ORIG(__read_chk)) (int fd, void *buf, size_t count);
+static ssize_t (*ORIG(__read_chk)) (int fd, void *buf, size_t count,
+                                    size_t buflen);
 #endif
 #if defined HAVE_READV
 static ssize_t (*ORIG(readv))   (int fd, const struct iovec *iov, int count);
@@ -371,11 +374,11 @@ int NEW(socket)(int domain, int type, int protocol)
 }
 #endif
 
-#define ZZ_RECV(myrecv) \
+#define ZZ_RECV(myrecv, myargs) \
     do \
     { \
         LOADSYM(myrecv); \
-        ret = ORIG(myrecv)(s, buf, len, flags); \
+        ret = ORIG(myrecv) myargs; \
         if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
              || _zz_islocked(s) || !_zz_isactive(s)) \
             return ret; \
@@ -401,23 +404,23 @@ int NEW(socket)(int domain, int type, int protocol)
 #undef recv
 RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
 {
-    int ret; ZZ_RECV(recv); return ret;
+    int ret; ZZ_RECV(recv, (s, buf, len, flags)); return ret;
 }
 #endif
 
 #if defined HAVE___RECV_CHK
 #undef __recv_chk
-RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, int flags)
+RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, size_t buflen, int flags)
 {
-    int ret; ZZ_RECV(__recv_chk); return ret;
+    int ret; ZZ_RECV(__recv_chk, (s, buf, len, buflen, flags)); return ret;
 }
 #endif
 
-#define ZZ_RECVFROM(myrecvfrom) \
+#define ZZ_RECVFROM(myrecvfrom, myargs) \
     do \
     { \
         LOADSYM(myrecvfrom); \
-        ret = ORIG(myrecvfrom)(s, buf, len, flags, from, fromlen); \
+        ret = ORIG(myrecvfrom) myargs; \
         if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
              || _zz_islocked(s) || !_zz_isactive(s)) \
             return ret; \
@@ -450,16 +453,20 @@ RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, int flags)
 RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
                      SOCKADDR_T *from, SOCKLEN_T *fromlen)
 {
-    int ret; ZZ_RECVFROM(recvfrom); return ret;
+    int ret;
+    ZZ_RECVFROM(recvfrom, (s, buf, len, flags, from, fromlen));
+    return ret;
 }
 #endif
 
 #if defined HAVE___RECVFROM_CHK
 #undef __recvfrom_chk
-RECV_T NEW(__recvfrom_chk)(int s, void *buf, size_t len, int flags,
-                           SOCKADDR_T *from, SOCKLEN_T *fromlen)
+RECV_T NEW(__recvfrom_chk)(int s, void *buf, size_t len, size_t buflen,
+                           int flags, SOCKADDR_T *from, SOCKLEN_T *fromlen)
 {
-    int ret; ZZ_RECVFROM(__recvfrom_chk); return ret;
+    int ret;
+    ZZ_RECVFROM(__recvfrom_chk, (s, buf, len, buflen, flags, from, fromlen));
+    return ret;
 }
 #endif
 
@@ -482,11 +489,11 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
 }
 #endif
 
-#define ZZ_READ(myread) \
+#define ZZ_READ(myread, myargs) \
     do \
     { \
         LOADSYM(myread); \
-        ret = ORIG(read)(fd, buf, count); \
+        ret = ORIG(myread) myargs; \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_hostwatched(fd) \
              || _zz_islocked(fd) || !_zz_isactive(fd)) \
             return ret; \
@@ -512,21 +519,21 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
 #undef read
 ssize_t NEW(read)(int fd, void *buf, size_t count)
 {
-    int ret; ZZ_READ(read); return (ssize_t)ret;
+    int ret; ZZ_READ(read, (fd, buf, count)); return (ssize_t)ret;
 }
 #else
 #undef read
 int NEW(read)(int fd, void *buf, unsigned int count)
 {
-    int ret; ZZ_READ(read); return ret;
+    int ret; ZZ_READ(read, (fd, buf, count)); return ret;
 }
 #endif
 
 #if defined HAVE___READ_CHK
 #undef __read_chk
-ssize_t NEW(__read_chk)(int fd, void *buf, size_t count)
+ssize_t NEW(__read_chk)(int fd, void *buf, size_t count, size_t buflen)
 {
-    int ret; ZZ_READ(__read_chk); return (ssize_t)ret;
+    int ret; ZZ_READ(__read_chk, (fd, buf, count, buflen)); return (ssize_t)ret;
 }
 #endif
 

@@ -114,12 +114,12 @@ static size_t  (*ORIG(fread_unlocked))  (void *ptr, size_t size, size_t nmemb,
                                          FILE *stream);
 #endif
 #if defined HAVE___FREAD_CHK
-static size_t  (*ORIG(__fread_chk))  (void *ptr, size_t size, size_t nmemb,
-                                      FILE *stream);
+static size_t  (*ORIG(__fread_chk))  (void *ptr, size_t ptrlen, size_t size,
+                                      size_t nmemb, FILE *stream);
 #endif
 #if defined HAVE___FREAD_UNLOCKED_CHK
-static size_t  (*ORIG(__fread_unlocked_chk))  (void *ptr, size_t size,
-                                               size_t nmemb, FILE *stream);
+static size_t  (*ORIG(__fread_unlocked_chk)) (void *ptr, size_t ptrlen, size_t
+                                              size, size_t nmemb, FILE *stream);
 #endif
 static int     (*ORIG(getc))     (FILE *stream);
 static int     (*ORIG(getchar))  (void);
@@ -141,10 +141,12 @@ static char *  (*ORIG(fgets))    (char *s, int size, FILE *stream);
 static char *  (*ORIG(fgets_unlocked))   (char *s, int size, FILE *stream);
 #endif
 #if defined HAVE___FGETS_CHK
-static char *  (*ORIG(__fgets_chk))    (char *s, int size, FILE *stream);
+static char *  (*ORIG(__fgets_chk)) (char *s, size_t ptrlen,
+                                     int size, FILE *stream);
 #endif
 #if defined HAVE___FGETS_UNLOCKED_CHK
-static char *  (*ORIG(__fgets_unlocked_chk)) (char *s, int size, FILE *stream);
+static char *  (*ORIG(__fgets_unlocked_chk)) (char *s, size_t ptrlen,
+                                              int size, FILE *stream);
 #endif
 static int     (*ORIG(ungetc))   (int c, FILE *stream);
 static int     (*ORIG(fclose))   (FILE *fp);
@@ -509,7 +511,7 @@ void NEW(rewind)(FILE *stream)
  * been invalidated, so we fuzz whatever's preloaded in it.
  */
 
-#define ZZ_FREAD(myfread) /* NEW */ \
+#define ZZ_FREAD(myfread, myargs) /* NEW */ \
     do \
     { \
         int64_t oldpos, newpos; \
@@ -520,14 +522,14 @@ void NEW(rewind)(FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
              || _zz_islocked(fd)) \
-            return ORIG(myfread)(ptr, size, nmemb, stream); \
+            return ORIG(myfread) myargs; \
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         oldpos = ZZ_FTELL(stream); \
         oldoff = get_stream_off(stream); \
         oldcnt = get_stream_cnt(stream); \
         _zz_lock(fd); \
-        ret = ORIG(myfread)(ptr, size, nmemb, stream); \
+        ret = ORIG(myfread) myargs; \
         _zz_unlock(fd); \
         newpos = ZZ_FTELL(stream); \
         if (newpos >= oldpos + oldcnt) \
@@ -558,31 +560,38 @@ void NEW(rewind)(FILE *stream)
 #undef fread
 size_t NEW(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-    size_t ret; ZZ_FREAD(fread); return ret;
+    size_t ret; ZZ_FREAD(fread, (ptr, size, nmemb, stream)); return ret;
 }
 
 #if defined HAVE_FREAD_UNLOCKED
 #undef fread_unlocked
 size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-    size_t ret; ZZ_FREAD(fread_unlocked); return ret;
+    size_t ret;
+    ZZ_FREAD(fread_unlocked, (ptr, size, nmemb, stream));
+    return ret;
 }
 #endif
 
 #if defined HAVE___FREAD_CHK
 #undef __fread_chk
-size_t NEW(__fread_chk)(void *ptr, size_t size, size_t nmemb, FILE *stream)
+size_t NEW(__fread_chk)(void *ptr, size_t ptrlen, size_t size, size_t nmemb,
+                        FILE *stream)
 {
-    size_t ret; ZZ_FREAD(__fread_chk); return ret;
+    size_t ret;
+    ZZ_FREAD(__fread_chk, (ptr, ptrlen, size, nmemb, stream));
+    return ret;
 }
 #endif
 
 #if defined HAVE___FREAD_UNLOCKED_CHK
 #undef __fread_unlocked_chk
-size_t NEW(__fread_unlocked_chk)(void *ptr, size_t size, size_t nmemb,
-                                 FILE *stream)
+size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
+                                 size_t nmemb, FILE *stream)
 {
-    size_t ret; ZZ_FREAD(__fread_unlocked_chk); return ret;
+    size_t ret;
+    ZZ_FREAD(__fread_unlocked_chk, (ptr, ptrlen, size, nmemb, stream));
+    return ret;
 }
 #endif
 
@@ -690,7 +699,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
  * fgets, fgets_unlocked
  */
 
-#define ZZ_FGETS(myfgets, myfgetc) \
+#define ZZ_FGETS(myfgets, myfgetc, myargs) \
     do \
     { \
         int64_t oldpos, newpos; \
@@ -702,7 +711,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
              || _zz_islocked(fd)) \
-            return ORIG(myfgets)(s, size, stream); \
+            return ORIG(myfgets) myargs; \
         debug_stream("before", stream); \
         oldpos = ZZ_FTELL(stream); \
         oldoff = get_stream_off(stream); \
@@ -763,30 +772,36 @@ int NEW(fgetc_unlocked)(FILE *stream)
 #undef fgets
 char *NEW(fgets)(char *s, int size, FILE *stream)
 {
-    char *ret; ZZ_FGETS(fgets, fgetc); return ret;
+    char *ret; ZZ_FGETS(fgets, fgetc, (s, size, stream)); return ret;
 }
 
 #if defined HAVE_FGETS_UNLOCKED
 #undef fgets_unlocked
 char *NEW(fgets_unlocked)(char *s, int size, FILE *stream)
 {
-    char *ret; ZZ_FGETS(fgets_unlocked, fgetc_unlocked); return ret;
+    char *ret;
+    ZZ_FGETS(fgets_unlocked, fgetc_unlocked, (s, size, stream));
+    return ret;
 }
 #endif
 
 #if defined HAVE___FGETS_CHK
 #undef __fgets_chk
-char *NEW(__fgets_chk)(char *s, int size, FILE *stream)
+char *NEW(__fgets_chk)(char *s, size_t ptrlen, int size, FILE *stream)
 {
-    char *ret; ZZ_FGETS(__fgets_chk, fgetc); return ret;
+    char *ret;
+    ZZ_FGETS(__fgets_chk, fgetc, (s, ptrlen, size, stream));
+    return ret;
 }
 #endif
 
 #if defined HAVE___FGETS_UNLOCKED_CHK
 #undef __fgets_unlocked_chk
-char *NEW(__fgets_unlocked_chk)(char *s, int size, FILE *stream)
+char *NEW(__fgets_unlocked_chk)(char *s, size_t ptrlen, int size, FILE *stream)
 {
-    char *ret; ZZ_FGETS(__fgets_unlocked_chk, fgetc_unlocked); return ret;
+    char *ret;
+    ZZ_FGETS(__fgets_unlocked_chk, fgetc_unlocked, (s, ptrlen, size, stream));
+    return ret;
 }
 #endif
 
