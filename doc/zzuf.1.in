@@ -77,7 +77,7 @@ flags.
 .TP
 \fB\-c\fR, \fB\-\-cmdline\fR
 Only fuzz files whose name is specified in the target application's command
-line. This is mostly a shortcut to avoid specifying twice the argument:
+line. This is mostly a shortcut to avoid specifying the argument twice:
 
 \fB    zzuf \-c cat file.txt\fR
 
