@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 #   define OPTSTR_RLIMIT_CPU ""
 #endif
 #define OPTSTR "+" OPTSTR_REGEX OPTSTR_RLIMIT_MEM OPTSTR_RLIMIT_CPU \
-                "a:Ab:B:C:dD:e:f:F:ij:l:mnp:P:qr:R:s:St:U:vxhV"
+                "a:Ab:B:C:dD:e:f:F:ij:l:mnO:p:P:qr:R:s:St:U:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct myoption long_options[] =
@@ -182,6 +182,7 @@ int main(int argc, char *argv[])
             { "md5",          0, NULL, 'm' },
             { "max-memory",   1, NULL, 'M' },
             { "network",      0, NULL, 'n' },
+            { "opmode",       1, NULL, 'O' },
             { "ports",        1, NULL, 'p' },
             { "protect",      1, NULL, 'P' },
             { "quiet",        0, NULL, 'q' },
@@ -256,6 +257,7 @@ int main(int argc, char *argv[])
             break;
         case 'F':
             fprintf(stderr, "%s: `-F' is deprecated, use `-j'\n", argv[0]);
+            _zz_opts_fini(opts);
             return EXIT_FAILURE;
         case 'i': /* --stdin */
             setenv("ZZUF_STDIN", "1", 1);
@@ -293,6 +295,21 @@ int main(int argc, char *argv[])
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
             network = 1;
+            break;
+        case 'O': /* --opmode */
+            if(myoptarg[0] == '=')
+                myoptarg++;
+            if (!strcmp(myoptarg, "preload"))
+                opts->opmode = OPMODE_PRELOAD;
+            else if (!strcmp(myoptarg, "copy"))
+                opts->opmode = OPMODE_COPY;
+            else
+            {
+                fprintf(stderr, "%s: invalid operating mode -- `%s'\n",
+                        argv[0], myoptarg);
+                _zz_opts_fini(opts);
+                return EXIT_FAILURE;
+            }
             break;
         case 'p': /* --ports */
             opts->ports = myoptarg;
@@ -385,7 +402,23 @@ int main(int argc, char *argv[])
     _zz_setratio(opts->minratio, opts->maxratio);
     _zz_setseed(opts->seed);
 
-    /* If asked to read from the standard input */
+    if(opts->fuzzing)
+        _zz_fuzzing(opts->fuzzing);
+    if(opts->bytes)
+        _zz_bytes(opts->bytes);
+    if(opts->list)
+        _zz_list(opts->list);
+    if(opts->protect)
+        _zz_protect(opts->protect);
+    if(opts->refuse)
+        _zz_refuse(opts->refuse);
+
+    /* Needed for stdin mode and for copy opmode. */
+    _zz_fd_init();
+
+    /*
+     * Mode 1: asked to read from the standard input
+     */
     if(myoptind >= argc)
     {
         if(opts->verbose)
@@ -404,106 +437,114 @@ int main(int argc, char *argv[])
         }
 
         loop_stdin(opts);
-
-        _zz_opts_fini(opts);
-        return EXIT_SUCCESS;
     }
-
-    /* If asked to launch programs */
+    /*
+     * Mode 2: asked to launch programs
+     */
+    else
+    {
 #if defined HAVE_REGEX_H
-    if(cmdline)
-    {
-        int dashdash = 0;
-
-        for(i = myoptind + 1; i < argc; i++)
+        if(cmdline)
         {
-            if(dashdash)
-                include = merge_file(include, argv[i]);
-            else if(!strcmp("--", argv[i]))
-                dashdash = 1;
-            else if(argv[i][0] != '-')
-                include = merge_file(include, argv[i]);
-        }
-    }
+            int dashdash = 0;
 
-    if(include)
-        setenv("ZZUF_INCLUDE", include, 1);
-    if(exclude)
-        setenv("ZZUF_EXCLUDE", exclude, 1);
+            for(i = myoptind + 1; i < argc; i++)
+            {
+                if(dashdash)
+                    include = merge_file(include, argv[i]);
+                else if(!strcmp("--", argv[i]))
+                    dashdash = 1;
+                else if(argv[i][0] != '-')
+                    include = merge_file(include, argv[i]);
+            }
+        }
+
+        if(include)
+            setenv("ZZUF_INCLUDE", include, 1);
+        if(exclude)
+            setenv("ZZUF_EXCLUDE", exclude, 1);
 #endif
 
-    setenv("ZZUF_DEBUG", debug ? debug > 1 ? "2" : "1" : "0", 1);
-    setenv("ZZUF_DEBUGFD", DEBUG_FILENO_STR, 1);
+        setenv("ZZUF_DEBUG", debug ? debug > 1 ? "2" : "1" : "0", 1);
+        setenv("ZZUF_DEBUGFD", DEBUG_FILENO_STR, 1);
 
-    if(opts->fuzzing)
-        setenv("ZZUF_FUZZING", opts->fuzzing, 1);
-    if(opts->bytes)
-        setenv("ZZUF_BYTES", opts->bytes, 1);
-    if(opts->list)
-        setenv("ZZUF_LIST", opts->list, 1);
-    if(opts->ports)
-        setenv("ZZUF_PORTS", opts->ports, 1);
-    if(opts->allow && opts->allow[0] == '!')
-        setenv("ZZUF_DENY", opts->allow, 1);
-    else if(opts->allow)
-        setenv("ZZUF_ALLOW", opts->allow, 1);
-    if(opts->protect)
-        setenv("ZZUF_PROTECT", opts->protect, 1);
-    if(opts->refuse)
-        setenv("ZZUF_REFUSE", opts->refuse, 1);
+        if(opts->fuzzing)
+            setenv("ZZUF_FUZZING", opts->fuzzing, 1);
+        if(opts->bytes)
+            setenv("ZZUF_BYTES", opts->bytes, 1);
+        if(opts->list)
+            setenv("ZZUF_LIST", opts->list, 1);
+        if(opts->ports)
+            setenv("ZZUF_PORTS", opts->ports, 1);
+        if(opts->allow && opts->allow[0] == '!')
+            setenv("ZZUF_DENY", opts->allow, 1);
+        else if(opts->allow)
+            setenv("ZZUF_ALLOW", opts->allow, 1);
+        if(opts->protect)
+            setenv("ZZUF_PROTECT", opts->protect, 1);
+        if(opts->refuse)
+            setenv("ZZUF_REFUSE", opts->refuse, 1);
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
-    if(opts->maxmem >= 0)
-    {
-        char buf[32];
-        snprintf(buf, 32, "%i", opts->maxmem);
-        setenv("ZZUF_MEMORY", buf, 1);
-    }
+        if(opts->maxmem >= 0)
+        {
+            char buf[32];
+            snprintf(buf, 32, "%i", opts->maxmem);
+            setenv("ZZUF_MEMORY", buf, 1);
+        }
 #endif
 
-    /* Allocate memory for children handling */
-    opts->child = malloc(opts->maxchild * sizeof(struct child));
-    for(i = 0; i < opts->maxchild; i++)
-        opts->child[i].status = STATUS_FREE;
-    opts->nchild = 0;
+        /* Allocate memory for children handling */
+        opts->child = malloc(opts->maxchild * sizeof(struct child));
+        for(i = 0; i < opts->maxchild; i++)
+            opts->child[i].status = STATUS_FREE;
+        opts->nchild = 0;
 
-    /* Create new argv */
-    opts->oldargv = argv;
-    opts->newargv = malloc((argc - myoptind + 1) * sizeof(char *));
-    memcpy(opts->newargv, argv + myoptind, (argc - myoptind) * sizeof(char *));
-    opts->newargv[argc - myoptind] = (char *)NULL;
-
-    /* Main loop */
-    while(opts->nchild || opts->seed < opts->endseed)
-    {
-        /* Spawn new children, if necessary */
-        spawn_children(opts);
-
-        /* Cleanup dead or dying children */
-        clean_children(opts);
-
-        /* Read data from children */
-        read_children(opts);
-
-        if(opts->maxcrashes && opts->crashes >= opts->maxcrashes
-            && opts->nchild == 0)
+        /* Create new argv */
+        opts->oldargc = argc;
+        opts->oldargv = argv;
+        for(i = 0; i < opts->maxchild; i++)
         {
-            if(opts->verbose)
-                fprintf(stderr,
-                        "zzuf: maximum crash count reached, exiting\n");
-            break;
+            int len = argc - myoptind;
+            opts->child[i].newargv = malloc((len + 1) * sizeof(char *));
+            memcpy(opts->child[i].newargv, argv + myoptind,
+                   len * sizeof(char *));
+            opts->child[i].newargv[len] = (char *)NULL;
         }
 
-        if(opts->maxtime && _zz_time() - opts->starttime >= opts->maxtime
-            && opts->nchild == 0)
+        /* Main loop */
+        while(opts->nchild || opts->seed < opts->endseed)
         {
-            if(opts->verbose)
-                fprintf(stderr,
-                        "zzuf: maximum running time reached, exiting\n");
-            break;
+            /* Spawn new children, if necessary */
+            spawn_children(opts);
+
+            /* Cleanup dead or dying children */
+            clean_children(opts);
+
+            /* Read data from children */
+            read_children(opts);
+
+            if(opts->maxcrashes && opts->crashes >= opts->maxcrashes
+                && opts->nchild == 0)
+            {
+                if(opts->verbose)
+                    fprintf(stderr,
+                            "zzuf: maximum crash count reached, exiting\n");
+                break;
+            }
+
+            if(opts->maxtime && _zz_time() - opts->starttime >= opts->maxtime
+                && opts->nchild == 0)
+            {
+                if(opts->verbose)
+                    fprintf(stderr,
+                            "zzuf: maximum running time reached, exiting\n");
+                break;
+            }
         }
     }
 
     /* Clean up */
+    _zz_fd_fini();
     _zz_opts_fini(opts);
 
     return opts->crashes ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -518,18 +559,6 @@ static void loop_stdin(struct opts *opts)
     if(opts->md5)
         ctx = _zz_md5_init();
 
-    if(opts->fuzzing)
-        _zz_fuzzing(opts->fuzzing);
-    if(opts->bytes)
-        _zz_bytes(opts->bytes);
-    if(opts->list)
-        _zz_list(opts->list);
-    if(opts->protect)
-        _zz_protect(opts->protect);
-    if(opts->refuse)
-        _zz_refuse(opts->refuse);
-
-    _zz_fd_init();
     _zz_register(0);
 
     for(;;)
@@ -578,7 +607,6 @@ static void loop_stdin(struct opts *opts)
     }
 
     _zz_unregister(0);
-    _zz_fd_fini();
 }
 
 static void finfo(FILE *fp, struct opts *opts, uint32_t seed)
@@ -665,10 +693,60 @@ static void spawn_children(struct opts *opts)
         if(opts->child[i].status == STATUS_FREE)
             break;
 
+    /* Prepare required files, if necessary */
+    if (opts->opmode == OPMODE_COPY)
+    {
+        char tmpname[4096];
+        char *tmpdir;
+        FILE *fpin;
+        int j, k = 0, fdout;
+
+        tmpdir = getenv("TEMP");
+        if (!tmpdir || !*tmpdir)
+            tmpdir = "/tmp";
+
+        for (j = optind + 1; j < opts->oldargc; j++)
+        {
+            fpin = fopen(opts->oldargv[j], "r");
+            if (!fpin)
+                continue;
+
+            sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, (int)getpid());
+            fdout = mkstemp(tmpname);
+            if (fdout < 0)
+            {
+                fclose(fpin);
+                continue;
+            }
+
+            opts->child[i].newargv[j - optind] = strdup(tmpname);
+
+            _zz_register(k);
+            while(!feof(fpin))
+            {
+                uint8_t buf[BUFSIZ];
+                size_t n = fread(buf, 1, BUFSIZ, fpin);
+                if (n <= 0)
+                    break;
+                _zz_fuzz(k, buf, n);
+                _zz_addpos(k, n);
+                write(fdout, buf, n);
+            }
+            _zz_unregister(k);
+
+            fclose(fpin);
+            close(fdout);
+
+            k++;
+        }
+    }
+
+    /* Launch process */
     if (myfork(&opts->child[i], opts) < 0)
     {
-        fprintf(stderr, "error launching `%s'\n", opts->newargv[0]);
+        fprintf(stderr, "error launching `%s'\n", opts->child[i].newargv[0]);
         opts->seed++;
+        /* FIXME: clean up OPMODE_COPY files here */
         return;
     }
 
@@ -684,7 +762,7 @@ static void spawn_children(struct opts *opts)
     if(opts->verbose)
     {
         finfo(stderr, opts, opts->child[i].seed);
-        fprintf(stderr, "launched `%s'\n", opts->newargv[0]);
+        fprintf(stderr, "launched `%s'\n", opts->child[i].newargv[0]);
     }
 
     opts->lastlaunch = now;
@@ -813,6 +891,19 @@ static void clean_children(struct opts *opts)
         for(j = 0; j < 3; j++)
             if(opts->child[i].fd[j] >= 0)
                 close(opts->child[i].fd[j]);
+
+        if (opts->opmode == OPMODE_COPY)
+        {
+            for (j = optind + 1; j < opts->oldargc; j++)
+            {
+                if (opts->child[i].newargv[j - optind] != opts->oldargv[j])
+                {
+                    unlink(opts->child[i].newargv[j - optind]);
+                    free(opts->child[i].newargv[j - optind]);
+                    opts->child[i].newargv[j - optind] = opts->oldargv[j];
+                }
+            }
+        }
 
         if(opts->md5)
         {
@@ -975,6 +1066,7 @@ static void usage(void)
 #if defined HAVE_REGEX_H
     printf(                                                " [-I include] [-E exclude]");
 #endif
+    printf("              [-O mode]\n");
     printf("\n");
     printf("              [PROGRAM [--] [ARGS]...]\n");
     printf("       zzuf -h | --help\n");
@@ -1008,6 +1100,7 @@ static void usage(void)
     printf("  -M, --max-memory <n>      maximum child virtual memory in MiB (default %u)\n", DEFAULT_MEM);
 #endif
     printf("  -n, --network             fuzz network input\n");
+    printf("  -O, --opmode <mode>       use operating mode <mode> ([preload] copy)\n");
     printf("  -p, --ports <list>        only fuzz network destination ports in <list>\n");
     printf("  -P, --protect <list>      protect bytes and characters in <list>\n");
     printf("  -q, --quiet               do not print children's messages\n");

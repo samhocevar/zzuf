@@ -69,7 +69,7 @@
 #   undef ZZUF_RLIMIT_CPU
 #endif
 
-static int run_process(struct opts *, int[][2]);
+static int run_process(struct child *child, struct opts *, int[][2]);
 
 #if defined HAVE_WINDOWS_H
 static void rep32(uint8_t *buf, void *addr);
@@ -100,11 +100,11 @@ int myfork(struct child *child, struct opts *opts)
         }
     }
 
-    pid = run_process(opts, pipes);
+    pid = run_process(child, opts, pipes);
     if(pid < 0)
     {
         /* FIXME: close pipes */
-        fprintf(stderr, "error launching `%s'\n", opts->newargv[0]);
+        fprintf(stderr, "error launching `%s'\n", child->newargv[0]);
         return -1;
     }
 
@@ -132,7 +132,7 @@ static void setenv(char const *name, char const *value, int overwrite)
 }
 #endif
 
-static int run_process(struct opts *opts, int pipes[][2])
+static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 {
     char buf[64];
 #if defined HAVE_FORK
@@ -241,12 +241,14 @@ static int run_process(struct opts *opts, int pipes[][2])
         libpath = bigbuf;
     }
 
-    setenv(PRELOAD, libpath, 1);
+    /* Only preload the library in preload mode */
+    if (opts->opmode == OPMODE_PRELOAD)
+        setenv(PRELOAD, libpath, 1);
     free(libpath);
 
-    if(execvp(opts->newargv[0], opts->newargv))
+    if(execvp(child->newargv[0], child->newargv))
     {
-        perror(opts->newargv[0]);
+        perror(child->newargv[0]);
         exit(EXIT_FAILURE);
     }
 
@@ -265,13 +267,13 @@ static int run_process(struct opts *opts, int pipes[][2])
     DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[2][1]), pid,
                     &sinfo.hStdOutput, 0, TRUE, DUPLICATE_SAME_ACCESS);
     sinfo.dwFlags = STARTF_USESTDHANDLES;
-    ret = CreateProcess(NULL, opts->newargv[0], NULL, NULL, FALSE,
+    ret = CreateProcess(NULL, child->newargv[0], NULL, NULL, FALSE,
                         CREATE_SUSPENDED, NULL, NULL, &sinfo, &pinfo);
     if(!ret)
         return -1;
 
     /* Get the child process's entry point address */
-    epaddr = (void *)get_entry_point(opts->newargv[0],
+    epaddr = (void *)get_entry_point(child->newargv[0],
                                      pinfo.dwProcessId);
     if(!epaddr)
         return -1;

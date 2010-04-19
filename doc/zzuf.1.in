@@ -10,7 +10,8 @@ zzuf \- multiple purpose fuzzer
 [\fB\-T\fR \fIseconds\fR] [\fB\-U\fR \fIseconds\fR] [\fB\-M\fR \fImebibytes\fR]
 [\fB\-b\fR \fIranges\fR] [\fB\-p\fR \fIports\fR] [\fB\-P\fR \fIprotect\fR]
 [\fB\-R\fR \fIrefuse\fR] [\fB\-l\fR \fIlist\fR] [\fB\-I\fR \fIinclude\fR]
-[\fB\-E\fR \fIexclude\fR] [\fIPROGRAM\fR [\fIARGS\fR]...]
+[\fB\-E\fR \fIexclude\fR] [\fB\-O\fR \fIopmode\fR]
+[\fIPROGRAM\fR [\fIARGS\fR]...]
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
 .br
@@ -193,6 +194,22 @@ Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
 
 Only INET (IPv4) and INET6 (IPv6) connections are fuzzed. Other protocol
 families are not yet supported.
+.TP
+\fB\-O\fR, \fB\-\-opmode\fR=\fImode\fR
+Use operating mode \fImode\fR. Valid values for \fImode\fR are:
+.RS
+.TP
+\fBpreload\fR
+override functions by preloading libzzuf into the executable using the
+system's dynamic linker
+.TP
+\fBcopy\fR
+temporarily copy files that need to be fuzzed
+.RE
+.IP
+The default value for \fImode\fR is \fBpreload\fR. \fBcopy\fR is useful on
+platforms that do not support dynamic linker injection, for instance when
+fuzzing a Cocoa application on Mac OS X.
 .TP
 \fB\-p\fR, \fB\-\-ports\fR=\fIranges\fR
 Only fuzz network ports that are in \fIranges\fR. By default \fBzzuf\fR

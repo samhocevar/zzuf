@@ -32,6 +32,7 @@
 
 void _zz_opts_init(struct opts *opts)
 {
+    opts->opmode = OPMODE_PRELOAD;
     opts->fuzzing = opts->bytes = opts->list = opts->ports = NULL;
     opts->allow = NULL;
     opts->protect = opts->refuse = NULL;
@@ -51,7 +52,6 @@ void _zz_opts_init(struct opts *opts)
     opts->delay = 0;
     opts->lastlaunch = 0;
 
-    opts->newargv = NULL;
     opts->maxchild = 1;
     opts->nchild = 0;
     opts->maxcrashes = 1;
@@ -61,9 +61,14 @@ void _zz_opts_init(struct opts *opts)
 
 void _zz_opts_fini(struct opts *opts)
 {
+    int i;
+
     if(opts->child)
+    {
+        for(i = 0; i < opts->maxchild; i++)
+            if (opts->child[i].newargv)
+                free(opts->child[i].newargv);
         free(opts->child);
-    if(opts->newargv)
-        free(opts->newargv);
+    }
 }
 

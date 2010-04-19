@@ -16,8 +16,13 @@
 
 struct opts
 {
+    enum opmode
+    {
+        OPMODE_PRELOAD,
+        OPMODE_COPY,
+    } opmode;
     char **oldargv;
-    char **newargv;
+    int oldargc;
     char *fuzzing, *bytes, *list, *ports, *protect, *refuse, *allow;
     uint32_t seed;
     uint32_t endseed;
@@ -54,6 +59,7 @@ struct opts
         double ratio;
         int64_t date;
         struct md5 *ctx;
+        char **newargv;
     } *child;
 };
 
