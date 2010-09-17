@@ -103,6 +103,8 @@ static void insert_func(void *module, void *old, void *new)
             if(*func != old)
                 continue;
 
+            /* FIXME: The StarCraft 2 hack uses two methods for function
+             * diversion. See HookSsdt() and HookHotPatch(). */
             VirtualProtect(func, sizeof(func), PAGE_EXECUTE_READWRITE, &dummy);
             WriteProcessMemory(GetCurrentProcess(), func, &new,
                                sizeof(new), NULL);

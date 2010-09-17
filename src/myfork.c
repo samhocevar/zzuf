@@ -385,14 +385,19 @@ static int dll_inject(void *process, void *epaddr, char const *lib)
     memcpy(code + loaderlen + jumperlen, lib, liblen);
 
     /* Backup the old entry point code */
-    ReadProcessMemory(process, epaddr, code + loaderlen,
-                      jumperlen, &tmp);
+    ReadProcessMemory(process, epaddr, code + loaderlen, jumperlen, &tmp);
     if(tmp != jumperlen)
         return -1;
 
+    /* XXX: at this point, the StarCraft 2 hack replaces the entry point
+     * contents with a jump to self, then waits until the program counter
+     * actually reaches the entry point. Not sure whether it is needed. */
+
     /* FIXME: the GetProcAddress calls assume the library was loaded at
      * the same address in the child process. This is wrong since Vista
-     * and its address space randomisation. */
+     * and its address space randomisation. The StarCraft 2 hack remotely
+     * parses the target process's module list in order to find the
+     * kernel32.dll address. Have a look at _RemoteGetProcAddress(). */
     kernel32 = LoadLibrary("kernel32.dll");
     if(!kernel32)
         return -1;
