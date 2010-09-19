@@ -705,21 +705,25 @@ static void spawn_children(struct opts *opts)
         if (!tmpdir || !*tmpdir)
             tmpdir = "/tmp";
 
-        for (j = optind + 1; j < opts->oldargc; j++)
+        for (j = myoptind + 1; j < opts->oldargc; j++)
         {
             fpin = fopen(opts->oldargv[j], "r");
             if (!fpin)
                 continue;
 
             sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, (int)getpid());
+#ifdef _WIN32
+            fdout = mktemp(tmpname);
+#else
             fdout = mkstemp(tmpname);
+#endif
             if (fdout < 0)
             {
                 fclose(fpin);
                 continue;
             }
 
-            opts->child[i].newargv[j - optind] = strdup(tmpname);
+            opts->child[i].newargv[j - myoptind] = strdup(tmpname);
 
             _zz_register(k);
             while(!feof(fpin))
@@ -894,13 +898,13 @@ static void clean_children(struct opts *opts)
 
         if (opts->opmode == OPMODE_COPY)
         {
-            for (j = optind + 1; j < opts->oldargc; j++)
+            for (j = myoptind + 1; j < opts->oldargc; j++)
             {
-                if (opts->child[i].newargv[j - optind] != opts->oldargv[j])
+                if (opts->child[i].newargv[j - myoptind] != opts->oldargv[j])
                 {
-                    unlink(opts->child[i].newargv[j - optind]);
-                    free(opts->child[i].newargv[j - optind]);
-                    opts->child[i].newargv[j - optind] = opts->oldargv[j];
+                    unlink(opts->child[i].newargv[j - myoptind]);
+                    free(opts->child[i].newargv[j - myoptind]);
+                    opts->child[i].newargv[j - myoptind] = opts->oldargv[j];
                 }
             }
         }
