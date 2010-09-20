@@ -35,16 +35,16 @@
 #include "sys.h"
 
 #if defined HAVE_WINDOWS_H
-static void insert_func(void *, void *, void *);
+static void insert_funcs(void *);
 
 /* TODO: get rid of this later */
 HINSTANCE (WINAPI *LoadLibraryA_orig)(LPCSTR);
 HINSTANCE WINAPI LoadLibraryA_new(LPCSTR path)
 {
     void *ret;
-    fprintf(stderr, "If you see this message, DLL preloading worked\n");
+    fprintf(stderr, "This is the diverted LoadLibraryA\n");
     ret = LoadLibraryA_orig(path);
-    fprintf(stderr, "If you see this message, function diversion worked\n");
+    fprintf(stderr, "Now the real LoadLibraryA was called\n");
     return ret;
 }
 #endif
@@ -54,11 +54,8 @@ void _zz_sys_init(void)
 #if defined HAVE_WINDOWS_H
     MEMORY_BASIC_INFORMATION mbi;
     MODULEENTRY32 entry;
-    void *list, *kernel32;
+    void *list;
     int k;
-
-    kernel32 = GetModuleHandleA("kernel32.dll");
-    LoadLibraryA_orig = (void *)GetProcAddress(kernel32, "LoadLibraryA");
 
     VirtualQuery(_zz_sys_init, &mbi, sizeof(mbi));
     list = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
@@ -68,7 +65,7 @@ void _zz_sys_init(void)
         if(entry.hModule == mbi.AllocationBase)
             continue; /* Don't replace our own functions */
 
-        insert_func(entry.hModule, LoadLibraryA_orig, LoadLibraryA_new);
+        insert_funcs(entry.hModule);
     }
     CloseHandle(list);
 #else
@@ -77,12 +74,18 @@ void _zz_sys_init(void)
 }
 
 #if defined HAVE_WINDOWS_H
-static void insert_func(void *module, void *old, void *new)
+static void insert_funcs(void *module)
 {
+    struct { char const *lib, *name; void **old; void *new; }
+    diversions[] =
+    {
+        { "kernel32.dll", "LoadLibraryA", &LoadLibraryA_orig, LoadLibraryA_new },
+    };
+
     unsigned long dummy;
     import_t import;
     thunk_t thunk;
-    int j, i;
+    int k, j, i;
 
     import = (import_t)
         ImageDirectoryEntryToData(module, TRUE,
@@ -90,25 +93,30 @@ static void insert_func(void *module, void *old, void *new)
     if(!import)
         return;
 
-    for(j = 0; import[j].Name; j++)
+    for (k = 0; k < sizeof(diversions) / sizeof(*diversions); k++)
     {
-        char *name = (char *)module + import[j].Name;
-        if(lstrcmpiA(name, "kernel32.dll") != 0)
-            continue;
+        void *lib = GetModuleHandleA(diversions[k].lib);
+        *diversions[k].old = (void *)GetProcAddress(lib, diversions[k].name);
 
-        thunk = (thunk_t)((char *)module + import->FirstThunk);
-        for(i = 0; thunk[i].u1.Function; i++)
+        for(j = 0; import[j].Name; j++)
         {
-            void **func = (void **)&thunk[i].u1.Function;
-            if(*func != old)
+            char *name = (char *)module + import[j].Name;
+            if(lstrcmpiA(name, diversions[k].lib) != 0)
                 continue;
 
-            /* FIXME: The StarCraft 2 hack uses two methods for function
-             * diversion. See HookSsdt() and HookHotPatch(). */
-            VirtualProtect(func, sizeof(func), PAGE_EXECUTE_READWRITE, &dummy);
-            WriteProcessMemory(GetCurrentProcess(), func, &new,
-                               sizeof(new), NULL);
-            return;
+            thunk = (thunk_t)((char *)module + import->FirstThunk);
+            for(i = 0; thunk[i].u1.Function; i++)
+            {
+                void **func = (void **)&thunk[i].u1.Function;
+                if(*func != *diversions[k].old)
+                    continue;
+
+                /* FIXME: The StarCraft 2 hack uses two methods for function
+                 * diversion. See HookSsdt() and HookHotPatch(). */
+                VirtualProtect(func, sizeof(func), PAGE_EXECUTE_READWRITE, &dummy);
+                WriteProcessMemory(GetCurrentProcess(), func, &diversions[k].new,
+                                   sizeof(diversions[k].new), NULL);
+            }
         }
     }
 }
