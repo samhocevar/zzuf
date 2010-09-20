@@ -47,6 +47,20 @@ HINSTANCE WINAPI LoadLibraryA_new(LPCSTR path)
     fprintf(stderr, "Now the real LoadLibraryA was called\n");
     return ret;
 }
+
+BOOL (WINAPI *AllocConsole_orig)(void);
+BOOL WINAPI AllocConsole_new(void)
+{
+    fprintf(stderr, "Allocating console\n");
+    return AllocConsole_orig();
+}
+
+BOOL (WINAPI *AttachConsole_orig)(DWORD);
+BOOL WINAPI AttachConsole_new(DWORD d)
+{
+    fprintf(stderr, "Attaching console\n");
+    return AttachConsole_orig(d);
+}
 #endif
 
 void _zz_sys_init(void)
@@ -80,6 +94,8 @@ static void insert_funcs(void *module)
     diversions[] =
     {
         { "kernel32.dll", "LoadLibraryA", &LoadLibraryA_orig, LoadLibraryA_new },
+        { "kernel32.dll", "AllocConsole", &AllocConsole_orig, AllocConsole_new },
+        { "kernel32.dll", "AttachConsole", &AttachConsole_orig, AttachConsole_new },
     };
 
     unsigned long dummy;
