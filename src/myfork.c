@@ -73,9 +73,10 @@ static int run_process(struct child *child, struct opts *, int[][2]);
 
 #if defined HAVE_WINDOWS_H
 static void rep32(uint8_t *buf, void *addr);
-static int dll_inject(void *, void *, char const *);
+static int dll_inject(PROCESS_INFORMATION *, void *, char const *);
 static intptr_t get_base_address(DWORD);
-static intptr_t get_entry_point_offset(char const *);
+static intptr_t get_entry_point(char const *name, DWORD pid);
+static intptr_t get_proc_address(void *, DWORD, char const *);
 #endif
 
 int myfork(struct child *child, struct opts *opts)
@@ -260,6 +261,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 
     memset(&sinfo, 0, sizeof(sinfo));
     sinfo.cb = sizeof(sinfo);
+#if 0
     DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[0][1]), pid,
         /* FIXME */ &sinfo.hStdInput, 0, TRUE, DUPLICATE_SAME_ACCESS);
     DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[1][1]), pid,
@@ -267,6 +269,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
     DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[2][1]), pid,
                     &sinfo.hStdOutput, 0, TRUE, DUPLICATE_SAME_ACCESS);
     sinfo.dwFlags = STARTF_USESTDHANDLES;
+#endif
     ret = CreateProcess(NULL, child->newargv[0], NULL, NULL, FALSE,
                         CREATE_SUSPENDED, NULL, NULL, &sinfo, &pinfo);
     if(!ret)
@@ -279,7 +282,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
         return -1;
 
     /* Insert the replacement code */
-    ret = dll_inject(pinfo.hProcess, epaddr, SONAME);
+    ret = dll_inject(&pinfo, epaddr, SONAME);
     if(ret < 0)
     {
         TerminateProcess(pinfo.hProcess, -1);
@@ -293,6 +296,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
         return -1;
     }
 
+Sleep(5000);
     return (long int)pinfo.hProcess;
 #endif
 }
@@ -308,7 +312,8 @@ static void rep32(uint8_t *buf, void *addr)
         }
 }
 
-static int dll_inject(void *process, void *epaddr, char const *lib)
+static int dll_inject(PROCESS_INFORMATION *pinfo,
+                      void *epaddr, char const *lib)
 {
     static uint8_t const loader[] =
         /* Load the injected DLL into memory */
@@ -334,10 +339,17 @@ static int dll_inject(void *process, void *epaddr, char const *lib)
         "\xb8____"       /* mov %eax, <original_entry_point_address> */
         "\xff\xe0";      /* jmp %eax */
 
+    static uint8_t const waiter[] =
+        "\xeb\xfe";      /* jmp <current> */
+
     static uint8_t const jumper[] =
         /* Jump to the injected loader */
         "\xb8____"       /* mov eax, <loader_address> */
         "\xff\xe0";      /* jmp eax */
+
+    void *process = pinfo->hProcess;
+    void *thread = pinfo->hThread;
+    DWORD pid = pinfo->dwProcessId;
 
     /* code:
      * +---------------+--------------------+--------------+-------------+
@@ -346,13 +358,13 @@ static int dll_inject(void *process, void *epaddr, char const *lib)
      * +---------------+--------------------+--------------+-------------+ */
     uint8_t code[1024];
 
-    void *kernel32;
     uint8_t *loaderaddr;
-    size_t liblen, loaderlen, jumperlen;
+    size_t liblen, loaderlen, waiterlen, jumperlen;
     DWORD tmp;
 
     liblen = strlen(lib) + 1;
     loaderlen = sizeof(loader) - 1;
+    waiterlen = sizeof(waiter) - 1;
     jumperlen = sizeof(jumper) - 1;
     if (loaderlen + jumperlen + liblen > 1024)
         return -1;
@@ -389,34 +401,47 @@ static int dll_inject(void *process, void *epaddr, char const *lib)
     if(tmp != jumperlen)
         return -1;
 
-    /* XXX: at this point, the StarCraft 2 hack replaces the entry point
-     * contents with a jump to self, then waits until the program counter
-     * actually reaches the entry point. Not sure whether it is needed. */
+    /* Replace the entry point code with a short jump to self, then resume
+     * the thread. This is necessary for CreateToolhelp32Snapshot() to
+     * work. */
+    WriteProcessMemory(process, epaddr, waiter, waiterlen, &tmp);
+    if(tmp != waiterlen)
+        return -1;
+    FlushInstructionCache(process, epaddr, waiterlen);
+    ResumeThread(thread);
 
-    /* FIXME: the GetProcAddress calls assume the library was loaded at
-     * the same address in the child process. This is wrong since Vista
-     * and its address space randomisation. The StarCraft 2 hack remotely
-     * parses the target process's module list in order to find the
-     * kernel32.dll address. Have a look at _RemoteGetProcAddress(). */
-    kernel32 = LoadLibrary("kernel32.dll");
-    if(!kernel32)
+    /* Wait until the entry point is reached */
+    for (tmp = 0; tmp < 100; tmp++)
+    {
+        CONTEXT ctx;
+        ctx.ContextFlags = CONTEXT_FULL;
+        GetThreadContext(thread, &ctx);
+        if ((uintptr_t)ctx.Eip == (uintptr_t)epaddr)
+            break;
+        Sleep(10);
+    }
+    SuspendThread(thread);
+    if (tmp == 100)
         return -1;
 
+    /* Remotely parse the target process's module list to get the addresses
+     * of the functions we need. This can only be done because we advanced
+     * the target's execution to the entry point. */
     rep32(code, loaderaddr + loaderlen + jumperlen);
-    rep32(code, GetProcAddress(kernel32, "LoadLibraryA"));
+    rep32(code, (uintptr_t)get_proc_address(process, pid, "LoadLibraryA"));
     rep32(code, (void *)(uintptr_t)jumperlen);
     rep32(code, loaderaddr + loaderlen);
     rep32(code, epaddr);
-    rep32(code, GetProcAddress(kernel32, "GetCurrentProcess"));
-    rep32(code, GetProcAddress(kernel32, "WriteProcessMemory"));
+    rep32(code, (uintptr_t)get_proc_address(process, pid, "GetCurrentProcess"));
+    rep32(code, (uintptr_t)get_proc_address(process, pid, "WriteProcessMemory"));
     rep32(code, epaddr);
-    FreeLibrary(kernel32);
 
     /* Write our shellcodes into the target process */
     WriteProcessMemory(process, epaddr, code + loaderlen + jumperlen + liblen,
                        jumperlen, &tmp);
     if(tmp != jumperlen)
         return -1;
+    FlushInstructionCache(process, epaddr, waiterlen);
 
     WriteProcessMemory(process, loaderaddr, code,
                        loaderlen + jumperlen + liblen, &tmp);
@@ -468,7 +493,7 @@ static intptr_t get_entry_point(char const *name, DWORD pid)
          * to the header's information, which is unreliable because of
          * Vista's address space randomisation. */
         if (!ret)
-            ret = (intptr_t)nt->OptionalHeader.BaseOfCode;
+            ret = (intptr_t)nt->OptionalHeader.ImageBase;
 
         ret += (intptr_t)nt->OptionalHeader.AddressOfEntryPoint;
     }
@@ -480,12 +505,82 @@ static intptr_t get_entry_point(char const *name, DWORD pid)
     return ret;
 }
 
+/* FIXME: this could probably be merged with get_entry_point */
+static intptr_t get_proc_address(void *process, DWORD pid, const char *func)
+{
+    char buf[1024];
+    size_t buflen = strlen(func) + 1;
+
+    MODULEENTRY32 entry;
+    intptr_t ret = 0;
+    DWORD tmp;
+    void *list;
+    int i, k;
+
+    list = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid);
+    entry.dwSize = sizeof(entry);
+    for(k = Module32First(list, &entry); k; k = Module32Next(list, &entry))
+    {
+        IMAGE_DOS_HEADER dos;
+        IMAGE_NT_HEADERS nt;
+        IMAGE_EXPORT_DIRECTORY expdir;
+
+        uint32_t exportaddr;
+        uint8_t const *base = entry.modBaseAddr;
+
+        if (strcmp("kernel32.dll", entry.szModule))
+            continue;
+
+        ReadProcessMemory(process, base, &dos, sizeof(dos), &tmp);
+        ReadProcessMemory(process, base + dos.e_lfanew, &nt, sizeof(nt), &tmp);
+
+        exportaddr = nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+        if (!exportaddr)
+            continue;
+
+        ReadProcessMemory(process, base + exportaddr, &expdir, sizeof(expdir), &tmp);
+
+        for (i = 0; i < (int)expdir.NumberOfNames; i++)
+        {
+            uint32_t nameaddr, funcaddr;
+            uint16_t j;
+
+            /* Look for our function name in the list of names */
+            ReadProcessMemory(process, base + expdir.AddressOfNames
+                                            + i * sizeof(DWORD),
+                              &nameaddr, sizeof(nameaddr), &tmp);
+            ReadProcessMemory(process, base + nameaddr, buf, buflen, &tmp);
+
+            if (strcmp(buf, func))
+                continue;
+
+            /* If we found a function with this name, return its address */
+            ReadProcessMemory(process, base + expdir.AddressOfNameOrdinals
+                                            + i * sizeof(WORD),
+                                &j, sizeof(j), &tmp);
+            ReadProcessMemory(process, base + expdir.AddressOfFunctions
+                                            + j * sizeof(DWORD),
+                                &funcaddr, sizeof(funcaddr), &tmp);
+
+            ret = (intptr_t)base + funcaddr;
+            goto _finished;
+        }
+    }
+
+_finished:
+    CloseHandle(list);
+    return ret;
+}
+
 /* Find the process's base address once it is loaded in memory (the header
- * information is unreliable because of Vista's ASLR). */
+ * information is unreliable because of Vista's ASLR).
+ * FIXME: this does not work properly because CreateToolhelp32Snapshot()
+ * requires a certain level of initialisation. */
 static intptr_t get_base_address(DWORD pid)
 {
     MODULEENTRY32 entry;
     intptr_t ret = 0;
+
     void *list;
     int k;
 

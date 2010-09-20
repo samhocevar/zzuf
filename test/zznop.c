@@ -25,7 +25,7 @@ int main(void)
     AllocConsole();
 
     fprintf(stderr, "About to call LoadLibraryA()\n");
-    //LoadLibraryA("whatever");
+    LoadLibraryA("whatever");
     fprintf(stderr, "Finished calling LoadLibraryA()\n");
 
     getchar();
