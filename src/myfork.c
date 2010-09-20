@@ -73,9 +73,7 @@ static int run_process(struct child *child, struct opts *, int[][2]);
 
 #if defined HAVE_WINDOWS_H
 static void rep32(uint8_t *buf, void *addr);
-static int dll_inject(PROCESS_INFORMATION *, void *, char const *);
-static intptr_t get_base_address(DWORD);
-static intptr_t get_entry_point(char const *name, DWORD pid);
+static int dll_inject(PROCESS_INFORMATION *, char const *);
 static intptr_t get_proc_address(void *, DWORD, char const *);
 #endif
 
@@ -158,7 +156,6 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
     PROCESS_INFORMATION pinfo;
     STARTUPINFO sinfo;
     HANDLE pid;
-    void *epaddr;
     int ret;
 #endif
 
@@ -275,14 +272,8 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
     if(!ret)
         return -1;
 
-    /* Get the child process's entry point address */
-    epaddr = (void *)get_entry_point(child->newargv[0],
-                                     pinfo.dwProcessId);
-    if(!epaddr)
-        return -1;
-
     /* Insert the replacement code */
-    ret = dll_inject(&pinfo, epaddr, SONAME);
+    ret = dll_inject(&pinfo, SONAME);
     if(ret < 0)
     {
         TerminateProcess(pinfo.hProcess, -1);
@@ -296,7 +287,6 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
         return -1;
     }
 
-Sleep(5000);
     return (long int)pinfo.hProcess;
 #endif
 }
@@ -312,8 +302,7 @@ static void rep32(uint8_t *buf, void *addr)
         }
 }
 
-static int dll_inject(PROCESS_INFORMATION *pinfo,
-                      void *epaddr, char const *lib)
+static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
 {
     static uint8_t const loader[] =
         /* Load the injected DLL into memory */
@@ -347,8 +336,10 @@ static int dll_inject(PROCESS_INFORMATION *pinfo,
         "\xb8____"       /* mov eax, <loader_address> */
         "\xff\xe0";      /* jmp eax */
 
+    CONTEXT ctx;
     void *process = pinfo->hProcess;
     void *thread = pinfo->hThread;
+    void *epaddr;
     DWORD pid = pinfo->dwProcessId;
 
     /* code:
@@ -396,6 +387,11 @@ static int dll_inject(PROCESS_INFORMATION *pinfo,
     memcpy(code, loader, loaderlen);
     memcpy(code + loaderlen + jumperlen, lib, liblen);
 
+    /* Find the entry point address. It's simply in EAX. */
+    ctx.ContextFlags = CONTEXT_FULL;
+    GetThreadContext(thread, &ctx);
+    epaddr = (void *)(uintptr_t)ctx.Eax;
+
     /* Backup the old entry point code */
     ReadProcessMemory(process, epaddr, code + loaderlen, jumperlen, &tmp);
     if(tmp != jumperlen)
@@ -428,12 +424,12 @@ static int dll_inject(PROCESS_INFORMATION *pinfo,
      * of the functions we need. This can only be done because we advanced
      * the target's execution to the entry point. */
     rep32(code, loaderaddr + loaderlen + jumperlen);
-    rep32(code, (uintptr_t)get_proc_address(process, pid, "LoadLibraryA"));
+    rep32(code, (void *)get_proc_address(process, pid, "LoadLibraryA"));
     rep32(code, (void *)(uintptr_t)jumperlen);
     rep32(code, loaderaddr + loaderlen);
     rep32(code, epaddr);
-    rep32(code, (uintptr_t)get_proc_address(process, pid, "GetCurrentProcess"));
-    rep32(code, (uintptr_t)get_proc_address(process, pid, "WriteProcessMemory"));
+    rep32(code, (void *)get_proc_address(process, pid, "GetCurrentProcess"));
+    rep32(code, (void *)get_proc_address(process, pid, "WriteProcessMemory"));
     rep32(code, epaddr);
 
     /* Write our shellcodes into the target process */
@@ -451,61 +447,6 @@ static int dll_inject(PROCESS_INFORMATION *pinfo,
     return 0;
 }
 
-/* Find the process's entry point address offset. The information is in
- * the file's PE header. */
-static intptr_t get_entry_point(char const *name, DWORD pid)
-{
-    PIMAGE_DOS_HEADER dos;
-    PIMAGE_NT_HEADERS nt;
-    intptr_t ret = 0;
-    void *file, *map, *base;
-
-    file = CreateFile(name, GENERIC_READ, FILE_SHARE_READ,
-                      NULL, OPEN_EXISTING, 0, NULL);
-    if(file == INVALID_HANDLE_VALUE)
-        return ret;
-
-    map = CreateFileMapping(file, NULL, PAGE_READONLY, 0, 0, NULL);
-    if(!map)
-    {
-        CloseHandle(file);
-        return ret;
-    }
-
-    base = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 0);
-    if(!base)
-    {
-        CloseHandle(map);
-        CloseHandle(file);
-        return ret;
-    }
-
-    /* Sanity checks */
-    dos = (PIMAGE_DOS_HEADER)base;
-    nt = (PIMAGE_NT_HEADERS)((char *)base + dos->e_lfanew);
-    if(dos->e_magic == IMAGE_DOS_SIGNATURE /* 0x5A4D */
-      && nt->Signature == IMAGE_NT_SIGNATURE /* 0x00004550 */
-      && nt->FileHeader.Machine == IMAGE_FILE_MACHINE_I386
-      && nt->OptionalHeader.Magic == 0x10b /* IMAGE_NT_OPTIONAL_HDR32_MAGIC */)
-    {
-        ret = get_base_address(pid);
-        /* Base address not found in the running process. Falling back
-         * to the header's information, which is unreliable because of
-         * Vista's address space randomisation. */
-        if (!ret)
-            ret = (intptr_t)nt->OptionalHeader.ImageBase;
-
-        ret += (intptr_t)nt->OptionalHeader.AddressOfEntryPoint;
-    }
-
-    UnmapViewOfFile(base);
-    CloseHandle(map);
-    CloseHandle(file);
-
-    return ret;
-}
-
-/* FIXME: this could probably be merged with get_entry_point */
 static intptr_t get_proc_address(void *process, DWORD pid, const char *func)
 {
     char buf[1024];
@@ -569,30 +510,6 @@ static intptr_t get_proc_address(void *process, DWORD pid, const char *func)
 
 _finished:
     CloseHandle(list);
-    return ret;
-}
-
-/* Find the process's base address once it is loaded in memory (the header
- * information is unreliable because of Vista's ASLR).
- * FIXME: this does not work properly because CreateToolhelp32Snapshot()
- * requires a certain level of initialisation. */
-static intptr_t get_base_address(DWORD pid)
-{
-    MODULEENTRY32 entry;
-    intptr_t ret = 0;
-
-    void *list;
-    int k;
-
-    list = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid);
-    entry.dwSize = sizeof(entry);
-    for(k = Module32First(list, &entry); k; k = Module32Next(list, &entry))
-    {
-        /* FIXME: how do we select the correct module? */
-        ret = (intptr_t)entry.modBaseAddr;
-    }
-    CloseHandle(list);
-
     return ret;
 }
 
