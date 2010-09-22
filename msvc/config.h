@@ -32,7 +32,7 @@
 /* #undef HAVE_FGETC_UNLOCKED */
 /* #undef HAVE_FGETLN */
 /* #undef HAVE_FGETS_UNLOCKED */
-#define HAVE_FOPEN64 1
+/* #undef HAVE_FOPEN64 */
 /* #undef HAVE_FORK */
 /* #undef HAVE_FREAD_UNLOCKED */
 /* #undef HAVE_FREEBSD_FILE */

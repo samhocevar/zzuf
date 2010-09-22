@@ -25,6 +25,13 @@
 /* Needed for getc_unlocked() on OpenSolaris */
 #define __EXTENSIONS__
 
+#if defined _MSC_VER
+#   include <io.h>
+typedef int ssize_t;
+#   define snprintf sprintf_s
+#   define close _close
+#endif
+
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
 #elif defined HAVE_INTTYPES_H
@@ -135,7 +142,7 @@ int main(int argc, char *argv[])
             number_lines = 1;
             break;
         case 'r': /* --repeat */
-            repeat = atoi(optarg);
+            repeat = atoi(myoptarg);
             break;
         case 's': /* --squeeze-blank */
             squeeze_lines = 1;
@@ -370,9 +377,9 @@ static int make_fmt(struct parser *p, char const *fmt)
     return ret;
 }
 
-#define PARSECMD(fmt, arg...) \
+#define PARSECMD(fmt, ...) \
     (make_fmt(&parser, fmt) == sscanf(sequence, parser.tmpfmt, \
-                                      ##arg, &parser.ch) \
+                                      __VA_ARGS__, &parser.ch) \
          && parser.ch == parser.lastch)
 
 /*
@@ -577,7 +584,7 @@ static int run(char const *sequence, char const *file)
                      ftell(f) >= 0 ? ftell(f) - retoff : 0);
 #endif
         else if (PARSECMD("rewind ( )"))
-            MY_FSEEK(rewind(f), -retlen);
+            MY_FSEEK(rewind(f), -(int)retlen);
         else if (PARSECMD("ungetc ( )"))
             MY_FSEEK(if(retoff) ungetc((unsigned char)retbuf[retoff - 1], f),
                      retoff ? -1 : 0);
