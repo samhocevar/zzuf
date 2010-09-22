@@ -356,7 +356,7 @@ struct parser
     char tmpfmt[1024], ch, lastch;
 };
 
-static int make_fmt(struct parser *p, char const *fmt)
+static int make_fmt(struct parser *p, char const *fmt, int *nitems)
 {
     char const *tmp;
     size_t len;
@@ -374,12 +374,15 @@ static int make_fmt(struct parser *p, char const *fmt)
         if (*tmp == '%')
             tmp++, ret++;
 
-    return ret;
+    *nitems = ret;
+
+    return 1;
 }
 
 #define PARSECMD(fmt, ...) \
-    (make_fmt(&parser, fmt) == sscanf(sequence, parser.tmpfmt, \
-                                      __VA_ARGS__, &parser.ch) \
+    (make_fmt(&parser, fmt, &nitems) \
+         && nitems == sscanf(sequence, parser.tmpfmt, \
+                             ##__VA_ARGS__, &parser.ch) \
          && parser.ch == parser.lastch)
 
 /*
@@ -393,7 +396,7 @@ static int run(char const *sequence, char const *file)
     char *retbuf = NULL, *tmp;
     FILE *f = NULL;
     size_t retlen = 0, retoff = 0;
-    int nloops = 0, fd = -1, feofs = 0, finish = 0;
+    int nitems, nloops = 0, fd = -1, feofs = 0, finish = 0;
 
     /* Initialise per-file state */
     /* TODO */
