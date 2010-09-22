@@ -126,6 +126,7 @@
     <ClCompile Include="..\src\libzzuf\lib-mem.c" />
     <ClCompile Include="..\src\libzzuf\lib-signal.c" />
     <ClCompile Include="..\src\libzzuf\lib-stream.c" />
+    <ClCompile Include="..\src\libzzuf\lib-win32.c" />
     <ClCompile Include="..\src\libzzuf\libzzuf.c" />
     <ClCompile Include="..\src\libzzuf\network.c" />
     <ClCompile Include="..\src\libzzuf\sys.c" />

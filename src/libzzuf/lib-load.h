@@ -53,7 +53,7 @@ zzuf_table_t;
 #   define DIVERT(x) { "kernel32.dll", #x, &x##_orig, x##_new }
 #   define DIVERT_END { NULL, NULL, NULL, NULL }
 
-extern zzuf_table_t table_stream[];
+extern zzuf_table_t table_stream[],
+                    table_win32[];
 
 #endif
-
