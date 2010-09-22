@@ -93,9 +93,10 @@ static void insert_funcs(void *module)
     struct { char const *lib, *name; void **old; void *new; }
     diversions[] =
     {
-        { "kernel32.dll", "LoadLibraryA", &LoadLibraryA_orig, LoadLibraryA_new },
-        { "kernel32.dll", "AllocConsole", &AllocConsole_orig, AllocConsole_new },
-        { "kernel32.dll", "AttachConsole", &AttachConsole_orig, AttachConsole_new },
+#define DIVERT(x) { "kernel32.dll", #x, &x##_orig, x##_new }
+        DIVERT(LoadLibraryA),
+        DIVERT(AllocConsole),
+        DIVERT(AttachConsole),
     };
 
     unsigned long dummy;
