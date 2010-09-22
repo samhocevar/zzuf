@@ -40,11 +40,20 @@
 static HANDLE (*ORIG(CreateFileA))(LPCTSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES,
                                    DWORD, DWORD, HANDLE);
 #endif
-
 #if defined HAVE_CREATEFILEA
 static HANDLE (*ORIG(CreateFileW))(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES,
                                    DWORD, DWORD, HANDLE);
 #endif
+#if defined HAVE_READFILE
+static BOOL (*ORIG(ReadFile))(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
+#endif
+#if defined HAVE_CLOSEHANDLE
+static BOOL (*ORIG(CloseHandle))(HANDLE);
+#endif
+
+/*
+ * CreateFileA, CreateFileW
+ */
 
 #if defined HAVE_CREATEFILEA
 HANDLE NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
@@ -72,15 +81,47 @@ HANDLE NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
 }
 #endif
 
+/*
+ * ReadFile
+ */
+
+#if defined HAVE_READFILE
+BOOL NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+                   LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
+{
+    fprintf(stderr, "ReadFile diverted!\n");
+    return ORIG(ReadFile)(hFile, lpBuffer, nNumberOfBytesToRead,
+                          lpNumberOfBytesRead, lpOverlapped);
+}
+#endif
+
+/*
+ * CloseHandle
+ */
+
+#if defined HAVE_CLOSEHANDLE
+BOOL NEW(CloseHandle)(HANDLE hObject)
+{
+    fprintf(stderr, "CloseHandle diverted!\n");
+    return ORIG(CloseHandle)(hObject);
+}
+#endif
+
 /* Win32 function table */
 #if defined _WIN32
 zzuf_table_t table_win32[] =
 {
+#if defined HAVE_CLOSEHANDLE
+    DIVERT(CloseHandle),
+#endif
 #if defined HAVE_CREATEFILEA
     DIVERT(CreateFileA),
 #endif
 #if defined HAVE_CREATEFILEW
     DIVERT(CreateFileW),
+#endif
+#if defined HAVE_READFILE
+    DIVERT(ReadFile),
 #endif
     DIVERT_END
 };

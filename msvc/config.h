@@ -24,6 +24,7 @@
 /* #undef HAVE_AIO_READ */
 /* #undef HAVE_ARPA_INET_H */
 #define HAVE_BIND 1
+#define HAVE_CLOSEHANDLE 1
 #define HAVE_CONNECT 1
 #define HAVE_CREATEFILEA 1
 #define HAVE_CREATEFILEW 1
@@ -72,6 +73,7 @@
 /* #undef HAVE_PRAGMA_INIT */
 /* #undef HAVE_PREAD */
 #define HAVE_PROCESS_H 1
+#define HAVE_READFILE 1
 /* #undef HAVE_READV */
 #define HAVE_RECV 1
 #define HAVE_RECVFROM 1
