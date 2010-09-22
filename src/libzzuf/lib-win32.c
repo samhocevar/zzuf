@@ -36,14 +36,17 @@
 #include "fd.h"
 
 /* Kernel functions that we divert */
-#if defined HAVE_CREATEFILE
-static HANDLE (*ORIG(CreateFileA))(LPCTSTR lpFileName, DWORD dwDesiredAccess,
-           DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-           DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
-           HANDLE hTemplateFile);
+#if defined HAVE_CREATEFILEA
+static HANDLE (*ORIG(CreateFileA))(LPCTSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES,
+                                   DWORD, DWORD, HANDLE);
 #endif
 
-#if defined HAVE_CREATEFILE
+#if defined HAVE_CREATEFILEA
+static HANDLE (*ORIG(CreateFileW))(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES,
+                                   DWORD, DWORD, HANDLE);
+#endif
+
+#if defined HAVE_CREATEFILEA
 HANDLE NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
            DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
            DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
@@ -56,12 +59,28 @@ HANDLE NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
 }
 #endif
 
+#if defined HAVE_CREATEFILEW
+HANDLE NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
+           DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+           DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
+           HANDLE hTemplateFile)
+{
+    fprintf(stderr, "CreateFileW diverted!\n");
+    return ORIG(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode,
+                             lpSecurityAttributes, dwCreationDisposition,
+                             dwFlagsAndAttributes, hTemplateFile);
+}
+#endif
+
 /* Win32 function table */
 #if defined _WIN32
 zzuf_table_t table_win32[] =
 {
-#if defined HAVE_CREATEFILE
+#if defined HAVE_CREATEFILEA
     DIVERT(CreateFileA),
+#endif
+#if defined HAVE_CREATEFILEW
+    DIVERT(CreateFileW),
 #endif
     DIVERT_END
 };

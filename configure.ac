@@ -54,7 +54,7 @@ AC_CHECK_FUNCS(__getdelim __srefill __filbuf __srget __uflow)
 AC_CHECK_FUNCS(open64 lseek64 mmap64 fopen64 freopen64 ftello64 fseeko64 fsetpos64)
 AC_CHECK_FUNCS(__open64 __lseek64 __fopen64 __freopen64 __ftello64 __fseeko64 __fsetpos64)
 AC_CHECK_FUNCS(__fgets_chk __fgets_unlocked_chk __fread_chk __fread_unlocked_chk __read_chk __recv_chk __recvfrom_chk)
-AC_CHECK_FUNCS(CreateFile)
+AC_CHECK_FUNCS(CreateFileA CreateFileW)
 
 AC_CHECK_TYPES(sighandler_t, [], [],
   [#define _GNU_SOURCE

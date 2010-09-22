@@ -25,7 +25,8 @@
 /* #undef HAVE_ARPA_INET_H */
 #define HAVE_BIND 1
 #define HAVE_CONNECT 1
-#define HAVE_CREATEFILE 1
+#define HAVE_CREATEFILEA 1
+#define HAVE_CREATEFILEW 1
 /* #undef HAVE_DLFCN_H */
 #define HAVE_DUP 1
 #define HAVE_DUP2 1
