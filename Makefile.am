@@ -5,10 +5,11 @@ DIST_SUBDIRS = $(SUBDIRS)
 EXTRA_DIST = bootstrap build-osx build-win32 AUTHORS \
 	m4/cflags.m4 m4/func.m4 \
 	msvc/config.h \
-	msvc/libzzuf.vcproj msvc/libzzuf.vcxproj \
+	msvc/libzzuf.vcxproj \
+	msvc/zzat.vcxproj \
 	msvc/zznop.vcxproj \
-	msvc/zzuf10.sln msvc/zzuf.sln \
-	msvc/zzuf.vcproj msvc/zzuf.vcxproj
+	msvc/zzuf.vcxproj \
+	msvc/zzuf.sln
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = foreign dist-bzip2
 
