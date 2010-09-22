@@ -37,18 +37,21 @@
 
 /* Kernel functions that we divert */
 #if defined HAVE_CREATEFILEA
-static HANDLE (*ORIG(CreateFileA))(LPCTSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES,
-                                   DWORD, DWORD, HANDLE);
+static HANDLE (__stdcall *ORIG(CreateFileA))(LPCTSTR, DWORD, DWORD,
+                                             LPSECURITY_ATTRIBUTES,
+                                             DWORD, DWORD, HANDLE);
 #endif
 #if defined HAVE_CREATEFILEA
-static HANDLE (*ORIG(CreateFileW))(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES,
-                                   DWORD, DWORD, HANDLE);
+static HANDLE (__stdcall *ORIG(CreateFileW))(LPCWSTR, DWORD, DWORD,
+                                             LPSECURITY_ATTRIBUTES,
+                                             DWORD, DWORD, HANDLE);
 #endif
 #if defined HAVE_READFILE
-static BOOL (*ORIG(ReadFile))(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
+static BOOL (__stdcall *ORIG(ReadFile))(HANDLE, LPVOID, DWORD, LPDWORD,
+                                        LPOVERLAPPED);
 #endif
 #if defined HAVE_CLOSEHANDLE
-static BOOL (*ORIG(CloseHandle))(HANDLE);
+static BOOL (__stdcall *ORIG(CloseHandle))(HANDLE);
 #endif
 
 /*
@@ -56,12 +59,12 @@ static BOOL (*ORIG(CloseHandle))(HANDLE);
  */
 
 #if defined HAVE_CREATEFILEA
-HANDLE NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
+HANDLE __stdcall NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
            DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
            DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
            HANDLE hTemplateFile)
 {
-    fprintf(stderr, "CreateFileA diverted!\n");
+    fprintf(stderr, "CreateFileA(%s)\n", lpFileName);
     return ORIG(CreateFileA)(lpFileName, dwDesiredAccess, dwShareMode,
                              lpSecurityAttributes, dwCreationDisposition,
                              dwFlagsAndAttributes, hTemplateFile);
@@ -69,12 +72,12 @@ HANDLE NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
 #endif
 
 #if defined HAVE_CREATEFILEW
-HANDLE NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
+HANDLE __stdcall NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
            DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
            DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
            HANDLE hTemplateFile)
 {
-    fprintf(stderr, "CreateFileW diverted!\n");
+    fprintf(stderr, "CreateFileW(?)\n");
     return ORIG(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode,
                              lpSecurityAttributes, dwCreationDisposition,
                              dwFlagsAndAttributes, hTemplateFile);
@@ -86,10 +89,11 @@ HANDLE NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
  */
 
 #if defined HAVE_READFILE
-BOOL NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-                   LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
+BOOL __stdcall NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer,
+           DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead,
+           LPOVERLAPPED lpOverlapped)
 {
-    fprintf(stderr, "ReadFile diverted!\n");
+    fprintf(stderr, "ReadFile(%i)\n", nNumberOfBytesToRead);
     return ORIG(ReadFile)(hFile, lpBuffer, nNumberOfBytesToRead,
                           lpNumberOfBytesRead, lpOverlapped);
 }
@@ -100,9 +104,9 @@ BOOL NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
  */
 
 #if defined HAVE_CLOSEHANDLE
-BOOL NEW(CloseHandle)(HANDLE hObject)
+BOOL __stdcall NEW(CloseHandle)(HANDLE hObject)
 {
-    fprintf(stderr, "CloseHandle diverted!\n");
+    fprintf(stderr, "CloseHandle(%i)\n", hObject);
     return ORIG(CloseHandle)(hObject);
 }
 #endif
