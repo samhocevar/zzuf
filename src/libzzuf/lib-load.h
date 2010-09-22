@@ -18,7 +18,7 @@
 #define STR(x) #x
 #define ORIG(x) x##_orig
 
-#ifdef HAVE_DLFCN_H
+#if defined HAVE_DLFCN_H
 #   include <dlfcn.h>
 #   define NEW(x) x
 #   define LOADSYM(x) \
@@ -34,7 +34,7 @@
             if(!ORIG(x)) \
                 abort(); \
         } while(0)
-#else
+#elif defined _WIN32
 #   define NEW(x) x##_new
 #   define LOADSYM(x) \
         do { \
@@ -56,4 +56,7 @@ zzuf_table_t;
 extern zzuf_table_t table_stream[],
                     table_win32[];
 
+#else
+#   error no function diversion system for this platform
 #endif
+

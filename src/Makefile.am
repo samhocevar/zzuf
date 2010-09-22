@@ -14,7 +14,7 @@ LIBZZUF = \
     libzzuf/sys.c libzzuf/sys.h \
     libzzuf/network.c libzzuf/network.h \
     libzzuf/lib-fd.c libzzuf/lib-mem.c libzzuf/lib-signal.c \
-    libzzuf/lib-stream.c libzzuf/lib-load.h
+    libzzuf/lib-stream.c libzzuf/lib-win32.c libzzuf/lib-load.h
 
 COMMON = \
     common/common.h \

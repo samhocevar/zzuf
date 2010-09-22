@@ -16,11 +16,17 @@
 
 #include "config.h"
 
-#if defined HAVE_WINDOWS_H
-#   include <windows.h>
+#if defined HAVE_STDINT_H
+#   include <stdint.h>
+#elif defined HAVE_INTTYPES_H
+#   include <inttypes.h>
 #endif
 
 #include <stdio.h>
+
+#if defined HAVE_WINDOWS_H
+#   include <windows.h>
+#endif
 
 #include "common.h"
 #include "libzzuf.h"
@@ -37,6 +43,7 @@ static HANDLE (*ORIG(CreateFileA))(LPCTSTR lpFileName, DWORD dwDesiredAccess,
            HANDLE hTemplateFile);
 #endif
 
+#if defined HAVE_CREATEFILE
 HANDLE NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
            DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
            DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
@@ -47,8 +54,10 @@ HANDLE NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
                              lpSecurityAttributes, dwCreationDisposition,
                              dwFlagsAndAttributes, hTemplateFile);
 }
+#endif
 
 /* Win32 function table */
+#if defined _WIN32
 zzuf_table_t table_win32[] =
 {
 #if defined HAVE_CREATEFILE
@@ -56,4 +65,5 @@ zzuf_table_t table_win32[] =
 #endif
     DIVERT_END
 };
+#endif
 
