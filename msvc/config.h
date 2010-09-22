@@ -69,7 +69,7 @@
 /* #undef HAVE_OPEN64 */
 /* #undef HAVE_PIPE */
 /* #undef HAVE_POSIX_MEMALIGN */
-#define HAVE_PRAGMA_INIT 1
+/* #undef HAVE_PRAGMA_INIT */
 /* #undef HAVE_PREAD */
 #define HAVE_PROCESS_H 1
 /* #undef HAVE_READV */
