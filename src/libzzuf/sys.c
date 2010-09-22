@@ -33,6 +33,7 @@
 #include <stdio.h>
 
 #include "sys.h"
+#include "lib-load.h"
 
 #if defined HAVE_WINDOWS_H
 static void insert_funcs(void *);
@@ -90,15 +91,12 @@ void _zz_sys_init(void)
 #if defined HAVE_WINDOWS_H
 static void insert_funcs(void *module)
 {
-    struct { char const *lib, *name; void **old; void *new; }
-    diversions[] =
+    static zzuf_table_t *list[] =
     {
-#define DIVERT(x) { "kernel32.dll", #x, &x##_orig, x##_new }
-        DIVERT(LoadLibraryA),
-        DIVERT(AllocConsole),
-        DIVERT(AttachConsole),
+        table_stream
     };
 
+    zzuf_table_t *diversion;
     unsigned long dummy;
     import_t import;
     thunk_t thunk;
@@ -110,29 +108,32 @@ static void insert_funcs(void *module)
     if(!import)
         return;
 
-    for (k = 0; k < sizeof(diversions) / sizeof(*diversions); k++)
+    for (k = 0; k < sizeof(list) / sizeof(*list); k++)
     {
-        void *lib = GetModuleHandleA(diversions[k].lib);
-        *diversions[k].old = (void *)GetProcAddress(lib, diversions[k].name);
-
-        for(j = 0; import[j].Name; j++)
+        for (diversion = list[k]; diversion->lib; diversion++)
         {
-            char *name = (char *)module + import[j].Name;
-            if(lstrcmpiA(name, diversions[k].lib) != 0)
-                continue;
+            void *lib = GetModuleHandleA(diversion->lib);
+            *diversion->old = (void *)GetProcAddress(lib, diversion->name);
 
-            thunk = (thunk_t)((char *)module + import->FirstThunk);
-            for(i = 0; thunk[i].u1.Function; i++)
+            for(j = 0; import[j].Name; j++)
             {
-                void **func = (void **)&thunk[i].u1.Function;
-                if(*func != *diversions[k].old)
+                char *name = (char *)module + import[j].Name;
+                if(lstrcmpiA(name, diversion->lib) != 0)
                     continue;
 
-                /* FIXME: The StarCraft 2 hack uses two methods for function
-                 * diversion. See HookSsdt() and HookHotPatch(). */
-                VirtualProtect(func, sizeof(func), PAGE_EXECUTE_READWRITE, &dummy);
-                WriteProcessMemory(GetCurrentProcess(), func, &diversions[k].new,
-                                   sizeof(diversions[k].new), NULL);
+                thunk = (thunk_t)((char *)module + import->FirstThunk);
+                for(i = 0; thunk[i].u1.Function; i++)
+                {
+                    void **func = (void **)&thunk[i].u1.Function;
+                    if(*func != *diversion->old)
+                        continue;
+
+                    /* FIXME: The StarCraft 2 hack uses two methods for function
+                     * diversion. See HookSsdt() and HookHotPatch(). */
+                    VirtualProtect(func, sizeof(func), PAGE_EXECUTE_READWRITE, &dummy);
+                    WriteProcessMemory(GetCurrentProcess(), func, &diversion->new,
+                                       sizeof(diversion->new), NULL);
+                }
             }
         }
     }

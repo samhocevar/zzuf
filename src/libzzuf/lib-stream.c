@@ -1146,3 +1146,11 @@ int NEW(__uflow)(FILE *fp)
 }
 #endif
 
+/* Win32 function table */
+zzuf_table_t table_stream[] =
+{
+    DIVERT(fopen),
+    DIVERT(fread),
+    DIVERT(fclose),
+    DIVERT_END
+};

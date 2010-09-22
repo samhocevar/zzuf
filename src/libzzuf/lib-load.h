@@ -41,5 +41,19 @@
             /* Nothing to do under Windows, everything is done as soon \
              * as the process is launched. */ \
         } while(0)
+
+typedef struct
+{
+    char const *lib, *name;
+    void **old;
+    void *new;
+}
+zzuf_table_t;
+
+#   define DIVERT(x) { "kernel32.dll", #x, &x##_orig, x##_new }
+#   define DIVERT_END { NULL, NULL, NULL, NULL }
+
+extern zzuf_table_t table_stream[];
+
 #endif
 
