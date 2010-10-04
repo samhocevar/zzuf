@@ -1145,15 +1145,3 @@ int NEW(__uflow)(FILE *fp)
     int ret; ZZ_REFILL(__uflow, 1); return ret;
 }
 #endif
-
-/* Win32 function table */
-#if defined _WIN32
-zzuf_table_t table_stream[] =
-{
-    DIVERT(fopen),
-    DIVERT(fread),
-    DIVERT(fclose),
-    DIVERT_END
-};
-#endif
-

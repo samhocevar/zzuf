@@ -50,14 +50,8 @@ typedef struct
 }
 zzuf_table_t;
 
-#   define DIVERT(x) { "kernel32.dll", #x, \
-                      (void **)&x##_orig, (void *)x##_new }
-#   define DIVERT_END { NULL, NULL, NULL, NULL }
-
-extern zzuf_table_t table_stream[],
-                    table_win32[];
+extern zzuf_table_t table_win32[];
 
 #else
 #   error no function diversion system for this platform
 #endif
-

@@ -113,6 +113,10 @@ BOOL __stdcall NEW(CloseHandle)(HANDLE hObject)
 
 /* Win32 function table */
 #if defined _WIN32
+#   define DIVERT(x) { "kernel32.dll", #x, \
+                      (void **)&x##_orig, (void *)x##_new }
+#   define DIVERT_END { NULL, NULL, NULL, NULL }
+
 zzuf_table_t table_win32[] =
 {
 #if defined HAVE_CLOSEHANDLE

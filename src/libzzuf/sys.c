@@ -93,7 +93,6 @@ static void insert_funcs(void *module)
 {
     static zzuf_table_t *list[] =
     {
-        table_stream,
         table_win32,
     };
 
@@ -139,7 +138,7 @@ static void insert_funcs(void *module)
                     continue;
 
                 /* FIXME: The StarCraft 2 hack uses two methods for function
-                    * diversion. See HookSsdt() and HookHotPatch(). */
+                 * diversion. See HookSsdt() and HookHotPatch(). */
                 VirtualProtect(func, sizeof(func), PAGE_EXECUTE_READWRITE, &dummy);
                 WriteProcessMemory(GetCurrentProcess(), func, &diversion->new,
                                     sizeof(diversion->new), NULL);
@@ -150,4 +149,3 @@ static void insert_funcs(void *module)
     }
 }
 #endif
-
