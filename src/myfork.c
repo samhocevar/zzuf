@@ -173,7 +173,8 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
     PROCESS_INFORMATION pinfo;
     STARTUPINFO sinfo;
     HANDLE pid;
-    int ret;
+    char *cmdline;
+    int i, ret, len;
 #endif
 
 #if defined HAVE_FORK
@@ -273,16 +274,32 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 #elif HAVE_WINDOWS_H
     pid = GetCurrentProcess();
 
+    /* Inherit standard handles */
     memset(&sinfo, 0, sizeof(sinfo));
     sinfo.cb = sizeof(sinfo);
-
     sinfo.hStdInput = (HANDLE)_get_osfhandle(pipes[0][CHILD_FD(0)]);
     sinfo.hStdOutput = (HANDLE)_get_osfhandle(pipes[1][CHILD_FD(1)]);
     sinfo.hStdError = (HANDLE)_get_osfhandle(pipes[2][CHILD_FD(2)]);
     sinfo.dwFlags = STARTF_USESTDHANDLES;
-    ret = CreateProcess(NULL, child->newargv[0], NULL, NULL, TRUE,
+
+    /* Build the commandline */
+    for (i = 0, len = 0; child->newargv[i]; i++)
+        len += strlen(child->newargv[i]) + 1;
+    cmdline = malloc(len);
+    for (i = 0, len = 0; child->newargv[i]; i++)
+    {
+        strcpy(cmdline + len, child->newargv[i]);
+        len += strlen(child->newargv[i]) + 1;
+        cmdline[len - 1] = ' ';
+    }
+    cmdline[len - 1] = '\0';
+
+    /* Create the process in suspended state */
+    ret = CreateProcess(child->newargv[0], cmdline, NULL, NULL, TRUE,
                         CREATE_SUSPENDED, NULL, NULL, &sinfo, &pinfo);
-    if(!ret)
+    free(cmdline);
+
+    if (!ret)
         return -1;
 
     /* Insert the replacement code */
