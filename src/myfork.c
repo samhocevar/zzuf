@@ -219,6 +219,8 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 #endif
 
     /* Set environment variables */
+    sprintf(buf, "%i", DEBUG_FILENO);
+    setenv("ZZUF_DEBUGFD", buf, 1);
     sprintf(buf, "%i", opts->seed);
     setenv("ZZUF_SEED", buf, 1);
     sprintf(buf, "%g", opts->minratio);

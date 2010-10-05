@@ -466,7 +466,6 @@ int main(int argc, char *argv[])
 #endif
 
         setenv("ZZUF_DEBUG", debug ? debug > 1 ? "2" : "1" : "0", 1);
-        setenv("ZZUF_DEBUGFD", DEBUG_FILENO_STR, 1);
 
         if(opts->fuzzing)
             setenv("ZZUF_FUZZING", opts->fuzzing, 1);
