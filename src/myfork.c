@@ -33,6 +33,9 @@
 #   include <imagehlp.h>
 #   include <tlhelp32.h>
 #endif
+#if defined HAVE_IO_H
+#   include <io.h>
+#endif
 #include <string.h>
 #include <fcntl.h> /* for O_BINARY */
 #if defined HAVE_SYS_RESOURCE_H
@@ -72,6 +75,14 @@
 static int run_process(struct child *child, struct opts *, int[][2]);
 
 #if defined HAVE_WINDOWS_H
+#   define PARENT_FD(x) ((x) ? 0 : 1)
+#   define CHILD_FD(x) ((x) ? 1 : 0)
+#else
+#   define PARENT_FD(x) 0
+#   define CHILD_FD(x) 1
+#endif
+
+#if defined HAVE_WINDOWS_H
 static void rep32(uint8_t *buf, void *addr);
 static int dll_inject(PROCESS_INFORMATION *, char const *);
 static intptr_t get_proc_address(void *, DWORD, char const *);
@@ -90,7 +101,13 @@ int myfork(struct child *child, struct opts *opts)
 #if defined HAVE_PIPE
         ret = pipe(pipes[i]);
 #elif defined HAVE__PIPE
+        int tmp;
+        /* The pipe is created with NOINHERIT otherwise both parts are
+         * inherited. We then duplicate the part we want. */
         ret = _pipe(pipes[i], 512, _O_BINARY | O_NOINHERIT);
+        tmp = _dup(pipes[i][CHILD_FD(i)]);
+        close(pipes[i][CHILD_FD(i)]);
+        pipes[i][CHILD_FD(i)] = tmp;
 #endif
         if(ret < 0)
         {
@@ -110,8 +127,8 @@ int myfork(struct child *child, struct opts *opts)
     child->pid = pid;
     for(i = 0; i < 3; i++)
     {
-        close(pipes[i][1]);
-        child->fd[i] = pipes[i][0];
+        close(pipes[i][CHILD_FD(i)]);
+        child->fd[i] = pipes[i][PARENT_FD(i)];
     }
 
     return 0;
@@ -258,16 +275,12 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 
     memset(&sinfo, 0, sizeof(sinfo));
     sinfo.cb = sizeof(sinfo);
-#if 0
-    DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[0][1]), pid,
-        /* FIXME */ &sinfo.hStdInput, 0, TRUE, DUPLICATE_SAME_ACCESS);
-    DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[1][1]), pid,
-                    &sinfo.hStdError, 0, TRUE, DUPLICATE_SAME_ACCESS);
-    DuplicateHandle(pid, (HANDLE)_get_osfhandle(pipes[2][1]), pid,
-                    &sinfo.hStdOutput, 0, TRUE, DUPLICATE_SAME_ACCESS);
+
+    sinfo.hStdInput = (HANDLE)_get_osfhandle(pipes[0][CHILD_FD(0)]);
+    sinfo.hStdOutput = (HANDLE)_get_osfhandle(pipes[1][CHILD_FD(1)]);
+    sinfo.hStdError = (HANDLE)_get_osfhandle(pipes[2][CHILD_FD(2)]);
     sinfo.dwFlags = STARTF_USESTDHANDLES;
-#endif
-    ret = CreateProcess(NULL, child->newargv[0], NULL, NULL, FALSE,
+    ret = CreateProcess(NULL, child->newargv[0], NULL, NULL, TRUE,
                         CREATE_SUSPENDED, NULL, NULL, &sinfo, &pinfo);
     if(!ret)
         return -1;

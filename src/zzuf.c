@@ -938,12 +938,27 @@ static void read_children(struct opts *opts)
         if(opts->child[i].status != STATUS_RUNNING)
             continue;
 
-        for(j = 0; j < 3; j++)
+        for(j = 1; j < 3; j++)
             ZZUF_FD_SET(opts->child[i].fd[j], &fdset, maxfd);
     }
     tv.tv_sec = 0;
     tv.tv_usec = 1000;
 
+#if _WIN32
+    for(i = 0; i < opts->maxchild; i++)
+        for (j = 1; j < 3; j++)
+        {
+            char tmpbuf[1025];
+            int tmp = _read(opts->child[i].fd[j], tmpbuf, 1024);
+            if (tmp > 0)
+            {
+                tmpbuf[tmp] = 0;
+                fprintf(stderr, "read %i bytes on fd %i: \"%s\"\n", tmp, j, tmpbuf);
+            }
+        }
+#endif
+
+    errno = 0;
     ret = select(maxfd + 1, &fdset, NULL, NULL, &tv);
     if(ret < 0 && errno)
         perror("select");

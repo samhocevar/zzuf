@@ -64,10 +64,14 @@ HANDLE __stdcall NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
            DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
            HANDLE hTemplateFile)
 {
-    fprintf(stderr, "CreateFileA(%s)\n", lpFileName);
-    return ORIG(CreateFileA)(lpFileName, dwDesiredAccess, dwShareMode,
-                             lpSecurityAttributes, dwCreationDisposition,
-                             dwFlagsAndAttributes, hTemplateFile);
+    HANDLE ret;
+    ret = ORIG(CreateFileA)(lpFileName, dwDesiredAccess, dwShareMode,
+                            lpSecurityAttributes, dwCreationDisposition,
+                            dwFlagsAndAttributes, hTemplateFile);
+    debug("%s(\"%s\", %x, %x, ..., %x, %x, ...) = [%i]",
+          __func__, lpFileName, dwDesiredAccess, dwShareMode,
+          dwCreationDisposition, dwFlagsAndAttributes, (int)ret); \
+    return ret;
 }
 #endif
 
