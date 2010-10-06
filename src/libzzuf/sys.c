@@ -42,24 +42,18 @@ static void insert_funcs(void *);
 HINSTANCE (WINAPI *LoadLibraryA_orig)(LPCSTR);
 HINSTANCE WINAPI LoadLibraryA_new(LPCSTR path)
 {
-    void *ret;
-    fprintf(stderr, "This is the diverted LoadLibraryA\n");
-    ret = LoadLibraryA_orig(path);
-    fprintf(stderr, "Now the real LoadLibraryA was called\n");
-    return ret;
+    return LoadLibraryA_orig(path);
 }
 
 BOOL (WINAPI *AllocConsole_orig)(void);
 BOOL WINAPI AllocConsole_new(void)
 {
-    fprintf(stderr, "Allocating console\n");
     return AllocConsole_orig();
 }
 
 BOOL (WINAPI *AttachConsole_orig)(DWORD);
 BOOL WINAPI AttachConsole_new(DWORD d)
 {
-    fprintf(stderr, "Attaching console\n");
     return AttachConsole_orig(d);
 }
 #endif

@@ -116,7 +116,11 @@ void _zz_init(void)
 
     tmp = getenv("ZZUF_DEBUGFD");
     if(tmp)
+#if defined _WIN32
+        _zz_debugfd = _open_osfhandle((HANDLE)atoi(tmp));
+#else
         _zz_debugfd = atoi(tmp);
+#endif
 
     /* We need this as soon as possible */
     _zz_mem_init();

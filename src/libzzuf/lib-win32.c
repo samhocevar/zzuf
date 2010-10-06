@@ -68,9 +68,9 @@ HANDLE __stdcall NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
     ret = ORIG(CreateFileA)(lpFileName, dwDesiredAccess, dwShareMode,
                             lpSecurityAttributes, dwCreationDisposition,
                             dwFlagsAndAttributes, hTemplateFile);
-    debug("%s(\"%s\", %x, %x, ..., %x, %x, ...) = [%i]",
-          __func__, lpFileName, dwDesiredAccess, dwShareMode,
-          dwCreationDisposition, dwFlagsAndAttributes, (int)ret); \
+    debug("CreateFileA(\"%s\", 0x%x, 0x%x, ..., 0x%x, 0x%x, ...) = [%i]",
+          lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
+          dwFlagsAndAttributes, (int)ret);
     return ret;
 }
 #endif
@@ -81,10 +81,14 @@ HANDLE __stdcall NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
            DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
            HANDLE hTemplateFile)
 {
-    fprintf(stderr, "CreateFileW(?)\n");
-    return ORIG(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode,
-                             lpSecurityAttributes, dwCreationDisposition,
-                             dwFlagsAndAttributes, hTemplateFile);
+    HANDLE ret;
+    ret = ORIG(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode,
+                            lpSecurityAttributes, dwCreationDisposition,
+                            dwFlagsAndAttributes, hTemplateFile);
+    debug("CreateFileW(\"%s\", 0x%x, 0x%x, ..., 0x%x, 0x%x, ...) = [%i]",
+          lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
+          dwFlagsAndAttributes, (int)ret);
+    return ret;
 }
 #endif
 
@@ -97,7 +101,6 @@ BOOL __stdcall NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer,
            DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead,
            LPOVERLAPPED lpOverlapped)
 {
-    fprintf(stderr, "ReadFile(%i)\n", nNumberOfBytesToRead);
     return ORIG(ReadFile)(hFile, lpBuffer, nNumberOfBytesToRead,
                           lpNumberOfBytesRead, lpOverlapped);
 }
@@ -110,32 +113,22 @@ BOOL __stdcall NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer,
 #if defined HAVE_CLOSEHANDLE
 BOOL __stdcall NEW(CloseHandle)(HANDLE hObject)
 {
-    fprintf(stderr, "CloseHandle(%i)\n", hObject);
     return ORIG(CloseHandle)(hObject);
 }
 #endif
 
 /* Win32 function table */
-#if defined _WIN32
+#if defined HAVE_WINDOWS_H
 #   define DIVERT(x) { "kernel32.dll", #x, \
                       (void **)&x##_orig, (void *)x##_new }
 #   define DIVERT_END { NULL, NULL, NULL, NULL }
 
 zzuf_table_t table_win32[] =
 {
-#if defined HAVE_CLOSEHANDLE
     DIVERT(CloseHandle),
-#endif
-#if defined HAVE_CREATEFILEA
     DIVERT(CreateFileA),
-#endif
-#if defined HAVE_CREATEFILEW
     DIVERT(CreateFileW),
-#endif
-#if defined HAVE_READFILE
     DIVERT(ReadFile),
-#endif
     DIVERT_END
 };
 #endif
-

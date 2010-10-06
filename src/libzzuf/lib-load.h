@@ -55,3 +55,4 @@ extern zzuf_table_t table_win32[];
 #else
 #   error no function diversion system for this platform
 #endif
+
