@@ -32,10 +32,10 @@
  * If more than 256 slots are required, new memory is allocated, otherwise
  * the static array static_ranges is used. It is the caller's duty to call
  * free() if the returned value is not static_ranges. */
-int *_zz_allocrange(char const *list, int *static_ranges)
+int64_t *_zz_allocrange(char const *list, int64_t *static_ranges)
 {
     char const *parser;
-    int *ranges;
+    int64_t *ranges;
     unsigned int i, chunks;
 
     /* Count commas */
@@ -44,7 +44,7 @@ int *_zz_allocrange(char const *list, int *static_ranges)
             chunks++;
 
     if(chunks >= 256)
-        ranges = malloc((chunks + 1) * 2 * sizeof(unsigned int));
+        ranges = malloc((chunks + 1) * 2 * sizeof(int64_t));
     else
         ranges = static_ranges;
 
@@ -69,9 +69,9 @@ int *_zz_allocrange(char const *list, int *static_ranges)
     return ranges;
 }
 
-int _zz_isinrange(int value, int const *ranges)
+int _zz_isinrange(int64_t value, int64_t const *ranges)
 {
-    int const *r;
+    int64_t const *r;
 
     if(!ranges)
         return 1;

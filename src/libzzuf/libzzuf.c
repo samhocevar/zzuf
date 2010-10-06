@@ -25,6 +25,9 @@
 #if defined HAVE_WINDOWS_H
 #   include <windows.h>
 #endif
+#if defined HAVE_IO_H
+#   include <io.h>
+#endif
 #if defined HAVE_PROCESS_H
 #   include <process.h>
 #endif
@@ -117,7 +120,7 @@ void _zz_init(void)
     tmp = getenv("ZZUF_DEBUGFD");
     if(tmp)
 #if defined _WIN32
-        _zz_debugfd = _open_osfhandle((HANDLE)atoi(tmp));
+        _zz_debugfd = _open_osfhandle((long)atoi(tmp), 0);
 #else
         _zz_debugfd = atoi(tmp);
 #endif

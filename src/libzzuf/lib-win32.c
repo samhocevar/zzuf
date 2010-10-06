@@ -27,6 +27,9 @@
 #if defined HAVE_WINDOWS_H
 #   include <windows.h>
 #endif
+#if defined HAVE_IO_H
+#   include <io.h>
+#endif
 
 #include "common.h"
 #include "libzzuf.h"
@@ -45,6 +48,10 @@ static HANDLE (__stdcall *ORIG(CreateFileA))(LPCTSTR, DWORD, DWORD,
 static HANDLE (__stdcall *ORIG(CreateFileW))(LPCWSTR, DWORD, DWORD,
                                              LPSECURITY_ATTRIBUTES,
                                              DWORD, DWORD, HANDLE);
+#endif
+#if defined HAVE_REOPENFILE
+static HANDLE (__stdcall *ORIG(ReOpenFile))(HANDLE, DWORD,
+                                            DWORD, DWORD);
 #endif
 #if defined HAVE_READFILE
 static BOOL (__stdcall *ORIG(ReadFile))(HANDLE, LPVOID, DWORD, LPDWORD,
@@ -68,7 +75,7 @@ HANDLE __stdcall NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
     ret = ORIG(CreateFileA)(lpFileName, dwDesiredAccess, dwShareMode,
                             lpSecurityAttributes, dwCreationDisposition,
                             dwFlagsAndAttributes, hTemplateFile);
-    debug("CreateFileA(\"%s\", 0x%x, 0x%x, ..., 0x%x, 0x%x, ...) = [%i]",
+    debug("CreateFileA(\"%s\", 0x%x, 0x%x, {...}, 0x%x, 0x%x, {...}) = %i",
           lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
           dwFlagsAndAttributes, (int)ret);
     return ret;
@@ -85,9 +92,22 @@ HANDLE __stdcall NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
     ret = ORIG(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode,
                             lpSecurityAttributes, dwCreationDisposition,
                             dwFlagsAndAttributes, hTemplateFile);
-    debug("CreateFileW(\"%S\", 0x%x, 0x%x, ..., 0x%x, 0x%x, ...) = [%i]",
+    debug("CreateFileW(\"%S\", 0x%x, 0x%x, {...}, 0x%x, 0x%x, {...}) = %i",
           lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
           dwFlagsAndAttributes, (int)ret);
+    return ret;
+}
+#endif
+
+#if defined HAVE_REOPENFILE
+HANDLE __stdcall NEW(ReOpenFile)(HANDLE hOriginalFile, DWORD dwDesiredAccess,
+                                 DWORD dwShareMode, DWORD dwFlags)
+{
+    HANDLE ret;
+    ret = ORIG(ReOpenFile)(hOriginalFile, dwDesiredAccess,
+                           dwShareMode, dwFlags);
+    debug("ReOpenFile(%i, 0x%x, 0x%x, 0x%x) = %i", (int)hOriginalFile,
+          dwDesiredAccess, dwShareMode, dwFlags, (int)ret);
     return ret;
 }
 #endif
@@ -113,7 +133,10 @@ BOOL __stdcall NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer,
 #if defined HAVE_CLOSEHANDLE
 BOOL __stdcall NEW(CloseHandle)(HANDLE hObject)
 {
-    return ORIG(CloseHandle)(hObject);
+    BOOL ret;
+    ret = ORIG(CloseHandle)(hObject);
+    debug("CloseHandle(%i) = %i", (int)hObject, ret);
+    return ret;
 }
 #endif
 

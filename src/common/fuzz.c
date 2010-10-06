@@ -46,8 +46,8 @@ static enum fuzzing
 fuzzing;
 
 /* Per-offset byte protection */
-static int *ranges = NULL;
-static int static_ranges[512];
+static int64_t *ranges = NULL;
+static int64_t static_ranges[512];
 
 /* Per-value byte protection */
 static unsigned char protect[256];

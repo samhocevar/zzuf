@@ -45,8 +45,8 @@ static int has_include = 0, has_exclude = 0;
 #endif
 
 /* File descriptor cherry picking */
-static int *list = NULL;
-static int static_list[512];
+static int64_t *list = NULL;
+static int64_t static_list[512];
 
 /* File descriptor stuff. When program is launched, we use the static array of
  * 32 structures, which ought to be enough for most programs. If it happens
@@ -397,8 +397,8 @@ int _zz_getfuzzed(int fd)
                                + files[fds[fd]].already_fuzzed)
         return 0;
 
-    return files[fds[fd]].already_fuzzed + files[fds[fd]].already_pos
-                                         - files[fds[fd]].pos;
+    return (int)(files[fds[fd]].already_fuzzed + files[fds[fd]].already_pos
+                                               - files[fds[fd]].pos);
 }
 
 struct fuzz *_zz_getfuzz(int fd)

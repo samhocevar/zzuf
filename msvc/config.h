@@ -79,6 +79,7 @@
 #define HAVE_RECVFROM 1
 /* #undef HAVE_RECVMSG */
 /* #undef HAVE_REGEX_H */
+#define HAVE_REOPENFILE 1
 /* #undef HAVE_SETENV */
 /* #undef HAVE_SETRLIMIT */
 /* #undef HAVE_SIGACTION */
