@@ -45,15 +45,21 @@ static void mydebug(char const *format, va_list args);
     do \
     { \
         char buf[128], *b = buf + 127; \
-        if(i <= 0) \
+        if (i <= 0) \
             append((i = -i) ? "-" : "0", 1); /* XXX: hack here */ \
-        while(i) \
+        if (i <= 0) \
+        { \
+            i = -(i + base); /* XXX: special case for INT_MIN */ \
+            *b-- = hex2char[i % base]; \
+            i = i / base + 1; \
+        } \
+        while (i) \
         { \
             *b-- = hex2char[i % base]; \
             i /= base; \
         } \
         append(b + 1, (int)(buf + 127 - b)); \
-    } while(0)
+    } while (0)
 
 /* Temporary buffer for deferred output */
 char debugbuffer[BUFSIZ];
@@ -151,7 +157,8 @@ static void mydebug(char const *format, va_list args)
         else if(*f == 'x')
         {
             int i = va_arg(args, int);
-            WRITE_INT(i, 16);
+            append("WHUT", 4);
+            WRITE_INT(i, 10);
         }
         else if(f[0] == 'l' && (f[1] == 'i' || f[1] == 'd'))
         {
