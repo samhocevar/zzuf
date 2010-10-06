@@ -156,9 +156,8 @@ static void mydebug(char const *format, va_list args)
         }
         else if(*f == 'x')
         {
-            int i = va_arg(args, int);
-            append("WHUT", 4);
-            WRITE_INT(i, 10);
+            unsigned int i = va_arg(args, unsigned int);
+            WRITE_INT(i, 16);
         }
         else if(f[0] == 'l' && (f[1] == 'i' || f[1] == 'd'))
         {
