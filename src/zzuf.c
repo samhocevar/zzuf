@@ -943,26 +943,15 @@ static void read_children(struct opts *opts)
     tv.tv_sec = 0;
     tv.tv_usec = 1000;
 
-#if _WIN32
-    for(i = 0; i < opts->maxchild; i++)
-        for (j = 0; j < 3; j++)
-        {
-            char tmpbuf[1025];
-            int tmp = _read(opts->child[i].fd[j], tmpbuf, 1024);
-            if (tmp > 0)
-            {
-                tmpbuf[tmp] = 0;
-                fprintf(stderr, "read %i bytes on fd %i: \"%s\"\n", tmp, j, tmpbuf);
-            }
-        }
-#endif
-
+#if !defined _WIN32
+    /* Win32 does not support select() on non-sockets */
     errno = 0;
     ret = select(maxfd + 1, &fdset, NULL, NULL, &tv);
     if(ret < 0 && errno)
         perror("select");
     if(ret <= 0)
         return;
+#endif
 
     /* XXX: cute (i, j) iterating hack */
     for(i = 0, j = 0; i < opts->maxchild; i += (j == 2), j = (j + 1) % 3)
@@ -972,8 +961,10 @@ static void read_children(struct opts *opts)
         if(opts->child[i].status != STATUS_RUNNING)
             continue;
 
+#if !defined _WIN32
         if(!ZZUF_FD_ISSET(opts->child[i].fd[j], &fdset))
             continue;
+#endif
 
         ret = read(opts->child[i].fd[j], buf, BUFSIZ - 1);
         if(ret > 0)
@@ -987,6 +978,7 @@ static void read_children(struct opts *opts)
             else if(!opts->quiet || j == 0)
                 write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);
         }
+#if !defined _WIN32
         else if(ret == 0)
         {
             /* End of file reached */
@@ -998,6 +990,7 @@ static void read_children(struct opts *opts)
                 && opts->child[i].fd[2] == -1)
                 opts->child[i].status = STATUS_EOF;
         }
+#endif
     }
 }
 
