@@ -46,10 +46,10 @@ static void mydebug(char const *format, va_list args);
     { \
         char buf[128], *b = buf + 127; \
         if (i <= 0) \
-            append((i = -i) ? "-" : "0", 1); /* XXX: hack here */ \
-        if (i <= 0) \
+            append((i = 1 + ~i) ? "-" : "0", 1); /* XXX: hack here */ \
+        if (i < 0) \
         { \
-            i = -(i + base); /* XXX: special case for INT_MIN */ \
+            i = 1 + ~(i + base); /* XXX: special case for INT_MIN */ \
             *b-- = hex2char[i % base]; \
             i = i / base + 1; \
         } \
@@ -209,6 +209,33 @@ static void mydebug(char const *format, va_list args)
                 while(s[l])
                     l++;
                 append(s, l);
+            }
+        }
+        else if(f[0] == 'S')
+        {
+            uint16_t *s = va_arg(args, uint16_t *);
+            if(!s)
+                append("(nil)", 5);
+            else
+            {
+                int l = 0;
+                while(s[l])
+                {
+                    if (s[l] < 128)
+                    {
+                        char tmp = (char)s[l];
+                        append(&tmp, 1);
+                    }
+                    else
+                    {
+                        append("\\u", 2);
+                        append(hex2char + ((s[l] & 0xf000) >> 12), 1);
+                        append(hex2char + ((s[l] & 0xf00) >> 8), 1);
+                        append(hex2char + ((s[l] & 0xf0) >> 4), 1);
+                        append(hex2char + (s[l] & 0xf), 1);
+                    }
+                    l++;
+                }
             }
         }
         else if(f[0] == '0' && f[1] == '2' && f[2] == 'x')

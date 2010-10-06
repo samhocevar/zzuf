@@ -85,7 +85,7 @@ HANDLE __stdcall NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
     ret = ORIG(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode,
                             lpSecurityAttributes, dwCreationDisposition,
                             dwFlagsAndAttributes, hTemplateFile);
-    debug("CreateFileW(\"%s\", 0x%x, 0x%x, ..., 0x%x, 0x%x, ...) = [%i]",
+    debug("CreateFileW(\"%S\", 0x%x, 0x%x, ..., 0x%x, 0x%x, ...) = [%i]",
           lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
           dwFlagsAndAttributes, (int)ret);
     return ret;
