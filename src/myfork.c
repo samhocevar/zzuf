@@ -211,7 +211,11 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 #endif
 
     /* Set environment variables */
-    sprintf(buf, "%i", DEBUG_FILENO);
+#if defined _WIN32
+    sprintf(buf, "%i", _get_osfhandle(pipes[0][1]));
+#else
+    sprintf(buf, "%i", pipes[0][1]);
+#endif
     setenv("ZZUF_DEBUGFD", buf, 1);
     sprintf(buf, "%i", opts->seed);
     setenv("ZZUF_SEED", buf, 1);
