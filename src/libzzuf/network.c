@@ -47,8 +47,8 @@ static unsigned int *deny = NULL;
 static unsigned int static_deny[512];
 
 /* Network port cherry picking */
-static int *ports = NULL;
-static int static_ports[512];
+static int64_t *ports = NULL;
+static int64_t static_ports[512];
 #endif
 
 void _zz_network_init(void)
