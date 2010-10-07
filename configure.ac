@@ -11,6 +11,18 @@ AM_PROG_CC_C_O
 AC_PROG_CPP
 AC_PROG_LIBTOOL
 
+dnl AC_PROG_EGREP only exists in autoconf 2.54+, so we use AC_EGREP_CPP right
+dnl now otherwise it might be set in an obscure if statement. Same thing for
+dnl PKG_PROG_PKG_CONFIG which needs to be called first.
+AC_EGREP_CPP(yes, foo)
+PKG_PROG_PKG_CONFIG()
+
+dnl Don't let pkg-config fuck our cross-compilation environment
+m4_pattern_allow([^PKG_CONFIG_LIBDIR$])
+if test "$build" != "$host" -a "${PKG_CONFIG_LIBDIR}" = ""; then
+  export PKG_CONFIG_LIBDIR=/dev/null
+fi
+
 AC_C_INLINE
 AC_C_FUNC
 
@@ -22,6 +34,11 @@ case "$shrext_cmds" in
 esac
 AC_MSG_RESULT($SONAME)
 AC_DEFINE_UNQUOTED(SONAME, "$SONAME", [Define to the libzzuf full name])
+
+PKG_CHECK_MODULES(CACA, caca >= 0.99.beta18,
+ [:],
+ [AC_MSG_RESULT(no)
+  AC_MSG_ERROR([you need libcaca version 0.99.beta18 or later])])
 
 # Optimizations
 AC_TRY_CFLAGS(-g -O2, CFLAGS="${CFLAGS} -g -O2")
@@ -45,7 +62,7 @@ esac
 AC_SUBST(WINSOCK2_LIBS)
 AC_SUBST(DLL_LDFLAGS)
 
-AC_CHECK_HEADERS(windows.h winsock2.h io.h process.h unistd.h inttypes.h stdint.h getopt.h libc.h malloc.h dlfcn.h regex.h sys/cdefs.h sys/socket.h netinet/in.h arpa/inet.h sys/uio.h aio.h sys/mman.h sys/wait.h sys/resource.h sys/time.h endian.h mach/task.h)
+AC_CHECK_HEADERS(windows.h winsock2.h io.h process.h unistd.h inttypes.h stdint.h libc.h malloc.h dlfcn.h regex.h sys/cdefs.h sys/socket.h netinet/in.h arpa/inet.h sys/uio.h aio.h sys/mman.h sys/wait.h sys/resource.h sys/time.h endian.h mach/task.h)
 
 AC_CHECK_FUNCS(setenv waitpid setrlimit gettimeofday fork kill pipe _pipe)
 AC_CHECK_FUNCS(dup dup2 ftello fseeko _IO_getc getline getdelim fgetln map_fd memalign posix_memalign aio_read accept bind connect socket readv pread recv recvfrom recvmsg mmap valloc sigaction getpagesize)
@@ -160,18 +177,6 @@ AC_TRY_COMPILE([],
   ac_v_attribute_printf="__attribute__((__format__(__printf__, x, y)))"],
  [AC_MSG_RESULT(no)])
 AC_DEFINE_UNQUOTED(ATTRIBUTE_PRINTF(x,y), $ac_v_attribute_printf, [Define to the __printf__ attribute if present])
-
-ac_cv_have_getopt_long="no"
-AC_CHECK_FUNCS(getopt_long,
- [ac_cv_have_getopt_long="yes"],
- [AC_CHECK_LIB(gnugetopt, getopt_long,
-   [ac_cv_have_getopt_long="yes"
-    GETOPT_LIBS="${GETOPT_LIBS} -lgnugetopt"])])
-if test "$ac_cv_have_getopt_long" != "no"; then
-  AC_DEFINE(HAVE_GETOPT_LONG, 1, Define to 1 if you have the `getopt_long' function.)
-fi
-AM_CONDITIONAL(NEED_GETOPT_LONG, test "$ac_cv_have_getopt_long" = "no")
-AC_SUBST(GETOPT_LIBS)
 
 AC_CHECK_LIB(m, log, [MATH_LIBS="-lm"])
 AC_SUBST(MATH_LIBS)

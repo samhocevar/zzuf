@@ -100,7 +100,6 @@
     <ClInclude Include="..\src\common\ranges.h" />
     <ClInclude Include="..\src\md5.h" />
     <ClInclude Include="..\src\myfork.h" />
-    <ClInclude Include="..\src\mygetopt.h" />
     <ClInclude Include="..\src\opts.h" />
     <ClInclude Include="..\src\timer.h" />
     <ClInclude Include="config.h" />
@@ -112,7 +111,6 @@
     <ClCompile Include="..\src\common\ranges.c" />
     <ClCompile Include="..\src\md5.c" />
     <ClCompile Include="..\src\myfork.c" />
-    <ClCompile Include="..\src\mygetopt.c" />
     <ClCompile Include="..\src\opts.c" />
     <ClCompile Include="..\src\timer.c" />
     <ClCompile Include="..\src\zzuf.c" />

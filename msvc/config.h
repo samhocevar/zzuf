@@ -49,8 +49,6 @@
 /* #undef HAVE_GETC_UNLOCKED */
 /* #undef HAVE_GETDELIM */
 /* #undef HAVE_GETLINE */
-/* #undef HAVE_GETOPT_H */
-/* #undef HAVE_GETOPT_LONG */
 #define HAVE_GETPAGESIZE 1
 /* #undef HAVE_GETTIMEOFDAY */
 /* #undef HAVE_GLIBC_FILE */

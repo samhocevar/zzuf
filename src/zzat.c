@@ -50,18 +50,7 @@ typedef int ssize_t;
 #include <stdio.h>
 #include <string.h>
 
-#if !defined HAVE_GETOPT_LONG
-#   include "mygetopt.h"
-#elif defined HAVE_GETOPT_H
-#   include <getopt.h>
-#endif
-
-#if defined HAVE_GETOPT_LONG
-#   define mygetopt getopt_long
-#   define myoptind optind
-#   define myoptarg optarg
-#   define myoption option
-#endif
+#include <caca.h>
 
 static int run(char const *sequence, char const *file);
 static void output(char const *buf, size_t len);
@@ -99,7 +88,7 @@ int main(int argc, char *argv[])
 #define OPTSTR "+AbdeEnr:stTvx:lhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
-        static struct myoption long_options[] =
+        static struct caca_option long_options[] =
         {
             { "show-all",         0, NULL, 'A' },
             { "number-nonblank",  0, NULL, 'b' },
@@ -116,7 +105,7 @@ int main(int argc, char *argv[])
             { "version",          0, NULL, 'V' },
             { NULL,               0, NULL,  0  }
         };
-        int c = mygetopt(argc, argv, OPTSTR, long_options, &option_index);
+        int c = caca_getopt(argc, argv, OPTSTR, long_options, &option_index);
 
         if (c == -1)
             break;
@@ -142,7 +131,7 @@ int main(int argc, char *argv[])
             number_lines = 1;
             break;
         case 'r': /* --repeat */
-            repeat = atoi(myoptarg);
+            repeat = atoi(caca_optarg);
             break;
         case 's': /* --squeeze-blank */
             squeeze_lines = 1;
@@ -157,9 +146,9 @@ int main(int argc, char *argv[])
             escape_tabs = 1;
             break;
         case 'x': /* --execute */
-            if (myoptarg[0] == '=')
-                myoptarg++;
-            sequence = myoptarg;
+            if (caca_optarg[0] == '=')
+                caca_optarg++;
+            sequence = caca_optarg;
             break;
         case 'l': /* --list */
             syntax();
@@ -177,14 +166,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (myoptind >= argc)
+    if (caca_optind >= argc)
     {
         fprintf(stderr, "E: zzat: too few arguments\n");
         return EXIT_FAILURE;
     }
 
     while (repeat-- > 0)
-        for (i = myoptind; i < argc; i++)
+        for (i = caca_optind; i < argc; i++)
         {
             int ret = run(sequence, argv[i]);
             if (ret)

@@ -23,21 +23,18 @@ COMMON = \
     common/fd.c common/fd.h \
     common/fuzz.c common/fuzz.h
 
-if NEED_GETOPT_LONG
-GETOPT = mygetopt.c mygetopt.h
-endif
-
-zzuf_SOURCES = $(ZZUF) $(COMMON) $(GETOPT)
+zzuf_SOURCES = $(ZZUF) $(COMMON)
 zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\" -I$(srcdir)/common
-zzuf_LDFLAGS = $(MATH_LIBS) $(WINSOCK2_LIBS)
+zzuf_LDFLAGS = $(CACA_LIBS) $(MATH_LIBS) $(WINSOCK2_LIBS)
 zzuf_DEPENDENCIES = libzzuf.la
 
-zzat_SOURCES = $(ZZAT) $(GETOPT)
+zzat_SOURCES = $(ZZAT)
+zzat_LDFLAGS = $(CACA_LIBS)
 
 libzzuf_la_SOURCES = $(LIBZZUF) $(COMMON)
 libzzuf_la_CFLAGS = -DLIBZZUF -I$(srcdir)/libzzuf -I$(srcdir)/common
 libzzuf_la_LDFLAGS = -avoid-version -no-undefined $(DLL_LDFLAGS)
-libzzuf_la_LIBADD = $(GETOPT_LIBS) $(DL_LIBS) $(MATH_LIBS) $(WINSOCK2_LIBS)
+libzzuf_la_LIBADD = $(DL_LIBS) $(MATH_LIBS) $(WINSOCK2_LIBS)
 
 echo-sources: ; echo $(SOURCES)
 
