@@ -150,7 +150,9 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 #   if defined __APPLE__
 #       define EXTRAINFO ""
 #       define PRELOAD "DYLD_INSERT_LIBRARIES"
-    setenv("DYLD_FORCE_FLAT_NAMESPACE", "1", 1);
+    /* Only enforce flat namespace in preload mode */
+    if (opts->opmode == OPMODE_PRELOAD)
+        setenv("DYLD_FORCE_FLAT_NAMESPACE", "1", 1);
 #   elif defined __osf__
 #       define EXTRAINFO ":DEFAULT"
 #       define PRELOAD "_RLD_LIST"
