@@ -20,8 +20,6 @@
 
 #include "config.h"
 
-/* Need this for RTLD_NEXT */
-#define _GNU_SOURCE
 /* Use this to get lseek64() on glibc systems */
 #define _LARGEFILE64_SOURCE
 /* Use this to get off64_t() on Solaris systems */

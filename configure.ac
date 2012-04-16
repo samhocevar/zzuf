@@ -178,6 +178,9 @@ AC_TRY_COMPILE([],
  [AC_MSG_RESULT(no)])
 AC_DEFINE_UNQUOTED(ATTRIBUTE_PRINTF(x,y), $ac_v_attribute_printf, [Define to the __printf__ attribute if present])
 
+AC_CHECK_LIB(dl, dladdr,
+ [AC_DEFINE(HAVE_DLADDR, 1, Define to 1 if you have the `dladdr' function.)])
+
 AC_CHECK_LIB(m, log, [MATH_LIBS="-lm"])
 AC_SUBST(MATH_LIBS)
 AC_CHECK_LIB(dl, dlopen, [DL_LIBS="-ldl"])

@@ -16,7 +16,7 @@
 
 #include "config.h"
 
-/* Need this for RTLD_NEXT */
+/* Need this for off64_t */
 #define _GNU_SOURCE
 /* Need this for MAP_ANON and valloc() on FreeBSD (together with cdefs.h) */
 #define _BSD_SOURCE

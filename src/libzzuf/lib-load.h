@@ -29,7 +29,8 @@
                  * otherwise we may miss a lot of stuff if we wait for \
                  * the linker to load us fully. */ \
                 _zz_init(); \
-                ORIG(x) = dlsym(RTLD_NEXT, STR(x)); \
+                extern void *_zz_dl_lib; \
+                ORIG(x) = dlsym(_zz_dl_lib, STR(x)); \
             } \
             if(!ORIG(x)) \
                 abort(); \

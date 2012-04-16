@@ -28,6 +28,7 @@
 #define HAVE_CONNECT 1
 #define HAVE_CREATEFILEA 1
 #define HAVE_CREATEFILEW 1
+/* #undef HAVE_DLADDR */
 /* #undef HAVE_DLFCN_H */
 #define HAVE_DUP 1
 #define HAVE_DUP2 1

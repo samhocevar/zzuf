@@ -16,10 +16,17 @@
 
 #include "config.h"
 
+/* Need this for RTLD_NEXT */
+#define _GNU_SOURCE
+
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
 #elif defined HAVE_INTTYPES_H
 #   include <inttypes.h>
+#endif
+
+#ifdef HAVE_DLFCN_H
+#   include <dlfcn.h>
 #endif
 
 #if defined HAVE_WINDOWS_H
@@ -34,6 +41,10 @@
 
 #include "sys.h"
 #include "lib-load.h"
+
+#if defined HAVE_DLFCN_H
+void *_zz_dl_lib = RTLD_NEXT;
+#endif
 
 #if defined HAVE_WINDOWS_H
 static void insert_funcs(void *);
@@ -77,6 +88,20 @@ void _zz_sys_init(void)
         insert_funcs(entry.hModule);
     }
     CloseHandle(list);
+#elif defined HAVE_DLFCN_H
+    /* If glibc is recent enough, we use dladdr() to get its address. This
+     * way we are sure that the symbols we load are the most recent version,
+     * or we may get weird problems. We choose fileno as a random symbol to
+     * get, because we know we don't divert it. */
+#   if HAVE_DLADDR
+    Dl_info di;
+    if (dladdr(&fileno, &di) != 0)
+    {
+        void *lib = dlopen(di.dli_fname, RTLD_NOW);
+        if (lib)
+            _zz_dl_lib = lib;
+    }
+#   endif
 #else
     /* Nothing to do on our platform */
 #endif
