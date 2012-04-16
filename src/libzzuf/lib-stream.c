@@ -516,7 +516,7 @@ void NEW(rewind)(FILE *stream)
     { \
         int64_t oldpos, newpos; \
         uint8_t *b = ptr;\
-        int oldoff, oldcnt; \
+        int oldcnt; \
         int fd; \
         LOADSYM(myfread); \
         fd = fileno(stream); \
@@ -526,7 +526,6 @@ void NEW(rewind)(FILE *stream)
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         oldpos = ZZ_FTELL(stream); \
-        oldoff = get_stream_off(stream); \
         oldcnt = get_stream_cnt(stream); \
         _zz_lock(fd); \
         ret = ORIG(myfread) myargs; \
@@ -607,7 +606,7 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
 #define ZZ_FGETC(myfgetc, s, arg) \
     do { \
         int64_t oldpos, newpos; \
-        int oldoff, oldcnt; \
+        int oldcnt; \
         int fd; \
         LOADSYM(myfgetc); \
         fd = fileno(s); \
@@ -616,7 +615,6 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
             return ORIG(myfgetc)(arg); \
         debug_stream("before", s); \
         oldpos = ZZ_FTELL(s); \
-        oldoff = get_stream_off(s); \
         oldcnt = get_stream_cnt(s); \
         _zz_lock(fd); \
         ret = ORIG(myfgetc)(arg); \
@@ -703,7 +701,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
     do \
     { \
         int64_t oldpos, newpos; \
-        int oldoff, oldcnt; \
+        int oldcnt; \
         int fd; \
         ret = s; \
         LOADSYM(myfgets); \
@@ -714,7 +712,6 @@ int NEW(fgetc_unlocked)(FILE *stream)
             return ORIG(myfgets) myargs; \
         debug_stream("before", stream); \
         oldpos = ZZ_FTELL(stream); \
-        oldoff = get_stream_off(stream); \
         oldcnt = get_stream_cnt(stream); \
         newpos = oldpos; \
         if(size <= 0) \
@@ -747,7 +744,6 @@ int NEW(fgetc_unlocked)(FILE *stream)
                                  get_stream_cnt(stream) + get_stream_off(stream)); \
                 } \
                 oldpos = newpos; \
-                oldoff = get_stream_off(stream); \
                 oldcnt = get_stream_cnt(stream); \
                 if(chr == EOF) \
                 { \
@@ -868,7 +864,7 @@ int NEW(fclose)(FILE *fp)
         int64_t oldpos, newpos; \
         char *line; \
         ssize_t done, size; \
-        int oldoff, oldcnt; \
+        int oldcnt; \
         int fd, finished = 0; \
         LOADSYM(mygetdelim); \
         LOADSYM(getdelim); \
@@ -879,7 +875,6 @@ int NEW(fclose)(FILE *fp)
             return ORIG(getdelim)(lineptr, n, delim, stream); \
         debug_stream("before", stream); \
         oldpos = ZZ_FTELL(stream); \
-        oldoff = get_stream_off(stream); \
         oldcnt = get_stream_cnt(stream); \
         newpos = oldpos; \
         line = *lineptr; \
@@ -917,7 +912,6 @@ int NEW(fclose)(FILE *fp)
                              get_stream_cnt(stream) + get_stream_off(stream)); \
             } \
             oldpos = newpos; \
-            oldoff = get_stream_off(stream); \
             oldcnt = get_stream_cnt(stream); \
             if(chr == EOF) \
             { \
