@@ -44,7 +44,7 @@ static HANDLE (__stdcall *ORIG(CreateFileA))(LPCTSTR, DWORD, DWORD,
                                              LPSECURITY_ATTRIBUTES,
                                              DWORD, DWORD, HANDLE);
 #endif
-#if defined HAVE_CREATEFILEA
+#if defined HAVE_CREATEFILEW
 static HANDLE (__stdcall *ORIG(CreateFileW))(LPCWSTR, DWORD, DWORD,
                                              LPSECURITY_ATTRIBUTES,
                                              DWORD, DWORD, HANDLE);

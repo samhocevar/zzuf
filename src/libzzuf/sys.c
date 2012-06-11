@@ -77,6 +77,7 @@ void _zz_sys_init(void)
     void *list;
     int k;
 
+    /* Enumerate all loaded objects and overwrite some functions */
     VirtualQuery(_zz_sys_init, &mbi, sizeof(mbi));
     list = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
     entry.dwSize = sizeof(entry);
@@ -85,6 +86,7 @@ void _zz_sys_init(void)
         if(entry.hModule == mbi.AllocationBase)
             continue; /* Don't replace our own functions */
 
+        fprintf(stderr, "diverting functions from %s\n", entry.szModule);
         insert_funcs(entry.hModule);
     }
     CloseHandle(list);
@@ -139,6 +141,9 @@ static void insert_funcs(void *module)
             diversion = NULL;
             continue;
         }
+
+        fprintf(stderr, "diverting method %s (from %s)\n",
+                        diversion->name, diversion->lib);
 
         lib = GetModuleHandleA(diversion->lib);
         *diversion->old = (void *)GetProcAddress(lib, diversion->name);

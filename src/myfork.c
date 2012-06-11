@@ -300,7 +300,17 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
     free(cmdline);
 
     if (!ret)
+    {
+        LPTSTR buf;
+        DWORD err = GetLastError();
+        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                      FORMAT_MESSAGE_FROM_SYSTEM |
+                      FORMAT_MESSAGE_IGNORE_INSERTS,
+                      NULL, err, 0, (LPTSTR)&buf, 0, NULL);
+        fprintf(stderr, "error launching `%s': %s\n", child->newargv[0], buf);
+        LocalFree(buf);
         return -1;
+    }
 
     /* Insert the replacement code */
     ret = dll_inject(&pinfo, SONAME);

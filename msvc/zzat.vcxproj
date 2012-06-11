@@ -63,7 +63,7 @@
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;..\..\libcaca\win32\Debug\Win32\libcaca.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)zzat.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)zzat.pdb</ProgramDatabaseFile>
@@ -83,7 +83,7 @@
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;..\..\libcaca\win32\Release\Win32\libcaca.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)zzat.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
