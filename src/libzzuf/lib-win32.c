@@ -40,7 +40,7 @@
 
 /* Kernel functions that we divert */
 #if defined HAVE_CREATEFILEA
-static HANDLE (__stdcall *ORIG(CreateFileA))(LPCTSTR, DWORD, DWORD,
+static HANDLE (__stdcall *ORIG(CreateFileA))(LPCSTR, DWORD, DWORD,
                                              LPSECURITY_ATTRIBUTES,
                                              DWORD, DWORD, HANDLE);
 #endif
@@ -66,12 +66,13 @@ static BOOL (__stdcall *ORIG(CloseHandle))(HANDLE);
  */
 
 #if defined HAVE_CREATEFILEA
-HANDLE __stdcall NEW(CreateFileA)(LPCTSTR lpFileName, DWORD dwDesiredAccess,
+HANDLE __stdcall NEW(CreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess,
            DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
            DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
            HANDLE hTemplateFile)
 {
     HANDLE ret;
+
     ret = ORIG(CreateFileA)(lpFileName, dwDesiredAccess, dwShareMode,
                             lpSecurityAttributes, dwCreationDisposition,
                             dwFlagsAndAttributes, hTemplateFile);

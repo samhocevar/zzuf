@@ -77,7 +77,7 @@ static int run_process(struct child *child, struct opts *, int[][2]);
 #if defined HAVE_WINDOWS_H
 static void rep32(uint8_t *buf, void *addr);
 static int dll_inject(PROCESS_INFORMATION *, char const *);
-static intptr_t get_proc_address(void *, DWORD, char const *);
+static void *get_proc_address(void *, DWORD, char const *);
 #endif
 
 int myfork(struct child *child, struct opts *opts)
@@ -304,7 +304,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
         LPTSTR buf;
         DWORD err = GetLastError();
         FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                      FORMAT_MESSAGE_FROM_SYSTEM |
+                      FORMAT_MESSAGE_FROM_SYSTEM     |
                       FORMAT_MESSAGE_IGNORE_INSERTS,
                       NULL, err, 0, (LPTSTR)&buf, 0, NULL);
         fprintf(stderr, "error launching `%s': %s\n", child->newargv[0], buf);
@@ -332,168 +332,106 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 }
 
 #if defined HAVE_WINDOWS_H
-static void rep32(uint8_t *buf, void *addr)
-{
-    while(buf++)
-        if (memcmp(buf, "____", 4) == 0)
-        {
-            memcpy(buf, &addr, 4);
-            return;
-        }
-}
 
 static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
 {
-    static uint8_t const loader[] =
-        /* Load the injected DLL into memory */
-        "\xb8____"       /* mov %eax, <library_name_address> */
-        "\x50"           /* push %eax */
-        "\xb8____"       /* mov %eax, <LoadLibraryA> */
-        "\xff\xd0"       /* call %eax */
-        /* Restore the clobbered entry point code using our backup */
-        "\xb8\0\0\0\0"   /* mov %eax,0 */
-        "\x50"           /* push %eax */
-        "\xb8____"       /* mov %eax, <jumper_length> */
-        "\x50"           /* push %eax */
-        "\xb8____"       /* mov %eax, <backuped_entry_point_address> */
-        "\x50"           /* push %eax */
-        "\xb8____"       /* mov %eax, <original_entry_point_address> */
-        "\x50"           /* push %eax */
-        "\xb8____"       /* mov %eax, <GetCurrentProcess> */
-        "\xff\xd0"       /* call %eax */
-        "\x50"           /* push %eax */
-        "\xb8____"       /* mov %eax, <WriteProcessMemory> */
-        "\xff\xd0"       /* call %eax */
-        /* Jump to the original entry point */
-        "\xb8____"       /* mov %eax, <original_entry_point_address> */
-        "\xff\xe0";      /* jmp %eax */
+    int res = -1;
 
-    static uint8_t const waiter[] =
-        "\xeb\xfe";      /* jmp <current> */
-
-    static uint8_t const jumper[] =
-        /* Jump to the injected loader */
-        "\xb8____"       /* mov eax, <loader_address> */
-        "\xff\xe0";      /* jmp eax */
-
-    CONTEXT ctx;
-    void *process = pinfo->hProcess;
-    void *thread = pinfo->hThread;
-    void *epaddr;
-    DWORD pid = pinfo->dwProcessId;
-
-    /* code:
-     * +---------------+--------------------+--------------+-------------+
-     * |     loader    | entry point backup | library name |   jumper    |
-     * |  len(loader)  |    len(jumper)     |   len(lib)   | len(jumper) |
-     * +---------------+--------------------+--------------+-------------+ */
-    uint8_t code[1024];
-
-    uint8_t *loaderaddr;
-    size_t liblen, loaderlen, waiterlen, jumperlen;
-    DWORD tmp;
-
-    liblen = strlen(lib) + 1;
-    loaderlen = sizeof(loader) - 1;
-    waiterlen = sizeof(waiter) - 1;
-    jumperlen = sizeof(jumper) - 1;
-    if (loaderlen + jumperlen + liblen > 1024)
-        return -1;
-
-    /* Allocate memory in the child for our injected code */
-    loaderaddr = VirtualAllocEx(process, NULL, loaderlen + jumperlen + liblen,
-                                MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    if(!loaderaddr)
-        return -1;
-
-    /* Create the first shellcode (jumper).
-     *
-     * The jumper's job is simply to jump at the second shellcode's location.
-     * It is written at the original entry point's location, which will in
-     * turn be restored by the second shellcode.
-     */
-    memcpy(code + loaderlen + jumperlen + liblen, jumper, jumperlen);
-    rep32(code + loaderlen + jumperlen + liblen, loaderaddr);
-
-    /* Create the second shellcode (loader, backuped entry point, and library
-     * name).
-     *
-     * The loader's job is to load the library by calling LoadLibraryA(),
-     * restore the original entry point using the backup copy, and jump
-     * back to the original entry point as if the process had just started.
-     *
-     * The second shellcode is written at a freshly allocated memory location.
-     */
-    memcpy(code, loader, loaderlen);
-    memcpy(code + loaderlen + jumperlen, lib, liblen);
-
-    /* Find the entry point address. It's simply in EAX. */
-    ctx.ContextFlags = CONTEXT_FULL;
-    GetThreadContext(thread, &ctx);
-    epaddr = (void *)(uintptr_t)ctx.Eax;
-
-    /* Backup the old entry point code */
-    ReadProcessMemory(process, epaddr, code + loaderlen, jumperlen, &tmp);
-    if(tmp != jumperlen)
-        return -1;
-
-    /* Replace the entry point code with a short jump to self, then resume
-     * the thread. This is necessary for CreateToolhelp32Snapshot() to
-     * work. */
-    WriteProcessMemory(process, epaddr, waiter, waiterlen, &tmp);
-    if(tmp != waiterlen)
-        return -1;
-    FlushInstructionCache(process, epaddr, waiterlen);
-    ResumeThread(thread);
-
-    /* Wait until the entry point is reached */
-    for (tmp = 0; tmp < 100; tmp++)
+    /* This payload allows us to load arbitrary module located at the end of this buffer */
+    static uint8_t const ldr[] =
     {
-        CONTEXT ctx;
-        ctx.ContextFlags = CONTEXT_FULL;
-        GetThreadContext(thread, &ctx);
-        if ((uintptr_t)ctx.Eip == (uintptr_t)epaddr)
-            break;
+        "\x60"                  /* pushad               */
+        "\xEB\x0E"              /* jmp short 0x11       */
+        "\xB8____"              /* mov eax,LoadLibraryA */
+        "\xFF\xD0"              /* call eax             */
+        "\x85\xC0"              /* test eax,eax         */
+        "\x75\x01"              /* jnz 0xf              */
+        "\xCC"                  /* int3                 */
+        "\x61"                  /* popad                */
+        "\xC3"                  /* ret                  */
+        "\xE8\xED\xFF\xFF\xFF"  /* call dword 0x3       */
+    };
+
+    /* We use this code to make the targeted process waits for us */
+    static uint8_t const wait[] = "\xeb\xfe"; /* jmp $-1 */
+    size_t wait_len             = sizeof(wait) - 1;
+    uint8_t orig_data[2];
+
+    void *process   = pinfo->hProcess;
+    void *thread    = pinfo->hThread;
+    DWORD pid       = pinfo->dwProcessId;
+    void *rldlib    = NULL;
+    DWORD written   = 0;
+    DWORD old_prot  = 0;
+
+    /* Payload */
+    void *rpl       = NULL;
+    uint8_t *pl     = NULL;
+    size_t pl_len   = sizeof(ldr) - 1 + strlen(lib) + 1;
+
+    CONTEXT ctxt;
+    DWORD oep; /* Original Entry Point */
+
+    /* Use the main thread to inject our library */
+    ctxt.ContextFlags = CONTEXT_FULL;
+    if (!GetThreadContext(thread, &ctxt)) goto _return;
+
+    /* Make the target program waits when it reachs the original entry point, because we can't do many thing from the windows loader */
+    oep = ctxt.Eax;
+    if (!ReadProcessMemory(process, (LPVOID)oep, orig_data, sizeof(orig_data), &written) || written != sizeof(orig_data)) goto _return; /* save original opcode */
+    if (!WriteProcessMemory(process, (LPVOID)oep, wait, wait_len , &written) || written != wait_len) goto _return;                      /* write jmp short $-1 */
+    if (!FlushInstructionCache(process, (LPVOID)oep, wait_len)) goto _return;
+    if (ResumeThread(thread) == (DWORD)-1) goto _return;
+
+    /* Stop when the program reachs the oep */
+    while (oep != ctxt.Eip)
+    {
+        if (!GetThreadContext(thread, &ctxt)) goto _return;
         Sleep(10);
     }
-    SuspendThread(thread);
-    if (tmp == 100)
-        return -1;
 
-    /* Remotely parse the target process's module list to get the addresses
-     * of the functions we need. This can only be done because we advanced
-     * the target's execution to the entry point. */
-    rep32(code, loaderaddr + loaderlen + jumperlen);
-    rep32(code, (void *)get_proc_address(process, pid, "LoadLibraryA"));
-    rep32(code, (void *)(uintptr_t)jumperlen);
-    rep32(code, loaderaddr + loaderlen);
-    rep32(code, epaddr);
-    rep32(code, (void *)get_proc_address(process, pid, "GetCurrentProcess"));
-    rep32(code, (void *)get_proc_address(process, pid, "WriteProcessMemory"));
-    rep32(code, epaddr);
+    if (SuspendThread(thread) == (DWORD)-1) goto _return;
 
-    /* Write our shellcodes into the target process */
-    WriteProcessMemory(process, epaddr, code + loaderlen + jumperlen + liblen,
-                       jumperlen, &tmp);
-    if(tmp != jumperlen)
-        return -1;
-    FlushInstructionCache(process, epaddr, waiterlen);
+    /* Resolve LoadLibraryA from the target process memory context */
+    rldlib = get_proc_address(process, pid, "LoadLibraryA");
 
-    WriteProcessMemory(process, loaderaddr, code,
-                       loaderlen + jumperlen + liblen, &tmp);
-    if(tmp != loaderlen + jumperlen + liblen)
-        return -1;
+    if ((rpl = VirtualAllocEx(process, NULL, pl_len, MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == NULL) goto _return;
 
-    return 0;
+    /* Emulate a call to the ldr code, thus the ret instruction from ldr will get eip back to the original entry point */
+    ctxt.Esp -= 4;
+    if (!WriteProcessMemory(process, (LPVOID)ctxt.Esp, &oep, sizeof(oep), &written) || written != sizeof(oep)) goto _return;
+    ctxt.Eip = (DWORD)rpl;
+    if (!SetThreadContext(thread, &ctxt)) goto _return;
+
+    /* Forge the payload */
+    if ((pl = (uint8_t *)malloc(pl_len)) == NULL) goto _return;
+    memcpy(pl, ldr, sizeof(ldr) - 1);
+    memcpy(pl + 4, &rldlib, sizeof(rldlib));        /* Write the address of LoadLibraryA         */
+    strcpy((char *)(pl + sizeof(ldr) - 1), lib);    /* Write the first parameter of LoadLibraryA */
+
+    if (!WriteProcessMemory(process, rpl, pl, pl_len, &written) || written != pl_len) goto _return;
+
+    /* Restore original opcode */
+    if (!WriteProcessMemory(process, (LPVOID)oep, orig_data, sizeof(orig_data), &written) || written != sizeof(orig_data)) goto _return;
+
+    if (!FlushInstructionCache(process, rpl, pl_len)) goto _return;
+    if (!FlushInstructionCache(process, (LPVOID)oep, sizeof(orig_data))) goto _return;
+
+    res = 0;
+_return:
+    if (pl != NULL) free(pl);
+
+    /* We must not free remote allocated memory since they will be used after the process will be resumed */
+    return res;
 }
 
-static intptr_t get_proc_address(void *process, DWORD pid, const char *func)
+static void *get_proc_address(void *process, DWORD pid, const char *func)
 {
     char buf[1024];
     size_t buflen = strlen(func) + 1;
 
     MODULEENTRY32 entry;
-    intptr_t ret = 0;
+    void *ret = 0;
     DWORD tmp;
     void *list;
     int i, k;
@@ -507,7 +445,7 @@ static intptr_t get_proc_address(void *process, DWORD pid, const char *func)
         IMAGE_EXPORT_DIRECTORY expdir;
 
         uint32_t exportaddr;
-        uint8_t const *base = entry.modBaseAddr;
+        uint8_t *base = entry.modBaseAddr;
 
         if (strcmp("kernel32.dll", entry.szModule))
             continue;
@@ -538,12 +476,12 @@ static intptr_t get_proc_address(void *process, DWORD pid, const char *func)
             /* If we found a function with this name, return its address */
             ReadProcessMemory(process, base + expdir.AddressOfNameOrdinals
                                             + i * sizeof(WORD),
-                                &j, sizeof(j), &tmp);
+                              &j, sizeof(j), &tmp);
             ReadProcessMemory(process, base + expdir.AddressOfFunctions
                                             + j * sizeof(DWORD),
-                                &funcaddr, sizeof(funcaddr), &tmp);
+                              &funcaddr, sizeof(funcaddr), &tmp);
 
-            ret = (intptr_t)base + funcaddr;
+            ret = base + funcaddr;
             goto _finished;
         }
     }

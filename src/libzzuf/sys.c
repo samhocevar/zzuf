@@ -154,7 +154,7 @@ static void insert_funcs(void *module)
             if(lstrcmpiA(name, diversion->lib) != 0)
                 continue;
 
-            thunk = (thunk_t)((char *)module + import->FirstThunk);
+            thunk = (thunk_t)((char *)module + import[j].FirstThunk);
             for(i = 0; thunk[i].u1.Function; i++)
             {
                 void **func = (void **)&thunk[i].u1.Function;
