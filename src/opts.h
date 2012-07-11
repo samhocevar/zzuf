@@ -14,6 +14,10 @@
  *  opts.h: configuration handling
  */
 
+#ifdef _WIN32
+#   include <Windows.h>
+#endif
+
 struct opts
 {
     enum opmode
@@ -54,6 +58,9 @@ struct opts
         } status;
 
         pid_t pid;
+#ifdef _WIN32
+        HANDLE process_handle;
+#endif
         int fd[3]; /* 0 is debug, 1 is stderr, 2 is stdout */
         int bytes, seed;
         double ratio;

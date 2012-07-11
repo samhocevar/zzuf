@@ -114,6 +114,8 @@ static void usage(void);
 
 #if defined _WIN32
 #   include <Windows.h>
+#   include <fcntl.h> /* _O_RDWR */
+#   include <io.h> /* _open */
 static CRITICAL_SECTION _zz_pipe_cs;
 #endif
 
@@ -713,10 +715,12 @@ static void spawn_children(struct opts *opts)
             if (!fpin)
                 continue;
 
-            sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, (int)getpid());
 #ifdef _WIN32
-            fdout = mktemp(tmpname);
+#
+            sprintf(tmpname, "%s/zzuf.$i.XXXXXX", tmpdir, GetCurrentProcessId());
+            fdout = _open(mktemp(tmpname), _O_RDWR, 0600);
 #else
+            sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, (int)getpid());
             fdout = mkstemp(tmpname);
 #endif
             if (fdout < 0)
@@ -889,6 +893,29 @@ static void clean_children(struct opts *opts)
             else
                 fprintf(stderr, "exit %i\n", WEXITSTATUS(status));
         }
+#elif defined _WIN32
+        {
+            DWORD exit_code;
+            if (GetExitCodeProcess(opts->child[i].process_handle, &exit_code))
+            {
+                if (exit_code == STILL_ACTIVE) continue; /* The process is still active, we don't do anything */
+
+                /* 
+                 * The main problem with GetExitCodeProcess is it returns either returned parameter value of
+                 * ExitProcess/TerminateProcess, or the unhandled exception (which is what we're looking for)
+                 */
+                switch (exit_code)
+                {
+                case EXCEPTION_ACCESS_VIOLATION: fprintf(stderr, "child(%d) unhandled exception: Access Violation", opts->child[i].pid); break;
+                default: break;
+                }
+            }
+
+            if (opts->child[i].status != STATUS_RUNNING)
+            {
+                TerminateProcess(opts->child[i].process_handle, 0);
+            }
+        }
 #else
         /* waitpid() is not available. Don't kill the process. */
         continue;
@@ -985,10 +1012,15 @@ static void read_children(struct opts *opts)
     for(i = 0, j = 0; i < (size_t)opts->maxchild; i += (j == 2), j = (j + 1) % 3)
     {
         struct child_overlapped * co;
-        HANDLE h;
+        HANDLE h = (opts->child[i].fd[j] == -1) ? INVALID_HANDLE_VALUE : (HANDLE)_get_osfhandle(opts->child[i].fd[j]);
 
-        if(opts->child[i].status != STATUS_RUNNING)
+        if(opts->child[i].status != STATUS_RUNNING
+        || opts->child[i].fd[j] == -1
+        || h == INVALID_HANDLE_VALUE)
+        {
+            fd_number--;
             continue;
+        }
 
         co = malloc(sizeof(*co));
         ZeroMemory(co, sizeof(*co));
@@ -997,15 +1029,24 @@ static void read_children(struct opts *opts)
         co->fd_no    = j;
         co->opts     = opts;
 
-        h = (HANDLE)_get_osfhandle(opts->child[i].fd[j]);
+        if(!ReadFileEx(h, co->buf, sizeof(co->buf), (LPOVERLAPPED)co, read_child))
+        {
+            /* End of file reached */
+            close(opts->child[i].fd[j]);
+            opts->child[i].fd[j] = -1;
 
-        /* FIXME: handle error */
-        ReadFileEx(h, co->buf, sizeof(co->buf), (LPOVERLAPPED)co, read_child);
+            if(opts->child[i].fd[0] == -1
+                && opts->child[i].fd[1] == -1
+                && opts->child[i].fd[2] == -1)
+                opts->child[i].status = STATUS_EOF;
+        }
         cur_child_handle++;
     }
 
+    if (fd_number == 0) return;
+
     /* FIXME: handle error */
-    WaitForMultipleObjectsEx(fd_number, children_handle, FALSE, INFINITE, TRUE);
+    WaitForMultipleObjectsEx(fd_number, children_handle, FALSE, 1000, TRUE);
 }
 
 #else

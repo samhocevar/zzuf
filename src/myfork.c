@@ -353,6 +353,9 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
                         CREATE_SUSPENDED, NULL, NULL, &sinfo, &pinfo);
     free(cmdline);
 
+    child->process_handle = pinfo.hProcess;
+    child->pid            = pinfo.dwProcessId;
+
     if (!ret)
     {
         LPTSTR buf;
