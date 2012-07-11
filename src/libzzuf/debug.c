@@ -65,6 +65,62 @@ static void mydebug(char const *format, va_list args);
 char debugbuffer[BUFSIZ];
 size_t debugcount = 1;
 
+#ifdef _WIN32
+
+CRITICAL_SECTION _zz_pipe_cs; /* Initialized in DllMain */
+
+void _zz_debug(char const *format, ...)
+{
+    va_list args;
+    char buf[0x100];
+    DWORD written;
+    va_start(args, format);
+    //if (_zz_debuglevel >= 1) // LATER:
+    {
+        HANDLE dbg_hdl = (HANDLE)_get_osfhandle(_zz_debugfd);
+        int ret = _vsnprintf(buf, sizeof(buf), format, args);
+
+        if (ret <= 0)       return;  /* if _snprintf failed, we send nothing                    */
+        if (buf[0] == '\0') return; /* if the buf is empty, we don't bother to send it to zzuf */
+
+        /* FIXME: if len >= count, no null-terminator is appended, so we may erased the last character */
+        if (ret >= sizeof(buf)) buf[ret - 1] = '\n';
+        else                    buf[ret++]   = '\n';
+
+        EnterCriticalSection(&_zz_pipe_cs);
+        WriteFile(dbg_hdl, buf, ret, &written, NULL);
+        LeaveCriticalSection(&_zz_pipe_cs);
+    }
+    va_end(args);
+    fflush(NULL); /* flush all streams to make sure zzuf gotta catch 'em all */
+}
+
+void _zz_debug2(char const *format, ...)
+{
+    va_list args;
+    char buf[0x100];
+    DWORD written;
+    va_start(args, format);
+    //if (_zz_debuglevel >= 1) // LATER:
+    {
+        HANDLE dbg_hdl = (HANDLE)_get_osfhandle(_zz_debugfd);
+        int ret = _vsnprintf(buf, sizeof(buf), format, args);
+
+        if (ret <= 0)       return;  /* if _snprintf failed, we send nothing                    */
+        if (buf[0] == '\0') return; /* if the buf is empty, we don't bother to send it to zzuf */
+
+        /* FIXME: if len >= count, no null-terminator is appended, so we may erased the last character */
+        if (ret >= sizeof(buf)) buf[ret - 1] = '\n';
+        else                    buf[ret++]   = '\n';
+
+        EnterCriticalSection(&_zz_pipe_cs);
+        WriteFile(dbg_hdl, buf, ret, &written, NULL);
+        LeaveCriticalSection(&_zz_pipe_cs);
+    }
+    va_end(args);
+    fflush(NULL); /* flush all streams to make sure zzuf gotta catch 'em all */
+}
+#else
 void _zz_debug(char const *format, ...)
 {
     va_list args;
@@ -82,6 +138,7 @@ void _zz_debug2(char const *format, ...)
         mydebug(format, args);
     va_end(args);
 }
+#endif
 
 /**
  * Format a string, printf-like, and write the resulting data to zzuf's

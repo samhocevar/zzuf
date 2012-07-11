@@ -112,6 +112,11 @@ static void usage(void);
 #define ZZUF_FD_ISSET(fd, p_fdset) \
     ((fd >= 0) && (FD_ISSET(fd, p_fdset)))
 
+#if defined _WIN32
+#   include <Windows.h>
+static CRITICAL_SECTION _zz_pipe_cs;
+#endif
+
 int main(int argc, char *argv[])
 {
     struct opts _opts, *opts = &_opts;
@@ -122,6 +127,10 @@ int main(int argc, char *argv[])
 #endif
     int debug = 0, network = 0;
     int i;
+
+#if defined _WIN32
+    InitializeCriticalSection(&_zz_pipe_cs);
+#endif
 
     _zz_opts_init(opts);
 
@@ -536,6 +545,10 @@ int main(int argc, char *argv[])
     _zz_fd_fini();
     _zz_opts_fini(opts);
 
+#if defined _WIN32
+    DeleteCriticalSection(&_zz_pipe_cs);
+#endif
+
     return opts->crashes ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
@@ -914,6 +927,88 @@ static void clean_children(struct opts *opts)
     }
 }
 
+#ifdef _WIN32
+
+/* This structure contains useful information about data sent from fuzzed applications */
+struct child_overlapped
+{
+    OVERLAPPED overlapped;
+    char buf[BUFSIZ];
+    struct opts * opts;
+    int child_no;
+    int fd_no;
+};
+
+/* This callback is called when fuzzed applications write in fd out, err or debug */
+static void _stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered, LPOVERLAPPED overlapped)
+{
+    struct child_overlapped * co = (struct child_overlapped *)overlapped;
+
+    /* TODO: handle more cases like ERROR_MORE_DATA */
+    if (err_code != ERROR_SUCCESS) return;
+
+    EnterCriticalSection(&_zz_pipe_cs);
+    switch (co->fd_no)
+    {
+    case 0: /* debug fd */
+        write(1, "dbg: ", 4);
+    case 1: /* out */
+        write(1, co->buf, nbr_of_bytes_transfered); break;
+    case 2: /* err */
+        write(2, co->buf, nbr_of_bytes_transfered); break;
+    default: break;
+    }
+    LeaveCriticalSection(&_zz_pipe_cs);
+
+    if(co->fd_no != 0) /* either out or err fd */
+        co->opts->child[co->child_no].bytes += nbr_of_bytes_transfered;
+
+    if(co->opts->md5 && co->fd_no == 2)
+        _zz_md5_add(co->opts->child[co->child_no].ctx, co->buf, nbr_of_bytes_transfered);
+
+    free(co); /* clean up allocated data */
+}
+
+/* Since on windows select doesn't support file HANDLE, we use IOCP */
+static void read_children(struct opts *opts)
+{
+    size_t i, j;
+    HANDLE *children_handle, * cur_child_handle;
+    size_t fd_number = opts->maxchild * 3;
+
+    cur_child_handle = children_handle = malloc(sizeof(*children_handle) * fd_number);
+
+    for(i = 0; i < fd_number; i++)
+        children_handle[i] = INVALID_HANDLE_VALUE;
+
+    /* XXX: cute (i, j) iterating hack */
+    for(i = 0, j = 0; i < (size_t)opts->maxchild; i += (j == 2), j = (j + 1) % 3)
+    {
+        struct child_overlapped * co;
+        HANDLE h;
+
+        if(opts->child[i].status != STATUS_RUNNING)
+            continue;
+
+        co = malloc(sizeof(*co));
+        ZeroMemory(co, sizeof(*co));
+        *cur_child_handle = co->overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+        co->child_no = i;
+        co->fd_no    = j;
+        co->opts     = opts;
+
+        h = (HANDLE)_get_osfhandle(opts->child[i].fd[j]);
+
+        /* FIXME: handle error */
+        ReadFileEx(h, co->buf, sizeof(co->buf), (LPOVERLAPPED)co, read_child);
+        cur_child_handle++;
+    }
+
+    /* FIXME: handle error */
+    WaitForMultipleObjectsEx(fd_number, children_handle, FALSE, INFINITE, TRUE);
+}
+
+#else
 static void read_children(struct opts *opts)
 {
     struct timeval tv;
@@ -933,15 +1028,12 @@ static void read_children(struct opts *opts)
     tv.tv_sec = 0;
     tv.tv_usec = 1000;
 
-#if !defined _WIN32
-    /* Win32 does not support select() on non-sockets */
     errno = 0;
     ret = select(maxfd + 1, &fdset, NULL, NULL, &tv);
     if(ret < 0 && errno)
         perror("select");
     if(ret <= 0)
         return;
-#endif
 
     /* XXX: cute (i, j) iterating hack */
     for(i = 0, j = 0; i < opts->maxchild; i += (j == 2), j = (j + 1) % 3)
@@ -951,10 +1043,8 @@ static void read_children(struct opts *opts)
         if(opts->child[i].status != STATUS_RUNNING)
             continue;
 
-#if !defined _WIN32
         if(!ZZUF_FD_ISSET(opts->child[i].fd[j], &fdset))
             continue;
-#endif
 
         ret = read(opts->child[i].fd[j], buf, BUFSIZ - 1);
         if(ret > 0)
@@ -968,7 +1058,6 @@ static void read_children(struct opts *opts)
             else if(!opts->quiet || j == 0)
                 write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);
         }
-#if !defined _WIN32
         else if(ret == 0)
         {
             /* End of file reached */
@@ -980,9 +1069,9 @@ static void read_children(struct opts *opts)
                 && opts->child[i].fd[2] == -1)
                 opts->child[i].status = STATUS_EOF;
         }
-#endif
     }
 }
+#endif
 
 #if !defined HAVE_SETENV
 static void setenv(char const *name, char const *value, int overwrite)

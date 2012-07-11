@@ -229,10 +229,12 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, PVOID impLoad)
     switch(reason)
     {
         case DLL_PROCESS_ATTACH:
+            InitializeCriticalSection(&_zz_pipe_cs);
             _zz_init();
             break;
         case DLL_PROCESS_DETACH:
             _zz_fini();
+            DeleteCriticalSection(&_zz_pipe_cs);
             break;
     }
 

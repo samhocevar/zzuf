@@ -122,8 +122,12 @@ BOOL __stdcall NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer,
            DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead,
            LPOVERLAPPED lpOverlapped)
 {
-    return ORIG(ReadFile)(hFile, lpBuffer, nNumberOfBytesToRead,
+    BOOL ret;
+    ret = ORIG(ReadFile)(hFile, lpBuffer, nNumberOfBytesToRead,
                           lpNumberOfBytesRead, lpOverlapped);
+    debug("ReadFile(%#08x, %#08x, %#08x, %#08x, %#08x) = %s",
+        hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped, (ret ? "TRUE" : "FALSE"));
+    return ret;
 }
 #endif
 
@@ -136,7 +140,7 @@ BOOL __stdcall NEW(CloseHandle)(HANDLE hObject)
 {
     BOOL ret;
     ret = ORIG(CloseHandle)(hObject);
-    debug("CloseHandle(%i) = %i", (int)hObject, ret);
+    debug("CloseHandle(%i) = %s", (int)hObject, (ret ? "TRUE" : "FALSE"));
     return ret;
 }
 #endif

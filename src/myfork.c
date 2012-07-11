@@ -92,7 +92,7 @@ int myfork(struct child *child, struct opts *opts)
         int ret;
 #if defined HAVE_PIPE
         ret = pipe(pipes[i]);
-#elif defined HAVE__PIPE
+#elif defined HAVE__PIPE && !defined _WIN32
         int tmp;
         /* The pipe is created with NOINHERIT otherwise both parts are
          * inherited. We then duplicate the part we want. */
@@ -100,6 +100,60 @@ int myfork(struct child *child, struct opts *opts)
         tmp = _dup(pipes[i][1]);
         close(pipes[i][1]);
         pipes[i][1] = tmp;
+#elif defined _WIN32
+        // http://www.daniweb.com/software-development/cpp/threads/295780/using-named-pipes-with-asynchronous-io-redirection-to-winapi
+        {
+            static int pipe_cnt = 0;
+            char pipe_name[BUFSIZ];
+            HANDLE pipe_hdl[2];         /* [0] read | [1] write */
+            HANDLE new_hdl;
+            SECURITY_ATTRIBUTES sa;
+            sa.nLength              = sizeof(sa);
+            sa.bInheritHandle       = TRUE;
+            sa.lpSecurityDescriptor = NULL;
+
+            ret = 0;
+
+            /* Since we have to use a named pipe, we have to make sure the name is unique */
+            _snprintf(pipe_name, sizeof(pipe_name), "\\\\.\\Pipe\\zzuf.%08x.%d", GetCurrentProcessId(), pipe_cnt++);
+
+            /* At this time, the HANDLE is inheritable and can both read/write */
+            if ((pipe_hdl[0] = CreateNamedPipeA(
+                pipe_name,
+                PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+                PIPE_TYPE_BYTE | PIPE_WAIT,
+                1,
+                BUFSIZ,
+                BUFSIZ,
+                0,
+                &sa)) == INVALID_HANDLE_VALUE ||
+
+            /* Create a new handle for writing access only and it must be inheritable */
+            (pipe_hdl[1] = CreateFileA(
+                pipe_name,
+                GENERIC_WRITE,
+                0,
+                &sa,
+                OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
+                NULL)) == INVALID_HANDLE_VALUE)
+                ret = -1;
+
+            /* Now we create a new handle for the listener which is not inheritable */
+            if (!DuplicateHandle(
+                GetCurrentProcess(), pipe_hdl[0],
+                GetCurrentProcess(), &new_hdl,
+                0, FALSE,
+                DUPLICATE_SAME_ACCESS))
+                ret = -1;
+
+            /* Finally we can safetly close the pipe handle */
+            CloseHandle(pipe_hdl[0]);
+
+            /* Now we convert handle to fd */
+            pipes[i][0] = _open_osfhandle((intptr_t)new_hdl,     0x0);
+            pipes[i][1] = _open_osfhandle((intptr_t)pipe_hdl[1], 0x0);
+        }
 #endif
         if(ret < 0)
         {
