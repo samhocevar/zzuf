@@ -76,9 +76,16 @@ HANDLE __stdcall NEW(CreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess,
     ret = ORIG(CreateFileA)(lpFileName, dwDesiredAccess, dwShareMode,
                             lpSecurityAttributes, dwCreationDisposition,
                             dwFlagsAndAttributes, hTemplateFile);
-    debug("CreateFileA(\"%s\", 0x%x, 0x%x, {...}, 0x%x, 0x%x, {...}) = %i",
+    debug("CreateFileA(\"%s\", 0x%x, 0x%x, {...}, 0x%x, 0x%x, {...}) = %#08x",
           lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
           dwFlagsAndAttributes, (int)ret);
+
+    if(!_zz_ready || _zz_islocked(-1)) return ret;
+    if (ret != INVALID_HANDLE_VALUE && dwCreationDisposition == OPEN_EXISTING && _zz_mustwatch(lpFileName))
+    {
+        _zz_register(ret);
+    }
+
     return ret;
 }
 #endif
@@ -93,9 +100,18 @@ HANDLE __stdcall NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
     ret = ORIG(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode,
                             lpSecurityAttributes, dwCreationDisposition,
                             dwFlagsAndAttributes, hTemplateFile);
-    debug("CreateFileW(\"%S\", 0x%x, 0x%x, {...}, 0x%x, 0x%x, {...}) = %i",
+    debug("CreateFileW(\"%S\", 0x%x, 0x%x, {...}, 0x%x, 0x%x, {...}) = %#08x",
           lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
           dwFlagsAndAttributes, (int)ret);
+
+    if(!_zz_ready || _zz_islocked(-1)) return ret;
+    if (ret != INVALID_HANDLE_VALUE && dwCreationDisposition == OPEN_EXISTING && _zz_mustwatch(lpFileName))
+    {
+        debug("handle %#08x is registered", ret);
+        _zz_register(ret);
+    }
+
+
     return ret;
 }
 #endif
@@ -107,7 +123,7 @@ HANDLE __stdcall NEW(ReOpenFile)(HANDLE hOriginalFile, DWORD dwDesiredAccess,
     HANDLE ret;
     ret = ORIG(ReOpenFile)(hOriginalFile, dwDesiredAccess,
                            dwShareMode, dwFlags);
-    debug("ReOpenFile(%i, 0x%x, 0x%x, 0x%x) = %i", (int)hOriginalFile,
+    debug("ReOpenFile(%#08x, 0x%x, 0x%x, 0x%x) = %#08x", (int)hOriginalFile,
           dwDesiredAccess, dwShareMode, dwFlags, (int)ret);
     return ret;
 }
@@ -127,6 +143,17 @@ BOOL __stdcall NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer,
                           lpNumberOfBytesRead, lpOverlapped);
     debug("ReadFile(%#08x, %#08x, %#08x, %#08x, %#08x) = %s",
         hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped, (ret ? "TRUE" : "FALSE"));
+
+    if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile))
+        return ret;
+
+    if (ret)
+    {
+        DWORD bytes_read = lpNumberOfBytesRead ? *lpNumberOfBytesRead : nNumberOfBytesToRead;
+        debug("fuzzing file %#08x\n", hFile);
+        _zz_fuzz(hFile, lpBuffer, bytes_read);
+        _zz_addpos(hFile, bytes_read);
+    }
     return ret;
 }
 #endif
@@ -139,8 +166,14 @@ BOOL __stdcall NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer,
 BOOL __stdcall NEW(CloseHandle)(HANDLE hObject)
 {
     BOOL ret;
+
+    /* TODO: Check if fuzzed application tries to close our debug channel */
+
     ret = ORIG(CloseHandle)(hObject);
-    debug("CloseHandle(%i) = %s", (int)hObject, (ret ? "TRUE" : "FALSE"));
+    debug("CloseHandle(%#08x) = %s", (int)hObject, (ret ? "TRUE" : "FALSE"));
+    if (!_zz_ready || !_zz_iswatched(hObject) || _zz_islocked(hObject))
+        return ret;
+    _zz_unregister(hObject);
     return ret;
 }
 #endif

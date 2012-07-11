@@ -906,8 +906,8 @@ static void clean_children(struct opts *opts)
                  */
                 switch (exit_code)
                 {
-                case EXCEPTION_ACCESS_VIOLATION: fprintf(stderr, "child(%d) unhandled exception: Access Violation", opts->child[i].pid); break;
-                default: break;
+                case EXCEPTION_ACCESS_VIOLATION: fprintf(stderr, "child(%d) unhandled exception: Access Violation\n", opts->child[i].pid); break;
+                default: fprintf(stderr, "child(%d) exited with code %#08x\n", opts->child[i].pid, exit_code); break;
                 }
             }
 
