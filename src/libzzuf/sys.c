@@ -72,6 +72,7 @@ BOOL WINAPI AttachConsole_new(DWORD d)
 void _zz_sys_init(void)
 {
 #if defined HAVE_WINDOWS_H
+
     MEMORY_BASIC_INFORMATION mbi;
     MODULEENTRY32 entry;
     void *list;
@@ -90,6 +91,7 @@ void _zz_sys_init(void)
         insert_funcs(entry.hModule);
     }
     CloseHandle(list);
+
 #elif defined HAVE_DLFCN_H
     /* If glibc is recent enough, we use dladdr() to get its address. This
      * way we are sure that the symbols we load are the most recent version,
@@ -110,6 +112,118 @@ void _zz_sys_init(void)
 }
 
 #if defined HAVE_WINDOWS_H
+
+#define MK_JMP_JD(dst, src) ((dst) - ((src) + 5))
+
+/*
+ * This function hooks a windows API using the hotpatch method
+ *     old_api must point to the original windows API.
+ *     new_api must point to the hook function
+ *     trampoline_api is filled by the function and contains the
+ *     function to call to call the original API.
+ *
+ * Windows API should start with the following instructions
+ * mov edi, edi
+ * push ebp
+ * mov ebp, esp
+ * which makes a 5 bytes, the perfect size to insert a jmp to the new api
+ */
+static int hook_hotpatch(uint8_t *old_api, uint8_t *new_api, uint8_t **trampoline_api)
+{
+    int res = -1;
+    uint8_t prolog[5];
+    uint8_t jmp_prolog[5];
+    static uint8_t const hotpatch_prolog[] = "\x8b\xff\x55\x8b\xec";
+    uint8_t *trampoline;
+    DWORD old_prot;
+
+    *trampoline_api = NULL;
+
+    /* Check if the targeted API contains the hotpatch feature */
+    memcpy(prolog, old_api, sizeof(prolog));
+    if (memcmp(prolog, hotpatch_prolog, sizeof(prolog))) goto _out;
+
+    jmp_prolog[0] = '\xe9'; /* jmp Jd */
+    *(uint32_t *)(&jmp_prolog[1]) = MK_JMP_JD(new_api, old_api);
+
+    trampoline = malloc(10); /* size of hotpatch_prolog + sizeof of jmp Jd */
+    memcpy(trampoline, hotpatch_prolog, sizeof(hotpatch_prolog) - 1);
+    trampoline[5] = '\xe9'; /* jmp Jd */
+    *(uint32_t *)&trampoline[6] = MK_JMP_JD(old_api + sizeof(hotpatch_prolog) - 1, trampoline + sizeof(hotpatch_prolog) - 1);
+
+    /* We must make the trampoline executable, this line is required because of DEP */
+    /* NOTE: We _must_ set the write protection, otherwise the heap allocator will crash ! */
+    if (!VirtualProtect(trampoline, 10, PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
+
+    /* We patch the targeted API, so we must set it as writable */
+    if (!VirtualProtect(old_api, sizeof(jmp_prolog), PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
+    memcpy(old_api, jmp_prolog, sizeof(jmp_prolog));
+    VirtualProtect(old_api, sizeof(jmp_prolog), old_prot, &old_prot); /* we don't care if this functon fails */
+
+    *trampoline_api = trampoline;
+
+    res = 0;
+
+_out:
+    if (res < 0)
+    {
+        if (*trampoline_api)
+        {
+            free(*trampoline_api);
+            trampoline_api = NULL;
+        }
+    }
+
+    return res;
+}
+
+/*
+ * Even if hook_hotpatch is working, it's look that some API don't use it anymore (kernel32!ReadFile)
+ * So we stay with IAT hook at this time
+ */
+#if 0
+static void insert_funcs(void *module)
+{
+    static zzuf_table_t *list[] = 
+    {
+        table_win32,
+    };
+
+    zzuf_table_t *diversion;
+    HMODULE lib;
+
+    for (diversion = *list; diversion->lib; diversion++)
+    {
+        uint8_t *old_api;
+        uint8_t *trampoline_api;
+
+        /* most of the time, the dll is already loaded */
+        if ((lib = GetModuleHandleA(diversion->lib)) == NULL)
+        {
+           if ((lib = LoadLibraryA(diversion->lib)) == NULL)
+           {
+               fprintf(stderr, "unable to load %s\n", diversion->lib);
+               return;
+           }
+        }
+        if ((old_api = (uint8_t *)GetProcAddress(lib, diversion->name)) == NULL)
+        {
+            fprintf(stderr, "unable to get pointer to %s\n", diversion->name);
+            return;
+        }
+        if (hook_hotpatch(old_api, diversion->new, &trampoline_api) < 0)
+        {
+            fprintf(stderr, "hook_hotpatch failed while hooking %s!%s\n", diversion->lib, diversion->name);
+            return;
+        }
+        *diversion->old = trampoline_api;
+    }
+
+    (void)module; /* not needed anymore */
+
+}
+#endif
+
 static void insert_funcs(void *module)
 {
     static zzuf_table_t *list[] =
