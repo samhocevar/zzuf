@@ -8,4 +8,5 @@ other contributors:
  Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de> (recvfrom)
  Sami Liedes <sliedes#cc:hut:fi> (LD_PRELOAD conservation)
  Corentin Delorme <codelorme@gmail.com> (remote host filtering)
+ Kévin Szkudłapski <kszkudlapski@quarkslab.com> (win32 port)
 

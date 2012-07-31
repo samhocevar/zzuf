@@ -47,7 +47,7 @@ void *_zz_dl_lib = RTLD_NEXT;
 #endif
 
 #if defined HAVE_WINDOWS_H
-static void insert_funcs(void *);
+static void insert_funcs(void);
 
 /* TODO: get rid of this later */
 HINSTANCE (WINAPI *LoadLibraryA_orig)(LPCSTR);
@@ -73,24 +73,7 @@ void _zz_sys_init(void)
 {
 #if defined HAVE_WINDOWS_H
 
-    MEMORY_BASIC_INFORMATION mbi;
-    MODULEENTRY32 entry;
-    void *list;
-    int k;
-
-    /* Enumerate all loaded objects and overwrite some functions */
-    VirtualQuery(_zz_sys_init, &mbi, sizeof(mbi));
-    list = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
-    entry.dwSize = sizeof(entry);
-    for(k = Module32First(list, &entry); k; k = Module32Next(list, &entry))
-    {
-        if(entry.hModule == mbi.AllocationBase)
-            continue; /* Don't replace our own functions */
-
-        fprintf(stderr, "diverting functions from %s\n", entry.szModule);
-        insert_funcs(entry.hModule);
-    }
-    CloseHandle(list);
+    insert_funcs();
 
 #elif defined HAVE_DLFCN_H
     /* If glibc is recent enough, we use dladdr() to get its address. This
@@ -115,50 +98,87 @@ void _zz_sys_init(void)
 
 #define MK_JMP_JD(dst, src) ((dst) - ((src) + 5))
 
-/*
- * This function hooks a windows API using the hotpatch method
- *     old_api must point to the original windows API.
- *     new_api must point to the hook function
- *     trampoline_api is filled by the function and contains the
- *     function to call to call the original API.
- *
- * Windows API should start with the following instructions
- * mov edi, edi
- * push ebp
- * mov ebp, esp
- * which makes a 5 bytes, the perfect size to insert a jmp to the new api
- */
-static int hook_hotpatch(uint8_t *old_api, uint8_t *new_api, uint8_t **trampoline_api)
+/* zz_lde is a _very_ simple length disassemble engine.
+ * x64 is not tested and should not work. */
+static int zz_lde(uint8_t *code, int required_size)
 {
-    int res = -1;
-    uint8_t prolog[5];
-    uint8_t jmp_prolog[5];
-    static uint8_t const hotpatch_prolog[] = "\x8b\xff\x55\x8b\xec";
-    uint8_t *trampoline;
+    int insn_size = 0;
+    static uint8_t modrm_size[] = { 0, 1, 4, 0 }; /* [reg ...], [reg ... + sbyte], [reg ... + sdword], reg */
+
+    while (insn_size < required_size)
+    {
+        uint8_t opcd = code[insn_size++];
+
+        /* Simple instructions should be placed here */
+        switch (opcd)
+        {
+        case 0x68: insn_size += 4; continue; /* PUSH Iv */
+        case 0x6a: insn_size += 1; continue; /* PUSH Ib */
+        default: break;
+        }
+
+        /* PUSH/POP rv */
+        if ((opcd & 0xf0) == 0x50) continue;
+
+        /* MOV Ev, Gv or Gv, Ev */
+        else if (opcd == 0x89 || opcd == 0x8b)
+        {
+            uint8_t modrm = code[insn_size++];
+
+            /* Does the instruciton have a SIB byte ? */
+            if (((modrm & 0x7) == 0x4) && ((modrm >> 6) != 0x3))
+                insn_size++;
+
+            insn_size += modrm_size[modrm >> 6];
+
+            continue;
+        }
+
+
+        /* If we can't disassemble the current instruction, we give up */
+        return -1;
+    }
+
+    return insn_size;
+}
+
+/* This function allows to hook any API. To do so, it disassembles the beginning of the
+ * targeted function and looks for, at least, 5 bytes (size of JMP Jd).
+ * Then it writes a JMP Jv instruction to make the new_api executed.
+ * Finally, trampoline_api contains a wrapper to call in order to execute the original API */
+static int hook_inline(uint8_t *old_api, uint8_t *new_api, uint8_t **trampoline_api)
+{
+    int res             = -1;
+    int patch_size      = 0;
+    uint8_t *jmp_prolog = NULL;
+    uint8_t *trampoline = NULL;
     DWORD old_prot;
 
-    *trampoline_api = NULL;
+    /* if we can't get enough byte, we quit */
+    if ((patch_size = zz_lde(old_api, 5)) == -1)
+        return -1;
 
-    /* Check if the targeted API contains the hotpatch feature */
-    memcpy(prolog, old_api, sizeof(prolog));
-    if (memcmp(prolog, hotpatch_prolog, sizeof(prolog))) goto _out;
+    if ((jmp_prolog = malloc(patch_size)) == NULL) goto _out;
+    memset(jmp_prolog, '\xcc', patch_size); /* We use 0xcc because the code after the jmp should be executed */
+
+    *trampoline_api = NULL;
 
     jmp_prolog[0] = '\xe9'; /* jmp Jd */
     *(uint32_t *)(&jmp_prolog[1]) = MK_JMP_JD(new_api, old_api);
 
-    trampoline = malloc(10); /* size of hotpatch_prolog + sizeof of jmp Jd */
-    memcpy(trampoline, hotpatch_prolog, sizeof(hotpatch_prolog) - 1);
-    trampoline[5] = '\xe9'; /* jmp Jd */
-    *(uint32_t *)&trampoline[6] = MK_JMP_JD(old_api + sizeof(hotpatch_prolog) - 1, trampoline + sizeof(hotpatch_prolog) - 1);
+    trampoline = malloc(patch_size + 5); /* size of old byte + sizeof of jmp Jd */
+    memcpy(trampoline, old_api, patch_size);
+    *(uint8_t  *)&trampoline[patch_size]     = '\xe9'; /* jmp Jd */
+    *(uint32_t *)&trampoline[patch_size + 1] = MK_JMP_JD(old_api + patch_size, trampoline + patch_size);
 
     /* We must make the trampoline executable, this line is required because of DEP */
     /* NOTE: We _must_ set the write protection, otherwise the heap allocator will crash ! */
-    if (!VirtualProtect(trampoline, 10, PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
+    if (!VirtualProtect(trampoline, patch_size + 5, PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
 
     /* We patch the targeted API, so we must set it as writable */
-    if (!VirtualProtect(old_api, sizeof(jmp_prolog), PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
-    memcpy(old_api, jmp_prolog, sizeof(jmp_prolog));
-    VirtualProtect(old_api, sizeof(jmp_prolog), old_prot, &old_prot); /* we don't care if this functon fails */
+    if (!VirtualProtect(old_api, patch_size, PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
+    memcpy(old_api, jmp_prolog, patch_size);
+    VirtualProtect(old_api, patch_size, old_prot, &old_prot); /* we don't care if this functon fails */
 
     *trampoline_api = trampoline;
 
@@ -174,17 +194,14 @@ _out:
         }
     }
 
+    if (jmp_prolog != NULL) free(jmp_prolog);
+
     return res;
 }
 
-/*
- * Even if hook_hotpatch is working, it's look that some API don't use it anymore (kernel32!ReadFile)
- * So we stay with IAT hook at this time
- */
-#if 0
-static void insert_funcs(void *module)
+static void insert_funcs(void)
 {
-    static zzuf_table_t *list[] = 
+    static zzuf_table_t *list[] =
     {
         table_win32,
     };
@@ -211,79 +228,13 @@ static void insert_funcs(void *module)
             fprintf(stderr, "unable to get pointer to %s\n", diversion->name);
             return;
         }
-        if (hook_hotpatch(old_api, diversion->new, &trampoline_api) < 0)
+        if (hook_inline(old_api, diversion->new, &trampoline_api) < 0)
         {
-            fprintf(stderr, "hook_hotpatch failed while hooking %s!%s\n", diversion->lib, diversion->name);
+            fprintf(stderr, "hook_inline failed while hooking %s!%s\n", diversion->lib, diversion->name);
             return;
         }
         *diversion->old = trampoline_api;
     }
-
-    (void)module; /* not needed anymore */
-
 }
-#endif
 
-static void insert_funcs(void *module)
-{
-    static zzuf_table_t *list[] =
-    {
-        table_win32,
-    };
-
-    zzuf_table_t *diversion;
-    void *lib;
-    unsigned long dummy;
-    import_t import;
-    thunk_t thunk;
-    int k, j, i;
-
-    import = (import_t)
-        ImageDirectoryEntryToData(module, TRUE,
-                                  IMAGE_DIRECTORY_ENTRY_IMPORT, &dummy);
-    if(!import)
-        return;
-
-    for (k = 0, diversion = NULL; k < sizeof(list) / sizeof(*list); )
-    {
-        if (!diversion)
-            diversion = list[k];
-
-        if (!diversion->lib)
-        {
-            k++;
-            diversion = NULL;
-            continue;
-        }
-
-        fprintf(stderr, "diverting method %s (from %s)\n",
-                        diversion->name, diversion->lib);
-
-        lib = GetModuleHandleA(diversion->lib);
-        *diversion->old = (void *)GetProcAddress(lib, diversion->name);
-
-        for(j = 0; import[j].Name; j++)
-        {
-            char *name = (char *)module + import[j].Name;
-            if(lstrcmpiA(name, diversion->lib) != 0)
-                continue;
-
-            thunk = (thunk_t)((char *)module + import[j].FirstThunk);
-            for(i = 0; thunk[i].u1.Function; i++)
-            {
-                void **func = (void **)&thunk[i].u1.Function;
-                if(*func != *diversion->old)
-                    continue;
-
-                /* FIXME: The StarCraft 2 hack uses two methods for function
-                 * diversion. See HookSsdt() and HookHotPatch(). */
-                VirtualProtect(func, sizeof(func), PAGE_EXECUTE_READWRITE, &dummy);
-                WriteProcessMemory(GetCurrentProcess(), func, &diversion->new,
-                                    sizeof(diversion->new), NULL);
-            }
-        }
-
-        diversion++;
-    }
-}
 #endif
