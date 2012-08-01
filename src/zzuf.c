@@ -29,7 +29,11 @@
 #   include <unistd.h> /* for read(), write(), close() */
 #endif
 #if defined HAVE_REGEX_H
-#   include <regex.h>
+#   if _WIN32
+#       include "com_regexp.hpp"
+#   else
+#       include <regex.h>
+#   endif
 #endif
 #if defined HAVE_WINSOCK2_H
 #   include <winsock2.h> /* for fd_set */

@@ -109,6 +109,7 @@
     <ClInclude Include="..\src\common\fuzz.h" />
     <ClInclude Include="..\src\common\random.h" />
     <ClInclude Include="..\src\common\ranges.h" />
+    <ClInclude Include="..\src\com_regexp.hpp" />
     <ClInclude Include="..\src\libzzuf\debug.h" />
     <ClInclude Include="..\src\libzzuf\lib-load.h" />
     <ClInclude Include="..\src\libzzuf\libzzuf.h" />
@@ -121,6 +122,10 @@
     <ClCompile Include="..\src\common\fuzz.c" />
     <ClCompile Include="..\src\common\random.c" />
     <ClCompile Include="..\src\common\ranges.c" />
+    <ClCompile Include="..\src\com_regexp.cpp">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+    </ClCompile>
     <ClCompile Include="..\src\libzzuf\debug.c" />
     <ClCompile Include="..\src\libzzuf\lib-fd.c" />
     <ClCompile Include="..\src\libzzuf\lib-mem.c" />

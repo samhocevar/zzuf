@@ -98,6 +98,7 @@
     <ClInclude Include="..\src\common\fuzz.h" />
     <ClInclude Include="..\src\common\random.h" />
     <ClInclude Include="..\src\common\ranges.h" />
+    <ClInclude Include="..\src\com_regexp.hpp" />
     <ClInclude Include="..\src\md5.h" />
     <ClInclude Include="..\src\myfork.h" />
     <ClInclude Include="..\src\opts.h" />
@@ -109,6 +110,10 @@
     <ClCompile Include="..\src\common\fuzz.c" />
     <ClCompile Include="..\src\common\random.c" />
     <ClCompile Include="..\src\common\ranges.c" />
+    <ClCompile Include="..\src\com_regexp.cpp">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+    </ClCompile>
     <ClCompile Include="..\src\md5.c" />
     <ClCompile Include="..\src\myfork.c" />
     <ClCompile Include="..\src\opts.c" />

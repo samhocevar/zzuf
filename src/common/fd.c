@@ -24,7 +24,11 @@
 #endif
 #include <stdlib.h>
 #if defined HAVE_REGEX_H
-#   include <regex.h>
+#   if _WIN32
+#       include "../com_regexp.hpp"
+#   else
+#       include <regex.h>
+#   endif
 #endif
 #include <string.h>
 #include <math.h>
@@ -200,6 +204,21 @@ int _zz_mustwatch(char const *file)
         return 0; /* not included: ignore */
 
     if(has_exclude && regexec(&re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
+        return 0; /* excluded: ignore */
+#else
+    (void)file;
+#endif
+
+    return 1; /* default */
+}
+
+int _zz_mustwatchw(wchar_t const *file)
+{
+#if defined HAVE_REGEX_H
+    if(has_include && regwexec(&re_include, file, 0, NULL, 0) == REG_NOMATCH)
+        return 0; /* not included: ignore */
+
+    if(has_exclude && regwexec(&re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
         return 0; /* excluded: ignore */
 #else
     (void)file;

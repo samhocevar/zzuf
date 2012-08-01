@@ -379,7 +379,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 
     /* insert your breakpoint here to have a chance to attach a debugger to libzzuf.dll */
     ret = ResumeThread(pinfo.hThread);
-    if(ret < 0)
+    if(ret == -1)
     {
         TerminateProcess(pinfo.hProcess, -1);
         return -1;

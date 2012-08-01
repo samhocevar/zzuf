@@ -105,7 +105,7 @@ HANDLE __stdcall NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
           dwFlagsAndAttributes, (int)ret);
 
     if(!_zz_ready || _zz_islocked(-1)) return ret;
-    if (ret != INVALID_HANDLE_VALUE && dwCreationDisposition == OPEN_EXISTING && _zz_mustwatch(lpFileName))
+    if (ret != INVALID_HANDLE_VALUE && dwCreationDisposition == OPEN_EXISTING && _zz_mustwatchw(lpFileName))
     {
         debug("handle %#08x is registered", ret);
         _zz_register(ret);
