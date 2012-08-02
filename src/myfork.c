@@ -393,7 +393,36 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 
 static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
 {
-    int res = -1;
+#ifdef  _M_AMD64
+#   define InstructionPointer   Rip
+#   define StackPointer         Rsp
+#   define LoaderRegister       Rcx
+#   define LoadLibraryAOffset   0x15
+
+    /* This payload allows us to load arbitrary module located at the end of this buffer */
+    static uint8_t const ldr[] =
+    {
+        "\x55"                          /* push rbp              */
+        "\x48\x89\xE5"                  /* mov rbp,rsp           */
+        "\x48\x83\xEC\x20"              /* sub rsp,byte +0x20    */
+        "\x48\x83\xE4\xF0"              /* and rsp,byte -0x10    */
+        "\x48\x8D\x0D\x14\x00\x00\x00"  /* lea rcx,[rel 0x27]    */
+        "\x48\xB8________"              /* mov rax, LoadLibraryA */
+        "\xFF\xD0"                      /* call rax              */
+        "\x48\x85\xC0"                  /* test rax,rax          */
+        "\x75\x01"                      /* jnz 0x25              */
+        "\xCC"                          /* int3                  */
+        "\xC9"                          /* leave                 */
+        "\xC3"                          /* ret                   */
+    };
+
+#elif defined (_M_IX86)
+#   define InstructionPointer   Eip
+#   define StackPointer         Esp
+#   define LoaderRegister       Eax /* It seems the Windows loader store the oep as the first param
+                                     * but by a side effect it's also contained in eax register */
+#   define ldr                  ldr32
+#   define LoadLibraryAOffset   0x04
 
     /* This payload allows us to load arbitrary module located at the end of this buffer */
     static uint8_t const ldr[] =
@@ -409,6 +438,11 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
         "\xC3"                  /* ret                  */
         "\xE8\xED\xFF\xFF\xFF"  /* call dword 0x3       */
     };
+#else
+#   error Unimplemented architecture !
+#endif
+
+    int res = -1;
 
     /* We use this code to make the targeted process waits for us */
     static uint8_t const wait[] = "\xeb\xfe"; /* jmp $-1 */
@@ -419,7 +453,7 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
     void *thread    = pinfo->hThread;
     DWORD pid       = pinfo->dwProcessId;
     void *rldlib    = NULL;
-    DWORD written   = 0;
+    SIZE_T written  = 0;
     DWORD old_prot  = 0;
 
     /* Payload */
@@ -428,21 +462,21 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
     size_t pl_len   = sizeof(ldr) - 1 + strlen(lib) + 1;
 
     CONTEXT ctxt;
-    DWORD oep; /* Original Entry Point */
+    DWORD_PTR oep; /* Original Entry Point */
 
     /* Use the main thread to inject our library */
     ctxt.ContextFlags = CONTEXT_FULL;
     if (!GetThreadContext(thread, &ctxt)) goto _return;
 
     /* Make the target program waits when it reachs the original entry point, because we can't do many thing from the windows loader */
-    oep = ctxt.Eax;
+    oep = ctxt.LoaderRegister;
     if (!ReadProcessMemory(process, (LPVOID)oep, orig_data, sizeof(orig_data), &written) || written != sizeof(orig_data)) goto _return; /* save original opcode */
     if (!WriteProcessMemory(process, (LPVOID)oep, wait, wait_len , &written) || written != wait_len) goto _return;                      /* write jmp short $-1 */
     if (!FlushInstructionCache(process, (LPVOID)oep, wait_len)) goto _return;
     if (ResumeThread(thread) == (DWORD)-1) goto _return;
 
     /* Stop when the program reachs the oep */
-    while (oep != ctxt.Eip)
+    while (oep != ctxt.InstructionPointer)
     {
         if (!GetThreadContext(thread, &ctxt)) goto _return;
         Sleep(10);
@@ -455,17 +489,17 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
 
     if ((rpl = VirtualAllocEx(process, NULL, pl_len, MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == NULL) goto _return;
 
-    /* Emulate a call to the ldr code, thus the ret instruction from ldr will get eip back to the original entry point */
-    ctxt.Esp -= 4;
-    if (!WriteProcessMemory(process, (LPVOID)ctxt.Esp, &oep, sizeof(oep), &written) || written != sizeof(oep)) goto _return;
-    ctxt.Eip = (DWORD)rpl;
+    /* Emulate a call to the ldr code, thus the ret instruction from ldr will get (e|r)ip back to the original entry point */
+    ctxt.StackPointer -= sizeof(oep);
+    if (!WriteProcessMemory(process, (LPVOID)ctxt.StackPointer, &oep, sizeof(oep), &written) || written != sizeof(oep)) goto _return;
+    ctxt.InstructionPointer = (DWORD_PTR)rpl;
     if (!SetThreadContext(thread, &ctxt)) goto _return;
 
     /* Forge the payload */
     if ((pl = (uint8_t *)malloc(pl_len)) == NULL) goto _return;
     memcpy(pl, ldr, sizeof(ldr) - 1);
-    memcpy(pl + 4, &rldlib, sizeof(rldlib));        /* Write the address of LoadLibraryA         */
-    strcpy((char *)(pl + sizeof(ldr) - 1), lib);    /* Write the first parameter of LoadLibraryA */
+    memcpy(pl + LoadLibraryAOffset, &rldlib, sizeof(rldlib));        /* Write the address of LoadLibraryA         */
+    strcpy((char *)(pl + sizeof(ldr) - 1), lib);                    /* Write the first parameter of LoadLibraryA */
 
     if (!WriteProcessMemory(process, rpl, pl, pl_len, &written) || written != pl_len) goto _return;
 
@@ -481,6 +515,11 @@ _return:
 
     /* We must not free remote allocated memory since they will be used after the process will be resumed */
     return res;
+
+#undef InstructionPointer
+#undef StackPointer
+#undef LoaderRegister
+#undef LoadLibraryAOffset
 }
 
 static void *get_proc_address(void *process, DWORD pid, const char *func)
@@ -490,7 +529,7 @@ static void *get_proc_address(void *process, DWORD pid, const char *func)
 
     MODULEENTRY32 entry;
     void *ret = 0;
-    DWORD tmp;
+    SIZE_T tmp;
     void *list;
     int i, k;
 

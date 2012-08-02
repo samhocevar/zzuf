@@ -500,7 +500,10 @@ int main(int argc, char *argv[])
         /* Allocate memory for children handling */
         opts->child = malloc(opts->maxchild * sizeof(struct child));
         for(i = 0; i < opts->maxchild; i++)
+        {
             opts->child[i].status = STATUS_FREE;
+            memset(opts->child[i].fd, -1, sizeof(opts->child->fd));
+        }
         opts->nchild = 0;
 
         /* Create new argv */

@@ -98,48 +98,166 @@ void _zz_sys_init(void)
 
 #define MK_JMP_JD(dst, src) ((dst) - ((src) + 5))
 
+static int modrm_sib_size(uint8_t* code)
+{
+    static uint8_t modrm_size[] = { 0, 1, 4, 0 }; /* [reg ...], [reg ... + sbyte], [reg ... + sdword], reg */
+    uint8_t modrm = *code;
+
+    if (modrm == 0x05) /* [(rip) + sdword] */ return 1 + 4;
+
+    /* Does the instruciton have a SIB byte ? */
+    return 1 + (!!(((modrm & 0x7) == 0x4) && ((modrm >> 6) != 0x3))) + modrm_size[modrm >> 6];
+}
+
 /* zz_lde is a _very_ simple length disassemble engine.
  * x64 is not tested and should not work. */
-static int zz_lde(uint8_t *code, int required_size)
+static int zz_lde(uint8_t *code)
 {
     int insn_size = 0;
-    static uint8_t modrm_size[] = { 0, 1, 4, 0 }; /* [reg ...], [reg ... + sbyte], [reg ... + sdword], reg */
 
-    while (insn_size < required_size)
+    uint8_t opcd = code[insn_size++];
+    int imm_size = 4; /* Iv */
+
+#ifdef _M_AMD64
+    // REX prefix
+    if ((opcd & 0xf8) == 0x48)
     {
-        uint8_t opcd = code[insn_size++];
+        imm_size = 8; /* REX.W */
+        opcd = code[insn_size++];
+    }
+#endif
 
-        /* Simple instructions should be placed here */
-        switch (opcd)
-        {
-        case 0x68: insn_size += 4; continue; /* PUSH Iv */
-        case 0x6a: insn_size += 1; continue; /* PUSH Ib */
-        default: break;
-        }
+    /* Simple instructions should be placed here */
+    switch (opcd)
+    {
+    case 0x68: insn_size += 4; break; /* PUSH Iv */
+    case 0x6a: insn_size += 1; break; /* PUSH Ib */
+    default: break;
+    }
 
-        /* PUSH/POP rv */
-        if ((opcd & 0xf0) == 0x50) continue;
+    /* PUSH/POP rv */
+    if ((opcd & 0xf0) == 0x50) return insn_size;
 
-        /* MOV Ev, Gv or Gv, Ev */
-        else if (opcd == 0x89 || opcd == 0x8b)
-        {
-            uint8_t modrm = code[insn_size++];
+    /* MNEM E?, G? or G?, E? */
+    switch (opcd)
+    {
+    case 0x89: /* mov Ev, Gv */
+    case 0x8b: /* mov Gv, Ev */
+        insn_size += modrm_sib_size(code + insn_size);
+        break;
 
-            /* Does the instruciton have a SIB byte ? */
-            if (((modrm & 0x7) == 0x4) && ((modrm >> 6) != 0x3))
-                insn_size++;
+    case 0x80: /* Group#1 Eb, Ib */
+    case 0x82: /* Group#1 Eb, Ib */
+    case 0x83: /* Group#1 Ev, Ib */
+        insn_size += (modrm_sib_size(code + insn_size) + 1);
+        break;
 
-            insn_size += modrm_size[modrm >> 6];
+    case 0x81: /* Group#1 Ev, Iz */
+        insn_size += (modrm_sib_size(code + insn_size) + 4);
+        break;
 
-            continue;
-        }
+    case 0xff:
+        if ((code[insn_size] & 0x38) == 0x30) /* PUSH Ev */
+            insn_size += modrm_sib_size(code + insn_size);
+        break;
 
-
-        /* If we can't disassemble the current instruction, we give up */
-        return -1;
+    default: break;
     }
 
     return insn_size;
+}
+
+/* This function returns the required size to insert a patch */
+static int compute_patch_size(uint8_t *code, int required_size)
+{
+    int patch_size = 0;
+    while (patch_size < required_size)
+    {
+        int insn_size = zz_lde(code);
+        if (insn_size == 0) return -1;
+        patch_size += insn_size;
+    }
+    return patch_size;
+}
+
+static void make_jmp32(uint8_t *src, uint8_t *dst, uint8_t *code)
+{
+    *(uint8_t  *)(code + 0) = 0xe9;             /* JMP Jd */
+    *(uint32_t *)(code + 1) = (uint32_t)MK_JMP_JD(dst, src);
+}
+
+static void make_jmp64(uint8_t *dst, uint8_t *code)
+{
+    memcpy(code, "\x48\xb8", 2);                /* MOV rAX, Iq */
+    *(uint64_t *)(code + 2) = (uint64_t)dst;
+    memcpy(code + 10, "\xff\xe0", 2);           /* JMP rAX */
+}
+
+/* This function allocates and fills a trampoline for the function pointed by code. It also tries to handle some relocations. */
+static int make_trampoline(uint8_t *code, size_t patch_size, uint8_t **trampoline_buf, size_t *trampoline_size)
+{
+    uint8_t *trampoline;
+
+    *trampoline_buf  = NULL;
+    *trampoline_size = 0;
+
+#ifdef _M_AMD64
+    {
+        size_t code_offset = 0;
+        size_t trampoline_offset = 0;
+        const size_t reloc_size  = -7 /* size of mov rax, [rip + ...] */ +10 /* size of mov rax, Iq */;
+
+        trampoline = malloc(patch_size + reloc_size + 13); /* Worst case */
+        if (trampoline == NULL) return -1;
+        memset(trampoline, 0xcc, patch_size + 13);
+
+        while (code_offset < patch_size)
+        {
+            int insn_size = zz_lde(code + code_offset);
+            if (insn_size == 0) return -1;
+
+            /* mov rax, [rip + ...] is the signature for stack cookie */
+            if (!memcmp(code + code_offset, "\x48\x8b\x05", 3))
+            {
+                uint64_t *cookie_address = (uint64_t *)(code + code_offset + insn_size + *(uint32_t *)(code + code_offset + 3));
+                patch_size              += reloc_size;
+
+                memcpy(trampoline + trampoline_offset, "\x48\xb8", 2); /* MOV rAX, Iq */
+                *(uint64_t *)(trampoline + trampoline_offset + 2) = *cookie_address;
+                trampoline_offset += 10;
+            }
+            else
+            {
+                *trampoline_size += insn_size;
+                memcpy(trampoline + trampoline_offset, code + code_offset, insn_size);
+                trampoline_offset += insn_size;
+            }
+
+            code_offset += insn_size;
+        }
+
+
+        /* We can't use make_jmp64 since rAX is used by the __security_cookie */
+        memcpy(trampoline + trampoline_offset, "\x49\xba", 2); /* MOV r10, Iq */
+        *(uint64_t *)(trampoline + trampoline_offset + 2) = (uint64_t)(code + code_offset);
+        memcpy(trampoline + trampoline_offset + 10, "\x41\xff\xe2", 3); /* JMP r10 */
+
+        *trampoline_buf  = trampoline;
+        *trampoline_size = trampoline_offset;
+        return 0;
+    }
+#elif _M_IX86
+    trampoline = malloc(patch_size + 5);
+    if (trampoline == NULL) return -1;
+    memcpy(trampoline, code, patch_size);
+    make_jmp32(trampoline + patch_size, code + patch_size, trampoline + patch_size);
+
+    *trampoline_size = patch_size;
+    *trampoline_buf  = trampoline;
+    return 0;
+#else
+#   error Unsupported architecture !
+#endif
 }
 
 /* This function allows to hook any API. To do so, it disassembles the beginning of the
@@ -148,32 +266,40 @@ static int zz_lde(uint8_t *code, int required_size)
  * Finally, trampoline_api contains a wrapper to call in order to execute the original API */
 static int hook_inline(uint8_t *old_api, uint8_t *new_api, uint8_t **trampoline_api)
 {
-    int res             = -1;
-    int patch_size      = 0;
-    uint8_t *jmp_prolog = NULL;
-    uint8_t *trampoline = NULL;
+    int res                 = -1;
+    int required_size       = 5;
+    int patch_size          = 0;
+    uint8_t jmp_prolog[12];
+    uint8_t *trampoline     = NULL;
+    size_t trampoline_size  = 0;
     DWORD old_prot;
-
-    /* if we can't get enough byte, we quit */
-    if ((patch_size = zz_lde(old_api, 5)) == -1)
-        return -1;
-
-    if ((jmp_prolog = malloc(patch_size)) == NULL) goto _out;
-    memset(jmp_prolog, '\xcc', patch_size); /* We use 0xcc because the code after the jmp should be executed */
 
     *trampoline_api = NULL;
 
-    jmp_prolog[0] = '\xe9'; /* jmp Jd */
-    *(uint32_t *)(&jmp_prolog[1]) = MK_JMP_JD(new_api, old_api);
+    memset(jmp_prolog, 0xcc, sizeof(jmp_prolog));
 
-    trampoline = malloc(patch_size + 5); /* size of old byte + sizeof of jmp Jd */
-    memcpy(trampoline, old_api, patch_size);
-    *(uint8_t  *)&trampoline[patch_size]     = '\xe9'; /* jmp Jd */
-    *(uint32_t *)&trampoline[patch_size + 1] = MK_JMP_JD(old_api + patch_size, trampoline + patch_size);
+#ifdef _M_AMD64
+    if (new_api - old_api > 0xffffffff)
+    {
+        required_size = 12;
+        make_jmp64(new_api, jmp_prolog);
+    }
+    else make_jmp32(old_api, new_api, jmp_prolog);
+#elif _M_IX86
+    make_jmp32(old_api, new_api, jmp_prolog);
+#else
+#   error Unsupported architecture !
+#endif
+
+    /* if we can't get enough byte, we quit */
+    if ((patch_size = compute_patch_size(old_api, required_size)) == -1)
+        return -1;
+
+    if (make_trampoline(old_api, patch_size, &trampoline, &trampoline_size) < 0) goto _out;
 
     /* We must make the trampoline executable, this line is required because of DEP */
     /* NOTE: We _must_ set the write protection, otherwise the heap allocator will crash ! */
-    if (!VirtualProtect(trampoline, patch_size + 5, PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
+    if (!VirtualProtect(trampoline, trampoline_size, PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
 
     /* We patch the targeted API, so we must set it as writable */
     if (!VirtualProtect(old_api, patch_size, PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
@@ -193,8 +319,6 @@ _out:
             trampoline_api = NULL;
         }
     }
-
-    if (jmp_prolog != NULL) free(jmp_prolog);
 
     return res;
 }
