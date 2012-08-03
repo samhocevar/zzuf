@@ -791,12 +791,12 @@ static void spawn_children(struct opts *opts)
 
 static void clean_children(struct opts *opts)
 {
-#if defined HAVE_KILL
+#if defined HAVE_KILL || defined HAVE_WINDOWS_H
     int64_t now = _zz_time();
 #endif
     int i, j;
 
-#if defined HAVE_KILL
+#if defined HAVE_KILL || defined HAVE_WINDOWS_H
     /* Terminate children if necessary */
     for(i = 0; i < opts->maxchild; i++)
     {
@@ -809,7 +809,13 @@ static void clean_children(struct opts *opts)
                 finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "data output exceeded, sending SIGTERM\n");
             }
+#if defined HAVE_KILL
             kill(opts->child[i].pid, SIGTERM);
+#else
+            /* We must invalidate fd */
+            memset(opts->child[i].fd, -1, sizeof(opts->child[i].fd));
+            TerminateProcess(opts->child[i].process_handle, 0x0);
+#endif
             opts->child[i].date = now;
             opts->child[i].status = STATUS_SIGTERM;
         }
@@ -823,7 +829,13 @@ static void clean_children(struct opts *opts)
                 finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "running time exceeded, sending SIGTERM\n");
             }
+#if defined HAVE_KILL
             kill(opts->child[i].pid, SIGTERM);
+#else
+            /* We must invalidate fd */
+            memset(opts->child[i].fd, -1, sizeof(opts->child[i].fd));
+            TerminateProcess(opts->child[i].process_handle, 0x0);
+#endif
             opts->child[i].date = now;
             opts->child[i].status = STATUS_SIGTERM;
         }
@@ -840,7 +852,11 @@ static void clean_children(struct opts *opts)
                 finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "not responding, sending SIGKILL\n");
             }
+#if defined HAVE_KILL
             kill(opts->child[i].pid, SIGKILL);
+#else
+            TerminateProcess(opts->child[i].process_handle, 0x0);
+#endif
             opts->child[i].status = STATUS_SIGKILL;
         }
     }

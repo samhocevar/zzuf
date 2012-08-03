@@ -28,6 +28,9 @@
 #define HAVE_CONNECT 1
 #define HAVE_CREATEFILEA 1
 #define HAVE_CREATEFILEW 1
+#define HAVE_CREATEFILEMAPPINGA 1
+#define HAVE_CREATEFILEMAPPINGW 1
+#define HAVE_MAPVIEWOFFILE 1
 /* #undef HAVE_DLADDR */
 /* #undef HAVE_DLFCN_H */
 #define HAVE_DUP 1
@@ -73,6 +76,7 @@
 /* #undef HAVE_PREAD */
 #define HAVE_PROCESS_H 1
 #define HAVE_READFILE 1
+#define HAVE_READFILEEX 1
 /* #undef HAVE_READV */
 #define HAVE_RECV 1
 #define HAVE_RECVFROM 1

@@ -57,6 +57,21 @@ static HANDLE (__stdcall *ORIG(ReOpenFile))(HANDLE, DWORD,
 static BOOL (__stdcall *ORIG(ReadFile))(HANDLE, LPVOID, DWORD, LPDWORD,
                                         LPOVERLAPPED);
 #endif
+#if defined HAVE_READFILEEX
+static BOOL (__stdcall *ORIG(ReadFileEx))(HANDLE, LPVOID, DWORD, LPDWORD,
+    LPOVERLAPPED, LPOVERLAPPED_COMPLETION_ROUTINE);
+#endif
+#if defined HAVE_CREATEFILEMAPPINGA
+static HANDLE (__stdcall *ORIG(CreateFileMappingA))(HANDLE, LPSECURITY_ATTRIBUTES,
+                                                   DWORD, DWORD, DWORD, LPCSTR);
+#endif
+#if defined HAVE_CREATEFILEMAPPINGW
+static HANDLE (__stdcall *ORIG(CreateFileMappingW))(HANDLE, LPSECURITY_ATTRIBUTES,
+                                                   DWORD, DWORD, DWORD, LPCWSTR);
+#endif
+#ifdef HAVE_MAPVIEWOFFILE
+static LPVOID (__stdcall *ORIG(MapViewOfFile))(HANDLE, DWORD, DWORD, DWORD, SIZE_T);
+#endif
 #if defined HAVE_CLOSEHANDLE
 static BOOL (__stdcall *ORIG(CloseHandle))(HANDLE);
 #endif
@@ -141,7 +156,7 @@ BOOL __stdcall NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer,
     BOOL ret;
     ret = ORIG(ReadFile)(hFile, lpBuffer, nNumberOfBytesToRead,
                           lpNumberOfBytesRead, lpOverlapped);
-    debug("ReadFile(%#08x, %#08x, %#08x, %#08x, %#08x) = %s",
+    debug("ReadFile(%#08x, %p, %#08x, %#08x, %p) = %s",
         hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped, (ret ? "TRUE" : "FALSE"));
 
     if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile))
@@ -154,6 +169,100 @@ BOOL __stdcall NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer,
         _zz_fuzz(hFile, lpBuffer, bytes_read);
         _zz_addpos(hFile, bytes_read);
     }
+    return ret;
+}
+#endif
+
+#if defined HAVE_READFILEEX
+BOOL __stdcall NEW(ReadFileEx)(HANDLE hFile, LPVOID lpBuffer,
+    DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead,
+    LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+    BOOL ret;
+
+    ret = ORIG(ReadFileEx)(hFile, lpBuffer, nNumberOfBytesToRead,
+        lpNumberOfBytesRead, lpOverlapped, lpCompletionRoutine);
+
+    debug("ReadFileEx(%#08x, %p, %#08x, %p, %p, %p) = %s",
+        hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped, lpCompletionRoutine, (ret ? "TRUE" : "FALSE"));
+
+    if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile))
+        return ret;
+
+    if (ret)
+    {
+        DWORD bytes_read = lpNumberOfBytesRead ? *lpNumberOfBytesRead : nNumberOfBytesToRead;
+        debug("fuzzing file %#08x\n", hFile);
+        _zz_fuzz(hFile, lpBuffer, bytes_read);
+        _zz_addpos(hFile, bytes_read);
+    }
+    return ret;
+}
+#endif
+
+#if defined HAVE_CREATEFILEMAPPINGA
+HANDLE __stdcall NEW(CreateFileMappingA)(HANDLE hFile, LPSECURITY_ATTRIBUTES lpAttributes,
+            DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow,
+            LPCSTR lpName)
+{
+    HANDLE ret;
+    ret = ORIG(CreateFileMappingA)(hFile, lpAttributes,
+        flProtect, dwMaximumSizeHigh, dwMaximumSizeLow,
+        lpName);
+
+    debug("CreateFileMappingA(%#08x, %#08x, %#08x, %#08x, %#08x, %s) = %#08x",
+        hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName, ret);
+
+    if (ret == NULL) return ret;
+
+    if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile) || _zz_islocked(-1))
+        return ret;
+
+    debug("handle %#08x is registered", ret);
+    _zz_register(ret);
+
+    return ret;
+}
+#endif
+
+#if defined HAVE_CREATEFILEMAPPINGW
+HANDLE __stdcall NEW(CreateFileMappingW)(HANDLE hFile, LPSECURITY_ATTRIBUTES lpAttributes,
+            DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow,
+            LPCWSTR lpName)
+{
+    HANDLE ret;
+    ret = ORIG(CreateFileMappingW)(hFile, lpAttributes,
+        flProtect, dwMaximumSizeHigh, dwMaximumSizeLow,
+        lpName);
+
+    debug("CreateFileMappingW(%#08x, %#08x, %#08x, %#08x, %#08x, %S) = %#08x",
+        hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName, ret);
+
+    if (ret == NULL) return ret;
+
+    if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile) || _zz_islocked(-1))
+        return ret;
+
+    debug("handle %#08x is registered", ret);
+    _zz_register(ret);
+
+    return ret;
+}
+#endif
+
+#ifdef HAVE_MAPVIEWOFFILE
+LPVOID __stdcall NEW(MapViewOfFile)(HANDLE hFileMappingObject, DWORD dwDesiredAccess,
+    DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow,
+    SIZE_T dwNumberOfBytesToMap)
+{
+    LPVOID ret;
+    ret = ORIG(MapViewOfFile)(hFileMappingObject, dwDesiredAccess,
+        dwFileOffsetHigh, dwFileOffsetLow,
+        dwNumberOfBytesToMap);
+
+    debug("MapViewOfFile(%#08x, %#08x, %#08x, %#08x, %#08x) = %p",
+        hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap, ret);
+
     return ret;
 }
 #endif
@@ -189,7 +298,11 @@ zzuf_table_t table_win32[] =
     DIVERT(CloseHandle),
     DIVERT(CreateFileA),
     DIVERT(CreateFileW),
+    DIVERT(CreateFileMappingA),
+    DIVERT(CreateFileMappingW),
+    DIVERT(MapViewOfFile),
     DIVERT(ReadFile),
+    DIVERT(ReadFileEx),
     DIVERT_END
 };
 #endif

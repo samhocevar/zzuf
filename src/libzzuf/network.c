@@ -28,6 +28,9 @@
 #   include <sys/socket.h>
 #   include <netinet/in.h>
 #   include <arpa/inet.h>
+#elif defined HAVE_WINSOCK2_H
+#   include <WinSock2.h>
+#   include <WS2tcpip.h>
 #endif
 
 #include "libzzuf.h"
@@ -35,7 +38,7 @@
 #include "ranges.h"
 #include "network.h"
 
-#if defined HAVE_SYS_SOCKET_H
+#if defined HAVE_SYS_SOCKET_H || defined (HAVE_WINDOWS_H)
 static unsigned int get_socket_ip(int);
 static int host_in_list(unsigned int, unsigned int const *);
 static unsigned int *create_host_list(char const *, unsigned int *);
@@ -53,12 +56,15 @@ static int64_t static_ports[512];
 
 void _zz_network_init(void)
 {
-    ;
+#ifdef HAVE_WINSOCK2_H
+    WSADATA wsa_data;
+    WSAStartup(MAKEWORD(2,2), &wsa_data); /* LATER: handle error */
+#endif
 }
 
 void _zz_network_fini(void)
 {
-#if defined HAVE_SYS_SOCKET_H
+#if defined HAVE_SYS_SOCKET_H || defined (HAVE_WINDOWS_H)
     if(ports != static_ports)
         free(ports);
     if(allow != static_allow)
@@ -66,32 +72,36 @@ void _zz_network_fini(void)
     if(deny != static_deny)
         free(deny);
 #endif
+
+#if defined HAVE_WINSOCK2_H
+    WSACleanup(); /* LATER: handle error */
+#endif
 }
 
 void _zz_allow(char const *allowlist)
 {
-#if defined HAVE_SYS_SOCKET_H
+#if defined HAVE_SYS_SOCKET_H || defined (HAVE_WINDOWS_H)
     allow = create_host_list(allowlist, static_allow);
 #endif
 }
 
 void _zz_deny(char const *denylist)
 {
-#if defined HAVE_SYS_SOCKET_H
+#if defined HAVE_SYS_SOCKET_H || defined (HAVE_WINDOWS_H)
     deny = create_host_list(denylist, static_deny);
 #endif
 }
 
 void _zz_ports(char const *portlist)
 {
-#if defined HAVE_SYS_SOCKET_H
+#if defined HAVE_SYS_SOCKET_H || defined (HAVE_WINDOWS_H)
     ports = _zz_allocrange(portlist, static_ports);
 #endif
 }
 
 int _zz_portwatched(int port)
 {
-#if defined HAVE_SYS_SOCKET_H
+#if defined HAVE_SYS_SOCKET_H || defined (HAVE_WINDOWS_H)
     if(!ports)
         return 1;
 
@@ -103,7 +113,7 @@ int _zz_portwatched(int port)
 
 int _zz_hostwatched(int sock)
 {
-#if defined HAVE_SYS_SOCKET_H
+#if defined HAVE_SYS_SOCKET_H || defined (HAVE_WINDOWS_H)
     int watch = 1;
     unsigned int ip;
 
@@ -125,7 +135,7 @@ int _zz_hostwatched(int sock)
 
 /* XXX: the following functions are local */
 
-#if defined HAVE_SYS_SOCKET_H
+#if defined HAVE_SYS_SOCKET_H || defined HAVE_WINSOCK2_H
 static unsigned int *create_host_list(char const *list,
                                       unsigned int *static_list)
 {
@@ -166,7 +176,7 @@ static unsigned int *create_host_list(char const *list,
             parser++;
         }
 
-        ret = inet_aton(buf, &addr);
+        ret = inet_pton(AF_INET, buf, &addr);
         if (ret)
             iplist[i++] = addr.s_addr;
         else
