@@ -923,7 +923,7 @@ static void clean_children(struct opts *opts)
             {
                 if (exit_code == STILL_ACTIVE) continue; /* The process is still active, we don't do anything */
 
-                /* 
+                /*
                  * The main problem with GetExitCodeProcess is it returns either returned parameter value of
                  * ExitProcess/TerminateProcess, or the unhandled exception (which is what we're looking for)
                  */
