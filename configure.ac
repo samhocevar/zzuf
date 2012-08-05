@@ -65,6 +65,7 @@ AC_SUBST(DLL_LDFLAGS)
 AC_CHECK_HEADERS(windows.h winsock2.h io.h process.h unistd.h inttypes.h stdint.h libc.h malloc.h dlfcn.h regex.h sys/cdefs.h sys/socket.h netinet/in.h arpa/inet.h sys/uio.h aio.h sys/mman.h sys/wait.h sys/resource.h sys/time.h endian.h mach/task.h)
 
 AC_CHECK_FUNCS(setenv waitpid setrlimit gettimeofday fork kill pipe _pipe)
+AC_CHECK_FUNCS(regexec regwexec)
 AC_CHECK_FUNCS(dup dup2 ftello fseeko _IO_getc getline getdelim fgetln map_fd memalign posix_memalign aio_read accept bind connect socket readv pread recv recvfrom recvmsg mmap valloc sigaction getpagesize)
 AC_CHECK_FUNCS(getc_unlocked getchar_unlocked fgetc_unlocked fread_unlocked fgets_unlocked)
 AC_CHECK_FUNCS(__getdelim __srefill __filbuf __srget __uflow)

@@ -199,7 +199,7 @@ void _zz_fd_fini(void)
 
 int _zz_mustwatch(char const *file)
 {
-#if defined HAVE_REGEX_H
+#if defined HAVE_REGEXEC
     if(has_include && regexec(&re_include, file, 0, NULL, 0) == REG_NOMATCH)
         return 0; /* not included: ignore */
 
@@ -214,7 +214,7 @@ int _zz_mustwatch(char const *file)
 
 int _zz_mustwatchw(wchar_t const *file)
 {
-#if defined HAVE_REGEX_H
+#if defined HAVE_REGWEXEC
     if(has_include && regwexec(&re_include, file, 0, NULL, 0) == REG_NOMATCH)
         return 0; /* not included: ignore */
 

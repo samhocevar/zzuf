@@ -81,8 +81,9 @@
 #define HAVE_RECV 1
 #define HAVE_RECVFROM 1
 /* #undef HAVE_RECVMSG */
-/* #undef HAVE_REGEX_H */
+/* #undef HAVE_REGEXEC */
 #define HAVE_REGEX_H 1
+#define HAVE_REGWEXEC 1
 #define HAVE_REOPENFILE 1
 /* #undef HAVE_SETENV */
 /* #undef HAVE_SETRLIMIT */

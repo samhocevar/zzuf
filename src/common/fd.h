@@ -14,6 +14,9 @@
  *  fd.h: file descriptor functions
  */
 
+#include <stdint.h>
+#include <wchar.h>
+
 extern void _zz_include(char const *);
 extern void _zz_exclude(char const *);
 extern void _zz_setseed(int32_t);
