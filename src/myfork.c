@@ -485,7 +485,7 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
     if (SuspendThread(thread) == (DWORD)-1) goto _return;
 
     /* Resolve LoadLibraryA from the target process memory context */
-    rldlib = get_proc_address(process, pid, "LoadLibraryA");
+    if ((rldlib = get_proc_address(process, pid, "LoadLibraryA")) == NULL) goto _return;
 
     if ((rpl = VirtualAllocEx(process, NULL, pl_len, MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == NULL) goto _return;
 
@@ -544,7 +544,7 @@ static void *get_proc_address(void *process, DWORD pid, const char *func)
         uint32_t exportaddr;
         uint8_t *base = entry.modBaseAddr;
 
-        if (strcmp("kernel32.dll", entry.szModule))
+        if (stricmp("kernel32.dll", entry.szModule))
             continue;
 
         ReadProcessMemory(process, base, &dos, sizeof(dos), &tmp);

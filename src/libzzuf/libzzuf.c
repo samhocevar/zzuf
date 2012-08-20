@@ -233,7 +233,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, PVOID impLoad)
             _zz_init();
             break;
         case DLL_PROCESS_DETACH:
-            _zz_fini();
+            //_zz_fini();
             DeleteCriticalSection(&_zz_pipe_cs);
             break;
     }

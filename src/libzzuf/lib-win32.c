@@ -61,6 +61,15 @@ static BOOL (__stdcall *ORIG(ReadFile))(HANDLE, LPVOID, DWORD, LPDWORD,
 static BOOL (__stdcall *ORIG(ReadFileEx))(HANDLE, LPVOID, DWORD, LPDWORD,
     LPOVERLAPPED, LPOVERLAPPED_COMPLETION_ROUTINE);
 #endif
+#if defined HAVE_CREATEIOCOMPLETIONPORT
+static HANDLE (__stdcall *ORIG(CreateIoCompletionPort))(HANDLE, HANDLE, ULONG_PTR, DWORD);
+#endif
+#if defined HAVE_GETQUEUEDCOMPLETIONSTATUS
+static BOOL (__stdcall *ORIG(GetQueuedCompletionStatus))(HANDLE, LPDWORD, PULONG_PTR, LPOVERLAPPED *, DWORD);
+#endif
+#if defined HAVE_GETOVERLAPPEDRESULT
+static BOOL (__stdcall *ORIG(GetOverlappedResult))(HANDLE, LPOVERLAPPED, LPDWORD, BOOL);
+#endif
 #if defined HAVE_CREATEFILEMAPPINGA
 static HANDLE (__stdcall *ORIG(CreateFileMappingA))(HANDLE, LPSECURITY_ATTRIBUTES,
                                                    DWORD, DWORD, DWORD, LPCSTR);
@@ -200,6 +209,57 @@ BOOL __stdcall NEW(ReadFileEx)(HANDLE hFile, LPVOID lpBuffer,
 }
 #endif
 
+#if defined HAVE_CREATEIOCOMPLETIONPORT
+HANDLE __stdcall NEW(CreateIoCompletionPort)(HANDLE FileHandle, HANDLE ExistingCompletionPort, ULONG_PTR CompletionKey, DWORD NumberOfConcurrentThreads)
+{
+	HANDLE ret;
+
+	ret = ORIG(CreateIoCompletionPort)(FileHandle, ExistingCompletionPort, CompletionKey, NumberOfConcurrentThreads);
+
+	debug("GetQueuedCompletionStatus(0x%08x, 0x%08x, 0x%08x, %d) = 0x%08x",
+		FileHandle, ExistingCompletionPort, CompletionKey, NumberOfConcurrentThreads, ret);
+
+    if (!_zz_ready || !_zz_iswatched(FileHandle) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(FileHandle) || !_zz_isactive(FileHandle))
+        return ret;
+
+    if (ret != NULL)
+    {
+        debug("handle %#08x is registered", ret);
+        _zz_register(ret);
+    }
+
+	return ret;
+}
+#endif
+
+#if defined HAVE_GETQUEUEDCOMPLETIONSTATUS
+BOOL __stdcall NEW(GetQueuedCompletionStatus)(HANDLE CompletionPort, LPDWORD lpNumberOfBytes, PULONG_PTR lpCompletion, LPOVERLAPPED *lpOverlapped, DWORD dwMilliseconds)
+{
+    BOOL ret;
+
+    ret = ORIG(GetQueuedCompletionStatus)(CompletionPort, lpNumberOfBytes, lpCompletion, lpOverlapped, dwMilliseconds);
+
+	debug("GetQueuedCompletionStatus(0x%08x, { %d }, %p, %p, %d) = %s",
+        CompletionPort, *lpNumberOfBytes, lpCompletion, lpOverlapped, dwMilliseconds, (ret ? "TRUE" : "FALSE"));
+
+    return ret;
+}
+#endif
+
+#if defined HAVE_GETOVERLAPPEDRESULT
+BOOL __stdcall NEW(GetOverlappedResult)(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, BOOL bWait)
+{
+    BOOL ret;
+
+    ret = ORIG(GetOverlappedResult)(hFile, lpOverlapped, lpNumberOfBytesTransferred, bWait);
+
+    debug("GetOverlappedResult(0x%#08x, %p, %p, %s) = %s",
+        hFile, lpOverlapped, lpNumberOfBytesTransferred, (bWait ? "TRUE" : "FALSE"), (ret ? "TRUE" : "FALSE"));
+
+    return ret;
+}
+#endif
+
 #if defined HAVE_CREATEFILEMAPPINGA
 HANDLE __stdcall NEW(CreateFileMappingA)(HANDLE hFile, LPSECURITY_ATTRIBUTES lpAttributes,
             DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow,
@@ -298,11 +358,14 @@ zzuf_table_t table_win32[] =
     DIVERT(CloseHandle),
     DIVERT(CreateFileA),
     DIVERT(CreateFileW),
+    DIVERT(ReadFile),
+    DIVERT(ReadFileEx),
+	DIVERT(CreateIoCompletionPort),
+    DIVERT(GetQueuedCompletionStatus),
+    DIVERT(GetOverlappedResult),
     DIVERT(CreateFileMappingA),
     DIVERT(CreateFileMappingW),
     DIVERT(MapViewOfFile),
-    DIVERT(ReadFile),
-    DIVERT(ReadFileEx),
     DIVERT_END
 };
 #endif

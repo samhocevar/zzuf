@@ -105,12 +105,11 @@ static int modrm_sib_size(uint8_t* code)
 
     if (modrm == 0x05) /* [(rip) + sdword] */ return 1 + 4;
 
-    /* Does the instruciton have a SIB byte ? */
+    /* Does this instruction have a SIB byte ? */
     return 1 + (!!(((modrm & 0x7) == 0x4) && ((modrm >> 6) != 0x3))) + modrm_size[modrm >> 6];
 }
 
-/* zz_lde is a _very_ simple length disassemble engine.
- * x64 is not tested and should not work. */
+/* zz_lde is a _very_ simple length disassemble engine. */
 static int zz_lde(uint8_t *code)
 {
     int insn_size = 0;
@@ -130,8 +129,9 @@ static int zz_lde(uint8_t *code)
     /* Simple instructions should be placed here */
     switch (opcd)
     {
-    case 0x68: insn_size += 4; break; /* PUSH Iv */
-    case 0x6a: insn_size += 1; break; /* PUSH Ib */
+    case 0x68: return (insn_size + 4); /* PUSH Iv */
+    case 0x6a: return (insn_size + 1); /* PUSH Ib */
+    case 0x90: return insn_size;       /* NOP     */
     default: break;
     }
 
@@ -143,28 +143,25 @@ static int zz_lde(uint8_t *code)
     {
     case 0x89: /* mov Ev, Gv */
     case 0x8b: /* mov Gv, Ev */
-        insn_size += modrm_sib_size(code + insn_size);
-        break;
+        return (insn_size + modrm_sib_size(code + insn_size));
 
     case 0x80: /* Group#1 Eb, Ib */
     case 0x82: /* Group#1 Eb, Ib */
     case 0x83: /* Group#1 Ev, Ib */
-        insn_size += (modrm_sib_size(code + insn_size) + 1);
-        break;
+        return (insn_size + (modrm_sib_size(code + insn_size) + 1));
 
     case 0x81: /* Group#1 Ev, Iz */
-        insn_size += (modrm_sib_size(code + insn_size) + 4);
-        break;
+        return (insn_size + (modrm_sib_size(code + insn_size) + 4));
 
     case 0xff:
         if ((code[insn_size] & 0x38) == 0x30) /* PUSH Ev */
-            insn_size += modrm_sib_size(code + insn_size);
+            return (insn_size + modrm_sib_size(code + insn_size));
         break;
 
     default: break;
     }
 
-    return insn_size;
+    return 0;
 }
 
 /* This function returns the required size to insert a patch */
@@ -260,6 +257,46 @@ static int make_trampoline(uint8_t *code, size_t patch_size, uint8_t **trampolin
 #endif
 }
 
+/*
+ * Sometimes Windows APIs are a stub and contain only a JMP to the real function.
+ * To avoid to relocate a JMP, we use the destination address.
+ */
+static int relocate_hook(uint8_t **code)
+{
+	uint8_t *cur_code = *code;
+
+#ifdef _M_AMD64
+    // we ignore the REX prefix
+    if ((*cur_code & 0xf8) == 0x48)
+		++cur_code;
+#endif
+
+    /* JMP Jd */
+    if (*cur_code == 0xe9)
+    {
+        *cur_code += (5 + *(uint32_t *)(cur_code + 1));
+        return 0;
+    }
+
+    /* JMP [(rip)+addr] */
+    else if (!memcmp(cur_code, "\xff\x25", 2))
+    {
+#ifdef _M_AMD64
+        uint8_t **dst_addr = (uint8_t **)(cur_code + 6 + *(uint32_t *)(cur_code + 2));
+        *code = *dst_addr;
+#elif _M_IX86
+        /* UNTESTED ! */
+        uint8_t **dst_addr = *(uint32_t *)(*cur_code + 2);
+        *code = *dst_addr;
+#else
+#   error Unsupported architecture !
+#endif
+        return 0;
+    }
+
+    return -1;
+}
+
 /* This function allows to hook any API. To do so, it disassembles the beginning of the
  * targeted function and looks for, at least, 5 bytes (size of JMP Jd).
  * Then it writes a JMP Jv instruction to make the new_api executed.
@@ -273,6 +310,10 @@ static int hook_inline(uint8_t *old_api, uint8_t *new_api, uint8_t **trampoline_
     uint8_t *trampoline     = NULL;
     size_t trampoline_size  = 0;
     DWORD old_prot;
+    uint8_t *reloc_old_api  = old_api;
+
+    while ((relocate_hook(&reloc_old_api)) >= 0)
+        old_api = reloc_old_api;
 
     *trampoline_api = NULL;
 
@@ -344,18 +385,18 @@ static void insert_funcs(void)
            if ((lib = LoadLibraryA(diversion->lib)) == NULL)
            {
                fprintf(stderr, "unable to load %s\n", diversion->lib);
-               return;
+               continue;
            }
         }
         if ((old_api = (uint8_t *)GetProcAddress(lib, diversion->name)) == NULL)
         {
             fprintf(stderr, "unable to get pointer to %s\n", diversion->name);
-            return;
+            continue;
         }
         if (hook_inline(old_api, diversion->new, &trampoline_api) < 0)
         {
             fprintf(stderr, "hook_inline failed while hooking %s!%s\n", diversion->lib, diversion->name);
-            return;
+            continue;
         }
         *diversion->old = trampoline_api;
     }
