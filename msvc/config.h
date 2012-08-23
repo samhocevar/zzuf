@@ -22,7 +22,9 @@
 #define HAVE_ACCEPT 1
 /* #undef HAVE_AIO_H */
 /* #undef HAVE_AIO_READ */
+#define HAVE_ALLOCCONSOLE 1
 /* #undef HAVE_ARPA_INET_H */
+#define HAVE_ATTACHCONSOLE 1
 #define HAVE_BIND 1
 #define HAVE_CLOSEHANDLE 1
 #define HAVE_CONNECT 1
@@ -88,6 +90,7 @@
 #define HAVE_REGEX_H 1
 #define HAVE_REGWEXEC 1
 #define HAVE_REOPENFILE 1
+#define HAVE_SETCONSOLEMODE 1
 /* #undef HAVE_SETENV */
 /* #undef HAVE_SETRLIMIT */
 /* #undef HAVE_SIGACTION */
@@ -114,6 +117,8 @@
 /* #undef HAVE_WAITPID */
 #define HAVE_WINDOWS_H 1
 #define HAVE_WINSOCK2_H 1
+#define HAVE_WRITECONSOLEOUTPUTA 1
+#define HAVE_WRITECONSOLEOUTPUTW 1
 /* #undef HAVE__IO_GETC */
 #define HAVE__PIPE 1
 /* #undef HAVE___FGETS_CHK */

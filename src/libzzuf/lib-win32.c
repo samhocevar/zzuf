@@ -1,6 +1,7 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
+ *  Copyright (c) 2006-2012 Sam Hocevar <sam@hocevar.net>
+ *                2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
  *                All Rights Reserved
  *
  *  This program is free software. It comes without any warranty, to
@@ -83,6 +84,26 @@ static LPVOID (__stdcall *ORIG(MapViewOfFile))(HANDLE, DWORD, DWORD, DWORD, SIZE
 #endif
 #if defined HAVE_CLOSEHANDLE
 static BOOL (__stdcall *ORIG(CloseHandle))(HANDLE);
+#endif
+#if defined HAVE_ALLOCCONSOLE
+static BOOL (__stdcall *ORIG(AllocConsole))();
+#endif
+#if defined HAVE_ATTACHCONSOLE
+static BOOL (__stdcall *ORIG(AttachConsole))(DWORD dwProcessId);
+#endif
+#if defined HAVE_SETCONSOLEMODE
+static BOOL (__stdcall *ORIG(SetConsoleMode))(HANDLE hConsoleHandle,
+                                              DWORD dwMode);
+#endif
+#if defined HAVE_WRITECONSOLEOUTPUTA
+static BOOL (__stdcall *ORIG(WriteConsoleOutputA))(HANDLE hConsoleOutput,
+                 CONST CHAR_INFO *lpBuffer, COORD dwBufferSize,
+                 COORD dwBufferCoord, PSMALL_RECT lpWriteRegion);
+#endif
+#if defined HAVE_WRITECONSOLEOUTPUTW
+static BOOL (__stdcall *ORIG(WriteConsoleOutputW))(HANDLE hConsoleOutput,
+                 CONST CHAR_INFO *lpBuffer, COORD dwBufferSize,
+                 COORD dwBufferCoord, PSMALL_RECT lpWriteRegion);
 #endif
 
 /*
@@ -212,12 +233,14 @@ BOOL __stdcall NEW(ReadFileEx)(HANDLE hFile, LPVOID lpBuffer,
 #if defined HAVE_CREATEIOCOMPLETIONPORT
 HANDLE __stdcall NEW(CreateIoCompletionPort)(HANDLE FileHandle, HANDLE ExistingCompletionPort, ULONG_PTR CompletionKey, DWORD NumberOfConcurrentThreads)
 {
-	HANDLE ret;
+    HANDLE ret;
 
-	ret = ORIG(CreateIoCompletionPort)(FileHandle, ExistingCompletionPort, CompletionKey, NumberOfConcurrentThreads);
+    ret = ORIG(CreateIoCompletionPort)(FileHandle, ExistingCompletionPort,
+                                   CompletionKey, NumberOfConcurrentThreads);
 
-	debug("GetQueuedCompletionStatus(0x%08x, 0x%08x, 0x%08x, %d) = 0x%08x",
-		FileHandle, ExistingCompletionPort, CompletionKey, NumberOfConcurrentThreads, ret);
+    debug("GetQueuedCompletionStatus(0x%08x, 0x%08x, 0x%08x, %d) = 0x%08x",
+          FileHandle, ExistingCompletionPort, CompletionKey,
+          NumberOfConcurrentThreads, ret);
 
     if (!_zz_ready || !_zz_iswatched(FileHandle) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(FileHandle) || !_zz_isactive(FileHandle))
         return ret;
@@ -228,7 +251,7 @@ HANDLE __stdcall NEW(CreateIoCompletionPort)(HANDLE FileHandle, HANDLE ExistingC
         _zz_register(ret);
     }
 
-	return ret;
+    return ret;
 }
 #endif
 
@@ -239,7 +262,7 @@ BOOL __stdcall NEW(GetQueuedCompletionStatus)(HANDLE CompletionPort, LPDWORD lpN
 
     ret = ORIG(GetQueuedCompletionStatus)(CompletionPort, lpNumberOfBytes, lpCompletion, lpOverlapped, dwMilliseconds);
 
-	debug("GetQueuedCompletionStatus(0x%08x, { %d }, %p, %p, %d) = %s",
+    debug("GetQueuedCompletionStatus(0x%08x, { %d }, %p, %p, %d) = %s",
         CompletionPort, *lpNumberOfBytes, lpCompletion, lpOverlapped, dwMilliseconds, (ret ? "TRUE" : "FALSE"));
 
     return ret;
@@ -347,6 +370,52 @@ BOOL __stdcall NEW(CloseHandle)(HANDLE hObject)
 }
 #endif
 
+#if defined HAVE_ALLOCCONSOLE
+BOOL __stdcall NEW(AllocConsole)()
+{
+    debug("AllocConsole()");
+    return ORIG(AllocConsole)();
+}
+#endif
+
+#if defined HAVE_ATTACHCONSOLE
+BOOL __stdcall NEW(AttachConsole)(DWORD dwProcessId)
+{
+    debug("AttachConsole(%#08x)");
+    return ORIG(AttachConsole)(dwProcessId);
+}
+#endif
+
+#if defined HAVE_SETCONSOLEMODE
+BOOL __stdcall NEW(SetConsoleMode)(HANDLE hConsoleHandle, DWORD dwMode)
+{
+    debug("SetConsoleMode(%#08x, %#08x)", (int)hConsoleHandle, dwMode);
+    return ORIG(SetConsoleMode)(hConsoleHandle, dwMode);
+}
+#endif
+
+#if defined HAVE_WRITECONSOLEOUTPUTA
+BOOL __stdcall NEW(WriteConsoleOutputA)(HANDLE hConsoleOutput,
+                               CONST CHAR_INFO *lpBuffer, COORD dwBufferSize,
+                               COORD dwBufferCoord, PSMALL_RECT lpWriteRegion)
+{
+    debug("WriteConsoleOutputA(%#08x, %p, ...)", (int)hConsoleOutput, lpBuffer);
+    return ORIG(WriteConsoleOutputA)(hConsoleOutput, lpBuffer, dwBufferSize,
+                                     dwBufferCoord, lpWriteRegion);
+}
+#endif
+
+#if defined HAVE_WRITECONSOLEOUTPUTW
+BOOL __stdcall NEW(WriteConsoleOutputW)(HANDLE hConsoleOutput,
+                               CONST CHAR_INFO *lpBuffer, COORD dwBufferSize,
+                               COORD dwBufferCoord, PSMALL_RECT lpWriteRegion)
+{
+    debug("WriteConsoleOutputW(%#08x, %p, ...)", (int)hConsoleOutput, lpBuffer);
+    return ORIG(WriteConsoleOutputW)(hConsoleOutput, lpBuffer, dwBufferSize,
+                                     dwBufferCoord, lpWriteRegion);
+}
+#endif
+
 /* Win32 function table */
 #if defined HAVE_WINDOWS_H
 #   define DIVERT(x) { "kernel32.dll", #x, \
@@ -360,12 +429,29 @@ zzuf_table_t table_win32[] =
     DIVERT(CreateFileW),
     DIVERT(ReadFile),
     DIVERT(ReadFileEx),
-	DIVERT(CreateIoCompletionPort),
+    DIVERT(CreateIoCompletionPort),
     DIVERT(GetQueuedCompletionStatus),
     DIVERT(GetOverlappedResult),
     DIVERT(CreateFileMappingA),
     DIVERT(CreateFileMappingW),
     DIVERT(MapViewOfFile),
+
+#if defined HAVE_ALLOCCONSOLE
+    DIVERT(AllocConsole),
+#endif
+#if defined HAVE_ATTACHCONSOLE
+    DIVERT(AttachConsole),
+#endif
+#if defined HAVE_SETCONSOLEMODE
+    DIVERT(SetConsoleMode),
+#endif
+#if defined HAVE_WRITECONSOLEOUTPUTA
+    DIVERT(WriteConsoleOutputA),
+#endif
+#if defined HAVE_WRITECONSOLEOUTPUTW
+    DIVERT(WriteConsoleOutputW),
+#endif
+
     DIVERT_END
 };
 #endif

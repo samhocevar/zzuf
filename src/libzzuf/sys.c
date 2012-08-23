@@ -1,6 +1,7 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
+ *  Copyright (c) 2006-2012 Sam Hocevar <sam@hocevar.net>
+ *                2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
  *                All Rights Reserved
  *
  *  This program is free software. It comes without any warranty, to
@@ -263,12 +264,12 @@ static int make_trampoline(uint8_t *code, size_t patch_size, uint8_t **trampolin
  */
 static int relocate_hook(uint8_t **code)
 {
-	uint8_t *cur_code = *code;
+    uint8_t *cur_code = *code;
 
 #ifdef _M_AMD64
     // we ignore the REX prefix
     if ((*cur_code & 0xf8) == 0x48)
-		++cur_code;
+        ++cur_code;
 #endif
 
     /* JMP Jd */
