@@ -48,25 +48,6 @@ void *_zz_dl_lib = RTLD_NEXT;
 
 #if defined HAVE_WINDOWS_H
 static void insert_funcs(void);
-
-/* TODO: get rid of this later */
-HINSTANCE (WINAPI *LoadLibraryA_orig)(LPCSTR);
-HINSTANCE WINAPI LoadLibraryA_new(LPCSTR path)
-{
-    return LoadLibraryA_orig(path);
-}
-
-BOOL (WINAPI *AllocConsole_orig)(void);
-BOOL WINAPI AllocConsole_new(void)
-{
-    return AllocConsole_orig();
-}
-
-BOOL (WINAPI *AttachConsole_orig)(DWORD);
-BOOL WINAPI AttachConsole_new(DWORD d)
-{
-    return AttachConsole_orig(d);
-}
 #endif
 
 void _zz_sys_init(void)
@@ -129,14 +110,28 @@ static int zz_lde(uint8_t *code)
     /* Simple instructions should be placed here */
     switch (opcd)
     {
-    case 0x68: return (insn_size + 4); /* PUSH Iv */
-    case 0x6a: return (insn_size + 1); /* PUSH Ib */
-    case 0x90: return insn_size;       /* NOP     */
-    default: break;
+    case 0x68:
+        return (insn_size + 4); /* PUSH Iv */
+    case 0x6a:
+        return (insn_size + 1); /* PUSH Ib */
+    case 0x90:
+        return insn_size;       /* NOP     */
+    case 0xb8:
+    case 0xb9:
+    case 0xba:
+    case 0xbb:
+    case 0xbc:
+    case 0xbd:
+    case 0xbe:
+    case 0xbf:
+        return insn_size + 5;   /* MOV immediate */
+    default:
+        break;
     }
 
     /* PUSH/POP rv */
-    if ((opcd & 0xf0) == 0x50) return insn_size;
+    if ((opcd & 0xf0) == 0x50)
+        return insn_size;
 
     /* MNEM E?, G? or G?, E? */
     switch (opcd)
@@ -158,7 +153,9 @@ static int zz_lde(uint8_t *code)
             return (insn_size + modrm_sib_size(code + insn_size));
         break;
 
-    default: break;
+    default:
+        fprintf(stderr, "unknown opcode %02x\n", opcd);
+        break;
     }
 
     return 0;
@@ -171,7 +168,8 @@ static int compute_patch_size(uint8_t *code, int required_size)
     while (patch_size < required_size)
     {
         int insn_size = zz_lde(code);
-        if (insn_size == 0) return -1;
+        if (insn_size == 0)
+            return -1;
         patch_size += insn_size;
     }
     return patch_size;
@@ -205,13 +203,15 @@ static int make_trampoline(uint8_t *code, size_t patch_size, uint8_t **trampolin
         const size_t reloc_size  = -7 /* size of mov rax, [rip + ...] */ +10 /* size of mov rax, Iq */;
 
         trampoline = malloc(patch_size + reloc_size + 13); /* Worst case */
-        if (trampoline == NULL) return -1;
+        if (trampoline == NULL)
+            return -1;
         memset(trampoline, 0xcc, patch_size + 13);
 
         while (code_offset < patch_size)
         {
             int insn_size = zz_lde(code + code_offset);
-            if (insn_size == 0) return -1;
+            if (insn_size == 0)
+                return -1;
 
             /* mov rax, [rip + ...] is the signature for stack cookie */
             if (!memcmp(code + code_offset, "\x48\x8b\x05", 3))
@@ -334,16 +334,31 @@ static int hook_inline(uint8_t *old_api, uint8_t *new_api, uint8_t **trampoline_
 
     /* if we can't get enough byte, we quit */
     if ((patch_size = compute_patch_size(old_api, required_size)) == -1)
+    {
+        fprintf(stderr, "cannot compute patch size\n");
         return -1;
+    }
 
-    if (make_trampoline(old_api, patch_size, &trampoline, &trampoline_size) < 0) goto _out;
+    if (make_trampoline(old_api, patch_size, &trampoline, &trampoline_size) < 0)
+    {
+        fprintf(stderr, "cannot make trampoline\n");
+        goto _out;
+    }
 
     /* We must make the trampoline executable, this line is required because of DEP */
     /* NOTE: We _must_ set the write protection, otherwise the heap allocator will crash ! */
-    if (!VirtualProtect(trampoline, trampoline_size, PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
+    if (!VirtualProtect(trampoline, trampoline_size, PAGE_EXECUTE_READWRITE, &old_prot))
+    {
+        fprintf(stderr, "cannot make the trampoline writable\n");
+        goto _out;
+    }
 
     /* We patch the targeted API, so we must set it as writable */
-    if (!VirtualProtect(old_api, patch_size, PAGE_EXECUTE_READWRITE, &old_prot)) goto _out;
+    if (!VirtualProtect(old_api, patch_size, PAGE_EXECUTE_READWRITE, &old_prot))
+    {
+        fprintf(stderr, "cannot make old API writable\n");
+        goto _out;
+    }
     memcpy(old_api, jmp_prolog, patch_size);
     VirtualProtect(old_api, patch_size, old_prot, &old_prot); /* we don't care if this functon fails */
 
