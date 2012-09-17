@@ -168,7 +168,7 @@ static int compute_patch_size(uint8_t *code, int required_size)
     int patch_size = 0;
     while (patch_size < required_size)
     {
-        int insn_size = zz_lde(code);
+        int insn_size = zz_lde(code + patch_size);
         if (insn_size == 0)
             return -1;
         patch_size += insn_size;
@@ -287,7 +287,7 @@ static int relocate_hook(uint8_t **code)
         *code = *dst_addr;
 #elif _M_IX86
         /* UNTESTED ! */
-        uint8_t **dst_addr = *(uint32_t *)(*cur_code + 2);
+		uint8_t **dst_addr = (uint8_t **)(*(uint32_t *)(cur_code + 2));
         *code = *dst_addr;
 #else
 #   error Unsupported architecture !
