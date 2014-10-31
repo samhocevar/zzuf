@@ -287,7 +287,7 @@ static int relocate_hook(uint8_t **code)
         *code = *dst_addr;
 #elif _M_IX86
         /* UNTESTED ! */
-		uint8_t **dst_addr = (uint8_t **)(*(uint32_t *)(cur_code + 2));
+        uint8_t **dst_addr = (uint8_t **)(*(uint32_t *)(cur_code + 2));
         *code = *dst_addr;
 #else
 #   error Unsupported architecture !
