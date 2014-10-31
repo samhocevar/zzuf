@@ -69,6 +69,21 @@ static struct files
 static int *fds, static_fds[STATIC_FILES];
 static int maxfd, nfiles;
 
+/* Spinlock. This variable protects the fds variable. */
+static volatile int fd_spinlock = 0;
+
+static void fd_lock()
+{
+    while (__sync_lock_test_and_set(&fd_spinlock, 1))
+        ;
+}
+
+static void fd_unlock()
+{
+    __sync_synchronize();
+    fd_spinlock = 0;
+}
+
 /* Create lock. This lock variable is used to disable file descriptor
  * creation wrappers. For instance on Mac OS X, fopen() calls open()
  * and we don’t want open() to do any zzuf-related stuff: fopen() takes
@@ -83,7 +98,7 @@ static int     autoinc = 0;
 void _zz_include(char const *regex)
 {
 #if defined HAVE_REGEX_H
-    if(regcomp(&re_include, regex, REG_EXTENDED) == 0)
+    if (regcomp(&re_include, regex, REG_EXTENDED) == 0)
         has_include = 1;
 #else
     (void)regex;
@@ -93,7 +108,7 @@ void _zz_include(char const *regex)
 void _zz_exclude(char const *regex)
 {
 #if defined HAVE_REGEX_H
-    if(regcomp(&re_exclude, regex, REG_EXTENDED) == 0)
+    if (regcomp(&re_exclude, regex, REG_EXTENDED) == 0)
         has_exclude = 1;
 #else
     (void)regex;
@@ -112,7 +127,7 @@ void _zz_setseed(int32_t s)
 
 void _zz_setratio(double r0, double r1)
 {
-    if(r0 == 0.0 && r1 == 0.0)
+    if (r0 == 0.0 && r1 == 0.0)
     {
         maxratio = minratio = 0.0;
         return;
@@ -120,7 +135,7 @@ void _zz_setratio(double r0, double r1)
 
     minratio = r0 < MIN_RATIO ? MIN_RATIO : r0 > MAX_RATIO ? MAX_RATIO : r0;
     maxratio = r1 < MIN_RATIO ? MIN_RATIO : r1 > MAX_RATIO ? MAX_RATIO : r1;
-    if(maxratio < minratio)
+    if (maxratio < minratio)
         maxratio = minratio;
 }
 
@@ -134,7 +149,7 @@ double _zz_getratio(void)
     uint16_t rate;
     double min, max, cur;
 
-    if(minratio == maxratio)
+    if (minratio == maxratio)
         return minratio; /* this also takes care of 0.0 */
 
     rate = shuffle[seed & 0xf] << 12;
@@ -161,11 +176,11 @@ void _zz_fd_init(void)
      * calls to malloc() that we do, so we get better chances that memory
      * corruption errors are reproducible */
     files = static_files;
-    for(nfiles = 0; nfiles < 32; nfiles++)
+    for (nfiles = 0; nfiles < 32; nfiles++)
         files[nfiles].managed = 0;
 
     fds = static_fds;
-    for(maxfd = 0; maxfd < 32; maxfd++)
+    for (maxfd = 0; maxfd < 32; maxfd++)
         fds[maxfd] = -1;
 }
 
@@ -173,9 +188,9 @@ void _zz_fd_fini(void)
 {
     int i;
 
-    for(i = 0; i < maxfd; i++)
+    for (i = 0; i < maxfd; i++)
     {
-        if(!files[fds[i]].managed)
+        if (!files[fds[i]].managed)
             continue;
 
         /* XXX: What are we supposed to do? If filedescriptors weren't
@@ -183,27 +198,27 @@ void _zz_fd_fini(void)
     }
 
 #if defined HAVE_REGEX_H
-    if(has_include)
+    if (has_include)
         regfree(&re_include);
-    if(has_exclude)
+    if (has_exclude)
         regfree(&re_exclude);
 #endif
 
-    if(files != static_files)
+    if (files != static_files)
        free(files);
-    if(fds != static_fds)
+    if (fds != static_fds)
         free(fds);
-    if(list != static_list)
+    if (list != static_list)
         free(list);
 }
 
 int _zz_mustwatch(char const *file)
 {
 #if defined HAVE_REGEXEC
-    if(has_include && regexec(&re_include, file, 0, NULL, 0) == REG_NOMATCH)
+    if (has_include && regexec(&re_include, file, 0, NULL, 0) == REG_NOMATCH)
         return 0; /* not included: ignore */
 
-    if(has_exclude && regexec(&re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
+    if (has_exclude && regexec(&re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
         return 0; /* excluded: ignore */
 #else
     (void)file;
@@ -215,10 +230,10 @@ int _zz_mustwatch(char const *file)
 int _zz_mustwatchw(wchar_t const *file)
 {
 #if defined HAVE_REGWEXEC
-    if(has_include && regwexec(&re_include, file, 0, NULL, 0) == REG_NOMATCH)
+    if (has_include && regwexec(&re_include, file, 0, NULL, 0) == REG_NOMATCH)
         return 0; /* not included: ignore */
 
-    if(has_exclude && regwexec(&re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
+    if (has_exclude && regwexec(&re_exclude, file, 0, NULL, 0) != REG_NOMATCH)
         return 0; /* excluded: ignore */
 #else
     (void)file;
@@ -229,49 +244,58 @@ int _zz_mustwatchw(wchar_t const *file)
 
 int _zz_iswatched(int fd)
 {
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return 0;
+    int ret = 0;
+    fd_lock();
 
-    return 1;
+    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
+
+    ret = 1;
+
+early_exit:
+    fd_unlock();
+    return ret;
 }
 
 void _zz_register(int fd)
 {
     int i;
 
-    if(fd < 0 || fd > 65535 || (fd < maxfd && fds[fd] != -1))
-        return;
+    fd_lock();
+
+    if (fd < 0 || fd > 65535 || (fd < maxfd && fds[fd] != -1))
+        goto early_exit;
 
 #if defined LIBZZUF
-    if(autoinc)
+    if (autoinc)
         debug2("using seed %li", (long int)seed);
 #endif
 
     /* If filedescriptor is outside our bounds */
-    while(fd >= maxfd)
+    while (fd >= maxfd)
     {
-        if(fds == static_fds)
+        if (fds == static_fds)
         {
             fds = malloc(2 * maxfd * sizeof(*fds));
             memcpy(fds, static_fds, maxfd * sizeof(*fds));
         }
         else
             fds = realloc(fds, 2 * maxfd * sizeof(*fds));
-        for(i = maxfd; i < maxfd * 2; i++)
+        for (i = maxfd; i < maxfd * 2; i++)
             fds[i] = -1;
         maxfd *= 2;
     }
 
     /* Find an empty slot */
-    for(i = 0; i < nfiles; i++)
-        if(files[i].managed == 0)
+    for (i = 0; i < nfiles; i++)
+        if (files[i].managed == 0)
             break;
 
     /* No slot found, allocate memory */
-    if(i == nfiles)
+    if (i == nfiles)
     {
         nfiles++;
-        if(files == static_files)
+        if (files == static_files)
         {
             files = malloc(nfiles * sizeof(*files));
             memcpy(files, static_files, nfiles * sizeof(*files));
@@ -292,7 +316,7 @@ void _zz_register(int fd)
     files[i].fuzz.uflag = 0;
 
     /* Check whether we should ignore the fd */
-    if(list)
+    if (list)
     {
         static int idx = 0;
 
@@ -301,100 +325,151 @@ void _zz_register(int fd)
     else
         files[i].active = 1;
 
-    if(autoinc)
+    if (autoinc)
         seed++;
 
     fds[fd] = i;
+
+early_exit:
+    fd_unlock();
 }
 
 void _zz_unregister(int fd)
 {
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return;
+    fd_lock();
+
+    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
 
     files[fds[fd]].managed = 0;
 #if defined HAVE_FGETLN
-    if(files[fds[fd]].fuzz.tmp)
+    if (files[fds[fd]].fuzz.tmp)
         free(files[fds[fd]].fuzz.tmp);
 #endif
 
     fds[fd] = -1;
+
+early_exit:
+    fd_unlock();
 }
 
 void _zz_lock(int fd)
 {
-    if(fd < -1 || fd >= maxfd || fds[fd] == -1)
-        return;
+    fd_lock();
 
-    if(fd == -1)
+    if (fd < -1 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
+
+    if (fd == -1)
         create_lock++;
     else
         files[fds[fd]].locked++;
+
+early_exit:
+    fd_unlock();
 }
 
 void _zz_unlock(int fd)
 {
-    if(fd < -1 || fd >= maxfd || fds[fd] == -1)
-        return;
+    fd_lock();
 
-    if(fd == -1)
+    if (fd < -1 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
+
+    if (fd == -1)
         create_lock--;
     else
         files[fds[fd]].locked--;
+
+early_exit:
+    fd_unlock();
 }
 
 int _zz_islocked(int fd)
 {
-    if(fd < -1 || fd >= maxfd || fds[fd] == -1)
-        return 0;
+    int ret = 0;
+    fd_lock();
 
-    if(fd == -1)
-        return create_lock;
+    if (fd < -1 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
+
+    if (fd == -1)
+        ret = create_lock;
     else
-        return files[fds[fd]].locked;
+        ret = files[fds[fd]].locked;
+
+early_exit:
+    fd_unlock();
+    return ret;
 }
 
 int _zz_isactive(int fd)
 {
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return 1;
+    int ret = 1;
+    fd_lock();
 
-    return files[fds[fd]].active;
+    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
+
+    ret = files[fds[fd]].active;
+
+early_exit:
+    fd_unlock();
+    return ret;
 }
 
 int64_t _zz_getpos(int fd)
 {
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return 0;
+    int ret = 0;
+    fd_lock();
 
-    return files[fds[fd]].pos;
+    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
+
+    ret = files[fds[fd]].pos;
+
+early_exit:
+    fd_unlock();
+    return ret;
 }
 
 void _zz_setpos(int fd, int64_t pos)
 {
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return;
+    fd_lock();
+
+    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
 
     files[fds[fd]].pos = pos;
+
+early_exit:
+    fd_unlock();
 }
 
 void _zz_addpos(int fd, int64_t off)
 {
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return;
+    fd_lock();
+
+    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
 
     files[fds[fd]].pos += off;
+
+early_exit:
+    fd_unlock();
 }
 
 void _zz_setfuzzed(int fd, int count)
 {
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return;
+    fd_lock();
+
+    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
 
     /* FIXME: what if we just slightly advanced? */
-    if(files[fds[fd]].pos == files[fds[fd]].already_pos
+    if (files[fds[fd]].pos == files[fds[fd]].already_pos
         && count <= files[fds[fd]].already_fuzzed)
-        return;
+        goto early_exit;
 
 #if defined LIBZZUF
     debug2("setfuzzed(%i, %i)", fd, count);
@@ -402,29 +477,46 @@ void _zz_setfuzzed(int fd, int count)
 
     files[fds[fd]].already_pos = files[fds[fd]].pos;
     files[fds[fd]].already_fuzzed = count;
+
+early_exit:
+    fd_unlock();
 }
 
 int _zz_getfuzzed(int fd)
 {
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return 0;
+    int ret = 0;
+    fd_lock();
 
-    if(files[fds[fd]].pos < files[fds[fd]].already_pos)
-        return 0;
+    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
 
-    if(files[fds[fd]].pos >= files[fds[fd]].already_pos
+    if (files[fds[fd]].pos < files[fds[fd]].already_pos)
+        goto early_exit;
+
+    if (files[fds[fd]].pos >= files[fds[fd]].already_pos
                                + files[fds[fd]].already_fuzzed)
-        return 0;
+        goto early_exit;
 
-    return (int)(files[fds[fd]].already_fuzzed + files[fds[fd]].already_pos
-                                               - files[fds[fd]].pos);
+    ret = (int)(files[fds[fd]].already_fuzzed + files[fds[fd]].already_pos
+                                              - files[fds[fd]].pos);
+
+early_exit:
+    fd_unlock();
+    return ret;
 }
 
 struct fuzz *_zz_getfuzz(int fd)
 {
-    if(fd < 0 || fd >= maxfd || fds[fd] == -1)
-        return NULL;
+    struct fuzz *ret = NULL;
+    fd_lock();
 
-    return &files[fds[fd]].fuzz;
+    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
+        goto early_exit;
+
+    ret = &files[fds[fd]].fuzz;
+
+early_exit:
+    fd_unlock();
+    return ret;
 }
 
