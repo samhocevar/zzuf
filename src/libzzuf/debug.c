@@ -47,7 +47,7 @@ static void mydebug(char const *format, va_list args);
         char buf[128], *b = buf + 127; \
         if (i <= 0) \
             append((i = 1 + ~i) ? "-" : "0", 1); /* XXX: hack here */ \
-        if (i < 0) \
+        if (i + 1 <= 0) \
         { \
             i = 1 + ~(i + base); /* XXX: special case for INT_MIN */ \
             *b-- = hex2char[i % base]; \

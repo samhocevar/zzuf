@@ -72,13 +72,13 @@ static int maxfd, nfiles;
 /* Spinlock. This variable protects the fds variable. */
 static volatile int fd_spinlock = 0;
 
-static void fd_lock()
+static void fd_lock(void)
 {
     while (__sync_lock_test_and_set(&fd_spinlock, 1))
         ;
 }
 
-static void fd_unlock()
+static void fd_unlock(void)
 {
     __sync_synchronize();
     fd_spinlock = 0;
