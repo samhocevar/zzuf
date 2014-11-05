@@ -3,7 +3,7 @@
 AC_INIT(zzuf, 0.13)
 AC_CONFIG_AUX_DIR(.auto)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE([no-define tar-ustar])
+AM_INIT_AUTOMAKE([subdir-objects no-define tar-ustar silent-rules])
 
 AC_PREREQ(2.50)
 

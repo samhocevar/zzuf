@@ -1,18 +1,17 @@
 #! /bin/sh
-# $Id: bootstrap 2005 2008-07-16 20:51:50Z sam $
 
 # bootstrap: generic bootstrap/autogen.sh script for autotools projects
 #
-# Copyright (c) 2002-2008 Sam Hocevar <sam@zoy.org>
+# Copyright (c) 2002-2014 Sam Hocevar <sam@hocevar.net>
 #
 #    This program is free software. It comes without any warranty, to
 #    the extent permitted by applicable law. You can redistribute it
 #    and/or modify it under the terms of the Do What The Fuck You Want
 #    To Public License, Version 2, as published by Sam Hocevar. See
-#    http://sam.zoy.org/wtfpl/COPYING for more details.
+#    http://www.wtfpl.net/ for more details.
 #
 # The latest version of this script can be found at the following place:
-#   http://sam.zoy.org/autotools/
+#    http://caca.zoy.org/wiki/build
 
 # Die if an error occurs
 set -e
@@ -29,6 +28,7 @@ fi
 
 # Check for needed features
 auxdir="`sed -ne 's/^[ \t]*A._CONFIG_AUX_DIR *([[ ]*\([^] )]*\).*/\1/p' $conffile`"
+pkgconfig="`grep '^[ \t]*PKG_PROG_PKG_CONFIG' $conffile >/dev/null 2>&1 && echo yes || echo no`"
 libtool="`grep '^[ \t]*A._PROG_LIBTOOL' $conffile >/dev/null 2>&1 && echo yes || echo no`"
 header="`grep '^[ \t]*A._CONFIG_HEADER' $conffile >/dev/null 2>&1 && echo yes || echo no`"
 makefile="`[ -f Makefile.am ] && echo yes || echo no`"
@@ -36,27 +36,15 @@ aclocalflags="`sed -ne 's/^[ \t]*ACLOCAL_AMFLAGS[ \t]*=//p' Makefile.am 2>/dev/n
 
 # Check for automake
 amvers="no"
-for v in 11 10 9 8 7 6 5; do
-  if automake-1.${v} --version >/dev/null 2>&1; then
-    amvers="-1.${v}"
-    break
-  elif automake1.${v} --version >/dev/null 2>&1; then
-    amvers="1.${v}"
+for v in "" "-1.15" "-1.14" "-1.13" "-1.12" "-1.11"; do
+  if automake${v} --version > /dev/null 2>&1; then
+    amvers=${v}
     break
   fi
 done
 
-if test "${amvers}" = "no" && automake --version > /dev/null 2>&1; then
-  amvers="`automake --version | sed -e '1s/[^0-9]*//' -e q`"
-  if expr "$amvers" "<" "1.5" > /dev/null 2>&1; then
-    amvers="no"
-  else
-    amvers=""
-  fi
-fi
-
 if test "$amvers" = "no"; then
-  echo "$0: you need automake version 1.5 or later"
+  echo "$0: automake not found"
   exit 1
 fi
 
@@ -70,7 +58,7 @@ for v in "" "259" "253"; do
 done
 
 if test "$acvers" = "no"; then
-  echo "$0: you need autoconf"
+  echo "$0: autoconf not found"
   exit 1
 fi
 
@@ -89,7 +77,15 @@ if test "$libtool" = "yes"; then
   fi
 
   if test "$libtoolize" = "no"; then
-    echo "$0: you need libtool"
+    echo "$0: libtool not found"
+    exit 1
+  fi
+fi
+
+# Check for pkg-config
+if test "$pkgconfig" = "yes"; then
+  if ! pkg-config --version >/dev/null 2>&1; then
+    echo "$0: pkg-config not found"
     exit 1
   fi
 fi
@@ -101,8 +97,19 @@ if test -n "$auxdir"; then
   if test ! -d "$auxdir"; then
     mkdir "$auxdir"
   fi
-  aclocalflags="${aclocalflags} -I $auxdir -I ."
+  aclocalflags="-I $auxdir -I . ${aclocalflags}"
 fi
+
+# Honour M4PATH because sometimes M4 doesn't
+save_IFS=$IFS
+IFS=:
+tmp="$M4PATH"
+for x in $tmp; do
+  if test -n "$x"; then
+    aclocalflags="-I $x ${aclocalflags}"
+  fi
+done
+IFS=$save_IFS
 
 # Explain what we are doing from now
 set -x
