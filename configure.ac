@@ -78,6 +78,10 @@ AC_CHECK_TYPES(sig_t, [], [],
 AC_CHECK_TYPES(socklen_t, [], [],
   [#include <sys/types.h>
    #include <sys/socket.h>])
+AC_CHECK_TYPES(fpos64_t, [], [],
+  [#define _LARGEFILE64_SOURCE
+   #define _LARGEFILE_SOURCE
+   #include <stdio.h>])
 
 AC_MSG_CHECKING(for connect() second argument)
 AC_TRY_COMPILE([#include <sys/types.h>
@@ -155,7 +159,7 @@ AC_TRY_COMPILE(
  [fpos64_t x; long long int y = (long long int)x;],
  [ac_v_fpos64_t="(x)"])
 AC_MSG_RESULT($ac_v_fpos64_t)
-AC_DEFINE_UNQUOTED(FPOS_CAST(x), $ac_v_fpos64_t, [Define to a macro for accessing an fpos64_t variable])
+AC_DEFINE_UNQUOTED(FPOS64_CAST(x), $ac_v_fpos64_t, [Define to a macro for accessing an fpos64_t variable])
 
 AC_MSG_CHECKING(for pragma INIT/FINI)
 AC_TRY_COMPILE([],

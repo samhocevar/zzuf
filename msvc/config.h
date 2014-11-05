@@ -43,6 +43,7 @@
 /* #undef HAVE_FGETS_UNLOCKED */
 /* #undef HAVE_FOPEN64 */
 /* #undef HAVE_FORK */
+/* #undef HAVE_FPOS64_T */
 /* #undef HAVE_FREAD_UNLOCKED */
 /* #undef HAVE_FREEBSD_FILE */
 /* #undef HAVE_FREOPEN64 */

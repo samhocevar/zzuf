@@ -37,6 +37,6 @@ extern void _zz_fini(void) __attribute__((destructor));
 extern void _zz_mem_init(void);
 
 #ifdef _WIN32
-#   include <Windows.h>
+#   include <windows.h>
 extern CRITICAL_SECTION _zz_pipe_cs;
 #endif

@@ -424,17 +424,39 @@ BOOL __stdcall NEW(WriteConsoleOutputW)(HANDLE hConsoleOutput,
 
 zzuf_table_t table_win32[] =
 {
+#if defined HAVE_CLOSEHANDLE
     DIVERT(CloseHandle),
+#endif
+#if defined HAVE_CREATEFILEA
     DIVERT(CreateFileA),
+#endif
+#if defined HAVE_CREATEFILEW
     DIVERT(CreateFileW),
+#endif
+#if defined HAVE_READFILE
     DIVERT(ReadFile),
+#endif
+#if defined HAVE_READFILEEX
     DIVERT(ReadFileEx),
+#endif
+#if defined HAVE_CREATEIOCOMPLETIONPORT
     DIVERT(CreateIoCompletionPort),
+#endif
+#if defined HAVE_GETQUEUEDCOMPLETIONSTATUS
     DIVERT(GetQueuedCompletionStatus),
+#endif
+#if defined HAVE_GETOVERLAPPEDRESULT
     DIVERT(GetOverlappedResult),
+#endif
+#if defined HAVE_CREATEFILEMAPPINGA
     DIVERT(CreateFileMappingA),
+#endif
+#if defined HAVE_CREATEFILEMAPPINGW
     DIVERT(CreateFileMappingW),
+#endif
+#ifdef HAVE_MAPVIEWOFFILE
     DIVERT(MapViewOfFile),
+#endif
 
 #if defined HAVE_ALLOCCONSOLE
     DIVERT(AllocConsole),

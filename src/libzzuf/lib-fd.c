@@ -78,6 +78,8 @@
 
 #if defined CONNECT_USES_STRUCT_SOCKADDR
 #   define SOCKADDR_T struct sockaddr
+#elif defined HAVE_WINSOCK2_H
+#   define SOCKADDR_T struct sockaddr
 #else
 #   define SOCKADDR_T void
 #endif

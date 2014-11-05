@@ -52,6 +52,12 @@
 #include "fuzz.h"
 #include "fd.h"
 
+#if defined HAVE_FPOS64_T
+#   define FPOS64_T fpos64_t
+#else
+#   define FPOS64_T fpos_t
+#endif
+
 #if defined HAVE___SREFILL
 #undef __srefill
 int NEW(__srefill)(FILE *fp);
@@ -101,10 +107,10 @@ static int     (*ORIG(fseeko64)) (FILE *stream, off_t offset, int whence);
 static int     (*ORIG(__fseeko64)) (FILE *stream, off_t offset, int whence);
 #endif
 #if defined HAVE_FSETPOS64
-static int     (*ORIG(fsetpos64))(FILE *stream, const fpos64_t *pos);
+static int     (*ORIG(fsetpos64))(FILE *stream, const FPOS64_T *pos);
 #endif
 #if defined HAVE___FSETPOS64
-static int     (*ORIG(__fsetpos64)) (FILE *stream, const fpos64_t *pos);
+static int     (*ORIG(__fsetpos64)) (FILE *stream, const FPOS64_T *pos);
 #endif
 static void    (*ORIG(rewind))   (FILE *stream);
 static size_t  (*ORIG(fread))    (void *ptr, size_t size, size_t nmemb,
@@ -386,6 +392,12 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
               fd, (long long int)offset, get_seek_mode_name(whence), ret); \
     } while(0)
 
+#if HAVE_FPOS64_T
+#   define FPOS_T_TO_INT64_T(x) ((int64_t)FPOS64_CAST(x))
+#else
+#   define FPOS_T_TO_INT64_T(x) ((int64_t)(x))
+#endif
+
 #define ZZ_FSETPOS(myfsetpos) \
     do \
     { \
@@ -412,10 +424,10 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
             _zz_fuzz(fd, get_stream_ptr(stream) - get_stream_off(stream), \
                          get_stream_cnt(stream) + get_stream_off(stream)); \
         } \
-        _zz_setpos(fd, (int64_t)FPOS_CAST(*pos)); \
+        _zz_setpos(fd, FPOS_T_TO_INT64_T(*pos)); \
         debug_stream("after", stream); \
         debug("%s([%i], %lli) = %i", __func__, \
-              fd, (long long int)FPOS_CAST(*pos), ret); \
+              fd, (long long int)FPOS_T_TO_INT64_T(*pos), ret); \
     } \
     while(0)
 
@@ -482,7 +494,7 @@ int NEW(__fseeko64)(FILE *stream, off64_t offset, int whence)
 
 #if defined HAVE_FSETPOS64
 #undef fsetpos64
-int NEW(fsetpos64)(FILE *stream, const fpos64_t *pos)
+int NEW(fsetpos64)(FILE *stream, const FPOS64_T *pos)
 {
     int ret; ZZ_FSETPOS(fsetpos64); return ret;
 }
@@ -490,7 +502,7 @@ int NEW(fsetpos64)(FILE *stream, const fpos64_t *pos)
 
 #if defined HAVE___FSETPOS64
 #undef __fsetpos64
-int NEW(__fsetpos64)(FILE *stream, const fpos64_t *pos)
+int NEW(__fsetpos64)(FILE *stream, const FPOS64_T *pos)
 {
     int ret; ZZ_FSETPOS(__fsetpos64); return ret;
 }

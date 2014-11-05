@@ -17,7 +17,7 @@ mkdir "${BUILDDIR}"
 
 cd "${BUILDDIR}"
 # Build for win32
-"${SRCDIR}/configure" --host=i586-mingw32msvc --prefix=/ --bindir=/ --libdir=/
+"${SRCDIR}/configure" --host=i686-w64-mingw32 --prefix=/ --bindir=/ --libdir=/
 
 make pkglibdir=/ pkgdatadir=/data bindir=/
 
