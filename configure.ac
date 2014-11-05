@@ -35,11 +35,6 @@ esac
 AC_MSG_RESULT($SONAME)
 AC_DEFINE_UNQUOTED(SONAME, "$SONAME", [Define to the libzzuf full name])
 
-PKG_CHECK_MODULES(CACA, caca >= 0.99.beta18,
- [:],
- [AC_MSG_RESULT(no)
-  AC_MSG_ERROR([you need libcaca version 0.99.beta18 or later])])
-
 # Optimizations
 AC_TRY_CFLAGS(-g -O2, CFLAGS="${CFLAGS} -g -O2")
 # Code qui fait des warnings == code de porc == deux baffes dans ta gueule

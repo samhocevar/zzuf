@@ -6,6 +6,7 @@
 .auto
 .libs
 .deps
+.dirstamp
 Makefile
 Makefile.in
 aclocal.m4
@@ -31,6 +32,8 @@ test/zzone
 test/bug-div0
 test/bug-memory
 test/bug-overflow
+test/*.log
+test/*.trs
 doc/zzat.1
 doc/zzuf.1
 doc/libzzuf.3

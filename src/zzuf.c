@@ -54,8 +54,6 @@
 #   include <sys/resource.h> /* for RLIMIT_AS */
 #endif
 
-#include <caca.h>
-
 #include "common.h"
 #include "opts.h"
 #include "random.h"
@@ -64,6 +62,7 @@
 #include "myfork.h"
 #include "md5.h"
 #include "timer.h"
+#include "caca_getopt.h"
 
 #if !defined SIGKILL
 #   define SIGKILL 9
