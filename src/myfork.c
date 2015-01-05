@@ -78,7 +78,6 @@ static int mypipe(int pipefd[2]);
 static int run_process(struct child *child, struct opts *, int[][2]);
 
 #if defined HAVE_WINDOWS_H
-static void rep32(uint8_t *buf, void *addr);
 static int dll_inject(PROCESS_INFORMATION *, char const *);
 static void *get_proc_address(void *, DWORD, char const *);
 #endif
@@ -343,8 +342,6 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
     return 0;
 
 #elif HAVE_WINDOWS_H
-    HANDLE pid = GetCurrentProcess();
-
     /* Inherit standard handles */
     STARTUPINFO sinfo;
     memset(&sinfo, 0, sizeof(sinfo));
@@ -359,7 +356,9 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
     for (int i = 0; child->newargv[i]; ++i)
         len += (int)strlen(child->newargv[i]) + 1;
     char *cmdline = malloc(len);
-    for (int i = 0, len = 0; child->newargv[i]; ++i)
+
+    len = 0;
+    for (int i = 0; child->newargv[i]; ++i)
     {
         strcpy(cmdline + len, child->newargv[i]);
         len += (int)strlen(child->newargv[i]) + 1;
@@ -378,14 +377,14 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 
     if (!ret)
     {
-        LPTSTR buf;
+        LPTSTR tmp;
         DWORD err = GetLastError();
         FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
                       FORMAT_MESSAGE_FROM_SYSTEM     |
                       FORMAT_MESSAGE_IGNORE_INSERTS,
-                      NULL, err, 0, (LPTSTR)&buf, 0, NULL);
-        fprintf(stderr, "error launching `%s': %s\n", child->newargv[0], buf);
-        LocalFree(buf);
+                      NULL, err, 0, (LPTSTR)&tmp, 0, NULL);
+        fprintf(stderr, "error launching `%s': %s\n", child->newargv[0], tmp);
+        LocalFree(tmp);
         return -1;
     }
 
@@ -475,7 +474,6 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
     DWORD pid       = pinfo->dwProcessId;
     void *rldlib    = NULL;
     SIZE_T written  = 0;
-    DWORD old_prot  = 0;
 
     /* Payload */
     void *rpl       = NULL;

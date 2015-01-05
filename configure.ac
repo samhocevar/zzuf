@@ -50,6 +50,8 @@ case "${host_os}" in
   *mingw32*)
     DLL_LDFLAGS="-Wl,-l,imagehlp" # Trick libtool here
     WINSOCK2_LIBS="-lws2_32"
+    # This one is necessary if we want inet_pton() with mingw
+    AC_DEFINE(_WIN32_WINNT, 0x600, [Define the Windows version to Vista])
     ac_cv_func_recv=yes
     ac_cv_func_recvfrom=yes
     ac_cv_func_socket=yes

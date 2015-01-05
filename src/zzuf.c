@@ -119,7 +119,7 @@ static void usage(void);
     ((fd >= 0) && (FD_ISSET(fd, p_fdset)))
 
 #if defined _WIN32
-#   include <Windows.h>
+#   include <windows.h>
 #   include <fcntl.h> /* _O_RDWR */
 #   include <io.h> /* _open */
 static CRITICAL_SECTION _zz_pipe_cs;
@@ -980,14 +980,15 @@ static void clean_children(struct opts *opts)
 struct child_overlapped
 {
     OVERLAPPED overlapped;
-    char buf[BUFSIZ];
+    uint8_t buf[BUFSIZ];
     struct opts * opts;
     int child_no;
     int fd_no;
 };
 
 /* This callback is called when fuzzed applications write in fd out, err or debug */
-static void _stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered, LPOVERLAPPED overlapped)
+static void __stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered,
+                                 LPOVERLAPPED overlapped)
 {
     struct child_overlapped * co = (struct child_overlapped *)overlapped;
 

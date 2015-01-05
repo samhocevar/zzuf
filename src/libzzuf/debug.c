@@ -85,11 +85,11 @@ void _zz_debug(char const *format, ...)
         if (buf[0] == '\0')
             return; /* if buf is empty, we don't bother to send it to zzuf */
 
-        /* FIXME: if len >= count, no null-terminator is appended, so we may erased the last character */
-        if (ret >= sizeof(buf))
-            buf[ret - 1] = '\n';
-        else
-            buf[ret++] = '\n';
+        /* If len >= count, no null-terminator is appended, so we need to
+         * erase the last character */
+        if (ret >= (int)sizeof(buf))
+            ret = (int)sizeof(buf) - 1;
+        buf[ret++] = '\n';
 
         EnterCriticalSection(&_zz_pipe_cs);
         WriteFile(dbg_hdl, buf, ret, &written, NULL);
@@ -115,9 +115,11 @@ void _zz_debug2(char const *format, ...)
         if (buf[0] == '\0')
             return; /* if buf is empty, we don't bother to send it to zzuf */
 
-        /* FIXME: if len >= count, no null-terminator is appended, so we may erased the last character */
-        if (ret >= sizeof(buf)) buf[ret - 1] = '\n';
-        else                    buf[ret++]   = '\n';
+        /* If len >= count, no null-terminator is appended, so we need to
+         * erase the last character */
+        if (ret >= (int)sizeof(buf))
+            ret = (int)sizeof(buf) - 1;
+        buf[ret++] = '\n';
 
         EnterCriticalSection(&_zz_pipe_cs);
         WriteFile(dbg_hdl, buf, ret, &written, NULL);

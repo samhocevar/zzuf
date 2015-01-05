@@ -183,12 +183,14 @@ static void make_jmp32(uint8_t *src, uint8_t *dst, uint8_t *code)
     *(uint32_t *)(code + 1) = (uint32_t)MK_JMP_JD(dst, src);
 }
 
+#ifdef _M_AMD64
 static void make_jmp64(uint8_t *dst, uint8_t *code)
 {
     memcpy(code, "\x48\xb8", 2);                /* MOV rAX, Iq */
-    *(uint64_t *)(code + 2) = (uint64_t)dst;
+    *(uintptr_t *)(code + 2) = (uintptr_t)dst;
     memcpy(code + 10, "\xff\xe0", 2);           /* JMP rAX */
 }
+#endif
 
 /* This function allocates and fills a trampoline for the function pointed by code. It also tries to handle some relocations. */
 static int make_trampoline(uint8_t *code, size_t patch_size, uint8_t **trampoline_buf, size_t *trampoline_size)

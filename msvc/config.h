@@ -151,6 +151,7 @@
 #define RECV_T int
 #define SONAME "libzzuf.dll"
 #define STDC_HEADERS 1
+/* #undef _WIN32_WINNT */
 /* #undef __func__ */
 
 /* Fucking Visual Studio should just shut the fuck up with this fucking

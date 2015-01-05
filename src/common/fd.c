@@ -32,7 +32,7 @@
 #   endif
 #endif
 #if _WIN32
-#   include <Windows.h>
+#   include <windows.h>
 #endif
 #include <string.h>
 #include <math.h>
