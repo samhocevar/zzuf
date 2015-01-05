@@ -1,13 +1,12 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *  Copyright © 2006—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -29,6 +28,9 @@
 #   else
 #       include <regex.h>
 #   endif
+#endif
+#if _WIN32
+#   include <Windows.h>
 #endif
 #include <string.h>
 #include <math.h>
@@ -70,18 +72,33 @@ static int *fds, static_fds[STATIC_FILES];
 static int maxfd, nfiles;
 
 /* Spinlock. This variable protects the fds variable. */
+#if _WIN32
+static volatile LONG fd_spinlock = 0;
+#elif __GNUC__ || __clang__
 static volatile int fd_spinlock = 0;
+#else
+#   error "No known atomic operations for this platform"
+#endif
 
 static void fd_lock(void)
 {
-    while (__sync_lock_test_and_set(&fd_spinlock, 1))
-        ;
+#if _WIN32
+    do {}
+    while (InterlockedExchange(&fd_spinlock, 1));
+#elif __GNUC__ || __clang__
+    do {}
+    while (__sync_lock_test_and_set(&fd_spinlock, 1));
+#endif
 }
 
 static void fd_unlock(void)
 {
-    __sync_synchronize();
+#if _WIN32
+    InterlockedExchange(&fd_spinlock, 0);
+#elif __GNUC__ || __clang__
     fd_spinlock = 0;
+    __sync_synchronize();
+#endif
 }
 
 /* Create lock. This lock variable is used to disable file descriptor
