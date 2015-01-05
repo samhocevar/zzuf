@@ -1,13 +1,13 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *
+ *  Copyright © 2006—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -441,7 +441,10 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         fd = fileno(stream); \
         if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
              || _zz_islocked(fd)) \
-            return ORIG(rewind)(stream); \
+        { \
+            ORIG(rewind)(stream); \
+            return; \
+        } \
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         oldpos = ZZ_FTELL(stream); \
@@ -527,7 +530,7 @@ void NEW(rewind)(FILE *stream)
     do \
     { \
         int64_t oldpos, newpos; \
-        uint8_t *b = ptr;\
+        uint8_t *b = (uint8_t *)ptr;\
         int oldcnt; \
         int fd; \
         LOADSYM(myfread); \

@@ -1,5 +1,6 @@
 /*
  *  zzuf - general purpose fuzzer
+ *
  *  Copyright © 2006—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
@@ -437,7 +438,7 @@ early_exit:
 
 int64_t _zz_getpos(int fd)
 {
-    int ret = 0;
+    int64_t ret = 0;
     fd_lock();
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)

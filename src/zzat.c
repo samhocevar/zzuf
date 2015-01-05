@@ -470,7 +470,7 @@ static int run(char const *sequence, char const *file)
 
         /* FILE * reading functions */
         else if (PARSECMD("fread ( %li , %li )", &l1, &l2))
-            MY_FREAD(l = fread(tmp, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
+            MY_FREAD(l = (ssize_t)fread(tmp, l1, l2, f), tmp, l > 0 ? l * l1 : 0);
         else if (PARSECMD("getc ( )"))
             MY_FREAD(ch = (n = getc(f)), &ch, (n != EOF));
         else if (PARSECMD("fgetc ( )"))
