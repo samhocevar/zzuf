@@ -18,6 +18,7 @@
 #include "config.h"
 
 #define _INCLUDE_POSIX_SOURCE /* for STDERR_FILENO on HP-UX */
+#define _BSD_SOURCE /* for setenv on glibc systems */
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
@@ -25,7 +26,7 @@
 #   include <inttypes.h>
 #endif
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h> /* for setenv */
 #if defined HAVE_UNISTD_H
 #   include <unistd.h>
 #endif
@@ -73,6 +74,7 @@
 #   undef ZZUF_RLIMIT_CPU
 #endif
 
+static int mypipe(int pipefd[2]);
 static int run_process(struct child *child, struct opts *, int[][2]);
 
 #if defined HAVE_WINDOWS_H
@@ -81,74 +83,25 @@ static int dll_inject(PROCESS_INFORMATION *, char const *);
 static void *get_proc_address(void *, DWORD, char const *);
 #endif
 
+/*
+ * Run a process, either by forking (Unix) or using the Windows API. The
+ * child PID is stored in the child structure, and a communication channel
+ * is set up using pipes.
+ */
 int myfork(struct child *child, struct opts *opts)
 {
-    int pipes[3][2];
-
-    /* Prepare communication pipe */
+    /* Prepare communication pipes */
+    int pipefds[3][2];
     for (int i = 0; i < 3; ++i)
     {
-        int ret = 0;
-#if defined HAVE_PIPE
-        ret = pipe(pipes[i]);
-#elif defined HAVE__PIPE && !defined _WIN32
-        /* The pipe is created with NOINHERIT otherwise both parts are
-         * inherited. We then duplicate the part we want. */
-        ret = _pipe(pipes[i], 512, _O_BINARY | O_NOINHERIT);
-        int tmp = _dup(pipes[i][1]);
-        close(pipes[i][1]);
-        pipes[i][1] = tmp;
-#elif defined _WIN32
-        SECURITY_ATTRIBUTES sa;
-        sa.nLength = sizeof(sa);
-        sa.bInheritHandle = TRUE;
-        sa.lpSecurityDescriptor = NULL;
-
-        /* Since we have to use a named pipe, make sure the name is unique */
-        // http://www.daniweb.com/software-development/cpp/threads/295780/using-named-pipes-with-asynchronous-io-redirection-to-winapi
-        static int pipe_cnt = 0;
-        char pipe_name[BUFSIZ];
-        _snprintf(pipe_name, sizeof(pipe_name), "\\\\.\\Pipe\\zzuf.%08x.%d",
-                  GetCurrentProcessId(), pipe_cnt++);
-
-        /* At this time, the HANDLE is inheritable and can both read/write */
-        HANDLE rpipe = CreateNamedPipeA(pipe_name,
-                               PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
-                               PIPE_TYPE_BYTE | PIPE_WAIT,
-                               1, BUFSIZ, BUFSIZ, 0, &sa);
-
-        /* Create a new handle for write access only; it must be inheritable */
-        HANDLE wpipe = CreateFileA(pipe_name, GENERIC_WRITE, 0, &sa,
-                                   OPEN_EXISTING,
-                                   FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
-                                   NULL);
-
-        if (rpipe == INVALID_HANDLE_VALUE || wpipe == INVALID_HANDLE_VALUE)
-            ret = -1;
-
-        /* Create a new handle for the listener; not inheritable */
-        HANDLE new_rpipe;
-        if (!DuplicateHandle(GetCurrentProcess(), rpipe,
-                             GetCurrentProcess(), &new_rpipe,
-                             0, FALSE, DUPLICATE_SAME_ACCESS))
-            ret = -1;
-
-        /* Finally we can safetly close the pipe handle */
-        CloseHandle(rpipe);
-
-        /* Now we convert handle to fd */
-        pipes[i][0] = _open_osfhandle((intptr_t)new_rpipe, 0x0);
-        pipes[i][1] = _open_osfhandle((intptr_t)wpipe, 0x0);
-#endif
-
-        if (ret < 0)
+        if (mypipe(pipefds[i]) < 0)
         {
             perror("pipe");
             return -1;
         }
     }
 
-    pid_t pid = run_process(child, opts, pipes);
+    pid_t pid = run_process(child, opts, pipefds);
     if (pid < 0)
     {
         /* FIXME: close pipes */
@@ -159,14 +112,86 @@ int myfork(struct child *child, struct opts *opts)
     child->pid = pid;
     for (int i = 0; i < 3; ++i)
     {
-        close(pipes[i][1]);
-        child->fd[i] = pipes[i][0];
+        close(pipefds[i][1]);
+        child->fd[i] = pipefds[i][0];
     }
 
     return 0;
 }
 
-#if !defined HAVE_SETENV
+/*
+ * Create a pipe, a unidirectional channel for interprocess communication.
+ */
+static int mypipe(int pipefd[2])
+{
+#if defined HAVE_PIPE
+    /* Unix, Linux, and nice systems: just use pipe() */
+    return pipe(pipefd);
+
+#elif defined HAVE__PIPE && !defined _WIN32
+    /* Systems with _pipe() but not pipe(). They probably don't even
+     * exist, apart from Win32 which we handle a different way.
+     * The pipe is created with NOINHERIT otherwise both parts are
+     * inherited. We then duplicate the part we want. */
+    int ret = _pipe(pipefd, 512, _O_BINARY | O_NOINHERIT);
+    int tmp = _dup(pipefd[1]);
+    close(pipefd[1]);
+    pipefd[1] = tmp;
+    return ret;
+
+#elif defined _WIN32
+    /* Windows: create a unique name for the pipe and use the Win32 API
+     * to create it. Inspired by
+     * http://www.daniweb.com/software-development/cpp/threads/295780/using-named-pipes-with-asynchronous-io-redirection-to-winapi */
+    static int pipe_cnt = 0;
+    char pipe_name[BUFSIZ];
+    _snprintf(pipe_name, sizeof(pipe_name), "\\\\.\\Pipe\\zzuf.%08x.%d",
+              GetCurrentProcessId(), pipe_cnt++);
+
+    SECURITY_ATTRIBUTES sa;
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+
+    /* At this time, the HANDLE is inheritable and can both read/write */
+    HANDLE rpipe = CreateNamedPipeA(pipe_name,
+                           PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+                           PIPE_TYPE_BYTE | PIPE_WAIT,
+                           1, BUFSIZ, BUFSIZ, 0, &sa);
+
+    /* Create a new handle for write access only; it must be inheritable */
+    HANDLE wpipe = CreateFileA(pipe_name, GENERIC_WRITE, 0, &sa,
+                               OPEN_EXISTING,
+                               FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
+                               NULL);
+
+    if (rpipe == INVALID_HANDLE_VALUE || wpipe == INVALID_HANDLE_VALUE)
+        return -1;
+
+    /* Create a new handle for the listener; not inheritable */
+    HANDLE new_rpipe;
+    if (!DuplicateHandle(GetCurrentProcess(), rpipe,
+                         GetCurrentProcess(), &new_rpipe,
+                         0, FALSE, DUPLICATE_SAME_ACCESS))
+        return -1;
+
+    /* Finally we can safetly close the pipe handle */
+    CloseHandle(rpipe);
+
+    /* Now we convert handle to fd */
+    pipefd[0] = _open_osfhandle((intptr_t)new_rpipe, 0x0);
+    pipefd[1] = _open_osfhandle((intptr_t)wpipe, 0x0);
+
+    return 0;
+#endif
+}
+
+#if !HAVE_SETENV
+/*
+ * Implement setenv() if not available on the system. We just call
+ * putenv() on heap-allocated memory.
+ * XXX: the memory allocated here is never freed by zzuf.
+ */
 static void setenv(char const *name, char const *value, int overwrite)
 {
     if (!overwrite && getenv(name))
@@ -201,20 +226,35 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
     /* Fork and launch child */
     int pid = fork();
     if (pid < 0)
+    {
         perror("fork");
-    if (pid != 0)
-        return pid;
+        return -1;
+    }
 
-    /* We loop in reverse order so that files[0] is done last,
-     * just in case one of the other dup2()ed fds had the value */
-    static int const files[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
+    if (pid != 0)
+    {
+        /* We are the parent. Close the pipe fds used for writing, since
+         * we will only be reading. */
+        for (int j = 3; j--; )
+            close(pipes[j][1]);
+
+        return pid;
+    }
+
+    /* We are the child. Close the pipe fds used for reading, since we
+     * will only be writing. Also, if the fd number does not match what
+     * we expect (for whatever reason), call dup2() and close the fd with
+     * the wrong number. We loop in reverse order so that files[0] (the
+     * debug fd) is done last, because it is the most important to us. */
+    static int const fds[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
     for (int j = 3; j--; )
     {
         close(pipes[j][0]);
-        if (pipes[j][1] != files[j])
+        if (pipes[j][1] != fds[j])
         {
-            dup2(pipes[j][1], files[j]);
+            dup2(pipes[j][1], fds[j]);
             close(pipes[j][1]);
+            pipes[j][1] = fds[j];
         }
     }
 #endif

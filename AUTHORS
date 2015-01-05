@@ -9,4 +9,5 @@ other contributors:
  Sami Liedes <sliedes#cc:hut:fi> (LD_PRELOAD conservation)
  Corentin Delorme <codelorme@gmail.com> (remote host filtering)
  Kévin Szkudłapski <kszkudlapski@quarkslab.com> (win32 port)
+ Will Newton <will.newton@linaro.org> (bugfixes)
 
