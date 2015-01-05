@@ -24,7 +24,7 @@ extern void *_zz_dl_lib;
 #   define NEW(x) x
 #   define LOADSYM(x) \
         do { \
-            if(!ORIG(x)) \
+            if (!ORIG(x)) \
             { \
                 /* XXX: we try to initialise libzzuf as soon as possible, \
                  * otherwise we may miss a lot of stuff if we wait for \
@@ -32,16 +32,16 @@ extern void *_zz_dl_lib;
                 _zz_init(); \
                 ORIG(x) = dlsym(_zz_dl_lib, STR(x)); \
             } \
-            if(!ORIG(x)) \
+            if (!ORIG(x)) \
                 abort(); \
-        } while(0)
+        } while (0)
 #elif defined _WIN32
 #   define NEW(x) x##_new
 #   define LOADSYM(x) \
         do { \
             /* Nothing to do under Windows, everything is done as soon \
              * as the process is launched. */ \
-        } while(0)
+        } while (0)
 
 typedef struct
 {
@@ -54,6 +54,6 @@ zzuf_table_t;
 extern zzuf_table_t table_win32[];
 
 #else
-#   error no function diversion system for this platform
+#   error "no function diversion system for this platform"
 #endif
 

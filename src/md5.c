@@ -1,13 +1,13 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2002-2010 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -57,21 +57,19 @@ struct md5 *_zz_md5_init(void)
 
 void _zz_md5_add(struct md5 *ctx, uint8_t *buf, unsigned len)
 {
-    uint32_t t;
-
-    t = ctx->bits[0];
-    if((ctx->bits[0] = t + ((uint32_t)len << 3)) < t)
+    uint32_t t = ctx->bits[0];
+    if ((ctx->bits[0] = t + ((uint32_t)len << 3)) < t)
         ctx->bits[1]++;
     ctx->bits[1] += len >> 29;
 
     t = (t >> 3) & 0x3f;
 
-    if(t)
+    if (t)
     {
         uint8_t *p = (uint8_t *)ctx->in + t;
 
         t = 64 - t;
-        if(len < t)
+        if (len < t)
         {
             memcpy(p, buf, len);
             return;
@@ -83,7 +81,7 @@ void _zz_md5_add(struct md5 *ctx, uint8_t *buf, unsigned len)
         len -= t;
     }
 
-    while(len >= 64)
+    while (len >= 64)
     {
         memcpy(ctx->in, buf, 64);
         swapwords(ctx->in, 64 / 4);
@@ -97,15 +95,12 @@ void _zz_md5_add(struct md5 *ctx, uint8_t *buf, unsigned len)
 
 void _zz_md5_fini(uint8_t *digest, struct md5 *ctx)
 {
-    unsigned count;
-    uint8_t *p;
-
-    count = (ctx->bits[0] >> 3) & 0x3F;
-    p = (uint8_t *)ctx->in + count;
+    unsigned count = (ctx->bits[0] >> 3) & 0x3F;
+    uint8_t *p = (uint8_t *)ctx->in + count;
     *p++ = 0x80;
 
     count = 64 - 1 - count;
-    if(count < 8)
+    if (count < 8)
     {
         memset(p, 0, count);
         swapwords(ctx->in, 64 / 4);
@@ -127,20 +122,19 @@ static void swapwords(uint32_t *buf, unsigned words)
 {
     /* XXX: no need to swap words on little endian machines */
 #if defined HAVE_ENDIAN_H
-    if(__BYTE_ORDER == __LITTLE_ENDIAN)
+    if (__BYTE_ORDER == __LITTLE_ENDIAN)
         return;
 #else
     /* This is compile-time optimised with at least -O1 or -Os */
     uint32_t const tmp = 0x12345678;
-    if(*(uint8_t const *)&tmp == 0x78)
+    if (*(uint8_t const *)&tmp == 0x78)
         return;
 #endif
 
-    while(words > 0)
+    while (words > 0)
     {
         uint8_t *b = (uint8_t *)buf;
-        *buf++ = (uint32_t)((unsigned) b[3] << 8 | b[2]) << 16 |
-                            ((unsigned) b[1] << 8 | b[0]);
+        *buf++ = (uint32_t)b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0];
         words--;
     }
 }

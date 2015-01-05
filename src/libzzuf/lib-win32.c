@@ -1,14 +1,14 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2012 Sam Hocevar <sam@hocevar.net>
- *                2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+ *              2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -125,7 +125,8 @@ HANDLE __stdcall NEW(CreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess,
           lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
           dwFlagsAndAttributes, (int)ret);
 
-    if(!_zz_ready || _zz_islocked(-1)) return ret;
+    if (!_zz_ready || _zz_islocked(-1))
+        return ret;
     if (ret != INVALID_HANDLE_VALUE && dwCreationDisposition == OPEN_EXISTING && _zz_mustwatch(lpFileName))
     {
         _zz_register(ret);
@@ -149,8 +150,10 @@ HANDLE __stdcall NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
           lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
           dwFlagsAndAttributes, (int)ret);
 
-    if(!_zz_ready || _zz_islocked(-1)) return ret;
-    if (ret != INVALID_HANDLE_VALUE && dwCreationDisposition == OPEN_EXISTING && _zz_mustwatchw(lpFileName))
+    if (!_zz_ready || _zz_islocked(-1))
+        return ret;
+    if (ret != INVALID_HANDLE_VALUE && dwCreationDisposition == OPEN_EXISTING
+         && _zz_mustwatchw(lpFileName))
     {
         debug("handle %#08x is registered", ret);
         _zz_register(ret);
@@ -296,7 +299,8 @@ HANDLE __stdcall NEW(CreateFileMappingA)(HANDLE hFile, LPSECURITY_ATTRIBUTES lpA
     debug("CreateFileMappingA(%#08x, %#08x, %#08x, %#08x, %#08x, %s) = %#08x",
         hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName, ret);
 
-    if (ret == NULL) return ret;
+    if (ret == NULL)
+        return ret;
 
     if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile) || _zz_islocked(-1))
         return ret;
@@ -321,7 +325,8 @@ HANDLE __stdcall NEW(CreateFileMappingW)(HANDLE hFile, LPSECURITY_ATTRIBUTES lpA
     debug("CreateFileMappingW(%#08x, %#08x, %#08x, %#08x, %#08x, %S) = %#08x",
         hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName, ret);
 
-    if (ret == NULL) return ret;
+    if (ret == NULL)
+        return ret;
 
     if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile) || _zz_islocked(-1))
         return ret;

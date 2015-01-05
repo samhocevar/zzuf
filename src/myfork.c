@@ -1,13 +1,14 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2002-2010 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+ *              2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -83,87 +84,72 @@ static void *get_proc_address(void *, DWORD, char const *);
 int myfork(struct child *child, struct opts *opts)
 {
     int pipes[3][2];
-    pid_t pid;
-    int i;
 
     /* Prepare communication pipe */
-    for(i = 0; i < 3; i++)
+    for (int i = 0; i < 3; ++i)
     {
-        int ret;
+        int ret = 0;
 #if defined HAVE_PIPE
         ret = pipe(pipes[i]);
 #elif defined HAVE__PIPE && !defined _WIN32
-        int tmp;
         /* The pipe is created with NOINHERIT otherwise both parts are
          * inherited. We then duplicate the part we want. */
         ret = _pipe(pipes[i], 512, _O_BINARY | O_NOINHERIT);
-        tmp = _dup(pipes[i][1]);
+        int tmp = _dup(pipes[i][1]);
         close(pipes[i][1]);
         pipes[i][1] = tmp;
 #elif defined _WIN32
+        SECURITY_ATTRIBUTES sa;
+        sa.nLength = sizeof(sa);
+        sa.bInheritHandle = TRUE;
+        sa.lpSecurityDescriptor = NULL;
+
+        /* Since we have to use a named pipe, make sure the name is unique */
         // http://www.daniweb.com/software-development/cpp/threads/295780/using-named-pipes-with-asynchronous-io-redirection-to-winapi
-        {
-            static int pipe_cnt = 0;
-            char pipe_name[BUFSIZ];
-            HANDLE pipe_hdl[2];         /* [0] read | [1] write */
-            HANDLE new_hdl;
-            SECURITY_ATTRIBUTES sa;
-            sa.nLength              = sizeof(sa);
-            sa.bInheritHandle       = TRUE;
-            sa.lpSecurityDescriptor = NULL;
+        static int pipe_cnt = 0;
+        char pipe_name[BUFSIZ];
+        _snprintf(pipe_name, sizeof(pipe_name), "\\\\.\\Pipe\\zzuf.%08x.%d",
+                  GetCurrentProcessId(), pipe_cnt++);
 
-            ret = 0;
+        /* At this time, the HANDLE is inheritable and can both read/write */
+        HANDLE rpipe = CreateNamedPipeA(pipe_name,
+                               PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+                               PIPE_TYPE_BYTE | PIPE_WAIT,
+                               1, BUFSIZ, BUFSIZ, 0, &sa);
 
-            /* Since we have to use a named pipe, we have to make sure the name is unique */
-            _snprintf(pipe_name, sizeof(pipe_name), "\\\\.\\Pipe\\zzuf.%08x.%d", GetCurrentProcessId(), pipe_cnt++);
+        /* Create a new handle for write access only; it must be inheritable */
+        HANDLE wpipe = CreateFileA(pipe_name, GENERIC_WRITE, 0, &sa,
+                                   OPEN_EXISTING,
+                                   FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
+                                   NULL);
 
-            /* At this time, the HANDLE is inheritable and can both read/write */
-            if ((pipe_hdl[0] = CreateNamedPipeA(
-                pipe_name,
-                PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
-                PIPE_TYPE_BYTE | PIPE_WAIT,
-                1,
-                BUFSIZ,
-                BUFSIZ,
-                0,
-                &sa)) == INVALID_HANDLE_VALUE ||
+        if (rpipe == INVALID_HANDLE_VALUE || wpipe == INVALID_HANDLE_VALUE)
+            ret = -1;
 
-            /* Create a new handle for writing access only and it must be inheritable */
-            (pipe_hdl[1] = CreateFileA(
-                pipe_name,
-                GENERIC_WRITE,
-                0,
-                &sa,
-                OPEN_EXISTING,
-                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
-                NULL)) == INVALID_HANDLE_VALUE)
-                ret = -1;
+        /* Create a new handle for the listener; not inheritable */
+        HANDLE new_rpipe;
+        if (!DuplicateHandle(GetCurrentProcess(), rpipe,
+                             GetCurrentProcess(), &new_rpipe,
+                             0, FALSE, DUPLICATE_SAME_ACCESS))
+            ret = -1;
 
-            /* Now we create a new handle for the listener which is not inheritable */
-            if (!DuplicateHandle(
-                GetCurrentProcess(), pipe_hdl[0],
-                GetCurrentProcess(), &new_hdl,
-                0, FALSE,
-                DUPLICATE_SAME_ACCESS))
-                ret = -1;
+        /* Finally we can safetly close the pipe handle */
+        CloseHandle(rpipe);
 
-            /* Finally we can safetly close the pipe handle */
-            CloseHandle(pipe_hdl[0]);
-
-            /* Now we convert handle to fd */
-            pipes[i][0] = _open_osfhandle((intptr_t)new_hdl,     0x0);
-            pipes[i][1] = _open_osfhandle((intptr_t)pipe_hdl[1], 0x0);
-        }
+        /* Now we convert handle to fd */
+        pipes[i][0] = _open_osfhandle((intptr_t)new_rpipe, 0x0);
+        pipes[i][1] = _open_osfhandle((intptr_t)wpipe, 0x0);
 #endif
-        if(ret < 0)
+
+        if (ret < 0)
         {
             perror("pipe");
             return -1;
         }
     }
 
-    pid = run_process(child, opts, pipes);
-    if(pid < 0)
+    pid_t pid = run_process(child, opts, pipes);
+    if (pid < 0)
     {
         /* FIXME: close pipes */
         fprintf(stderr, "error launching `%s'\n", child->newargv[0]);
@@ -171,7 +157,7 @@ int myfork(struct child *child, struct opts *opts)
     }
 
     child->pid = pid;
-    for(i = 0; i < 3; i++)
+    for (int i = 0; i < 3; ++i)
     {
         close(pipes[i][1]);
         child->fd[i] = pipes[i][0];
@@ -183,12 +169,10 @@ int myfork(struct child *child, struct opts *opts)
 #if !defined HAVE_SETENV
 static void setenv(char const *name, char const *value, int overwrite)
 {
-    char *str;
-
-    if(!overwrite && getenv(name))
+    if (!overwrite && getenv(name))
         return;
 
-    str = malloc(strlen(name) + 1 + strlen(value) + 1);
+    char *str = malloc(strlen(name) + 1 + strlen(value) + 1);
     sprintf(str, "%s=%s", name, value);
     putenv(str);
 }
@@ -196,11 +180,7 @@ static void setenv(char const *name, char const *value, int overwrite)
 
 static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 {
-    char buf[64];
 #if defined HAVE_FORK
-    static int const files[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
-    char *libpath, *tmp;
-    int pid, j, len = strlen(opts->oldargv[0]);
 #   if defined __APPLE__
 #       define EXTRAINFO ""
 #       define PRELOAD "DYLD_INSERT_LIBRARIES"
@@ -217,28 +197,21 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 #       define EXTRAINFO ""
 #       define PRELOAD "LD_PRELOAD"
 #   endif
-#elif HAVE_WINDOWS_H
-    PROCESS_INFORMATION pinfo;
-    STARTUPINFO sinfo;
-    HANDLE pid;
-    char *cmdline;
-    int i, ret, len;
-#endif
 
-#if defined HAVE_FORK
     /* Fork and launch child */
-    pid = fork();
-    if(pid < 0)
+    int pid = fork();
+    if (pid < 0)
         perror("fork");
-    if(pid != 0)
+    if (pid != 0)
         return pid;
 
     /* We loop in reverse order so that files[0] is done last,
      * just in case one of the other dup2()ed fds had the value */
-    for(j = 3; j--; )
+    static int const files[] = { DEBUG_FILENO, STDERR_FILENO, STDOUT_FILENO };
+    for (int j = 3; j--; )
     {
         close(pipes[j][0]);
-        if(pipes[j][1] != files[j])
+        if (pipes[j][1] != files[j])
         {
             dup2(pipes[j][1], files[j]);
             close(pipes[j][1]);
@@ -247,7 +220,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 #endif
 
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
-    if(opts->maxmem >= 0)
+    if (opts->maxmem >= 0)
     {
         struct rlimit rlim;
         rlim.rlim_cur = opts->maxmem * 1048576;
@@ -257,7 +230,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 #endif
 
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
-    if(opts->maxcpu >= 0)
+    if (opts->maxcpu >= 0)
     {
         struct rlimit rlim;
         rlim.rlim_cur = opts->maxcpu;
@@ -267,6 +240,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 #endif
 
     /* Set environment variables */
+    char buf[64];
 #if defined _WIN32
     sprintf(buf, "%i", _get_osfhandle(pipes[0][1]));
 #else
@@ -282,17 +256,19 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 
 #if defined HAVE_FORK
     /* Make sure there is space for everything we might do. */
-    libpath = malloc(len + strlen(LIBDIR "/" LT_OBJDIR SONAME EXTRAINFO) + 1);
+    int len = strlen(opts->oldargv[0]);
+    char *libpath =
+               malloc(len + strlen(LIBDIR "/" LT_OBJDIR SONAME EXTRAINFO) + 1);
     strcpy(libpath, opts->oldargv[0]);
 
     /* If the binary name contains a '/', we look for a libzzuf in the
      * same directory. Otherwise, we only look into the system directory
      * to avoid shared library attacks. Write the result in libpath. */
-    tmp = strrchr(libpath, '/');
-    if(tmp)
+    char *tmp = strrchr(libpath, '/');
+    if (tmp)
     {
         strcpy(tmp + 1, LT_OBJDIR SONAME);
-        if(access(libpath, R_OK) < 0)
+        if (access(libpath, R_OK) < 0)
             strcpy(libpath, LIBDIR "/" SONAME);
     }
     else
@@ -303,7 +279,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 
     /* Do not clobber previous LD_PRELOAD values */
     tmp = getenv(PRELOAD);
-    if(tmp && *tmp)
+    if (tmp && *tmp)
     {
         char *bigbuf = malloc(strlen(tmp) + strlen(libpath) + 2);
         sprintf(bigbuf, "%s:%s", tmp, libpath);
@@ -316,7 +292,7 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
         setenv(PRELOAD, libpath, 1);
     free(libpath);
 
-    if(execvp(child->newargv[0], child->newargv))
+    if (execvp(child->newargv[0], child->newargv))
     {
         perror(child->newargv[0]);
         exit(EXIT_FAILURE);
@@ -325,10 +301,12 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
     exit(EXIT_SUCCESS);
     /* no return */
     return 0;
+
 #elif HAVE_WINDOWS_H
-    pid = GetCurrentProcess();
+    HANDLE pid = GetCurrentProcess();
 
     /* Inherit standard handles */
+    STARTUPINFO sinfo;
     memset(&sinfo, 0, sizeof(sinfo));
     sinfo.cb = sizeof(sinfo);
     sinfo.hStdInput = INVALID_HANDLE_VALUE;
@@ -337,20 +315,22 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
     sinfo.dwFlags = STARTF_USESTDHANDLES;
 
     /* Build the commandline */
-    for (i = 0, len = 0; child->newargv[i]; i++)
-        len += strlen(child->newargv[i]) + 1;
-    cmdline = malloc(len);
-    for (i = 0, len = 0; child->newargv[i]; i++)
+    int len = 0;
+    for (int i = 0; child->newargv[i]; ++i)
+        len += (int)strlen(child->newargv[i]) + 1;
+    char *cmdline = malloc(len);
+    for (int i = 0, len = 0; child->newargv[i]; ++i)
     {
         strcpy(cmdline + len, child->newargv[i]);
-        len += strlen(child->newargv[i]) + 1;
+        len += (int)strlen(child->newargv[i]) + 1;
         cmdline[len - 1] = ' ';
     }
     cmdline[len - 1] = '\0';
 
     /* Create the process in suspended state */
-    ret = CreateProcess(child->newargv[0], cmdline, NULL, NULL, TRUE,
-                        CREATE_SUSPENDED, NULL, NULL, &sinfo, &pinfo);
+    PROCESS_INFORMATION pinfo;
+    int ret = CreateProcess(child->newargv[0], cmdline, NULL, NULL, TRUE,
+                            CREATE_SUSPENDED, NULL, NULL, &sinfo, &pinfo);
     free(cmdline);
 
     child->process_handle = pinfo.hProcess;
@@ -371,15 +351,16 @@ static int run_process(struct child *child, struct opts *opts, int pipes[][2])
 
     /* Insert the replacement code */
     ret = dll_inject(&pinfo, SONAME);
-    if(ret < 0)
+    if (ret < 0)
     {
         TerminateProcess(pinfo.hProcess, -1);
         return -1;
     }
 
-    /* insert your breakpoint here to have a chance to attach a debugger to libzzuf.dll */
+    /* Insert your breakpoint here to have a chance to attach a debugger
+     * to libzzuf.dll */
     ret = ResumeThread(pinfo.hThread);
-    if(ret == -1)
+    if (ret == -1)
     {
         TerminateProcess(pinfo.hProcess, -1);
         return -1;
@@ -446,7 +427,7 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
 
     /* We use this code to make the targeted process waits for us */
     static uint8_t const wait[] = "\xeb\xfe"; /* jmp $-1 */
-    size_t wait_len             = sizeof(wait) - 1;
+    size_t wait_len = sizeof(wait) - 1;
     uint8_t orig_data[2];
 
     void *process   = pinfo->hProcess;
@@ -466,54 +447,72 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
 
     /* Use the main thread to inject our library */
     ctxt.ContextFlags = CONTEXT_FULL;
-    if (!GetThreadContext(thread, &ctxt)) goto _return;
+    if (!GetThreadContext(thread, &ctxt))
+        goto _return;
 
     /* Make the target program waits when it reachs the original entry point, because we can't do many thing from the windows loader */
     oep = ctxt.LoaderRegister;
-    if (!ReadProcessMemory(process, (LPVOID)oep, orig_data, sizeof(orig_data), &written) || written != sizeof(orig_data)) goto _return; /* save original opcode */
-    if (!WriteProcessMemory(process, (LPVOID)oep, wait, wait_len , &written) || written != wait_len) goto _return;                      /* write jmp short $-1 */
-    if (!FlushInstructionCache(process, (LPVOID)oep, wait_len)) goto _return;
-    if (ResumeThread(thread) == (DWORD)-1) goto _return;
+    if (!ReadProcessMemory(process, (LPVOID)oep, orig_data, sizeof(orig_data), &written) || written != sizeof(orig_data))
+        goto _return; /* save original opcode */
+    if (!WriteProcessMemory(process, (LPVOID)oep, wait, wait_len , &written) || written != wait_len)
+        goto _return;                      /* write jmp short $-1 */
+    if (!FlushInstructionCache(process, (LPVOID)oep, wait_len))
+        goto _return;
+    if (ResumeThread(thread) == (DWORD)-1)
+        goto _return;
 
     /* Stop when the program reachs the oep */
     while (oep != ctxt.InstructionPointer)
     {
-        if (!GetThreadContext(thread, &ctxt)) goto _return;
+        if (!GetThreadContext(thread, &ctxt))
+            goto _return;
         Sleep(10);
     }
 
-    if (SuspendThread(thread) == (DWORD)-1) goto _return;
+    if (SuspendThread(thread) == (DWORD)-1)
+        goto _return;
 
     /* Resolve LoadLibraryA from the target process memory context */
-    if ((rldlib = get_proc_address(process, pid, "LoadLibraryA")) == NULL) goto _return;
+    if ((rldlib = get_proc_address(process, pid, "LoadLibraryA")) == NULL)
+        goto _return;
 
-    if ((rpl = VirtualAllocEx(process, NULL, pl_len, MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == NULL) goto _return;
+    if ((rpl = VirtualAllocEx(process, NULL, pl_len, MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == NULL)
+        goto _return;
 
     /* Emulate a call to the ldr code, thus the ret instruction from ldr will get (e|r)ip back to the original entry point */
     ctxt.StackPointer -= sizeof(oep);
-    if (!WriteProcessMemory(process, (LPVOID)ctxt.StackPointer, &oep, sizeof(oep), &written) || written != sizeof(oep)) goto _return;
+    if (!WriteProcessMemory(process, (LPVOID)ctxt.StackPointer, &oep, sizeof(oep), &written) || written != sizeof(oep))
+        goto _return;
     ctxt.InstructionPointer = (DWORD_PTR)rpl;
-    if (!SetThreadContext(thread, &ctxt)) goto _return;
+    if (!SetThreadContext(thread, &ctxt))
+        goto _return;
 
     /* Forge the payload */
-    if ((pl = (uint8_t *)malloc(pl_len)) == NULL) goto _return;
+    if ((pl = (uint8_t *)malloc(pl_len)) == NULL)
+        goto _return;
     memcpy(pl, ldr, sizeof(ldr) - 1);
     memcpy(pl + LoadLibraryAOffset, &rldlib, sizeof(rldlib));        /* Write the address of LoadLibraryA         */
     strcpy((char *)(pl + sizeof(ldr) - 1), lib);                    /* Write the first parameter of LoadLibraryA */
 
-    if (!WriteProcessMemory(process, rpl, pl, pl_len, &written) || written != pl_len) goto _return;
+    if (!WriteProcessMemory(process, rpl, pl, pl_len, &written) || written != pl_len)
+        goto _return;
 
     /* Restore original opcode */
-    if (!WriteProcessMemory(process, (LPVOID)oep, orig_data, sizeof(orig_data), &written) || written != sizeof(orig_data)) goto _return;
+    if (!WriteProcessMemory(process, (LPVOID)oep, orig_data, sizeof(orig_data), &written) || written != sizeof(orig_data))
+        goto _return;
 
-    if (!FlushInstructionCache(process, rpl, pl_len)) goto _return;
-    if (!FlushInstructionCache(process, (LPVOID)oep, sizeof(orig_data))) goto _return;
+    if (!FlushInstructionCache(process, rpl, pl_len))
+        goto _return;
+    if (!FlushInstructionCache(process, (LPVOID)oep, sizeof(orig_data)))
+        goto _return;
 
     res = 0;
 _return:
-    if (pl != NULL) free(pl);
+    if (pl != NULL)
+        free(pl);
 
-    /* We must not free remote allocated memory since they will be used after the process will be resumed */
+    /* We must not free remote allocated memory since they will be used
+     * after the process will be resumed */
     return res;
 
 #undef InstructionPointer
@@ -524,18 +523,13 @@ _return:
 
 static void *get_proc_address(void *process, DWORD pid, const char *func)
 {
-    char buf[1024];
-    size_t buflen = strlen(func) + 1;
+    void *ret = 0;
 
     MODULEENTRY32 entry;
-    void *ret = 0;
-    SIZE_T tmp;
-    void *list;
-    int i, k;
-
-    list = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid);
     entry.dwSize = sizeof(entry);
-    for(k = Module32First(list, &entry); k; k = Module32Next(list, &entry))
+    void *list = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid);
+
+    for (int k = Module32First(list, &entry); k; k = Module32Next(list, &entry))
     {
         IMAGE_DOS_HEADER dos;
         IMAGE_NT_HEADERS nt;
@@ -547,6 +541,7 @@ static void *get_proc_address(void *process, DWORD pid, const char *func)
         if (stricmp("kernel32.dll", entry.szModule))
             continue;
 
+        SIZE_T tmp;
         ReadProcessMemory(process, base, &dos, sizeof(dos), &tmp);
         ReadProcessMemory(process, base + dos.e_lfanew, &nt, sizeof(nt), &tmp);
 
@@ -556,24 +551,27 @@ static void *get_proc_address(void *process, DWORD pid, const char *func)
 
         ReadProcessMemory(process, base + exportaddr, &expdir, sizeof(expdir), &tmp);
 
-        for (i = 0; i < (int)expdir.NumberOfNames; i++)
+        for (int i = 0; i < (int)expdir.NumberOfNames; ++i)
         {
-            uint32_t nameaddr, funcaddr;
-            uint16_t j;
-
+            uint32_t nameaddr;
             /* Look for our function name in the list of names */
             ReadProcessMemory(process, base + expdir.AddressOfNames
                                             + i * sizeof(DWORD),
                               &nameaddr, sizeof(nameaddr), &tmp);
+            char buf[1024];
+            size_t buflen = strlen(func) + 1;
             ReadProcessMemory(process, base + nameaddr, buf, buflen, &tmp);
 
             if (strcmp(buf, func))
                 continue;
 
             /* If we found a function with this name, return its address */
+            uint16_t j;
             ReadProcessMemory(process, base + expdir.AddressOfNameOrdinals
                                             + i * sizeof(WORD),
                               &j, sizeof(j), &tmp);
+
+            uint32_t funcaddr;
             ReadProcessMemory(process, base + expdir.AddressOfFunctions
                                             + j * sizeof(DWORD),
                               &funcaddr, sizeof(funcaddr), &tmp);

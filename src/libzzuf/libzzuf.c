@@ -1,13 +1,14 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+ *              2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -114,11 +115,11 @@ void _zz_init(void)
         return;
 
     tmp = getenv("ZZUF_DEBUG");
-    if(tmp)
+    if (tmp)
         _zz_debuglevel = atoi(tmp);
 
     tmp = getenv("ZZUF_DEBUGFD");
-    if(tmp)
+    if (tmp)
 #if defined _WIN32
         _zz_debugfd = _open_osfhandle((long)atoi(tmp), 0);
 #else
@@ -129,64 +130,64 @@ void _zz_init(void)
     _zz_mem_init();
 
     tmp = getenv("ZZUF_SEED");
-    if(tmp && *tmp)
+    if (tmp && *tmp)
         _zz_setseed(atol(tmp));
 
     tmp = getenv("ZZUF_MINRATIO");
     tmp2 = getenv("ZZUF_MAXRATIO");
-    if(tmp && *tmp && tmp2 && *tmp2)
+    if (tmp && *tmp && tmp2 && *tmp2)
         _zz_setratio(atof(tmp), atof(tmp2));
 
     tmp = getenv("ZZUF_AUTOINC");
-    if(tmp && *tmp == '1')
+    if (tmp && *tmp == '1')
         _zz_setautoinc();
 
     tmp = getenv("ZZUF_BYTES");
-    if(tmp && *tmp)
+    if (tmp && *tmp)
         _zz_bytes(tmp);
 
     tmp = getenv("ZZUF_LIST");
-    if(tmp && *tmp)
+    if (tmp && *tmp)
         _zz_list(tmp);
 
     tmp = getenv("ZZUF_PORTS");
-    if(tmp && *tmp)
+    if (tmp && *tmp)
         _zz_ports(tmp);
 
     tmp = getenv("ZZUF_ALLOW");
-    if(tmp && *tmp)
+    if (tmp && *tmp)
         _zz_allow(tmp);
 
     tmp = getenv("ZZUF_DENY");
-    if(tmp && *tmp)
+    if (tmp && *tmp)
         _zz_deny(tmp);
 
     tmp = getenv("ZZUF_PROTECT");
-    if(tmp && *tmp)
+    if (tmp && *tmp)
         _zz_protect(tmp);
 
     tmp = getenv("ZZUF_REFUSE");
-    if(tmp && *tmp)
+    if (tmp && *tmp)
         _zz_refuse(tmp);
 
     tmp = getenv("ZZUF_INCLUDE");
-    if(tmp && *tmp)
+    if (tmp && *tmp)
         _zz_include(tmp);
 
     tmp = getenv("ZZUF_EXCLUDE");
-    if(tmp && *tmp)
+    if (tmp && *tmp)
         _zz_exclude(tmp);
 
     tmp = getenv("ZZUF_SIGNAL");
-    if(tmp && *tmp == '1')
+    if (tmp && *tmp == '1')
         _zz_signal = 1;
 
     tmp = getenv("ZZUF_MEMORY");
-    if(tmp)
+    if (tmp)
         _zz_memory = atoi(tmp);
 
     tmp = getenv("ZZUF_NETWORK");
-    if(tmp && *tmp == '1')
+    if (tmp && *tmp == '1')
         _zz_network = 1;
 
     _zz_fd_init();
@@ -194,7 +195,7 @@ void _zz_init(void)
     _zz_sys_init();
 
     tmp = getenv("ZZUF_STDIN");
-    if(tmp && *tmp == '1')
+    if (tmp && *tmp == '1')
         _zz_register(0);
 
     _zz_ready = 1;

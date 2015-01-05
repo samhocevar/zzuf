@@ -1,17 +1,17 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
- *                2007 Rémi Denis-Courmont <rdenis#simphalempin:com>
- *                2007 Clément Stenac <zorglub#diwi:org>
- *                2007 Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de>
- *                2009 Corentin Delorme <codelorme@gmail.com>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+ *              2007 Rémi Denis-Courmont <rdenis#simphalempin:com>
+ *              2007 Clément Stenac <zorglub#diwi:org>
+ *              2007 Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de>
+ *              2009 Corentin Delorme <codelorme@gmail.com>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -171,7 +171,7 @@ static int     (*ORIG(close))   (int fd);
     { \
         int mode = 0; \
         LOADSYM(myopen); \
-        if(oflag & O_CREAT) \
+        if (oflag & O_CREAT) \
         { \
             va_list va; \
             va_start(va, oflag); \
@@ -183,20 +183,20 @@ static int     (*ORIG(close))   (int fd);
         { \
             ret = ORIG(myopen)(file, oflag); \
         } \
-        if(!_zz_ready || _zz_islocked(-1)) \
+        if (!_zz_ready || _zz_islocked(-1)) \
             return ret; \
-        if(ret >= 0 \
+        if (ret >= 0 \
             && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY) \
             && _zz_mustwatch(file)) \
         { \
-            if(oflag & O_CREAT) \
+            if (oflag & O_CREAT) \
                 debug("%s(\"%s\", %i, %i) = %i", \
                       __func__, file, oflag, mode, ret); \
             else \
                 debug("%s(\"%s\", %i) = %i", __func__, file, oflag, ret); \
             _zz_register(ret); \
         } \
-    } while(0)
+    } while (0)
 
 #undef open
 int NEW(open)(const char *file, int oflag, ...)
@@ -228,11 +228,11 @@ int NEW(dup)(int oldfd)
 
     LOADSYM(dup);
     ret = ORIG(dup)(oldfd);
-    if(!_zz_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
+    if (!_zz_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
          || !_zz_isactive(oldfd))
         return ret;
 
-    if(ret >= 0)
+    if (ret >= 0)
     {
         debug("%s(%i) = %i", __func__, oldfd, ret);
         _zz_register(ret);
@@ -250,15 +250,15 @@ int NEW(dup2)(int oldfd, int newfd)
 
     LOADSYM(dup2);
     ret = ORIG(dup2)(oldfd, newfd);
-    if(!_zz_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
+    if (!_zz_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
          || !_zz_isactive(oldfd))
         return ret;
 
-    if(ret >= 0)
+    if (ret >= 0)
     {
         /* We must close newfd if it was open, but only if oldfd != newfd
          * and if dup2() suceeded. */
-        if(oldfd != newfd && _zz_iswatched(newfd) && _zz_isactive(newfd))
+        if (oldfd != newfd && _zz_iswatched(newfd) && _zz_isactive(newfd))
             _zz_unregister(newfd);
 
         debug("%s(%i, %i) = %i", __func__, oldfd, newfd, ret);
@@ -277,13 +277,13 @@ int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
 
     LOADSYM(accept);
     ret = ORIG(accept)(sockfd, addr, addrlen);
-    if(!_zz_ready || _zz_islocked(-1) || !_zz_network
+    if (!_zz_ready || _zz_islocked(-1) || !_zz_network
          || !_zz_iswatched(sockfd) || !_zz_isactive(sockfd))
         return ret;
 
-    if(ret >= 0)
+    if (ret >= 0)
     {
-        if(addrlen)
+        if (addrlen)
             debug("%s(%i, %p, &%i) = %i", __func__,
                   sockfd, addr, (int)*addrlen, ret);
         else
@@ -306,9 +306,9 @@ int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
     { \
         LOADSYM(myconnect); \
         ret = ORIG(myconnect)(sockfd, addr, addrlen); \
-        if(!_zz_ready || _zz_islocked(-1) || !_zz_network) \
+        if (!_zz_ready || _zz_islocked(-1) || !_zz_network) \
             return ret; \
-        if(ret >= 0) \
+        if (ret >= 0) \
         { \
             struct sockaddr_in in; \
             long int port; \
@@ -324,7 +324,7 @@ int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
                    (char const *)addr + ((char *)&in.sin_port - (char *)&in), \
                    sizeof(in.sin_port)); \
                 port = ntohs(in.sin_port); \
-                if(_zz_portwatched(port)) \
+                if (_zz_portwatched(port)) \
                     break; \
                 /* Fall through */ \
             default: \
@@ -334,7 +334,7 @@ int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
             debug("%s(%i, %p, %i) = %i", __func__, \
                   sockfd, addr, (int)addrlen, ret); \
         } \
-    } while(0);
+    } while (0);
 
 #if defined HAVE_BIND
 #undef bind
@@ -361,10 +361,10 @@ int NEW(socket)(int domain, int type, int protocol)
 
     LOADSYM(socket);
     ret = ORIG(socket)(domain, type, protocol);
-    if(!_zz_ready || _zz_islocked(-1) || !_zz_network)
+    if (!_zz_ready || _zz_islocked(-1) || !_zz_network)
         return ret;
 
-    if(ret >= 0)
+    if (ret >= 0)
     {
         debug("%s(%i, %i, %i) = %i", __func__, domain, type, protocol, ret);
         _zz_register(ret);
@@ -379,15 +379,15 @@ int NEW(socket)(int domain, int type, int protocol)
     { \
         LOADSYM(myrecv); \
         ret = ORIG(myrecv) myargs; \
-        if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
+        if (!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
              || _zz_islocked(s) || !_zz_isactive(s)) \
             return ret; \
-        if(ret > 0) \
+        if (ret > 0) \
         { \
             char *b = buf; \
             _zz_fuzz(s, buf, ret); \
             _zz_addpos(s, ret); \
-            if(ret >= 4) \
+            if (ret >= 4) \
                 debug("%s(%i, %p, %li, 0x%x) = %i \"%c%c%c%c...", __func__, \
                       s, buf, (long int)len, flags, ret, \
                       b[0], b[1], b[2], b[3]); \
@@ -398,7 +398,7 @@ int NEW(socket)(int domain, int type, int protocol)
         else \
             debug("%s(%i, %p, %li, 0x%x) = %i", __func__, \
                   s, buf, (long int)len, flags, ret); \
-    } while(0);
+    } while (0);
 
 #if defined HAVE_RECV
 #undef recv
@@ -421,10 +421,10 @@ RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, size_t buflen, int flags)
     { \
         LOADSYM(myrecvfrom); \
         ret = ORIG(myrecvfrom) myargs; \
-        if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
+        if (!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
              || _zz_islocked(s) || !_zz_isactive(s)) \
             return ret; \
-        if(ret > 0) \
+        if (ret > 0) \
         { \
             char tmp[128]; \
             char *b = buf; \
@@ -446,7 +446,7 @@ RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, size_t buflen, int flags)
         else \
             debug("%s(%i, %p, %li, 0x%x, %p, %p) = %i", __func__, \
                   s, buf, (long int)len, flags, from, fromlen, ret); \
-    } while(0)
+    } while (0)
 
 #if defined HAVE_RECVFROM
 #undef recvfrom
@@ -478,7 +478,7 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
 
     LOADSYM(recvmsg);
     ret = ORIG(recvmsg)(s, hdr, flags);
-    if(!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s)
+    if (!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s)
          || _zz_islocked(s) || !_zz_isactive(s))
         return ret;
 
@@ -494,15 +494,15 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
     { \
         LOADSYM(myread); \
         ret = ORIG(myread) myargs; \
-        if(!_zz_ready || !_zz_iswatched(fd) || !_zz_hostwatched(fd) \
+        if (!_zz_ready || !_zz_iswatched(fd) || !_zz_hostwatched(fd) \
              || _zz_islocked(fd) || !_zz_isactive(fd)) \
             return ret; \
-        if(ret > 0) \
+        if (ret > 0) \
         { \
             char *b = buf; \
             _zz_fuzz(fd, buf, ret); \
             _zz_addpos(fd, ret); \
-            if(ret >= 4) \
+            if (ret >= 4) \
                 debug("%s(%i, %p, %li) = %i \"%c%c%c%c...", __func__, fd, \
                       buf, (long int)count, ret, b[0], b[1], b[2], b[3]); \
             else \
@@ -513,7 +513,7 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
             debug("%s(%i, %p, %li) = %i", __func__, fd, \
                   buf, (long int)count, ret); \
         offset_check(fd); \
-    } while(0)
+    } while (0)
 
 #if defined READ_USES_SSIZE_T
 #undef read
@@ -545,7 +545,7 @@ ssize_t NEW(readv)(int fd, const struct iovec *iov, int count)
 
     LOADSYM(readv);
     ret = ORIG(readv)(fd, iov, count);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
+    if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
          || !_zz_isactive(fd))
         return ret;
 
@@ -565,11 +565,11 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
 
     LOADSYM(pread);
     ret = ORIG(pread)(fd, buf, count, offset);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
+    if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
          || !_zz_isactive(fd))
         return ret;
 
-    if(ret > 0)
+    if (ret > 0)
     {
         long int curoff = _zz_getpos(fd);
         char *b = buf;
@@ -578,7 +578,7 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
         _zz_fuzz(fd, buf, ret);
         _zz_setpos(fd, curoff);
 
-        if(ret >= 4)
+        if (ret >= 4)
             debug("%s(%i, %p, %li, %li) = %i \"%c%c%c%c...", __func__, fd, buf,
                   (long int)count, (long int)offset, ret,
                   b[0], b[1], b[2], b[3]);
@@ -599,14 +599,14 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
     { \
         LOADSYM(mylseek); \
         ret = ORIG(mylseek)(fd, offset, whence); \
-        if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
+        if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
              || !_zz_isactive(fd)) \
             return ret; \
         debug("%s(%i, %lli, %i) = %lli", __func__, fd, \
               (long long int)offset, whence, (long long int)ret); \
-        if(ret != (off_t)-1) \
+        if (ret != (off_t)-1) \
             _zz_setpos(fd, ret); \
-    } while(0)
+    } while (0)
 
 #undef lseek
 off_t NEW(lseek)(int fd, off_t offset, int whence)
@@ -640,7 +640,7 @@ int NEW(aio_read)(struct aiocb *aiocbp)
     int fd = aiocbp->aio_fildes;
 
     LOADSYM(aio_read);
-    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
+    if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(aio_read)(aiocbp);
 
     _zz_lock(fd);
@@ -660,14 +660,14 @@ ssize_t NEW(aio_return)(struct aiocb *aiocbp)
     int fd = aiocbp->aio_fildes;
 
     LOADSYM(aio_return);
-    if(!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
+    if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(aio_return)(aiocbp);
 
     ret = ORIG(aio_return)(aiocbp);
     _zz_unlock(fd);
 
     /* FIXME: make sure we’re actually *reading* */
-    if(ret > 0)
+    if (ret > 0)
     {
         _zz_setpos(fd, aiocbp->aio_offset);
         _zz_fuzz(fd, aiocbp->aio_buf, ret);
@@ -689,12 +689,12 @@ int NEW(close)(int fd)
     int ret;
 
     /* Hey, it’s our debug channel! Silently pretend we closed it. */
-    if(fd == _zz_debugfd)
+    if (fd == _zz_debugfd)
         return 0;
 
     LOADSYM(close);
     ret = ORIG(close)(fd);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
+    if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
     debug("%s(%i) = %i", __func__, fd, ret);
@@ -709,12 +709,12 @@ int NEW(close)(int fd)
 static void fuzz_iovec(int fd, const struct iovec *iov, ssize_t ret)
 {
     /* NOTE: We assume that iov countains at least <ret> bytes. */
-    while(ret > 0)
+    while (ret > 0)
     {
         void *b = iov->iov_base;
         size_t len = iov->iov_len;
 
-        if(len > (size_t)ret)
+        if (len > (size_t)ret)
             len = ret;
 
         _zz_fuzz(fd, b, len);
@@ -739,7 +739,7 @@ static void offset_check(int fd)
     LOADSYM(lseek);
     ret = ORIG(lseek)(fd, 0, SEEK_CUR);
 #endif
-    if(ret != -1 && ret != _zz_getpos(fd))
+    if (ret != -1 && ret != _zz_getpos(fd))
         debug("warning: offset inconsistency");
     errno = orig_errno;
 }

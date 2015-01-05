@@ -408,8 +408,8 @@ size_t regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_si
 int regexec(const regex_t *preg, const char *string, size_t nmatch, regmatch_t *pmatch, int eflags)
 {
     cxx_regex *cr = (cxx_regex *)preg->cxx_regex;
-
-    if (cr == NULL) return -1;
+    if (cr == NULL)
+        return -1;
 
     try
     {
@@ -427,8 +427,8 @@ int regexec(const regex_t *preg, const char *string, size_t nmatch, regmatch_t *
 int regwexec(const regex_t *preg, const wchar_t *string, size_t nmatch, regmatch_t *pmatch, int eflags)
 {
     cxx_regex *cr = (cxx_regex *)preg->cxx_regex;
-
-    if (cr == NULL) return -1;
+    if (cr == NULL)
+        return -1;
 
     try
     {

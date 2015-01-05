@@ -1,13 +1,13 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -80,12 +80,16 @@ void _zz_debug(char const *format, ...)
         HANDLE dbg_hdl = (HANDLE)_get_osfhandle(_zz_debugfd);
         int ret = _vsnprintf(buf, sizeof(buf), format, args);
 
-        if (ret <= 0)       return;  /* if _snprintf failed, we send nothing                    */
-        if (buf[0] == '\0') return; /* if the buf is empty, we don't bother to send it to zzuf */
+        if (ret <= 0)
+            return; /* if _snprintf failed, we send nothing */
+        if (buf[0] == '\0')
+            return; /* if buf is empty, we don't bother to send it to zzuf */
 
         /* FIXME: if len >= count, no null-terminator is appended, so we may erased the last character */
-        if (ret >= sizeof(buf)) buf[ret - 1] = '\n';
-        else                    buf[ret++]   = '\n';
+        if (ret >= sizeof(buf))
+            buf[ret - 1] = '\n';
+        else
+            buf[ret++] = '\n';
 
         EnterCriticalSection(&_zz_pipe_cs);
         WriteFile(dbg_hdl, buf, ret, &written, NULL);
@@ -106,8 +110,10 @@ void _zz_debug2(char const *format, ...)
         HANDLE dbg_hdl = (HANDLE)_get_osfhandle(_zz_debugfd);
         int ret = _vsnprintf(buf, sizeof(buf), format, args);
 
-        if (ret <= 0)       return;  /* if _snprintf failed, we send nothing                    */
-        if (buf[0] == '\0') return; /* if the buf is empty, we don't bother to send it to zzuf */
+        if (ret <= 0)
+            return; /* if _snprintf failed, we send nothing */
+        if (buf[0] == '\0')
+            return; /* if buf is empty, we don't bother to send it to zzuf */
 
         /* FIXME: if len >= count, no null-terminator is appended, so we may erased the last character */
         if (ret >= sizeof(buf)) buf[ret - 1] = '\n';
@@ -163,10 +169,8 @@ static inline void append(void const *data, size_t count)
 static void mydebug(char const *format, va_list args)
 {
     static char const *hex2char = "0123456789abcdef";
-    char const *f;
-    int saved_errno;
 
-    saved_errno = errno;
+    int saved_errno = errno;
 
     /* If there is spare data and the debug fd is open, we send the data */
     if (debugcount && _zz_debugfd >= 0)
@@ -176,28 +180,28 @@ static void mydebug(char const *format, va_list args)
     }
 
     append("** zzuf debug ** ", 17);
-    for(f = format; *f; f++)
+    for (char const *f = format; *f; ++f)
     {
-        if(*f != '%')
+        if (*f != '%')
         {
             append(f, 1);
             continue;
         }
 
         f++;
-        if(!*f)
+        if (!*f)
             break;
 
-        if(*f == 'c')
+        if (*f == 'c')
         {
             char i = (char)(unsigned char)va_arg(args, int);
-            if(i >= 0x20 && i < 0x7f)
+            if (i >= 0x20 && i < 0x7f)
                 append(&i, 1);
-            else if(i == '\n')
+            else if (i == '\n')
                 append("\\n", 2);
-            else if(i == '\t')
+            else if (i == '\t')
                 append("\\t", 2);
-            else if(i == '\r')
+            else if (i == '\r')
                 append("\\r", 2);
             else
             {
@@ -206,48 +210,48 @@ static void mydebug(char const *format, va_list args)
                 append(hex2char + (i & 0x0f), 1);
             }
         }
-        else if(*f == 'i' || *f == 'd')
+        else if (*f == 'i' || *f == 'd')
         {
             int i = va_arg(args, int);
             WRITE_INT(i, 10);
         }
-        else if(*f == 'x')
+        else if (*f == 'x')
         {
             unsigned int i = va_arg(args, unsigned int);
             WRITE_INT(i, 16);
         }
-        else if(f[0] == 'l' && (f[1] == 'i' || f[1] == 'd'))
+        else if (f[0] == 'l' && (f[1] == 'i' || f[1] == 'd'))
         {
             long int i = va_arg(args, long int);
             WRITE_INT(i, 10);
             f++;
         }
-        else if(f[0] == 'l' && f[1] == 'l' && (f[2] == 'i' || f[1] == 'd'))
+        else if (f[0] == 'l' && f[1] == 'l' && (f[2] == 'i' || f[1] == 'd'))
         {
             long long int i = va_arg(args, long long int);
             WRITE_INT(i, 10);
             f += 2;
         }
-        else if(f[0] == 'g')
+        else if (f[0] == 'g')
         {
             double g = va_arg(args, double), h = 0.0000001;
             int i = (int)g;
             WRITE_INT(i, 10);
-            for(i = 0; i < 7; i++)
+            for (i = 0; i < 7; ++i)
             {
                 g = (g - (int)g) * 10;
                 h *= 10;
-                if(g < h)
+                if (g < h)
                     break;
-                if(i == 0)
+                if (i == 0)
                     append(".", 1);
                 append(hex2char + (int)g, 1);
             }
         }
-        else if(f[0] == 'p')
+        else if (f[0] == 'p')
         {
             uintptr_t i = va_arg(args, uintptr_t);
-            if(!i)
+            if (!i)
                 append("NULL", 4);
             else
             {
@@ -255,28 +259,28 @@ static void mydebug(char const *format, va_list args)
                 WRITE_INT(i, 16);
             }
         }
-        else if(f[0] == 's')
+        else if (f[0] == 's')
         {
             char *s = va_arg(args, char *);
-            if(!s)
+            if (!s)
                 append("(nil)", 5);
             else
             {
                 int l = 0;
-                while(s[l])
+                while (s[l])
                     l++;
                 append(s, l);
             }
         }
-        else if(f[0] == 'S')
+        else if (f[0] == 'S')
         {
             uint16_t *s = va_arg(args, uint16_t *);
-            if(!s)
+            if (!s)
                 append("(nil)", 5);
             else
             {
                 int l = 0;
-                while(s[l])
+                while (s[l])
                 {
                     if (s[l] < 128)
                     {
@@ -295,7 +299,7 @@ static void mydebug(char const *format, va_list args)
                 }
             }
         }
-        else if(f[0] == '0' && f[1] == '2' && f[2] == 'x')
+        else if (f[0] == '0' && f[1] == '2' && f[2] == 'x')
         {
             int i = va_arg(args, int);
             append(hex2char + ((i & 0xf0) >> 4), 1);

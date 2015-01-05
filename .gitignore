@@ -1,3 +1,4 @@
+# Autotools cruft
 *.o
 *.lo
 *.la
@@ -24,6 +25,13 @@ m4/ltoptions.m4
 m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
+# Visual Studio cruft
+msvc/*.suo
+msvc/*.sdf
+msvc/*.opensdf
+msvc/Debug
+msvc/Releast
+# Our binaries
 src/zzuf
 src/zzat
 test/zzero
@@ -32,8 +40,10 @@ test/zzone
 test/bug-div0
 test/bug-memory
 test/bug-overflow
+# Test suite temporary files
 test/*.log
 test/*.trs
+# Generated manpages
 doc/zzat.1
 doc/zzuf.1
 doc/libzzuf.3

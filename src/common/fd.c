@@ -2,6 +2,7 @@
  *  zzuf - general purpose fuzzer
  *
  *  Copyright © 2006—2015 Sam Hocevar <sam@hocevar.net>
+ *              2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
@@ -194,19 +195,17 @@ void _zz_fd_init(void)
      * calls to malloc() that we do, so we get better chances that memory
      * corruption errors are reproducible */
     files = static_files;
-    for (nfiles = 0; nfiles < 32; nfiles++)
+    for (nfiles = 0; nfiles < 32; ++nfiles)
         files[nfiles].managed = 0;
 
     fds = static_fds;
-    for (maxfd = 0; maxfd < 32; maxfd++)
+    for (maxfd = 0; maxfd < 32; ++maxfd)
         fds[maxfd] = -1;
 }
 
 void _zz_fd_fini(void)
 {
-    int i;
-
-    for (i = 0; i < maxfd; i++)
+    for (int i = 0; i < maxfd; ++i)
     {
         if (!files[fds[i]].managed)
             continue;
@@ -299,13 +298,13 @@ void _zz_register(int fd)
         }
         else
             fds = realloc(fds, 2 * maxfd * sizeof(*fds));
-        for (i = maxfd; i < maxfd * 2; i++)
+        for (i = maxfd; i < maxfd * 2; ++i)
             fds[i] = -1;
         maxfd *= 2;
     }
 
     /* Find an empty slot */
-    for (i = 0; i < nfiles; i++)
+    for (i = 0; i < nfiles; ++i)
         if (files[i].managed == 0)
             break;
 

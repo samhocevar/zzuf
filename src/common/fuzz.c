@@ -58,11 +58,11 @@ static void readchars(unsigned char *, char const *);
 
 extern void _zz_fuzzing(char const *mode)
 {
-    if(!strcmp(mode, "xor"))
+    if (!strcmp(mode, "xor"))
         fuzzing = FUZZING_XOR;
-    else if(!strcmp(mode, "set"))
+    else if (!strcmp(mode, "set"))
         fuzzing = FUZZING_SET;
-    else if(!strcmp(mode, "unset"))
+    else if (!strcmp(mode, "unset"))
         fuzzing = FUZZING_UNSET;
 }
 
@@ -84,27 +84,22 @@ void _zz_refuse(char const *list)
 
 void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
 {
-    int64_t start, stop;
     int64_t pos = _zz_getpos(fd);
-    struct fuzz *fuzz;
-    volatile uint8_t *aligned_buf;
-    int64_t i, j;
-    int todo;
 
 #if defined LIBZZUF
     debug2("... fuzz(%i, @%lli, %lli)", fd, (long long int)pos,
            (long long int)len);
 #endif
 
-    aligned_buf = buf - pos;
-    fuzz = _zz_getfuzz(fd);
+    volatile uint8_t *aligned_buf = buf - pos;
+    struct fuzz *fuzz = _zz_getfuzz(fd);
 
-    for(i = pos / CHUNKBYTES;
-        i < (pos + len + CHUNKBYTES - 1) / CHUNKBYTES;
-        i++)
+    for (int64_t i = pos / CHUNKBYTES;
+         i < (pos + len + CHUNKBYTES - 1) / CHUNKBYTES;
+         ++i)
     {
         /* Cache bitmask array */
-        if(fuzz->cur != (int)i)
+        if (fuzz->cur != (int)i)
         {
             uint32_t chunkseed;
 
@@ -119,9 +114,9 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
             memset(fuzz->data, 0, CHUNKBYTES);
 
             /* Add some random dithering to handle ratio < 1.0/CHUNKBYTES */
-            todo = (int)((fuzz->ratio * (8 * CHUNKBYTES) * 1000000.0
+            int todo = (int)((fuzz->ratio * (8 * CHUNKBYTES) * 1000000.0
                                 + _zz_rand(1000000)) / 1000000.0);
-            while(todo--)
+            while (todo--)
             {
                 unsigned int idx = _zz_rand(CHUNKBYTES);
                 uint8_t bit = (1 << _zz_rand(8));
@@ -133,26 +128,25 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
         }
 
         /* Apply our bitmask array to the buffer */
-        start = (i * CHUNKBYTES > pos) ? i * CHUNKBYTES : pos;
+        int64_t start = (i * CHUNKBYTES > pos) ? i * CHUNKBYTES : pos;
+        int64_t stop = ((i + 1) * CHUNKBYTES < pos + len)
+                      ? (i + 1) * CHUNKBYTES : pos + len;
 
-        stop = ((i + 1) * CHUNKBYTES < pos + len)
-              ? (i + 1) * CHUNKBYTES : pos + len;
-
-        for(j = start; j < stop; j++)
+        for (int64_t j = start; j < stop; ++j)
         {
             uint8_t byte, fuzzbyte;
 
-            if(ranges && !_zz_isinrange(j, ranges))
+            if (ranges && !_zz_isinrange(j, ranges))
                 continue; /* Not in one of the ranges, skip byte */
 
             byte = aligned_buf[j];
 
-            if(protect[byte])
+            if (protect[byte])
                 continue;
 
             fuzzbyte = fuzz->data[j % CHUNKBYTES];
 
-            if(!fuzzbyte)
+            if (!fuzzbyte)
                 continue;
 
             switch(fuzzing)
@@ -168,7 +162,7 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
                 break;
             }
 
-            if(refuse[byte])
+            if (refuse[byte])
                 continue;
 
             aligned_buf[j] = byte;
@@ -176,10 +170,10 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
     }
 
     /* Handle ungetc() */
-    if(fuzz->uflag)
+    if (fuzz->uflag)
     {
         fuzz->uflag = 0;
-        if(fuzz->upos == pos)
+        if (fuzz->upos == pos)
             buf[0] = fuzz->uchar;
     }
 }
@@ -192,22 +186,22 @@ static void readchars(unsigned char *table, char const *list)
 
     memset(table, 0, 256 * sizeof(unsigned char));
 
-    for(tmp = list, a = b = -1; *tmp; tmp++)
+    for (tmp = list, a = b = -1; *tmp; ++tmp)
     {
         int ch;
 
-        if(*tmp == '\\' && tmp[1] == '\0')
+        if (*tmp == '\\' && tmp[1] == '\0')
             ch = '\\';
-        else if(*tmp == '\\')
+        else if (*tmp == '\\')
         {
             tmp++;
-            if(*tmp == 'n')
+            if (*tmp == 'n')
                 ch = '\n';
-            else if(*tmp == 'r')
+            else if (*tmp == 'r')
                 ch = '\r';
-            else if(*tmp == 't')
+            else if (*tmp == 't')
                 ch = '\t';
-            else if(tmp[0] >= '0' && tmp[0] <= '7' && tmp[1] >= '0'
+            else if (tmp[0] >= '0' && tmp[0] <= '7' && tmp[1] >= '0'
                      && tmp[1] <= '7' && tmp[2] >= '0' && tmp[2] <= '7')
             {
                 ch = tmp[2] - '0';
@@ -215,7 +209,7 @@ static void readchars(unsigned char *table, char const *list)
                 ch |= (int)(tmp[0] - '0') << 6;
                 tmp += 2;
             }
-            else if((*tmp == 'x' || *tmp == 'X')
+            else if ((*tmp == 'x' || *tmp == 'X')
                      && tmp[1] && strchr(hex, tmp[1])
                      && tmp[2] && strchr(hex, tmp[2]))
             {
@@ -229,24 +223,24 @@ static void readchars(unsigned char *table, char const *list)
         else
             ch = (unsigned char)*tmp;
 
-        if(a != -1 && b == '-' && a <= ch)
+        if (a != -1 && b == '-' && a <= ch)
         {
-            while(a <= ch)
+            while (a <= ch)
                 table[a++] = 1;
             a = b = -1;
         }
         else
         {
-            if(a != -1)
+            if (a != -1)
                 table[a] = 1;
             a = b;
             b = ch;
         }
     }
 
-    if(a != -1)
+    if (a != -1)
         table[a] = 1;
-    if(b != -1)
+    if (b != -1)
         table[b] = 1;
 }
 

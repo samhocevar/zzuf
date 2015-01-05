@@ -1,13 +1,13 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -39,25 +39,25 @@ int64_t *_zz_allocrange(char const *list, int64_t *static_ranges)
     unsigned int i, chunks;
 
     /* Count commas */
-    for(parser = list, chunks = 1; *parser; parser++)
-        if(*parser == ',')
+    for (parser = list, chunks = 1; *parser; ++parser)
+        if (*parser == ',')
             chunks++;
 
-    if(chunks >= 256)
+    if (chunks >= 256)
         ranges = malloc((chunks + 1) * 2 * sizeof(int64_t));
     else
         ranges = static_ranges;
 
     /* Fill ranges list */
-    for(parser = list, i = 0; i < chunks; i++)
+    for (parser = list, i = 0; i < chunks; ++i)
     {
         char const *comma = strchr(parser, ',');
         char const *dash = strchr(parser, '-');
 
         ranges[i * 2] = (dash == parser) ? 0 : atoi(parser);
-        if(dash && (dash + 1 == comma || dash[1] == '\0'))
+        if (dash && (dash + 1 == comma || dash[1] == '\0'))
             ranges[i * 2 + 1] = ranges[i * 2]; /* special case */
-        else if(dash && (!comma || dash < comma))
+        else if (dash && (!comma || dash < comma))
             ranges[i * 2 + 1] = atoi(dash + 1) + 1;
         else
             ranges[i * 2 + 1] = ranges[i * 2] + 1;
@@ -73,11 +73,11 @@ int _zz_isinrange(int64_t value, int64_t const *ranges)
 {
     int64_t const *r;
 
-    if(!ranges)
+    if (!ranges)
         return 1;
 
-    for(r = ranges; r[1]; r += 2)
-        if(value >= r[0] && (r[0] == r[1] || value < r[1]))
+    for (r = ranges; r[1]; r += 2)
+        if (value >= r[0] && (r[0] == r[1] || value < r[1]))
             return 1;
 
     return 0;

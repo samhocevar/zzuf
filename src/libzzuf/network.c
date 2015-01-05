@@ -1,13 +1,14 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+ *              2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -65,11 +66,11 @@ void _zz_network_init(void)
 void _zz_network_fini(void)
 {
 #if defined HAVE_SYS_SOCKET_H || defined (HAVE_WINDOWS_H)
-    if(ports != static_ports)
+    if (ports != static_ports)
         free(ports);
-    if(allow != static_allow)
+    if (allow != static_allow)
         free(allow);
-    if(deny != static_deny)
+    if (deny != static_deny)
         free(deny);
 #endif
 
@@ -102,7 +103,7 @@ void _zz_ports(char const *portlist)
 int _zz_portwatched(int port)
 {
 #if defined HAVE_SYS_SOCKET_H || defined (HAVE_WINDOWS_H)
-    if(!ports)
+    if (!ports)
         return 1;
 
     return _zz_isinrange(port, ports);
@@ -117,14 +118,14 @@ int _zz_hostwatched(int sock)
     int watch = 1;
     unsigned int ip;
 
-    if(!allow && !deny)
+    if (!allow && !deny)
         return 1;
 
     ip = get_socket_ip(sock);
 
-    if(allow)
+    if (allow)
         watch = host_in_list(ip, allow);
-    else if(deny && host_in_list(ip, deny))
+    else if (deny && host_in_list(ip, deny))
         watch = 0;
 
     return watch;
@@ -146,16 +147,16 @@ static unsigned int *create_host_list(char const *list,
     int ret;
 
     /* Count commas */
-    for(parser = list, chunks = 1; *parser; parser++)
-        if(*parser == ',')
+    for (parser = list, chunks = 1; *parser; ++parser)
+        if (*parser == ',')
             chunks++;
 
-    if(chunks >= 512)
+    if (chunks >= 512)
         iplist = malloc((chunks + 1) * sizeof(unsigned int));
     else
         iplist = static_list;
 
-    for(i = 0, parser = list; *parser; )
+    for (i = 0, parser = list; *parser; )
     {
         char *comma = strchr(parser, ',');
 
@@ -193,12 +194,10 @@ static unsigned int *create_host_list(char const *list,
 
 static int host_in_list(unsigned int value, unsigned int const *list)
 {
-    unsigned int i;
-
     if (!value || !list)
         return 0;
 
-    for (i = 0; list[i]; i++)
+    for (unsigned i = 0; list[i]; ++i)
         if (value == list[i])
             return 1;
 

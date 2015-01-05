@@ -2,6 +2,7 @@
  *  zzuf - general purpose fuzzer
  *
  *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+ *              2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
@@ -105,10 +106,10 @@ static void version(void);
 static void usage(void);
 
 #define ZZUF_FD_SET(fd, p_fdset, maxfd) \
-    if(fd >= 0) \
+    if (fd >= 0) \
     { \
         FD_SET((unsigned int)fd, p_fdset); \
-        if(fd > maxfd) \
+        if (fd > maxfd) \
             maxfd = fd; \
     }
 
@@ -128,10 +129,9 @@ int main(int argc, char *argv[])
     char *tmp;
 #if defined HAVE_REGEX_H
     char *include = NULL, *exclude = NULL;
-    int cmdline = 0;
+    int has_cmdline = 0;
 #endif
-    int debug = 0, network = 0;
-    int i;
+    int debug = 0, has_network = 0;
 
 #if defined _WIN32
     InitializeCriticalSection(&_zz_pipe_cs);
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 
     _zz_opts_init(opts);
 
-    for(;;)
+    for (;;)
     {
 #if defined HAVE_REGEX_H
 #   define OPTSTR_REGEX "cE:I:"
@@ -205,10 +205,10 @@ int main(int argc, char *argv[])
         };
         int c = caca_getopt(argc, argv, OPTSTR, long_options, &option_index);
 
-        if(c == -1)
+        if (c == -1)
             break;
 
-        switch(c)
+        switch (c)
         {
         case 'a': /* --allow */
             opts->allow = caca_optarg;
@@ -220,34 +220,34 @@ int main(int argc, char *argv[])
             opts->bytes = caca_optarg;
             break;
         case 'B': /* --max-bytes */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             opts->maxbytes = atoi(caca_optarg);
             break;
 #if defined HAVE_REGEX_H
         case 'c': /* --cmdline */
-            cmdline = 1;
+            has_cmdline = 1;
             break;
 #endif
         case 'C': /* --max-crashes */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             opts->maxcrashes = atoi(caca_optarg);
-            if(opts->maxcrashes <= 0)
+            if (opts->maxcrashes <= 0)
                 opts->maxcrashes = 0;
             break;
         case 'd': /* --debug */
             debug++;
             break;
         case 'D': /* --delay */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             opts->delay = (int64_t)(atof(caca_optarg) * 1000000.0);
             break;
 #if defined HAVE_REGEX_H
         case 'E': /* --exclude */
             exclude = merge_regex(exclude, caca_optarg);
-            if(!exclude)
+            if (!exclude)
             {
                 fprintf(stderr, "%s: invalid regex -- `%s'\n",
                         argv[0], caca_optarg);
@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
 #if defined HAVE_REGEX_H
         case 'I': /* --include */
             include = merge_regex(include, caca_optarg);
-            if(!include)
+            if (!include)
             {
                 fprintf(stderr, "%s: invalid regex -- `%s'\n",
                         argv[0], caca_optarg);
@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
             break;
 #endif
         case 'j': /* --jobs */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             opts->maxchild = atoi(caca_optarg) > 1 ? atoi(caca_optarg) : 1;
             break;
@@ -291,17 +291,17 @@ int main(int argc, char *argv[])
             break;
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
         case 'M': /* --max-memory */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             opts->maxmem = atoi(caca_optarg);
             break;
 #endif
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
-            network = 1;
+            has_network = 1;
             break;
         case 'O': /* --opmode */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             if (!strcmp(caca_optarg, "preload"))
                 opts->opmode = OPMODE_PRELOAD;
@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
             opts->quiet = 1;
             break;
         case 'r': /* --ratio */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             tmp = strchr(caca_optarg, ':');
             opts->minratio = atof(caca_optarg);
@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
             opts->refuse = caca_optarg;
             break;
         case 's': /* --seed */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             tmp = strchr(caca_optarg, ':');
             opts->seed = atol(caca_optarg);
@@ -347,19 +347,19 @@ int main(int argc, char *argv[])
             setenv("ZZUF_SIGNAL", "1", 1);
             break;
         case 't': /* --max-time */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             opts->maxtime = (int64_t)atoi(caca_optarg) * 1000000;
             break;
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
         case 'T': /* --max-cputime */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             opts->maxcpu = (int)(atof(caca_optarg) + 0.5);
             break;
 #endif
         case 'U': /* --max-usertime */
-            if(caca_optarg[0] == '=')
+            if (caca_optarg[0] == '=')
                 caca_optarg++;
             opts->maxusertime = (int64_t)(atof(caca_optarg) * 1000000.0);
             break;
@@ -385,7 +385,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(opts->ports && !network)
+    if (opts->ports && !has_network)
     {
         fprintf(stderr, "%s: port option (-p) requires network fuzzing (-n)\n",
                 argv[0]);
@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    if (opts->allow && !network)
+    if (opts->allow && !has_network)
     {
         fprintf(stderr, "%s: allow option (-a) requires network fuzzing (-n)\n",
                 argv[0]);
@@ -406,15 +406,15 @@ int main(int argc, char *argv[])
     _zz_setratio(opts->minratio, opts->maxratio);
     _zz_setseed(opts->seed);
 
-    if(opts->fuzzing)
+    if (opts->fuzzing)
         _zz_fuzzing(opts->fuzzing);
-    if(opts->bytes)
+    if (opts->bytes)
         _zz_bytes(opts->bytes);
-    if(opts->list)
+    if (opts->list)
         _zz_list(opts->list);
-    if(opts->protect)
+    if (opts->protect)
         _zz_protect(opts->protect);
-    if(opts->refuse)
+    if (opts->refuse)
         _zz_refuse(opts->refuse);
 
     /* Needed for stdin mode and for copy opmode. */
@@ -423,15 +423,15 @@ int main(int argc, char *argv[])
     /*
      * Mode 1: asked to read from the standard input
      */
-    if(caca_optind >= argc)
+    if (caca_optind >= argc)
     {
-        if(opts->verbose)
+        if (opts->verbose)
         {
             finfo(stderr, opts, opts->seed);
             fprintf(stderr, "reading from stdin\n");
         }
 
-        if(opts->endseed != opts->seed + 1)
+        if (opts->endseed != opts->seed + 1)
         {
             fprintf(stderr, "%s: seed ranges are incompatible with "
                             "stdin fuzzing\n", argv[0]);
@@ -448,47 +448,47 @@ int main(int argc, char *argv[])
     else
     {
 #if defined HAVE_REGEX_H
-        if(cmdline)
+        if (has_cmdline)
         {
             int dashdash = 0;
 
-            for(i = caca_optind + 1; i < argc; i++)
+            for (int i = caca_optind + 1; i < argc; ++i)
             {
-                if(dashdash)
+                if (dashdash)
                     include = merge_file(include, argv[i]);
-                else if(!strcmp("--", argv[i]))
+                else if (!strcmp("--", argv[i]))
                     dashdash = 1;
-                else if(argv[i][0] != '-')
+                else if (argv[i][0] != '-')
                     include = merge_file(include, argv[i]);
             }
         }
 
-        if(include)
+        if (include)
             setenv("ZZUF_INCLUDE", include, 1);
-        if(exclude)
+        if (exclude)
             setenv("ZZUF_EXCLUDE", exclude, 1);
 #endif
 
         setenv("ZZUF_DEBUG", debug ? debug > 1 ? "2" : "1" : "0", 1);
 
-        if(opts->fuzzing)
+        if (opts->fuzzing)
             setenv("ZZUF_FUZZING", opts->fuzzing, 1);
-        if(opts->bytes)
+        if (opts->bytes)
             setenv("ZZUF_BYTES", opts->bytes, 1);
-        if(opts->list)
+        if (opts->list)
             setenv("ZZUF_LIST", opts->list, 1);
-        if(opts->ports)
+        if (opts->ports)
             setenv("ZZUF_PORTS", opts->ports, 1);
-        if(opts->allow && opts->allow[0] == '!')
+        if (opts->allow && opts->allow[0] == '!')
             setenv("ZZUF_DENY", opts->allow, 1);
-        else if(opts->allow)
+        else if (opts->allow)
             setenv("ZZUF_ALLOW", opts->allow, 1);
-        if(opts->protect)
+        if (opts->protect)
             setenv("ZZUF_PROTECT", opts->protect, 1);
-        if(opts->refuse)
+        if (opts->refuse)
             setenv("ZZUF_REFUSE", opts->refuse, 1);
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
-        if(opts->maxmem >= 0)
+        if (opts->maxmem >= 0)
         {
             char buf[32];
             snprintf(buf, 32, "%i", opts->maxmem);
@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
 
         /* Allocate memory for children handling */
         opts->child = malloc(opts->maxchild * sizeof(struct child));
-        for(i = 0; i < opts->maxchild; i++)
+        for (int i = 0; i < opts->maxchild; ++i)
         {
             opts->child[i].status = STATUS_FREE;
             memset(opts->child[i].fd, -1, sizeof(opts->child->fd));
@@ -508,7 +508,7 @@ int main(int argc, char *argv[])
         /* Create new argv */
         opts->oldargc = argc;
         opts->oldargv = argv;
-        for(i = 0; i < opts->maxchild; i++)
+        for (int i = 0; i < opts->maxchild; ++i)
         {
             int len = argc - caca_optind;
             opts->child[i].newargv = malloc((len + 1) * sizeof(char *));
@@ -518,7 +518,7 @@ int main(int argc, char *argv[])
         }
 
         /* Main loop */
-        while(opts->nchild || opts->seed < opts->endseed)
+        while (opts->nchild || opts->seed < opts->endseed)
         {
             /* Spawn new children, if necessary */
             spawn_children(opts);
@@ -529,19 +529,19 @@ int main(int argc, char *argv[])
             /* Read data from children */
             read_children(opts);
 
-            if(opts->maxcrashes && opts->crashes >= opts->maxcrashes
-                && opts->nchild == 0)
+            if (opts->maxcrashes && opts->crashes >= opts->maxcrashes
+                 && opts->nchild == 0)
             {
-                if(opts->verbose)
+                if (opts->verbose)
                     fprintf(stderr,
                             "zzuf: maximum crash count reached, exiting\n");
                 break;
             }
 
-            if(opts->maxtime && _zz_time() - opts->starttime >= opts->maxtime
-                && opts->nchild == 0)
+            if (opts->maxtime && _zz_time() - opts->starttime >= opts->maxtime
+                 && opts->nchild == 0)
             {
-                if(opts->verbose)
+                if (opts->verbose)
                     fprintf(stderr,
                             "zzuf: maximum running time reached, exiting\n");
                 break;
@@ -562,30 +562,28 @@ int main(int argc, char *argv[])
 
 static void loop_stdin(struct opts *opts)
 {
-    uint8_t md5sum[16];
     struct md5 *ctx = NULL;
-    int total = 0;
 
-    if(opts->md5)
+    if (opts->md5)
         ctx = _zz_md5_init();
 
     _zz_register(0);
 
-    for(;;)
+    for (int total = 0; ; )
     {
         uint8_t buf[BUFSIZ];
-        int ret, toread = BUFSIZ, off = 0, nw = 0;
+        int toread = BUFSIZ, off = 0;
 
-        if(opts->maxbytes >= 0)
+        if (opts->maxbytes >= 0)
         {
-            if(total >= opts->maxbytes)
+            if (total >= opts->maxbytes)
                 break;
-            if(total + BUFSIZ >= opts->maxbytes)
+            if (total + BUFSIZ >= opts->maxbytes)
                 toread = opts->maxbytes - total;
         }
 
-        ret = read(0, buf, toread);
-        if(ret <= 0)
+        int ret = read(0, buf, toread);
+        if (ret <= 0)
             break;
 
         total += ret;
@@ -593,19 +591,21 @@ static void loop_stdin(struct opts *opts)
         _zz_fuzz(0, buf, ret);
         _zz_addpos(0, ret);
 
-        if(opts->md5)
+        if (opts->md5)
             _zz_md5_add(ctx, buf, ret);
-        else while(ret)
+        else while (ret)
         {
-            if((nw = write(1, buf + off, (unsigned int)ret)) < 0)
+            int nw = 0;
+            if ((nw = write(1, buf + off, (unsigned int)ret)) < 0)
                 break;
             ret -= nw;
             off += nw;
         }
     }
 
-    if(opts->md5)
+    if (opts->md5)
     {
+        uint8_t md5sum[16];
         _zz_md5_fini(md5sum, ctx);
         finfo(stdout, opts, opts->seed);
         fprintf(stdout, "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x"
@@ -621,7 +621,7 @@ static void loop_stdin(struct opts *opts)
 
 static void finfo(FILE *fp, struct opts *opts, uint32_t seed)
 {
-    if(opts->minratio == opts->maxratio)
+    if (opts->minratio == opts->maxratio)
         fprintf(fp, "zzuf[s=%i,r=%g]: ", seed, opts->minratio);
     else
         fprintf(fp, "zzuf[s=%i,r=%g:%g]: ", seed,
@@ -631,16 +631,17 @@ static void finfo(FILE *fp, struct opts *opts, uint32_t seed)
 #if defined HAVE_REGEX_H
 static char *merge_file(char *regex, char *file)
 {
-    char *newfile = malloc(5 + 2 * strlen(file) + 1 + 1), *tmp = newfile;
+    char *newfile = malloc(5 + 2 * strlen(file) + 1 + 1);
+    char *tmp = newfile;
 
     *tmp++ = '(';
     *tmp++ = '^';
     *tmp++ = '|';
     *tmp++ = '/';
     *tmp++ = ')';
-    while(*file)
+    while (*file)
     {
-        if(strchr("^.[$()|*+?{\\", *file))
+        if (strchr("^.[$()|*+?{\\", *file))
             *tmp++ = '\\';
         *tmp++ = *file++;
     }
@@ -654,9 +655,7 @@ static char *merge_file(char *regex, char *file)
 
 static char *merge_regex(char *regex, char *string)
 {
-    regex_t optre;
-
-    if(regex)
+    if (regex)
     {
         regex = realloc(regex, strlen(regex) + strlen(string) + 1 + 1);
         sprintf(regex + strlen(regex) - 1, "|%s)", string);
@@ -667,7 +666,8 @@ static char *merge_regex(char *regex, char *string)
         sprintf(regex, "(%s)", string);
     }
 
-    if(regcomp(&optre, regex, REG_EXTENDED) != 0)
+    regex_t optre;
+    if (regcomp(&optre, regex, REG_EXTENDED) != 0)
     {
         free(regex);
         return NULL;
@@ -681,53 +681,50 @@ static char *merge_regex(char *regex, char *string)
 static void spawn_children(struct opts *opts)
 {
     int64_t now = _zz_time();
-    int i;
 
-    if(opts->nchild == opts->maxchild)
+    if (opts->nchild == opts->maxchild)
         return; /* no slot */
 
-    if(opts->seed == opts->endseed)
+    if (opts->seed == opts->endseed)
         return; /* job finished */
 
-    if(opts->maxcrashes && opts->crashes >= opts->maxcrashes)
+    if (opts->maxcrashes && opts->crashes >= opts->maxcrashes)
         return; /* all jobs crashed */
 
-    if(opts->maxtime && now - opts->starttime >= opts->maxtime)
+    if (opts->maxtime && now - opts->starttime >= opts->maxtime)
         return; /* run time exceeded */
 
-    if(opts->delay > 0 && opts->lastlaunch + opts->delay > now)
+    if (opts->delay > 0 && opts->lastlaunch + opts->delay > now)
         return; /* too early */
 
     /* Find the empty slot */
-    for(i = 0; i < opts->maxchild; i++)
-        if(opts->child[i].status == STATUS_FREE)
-            break;
+    int slot = 0;
+    while (slot < opts->maxchild && opts->child[slot].status != STATUS_FREE)
+        ++slot;
 
     /* Prepare required files, if necessary */
     if (opts->opmode == OPMODE_COPY)
     {
         char tmpname[4096];
         char *tmpdir;
-        FILE *fpin;
-        int j, k = 0, fdout;
-
         tmpdir = getenv("TEMP");
         if (!tmpdir || !*tmpdir)
             tmpdir = "/tmp";
 
-        for (j = caca_optind + 1; j < opts->oldargc; j++)
+        int k = 0;
+
+        for (int j = caca_optind + 1; j < opts->oldargc; ++j)
         {
-            fpin = fopen(opts->oldargv[j], "r");
+            FILE *fpin = fopen(opts->oldargv[j], "r");
             if (!fpin)
                 continue;
 
 #ifdef _WIN32
-#
             sprintf(tmpname, "%s/zzuf.$i.XXXXXX", tmpdir, GetCurrentProcessId());
-            fdout = _open(mktemp(tmpname), _O_RDWR, 0600);
+            int fdout = _open(mktemp(tmpname), _O_RDWR, 0600);
 #else
             sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, (int)getpid());
-            fdout = mkstemp(tmpname);
+            int fdout = mkstemp(tmpname);
 #endif
             if (fdout < 0)
             {
@@ -735,10 +732,10 @@ static void spawn_children(struct opts *opts)
                 continue;
             }
 
-            opts->child[i].newargv[j - caca_optind] = strdup(tmpname);
+            opts->child[slot].newargv[j - caca_optind] = strdup(tmpname);
 
             _zz_register(k);
-            while(!feof(fpin))
+            while (!feof(fpin))
             {
                 uint8_t buf[BUFSIZ];
                 size_t n = fread(buf, 1, BUFSIZ, fpin);
@@ -753,32 +750,32 @@ static void spawn_children(struct opts *opts)
             fclose(fpin);
             close(fdout);
 
-            k++;
+            ++k;
         }
     }
 
     /* Launch process */
-    if (myfork(&opts->child[i], opts) < 0)
+    if (myfork(&opts->child[slot], opts) < 0)
     {
-        fprintf(stderr, "error launching `%s'\n", opts->child[i].newargv[0]);
+        fprintf(stderr, "error launching `%s'\n", opts->child[slot].newargv[0]);
         opts->seed++;
         /* FIXME: clean up OPMODE_COPY files here */
         return;
     }
 
     /* We’re the parent, acknowledge spawn */
-    opts->child[i].date = now;
-    opts->child[i].bytes = 0;
-    opts->child[i].seed = opts->seed;
-    opts->child[i].ratio = _zz_getratio();
-    opts->child[i].status = STATUS_RUNNING;
-    if(opts->md5)
-        opts->child[i].ctx = _zz_md5_init();
+    opts->child[slot].date = now;
+    opts->child[slot].bytes = 0;
+    opts->child[slot].seed = opts->seed;
+    opts->child[slot].ratio = _zz_getratio();
+    opts->child[slot].status = STATUS_RUNNING;
+    if (opts->md5)
+        opts->child[slot].ctx = _zz_md5_init();
 
-    if(opts->verbose)
+    if (opts->verbose)
     {
-        finfo(stderr, opts, opts->child[i].seed);
-        fprintf(stderr, "launched `%s'\n", opts->child[i].newargv[0]);
+        finfo(stderr, opts, opts->child[slot].seed);
+        fprintf(stderr, "launched `%s'\n", opts->child[slot].newargv[0]);
     }
 
     opts->lastlaunch = now;
@@ -793,17 +790,16 @@ static void clean_children(struct opts *opts)
 #if defined HAVE_KILL || defined HAVE_WINDOWS_H
     int64_t now = _zz_time();
 #endif
-    int i, j;
 
 #if defined HAVE_KILL || defined HAVE_WINDOWS_H
     /* Terminate children if necessary */
-    for(i = 0; i < opts->maxchild; i++)
+    for (int i = 0; i < opts->maxchild; ++i)
     {
-        if(opts->child[i].status == STATUS_RUNNING
+        if (opts->child[i].status == STATUS_RUNNING
             && opts->maxbytes >= 0
             && opts->child[i].bytes > opts->maxbytes)
         {
-            if(opts->verbose)
+            if (opts->verbose)
             {
                 finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "data output exceeded, sending SIGTERM\n");
@@ -819,11 +815,11 @@ static void clean_children(struct opts *opts)
             opts->child[i].status = STATUS_SIGTERM;
         }
 
-        if(opts->child[i].status == STATUS_RUNNING
-            && opts->maxusertime >= 0
-            && now > opts->child[i].date + opts->maxusertime)
+        if (opts->child[i].status == STATUS_RUNNING
+             && opts->maxusertime >= 0
+             && now > opts->child[i].date + opts->maxusertime)
         {
-            if(opts->verbose)
+            if (opts->verbose)
             {
                 finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "running time exceeded, sending SIGTERM\n");
@@ -841,12 +837,12 @@ static void clean_children(struct opts *opts)
     }
 
     /* Kill children if necessary (still there after 2 seconds) */
-    for(i = 0; i < opts->maxchild; i++)
+    for (int i = 0; i < opts->maxchild; ++i)
     {
-        if(opts->child[i].status == STATUS_SIGTERM
+        if (opts->child[i].status == STATUS_SIGTERM
             && now > opts->child[i].date + 2000000)
         {
-            if(opts->verbose)
+            if (opts->verbose)
             {
                 finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "not responding, sending SIGKILL\n");
@@ -862,7 +858,7 @@ static void clean_children(struct opts *opts)
 #endif
 
     /* Collect dead children */
-    for(i = 0; i < opts->maxchild; i++)
+    for (int i = 0; i < opts->maxchild; ++i)
     {
         uint8_t md5sum[16];
 #if defined HAVE_WAITPID
@@ -870,35 +866,35 @@ static void clean_children(struct opts *opts)
         pid_t pid;
 #endif
 
-        if(opts->child[i].status != STATUS_SIGKILL
+        if (opts->child[i].status != STATUS_SIGKILL
             && opts->child[i].status != STATUS_SIGTERM
             && opts->child[i].status != STATUS_EOF)
             continue;
 
 #if defined HAVE_WAITPID
         pid = waitpid(opts->child[i].pid, &status, WNOHANG);
-        if(pid <= 0)
+        if (pid <= 0)
             continue;
 
-        if(opts->checkexit && WIFEXITED(status) && WEXITSTATUS(status))
+        if (opts->checkexit && WIFEXITED(status) && WEXITSTATUS(status))
         {
             finfo(stderr, opts, opts->child[i].seed);
             fprintf(stderr, "exit %i\n", WEXITSTATUS(status));
             opts->crashes++;
         }
-        else if(WIFSIGNALED(status)
+        else if (WIFSIGNALED(status)
                  && !(WTERMSIG(status) == SIGTERM
                        && opts->child[i].status == STATUS_SIGTERM))
         {
             char const *message = "";
 
-            if(WTERMSIG(status) == SIGKILL && opts->maxmem >= 0)
+            if (WTERMSIG(status) == SIGKILL && opts->maxmem >= 0)
                 message = " (memory exceeded?)";
 #   if defined SIGXCPU
-            else if(WTERMSIG(status) == SIGXCPU && opts->maxcpu >= 0)
+            else if (WTERMSIG(status) == SIGXCPU && opts->maxcpu >= 0)
                 message = " (CPU time exceeded?)";
 #   endif
-            else if(WTERMSIG(status) == SIGKILL && opts->maxcpu >= 0)
+            else if (WTERMSIG(status) == SIGKILL && opts->maxcpu >= 0)
                 message = " (CPU time exceeded?)";
 
             finfo(stderr, opts, opts->child[i].seed);
@@ -943,13 +939,13 @@ static void clean_children(struct opts *opts)
         continue;
 #endif
 
-        for(j = 0; j < 3; j++)
-            if(opts->child[i].fd[j] >= 0)
+        for (int j = 0; j < 3; ++j)
+            if (opts->child[i].fd[j] >= 0)
                 close(opts->child[i].fd[j]);
 
         if (opts->opmode == OPMODE_COPY)
         {
-            for (j = caca_optind + 1; j < opts->oldargc; j++)
+            for (int j = caca_optind + 1; j < opts->oldargc; ++j)
             {
                 if (opts->child[i].newargv[j - caca_optind] != opts->oldargv[j])
                 {
@@ -960,7 +956,7 @@ static void clean_children(struct opts *opts)
             }
         }
 
-        if(opts->md5)
+        if (opts->md5)
         {
             _zz_md5_fini(md5sum, opts->child[i].ctx);
             finfo(stdout, opts, opts->child[i].seed);
@@ -994,7 +990,8 @@ static void _stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered, L
     struct child_overlapped * co = (struct child_overlapped *)overlapped;
 
     /* TODO: handle more cases like ERROR_MORE_DATA */
-    if (err_code != ERROR_SUCCESS) return;
+    if (err_code != ERROR_SUCCESS)
+        return;
 
     EnterCriticalSection(&_zz_pipe_cs);
     switch (co->fd_no)
@@ -1009,10 +1006,10 @@ static void _stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered, L
     }
     LeaveCriticalSection(&_zz_pipe_cs);
 
-    if(co->fd_no != 0) /* either out or err fd */
+    if (co->fd_no != 0) /* either out or err fd */
         co->opts->child[co->child_no].bytes += nbr_of_bytes_transfered;
 
-    if(co->opts->md5 && co->fd_no == 2)
+    if (co->opts->md5 && co->fd_no == 2)
         _zz_md5_add(co->opts->child[co->child_no].ctx, co->buf, nbr_of_bytes_transfered);
 
     free(co); /* clean up allocated data */
@@ -1021,24 +1018,23 @@ static void _stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered, L
 /* Since on windows select doesn't support file HANDLE, we use IOCP */
 static void read_children(struct opts *opts)
 {
-    size_t i, j;
     HANDLE *children_handle, * cur_child_handle;
     size_t fd_number = opts->maxchild * 3;
 
     cur_child_handle = children_handle = malloc(sizeof(*children_handle) * fd_number);
 
-    for(i = 0; i < fd_number; i++)
+    for (size_t i = 0; i < fd_number; ++i)
         children_handle[i] = INVALID_HANDLE_VALUE;
 
-    /* XXX: cute (i, j) iterating hack */
-    for(i = 0, j = 0; i < (size_t)opts->maxchild; i += (j == 2), j = (j + 1) % 3)
+    for (int i = 0; i < opts->maxchild; ++i)
+    for (int j = 0; j < 3; ++j)
     {
         struct child_overlapped * co;
         HANDLE h = (opts->child[i].fd[j] == -1) ? INVALID_HANDLE_VALUE : (HANDLE)_get_osfhandle(opts->child[i].fd[j]);
 
-        if(opts->child[i].status != STATUS_RUNNING
-        || opts->child[i].fd[j] == -1
-        || h == INVALID_HANDLE_VALUE)
+        if (opts->child[i].status != STATUS_RUNNING
+             || opts->child[i].fd[j] == -1
+             || h == INVALID_HANDLE_VALUE)
         {
             fd_number--;
             continue;
@@ -1051,13 +1047,13 @@ static void read_children(struct opts *opts)
         co->fd_no    = j;
         co->opts     = opts;
 
-        if(!ReadFileEx(h, co->buf, sizeof(co->buf), (LPOVERLAPPED)co, read_child))
+        if (!ReadFileEx(h, co->buf, sizeof(co->buf), (LPOVERLAPPED)co, read_child))
         {
             /* End of file reached */
             close(opts->child[i].fd[j]);
             opts->child[i].fd[j] = -1;
 
-            if(opts->child[i].fd[0] == -1
+            if (opts->child[i].fd[0] == -1
                 && opts->child[i].fd[1] == -1
                 && opts->child[i].fd[2] == -1)
                 opts->child[i].status = STATUS_EOF;
@@ -1065,7 +1061,8 @@ static void read_children(struct opts *opts)
         cur_child_handle++;
     }
 
-    if (fd_number == 0) return;
+    if (fd_number == 0)
+        return;
 
     /* FIXME: handle error */
     WaitForMultipleObjectsEx(fd_number, children_handle, FALSE, 1000, TRUE);
@@ -1076,58 +1073,58 @@ static void read_children(struct opts *opts)
 {
     struct timeval tv;
     fd_set fdset;
-    int i, j, ret, maxfd = 0;
+    int maxfd = 0;
 
     /* Read data from all sockets */
     FD_ZERO(&fdset);
-    for(i = 0; i < opts->maxchild; i++)
+    for (int i = 0; i < opts->maxchild; ++i)
     {
-        if(opts->child[i].status != STATUS_RUNNING)
+        if (opts->child[i].status != STATUS_RUNNING)
             continue;
 
-        for(j = 0; j < 3; j++)
+        for (int j = 0; j < 3; ++j)
             ZZUF_FD_SET(opts->child[i].fd[j], &fdset, maxfd);
     }
     tv.tv_sec = 0;
     tv.tv_usec = 1000;
 
     errno = 0;
-    ret = select(maxfd + 1, &fdset, NULL, NULL, &tv);
-    if(ret < 0 && errno)
+    int ret = select(maxfd + 1, &fdset, NULL, NULL, &tv);
+    if (ret < 0 && errno)
         perror("select");
-    if(ret <= 0)
+    if (ret <= 0)
         return;
 
-    /* XXX: cute (i, j) iterating hack */
-    for(i = 0, j = 0; i < opts->maxchild; i += (j == 2), j = (j + 1) % 3)
+    for (int i = 0; i < opts->maxchild; ++i)
+    for (int j = 0; j < 3; ++j)
     {
         uint8_t buf[BUFSIZ];
 
-        if(opts->child[i].status != STATUS_RUNNING)
+        if (opts->child[i].status != STATUS_RUNNING)
             continue;
 
-        if(!ZZUF_FD_ISSET(opts->child[i].fd[j], &fdset))
+        if (!ZZUF_FD_ISSET(opts->child[i].fd[j], &fdset))
             continue;
 
         ret = read(opts->child[i].fd[j], buf, BUFSIZ - 1);
-        if(ret > 0)
+        if (ret > 0)
         {
             /* We got data */
-            if(j != 0)
+            if (j != 0)
                 opts->child[i].bytes += ret;
 
-            if(opts->md5 && j == 2)
+            if (opts->md5 && j == 2)
                 _zz_md5_add(opts->child[i].ctx, buf, ret);
-            else if(!opts->quiet || j == 0)
+            else if (!opts->quiet || j == 0)
                 write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);
         }
-        else if(ret == 0)
+        else if (ret == 0)
         {
             /* End of file reached */
             close(opts->child[i].fd[j]);
             opts->child[i].fd[j] = -1;
 
-            if(opts->child[i].fd[0] == -1
+            if (opts->child[i].fd[0] == -1
                 && opts->child[i].fd[1] == -1
                 && opts->child[i].fd[2] == -1)
                 opts->child[i].status = STATUS_EOF;
@@ -1139,12 +1136,10 @@ static void read_children(struct opts *opts)
 #if !defined HAVE_SETENV
 static void setenv(char const *name, char const *value, int overwrite)
 {
-    char *str;
-
-    if(!overwrite && getenv(name))
+    if (!overwrite && getenv(name))
         return;
 
-    str = malloc(strlen(name) + 1 + strlen(value) + 1);
+    char *str = malloc(strlen(name) + 1 + strlen(value) + 1);
     sprintf(str, "%s=%s", name, value);
     putenv(str);
 }
@@ -1153,7 +1148,7 @@ static void setenv(char const *name, char const *value, int overwrite)
 #if defined HAVE_WAITPID
 static char const *sig2name(int signum)
 {
-    switch(signum)
+    switch (signum)
     {
 #ifdef SIGQUIT
         case SIGQUIT:  return " (SIGQUIT)"; /* 3 */

@@ -1,13 +1,13 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -157,7 +157,7 @@ void _zz_mem_init(void)
 void *NEW(calloc)(size_t nmemb, size_t size)
 {
     void *ret;
-    if(!ORIG(calloc))
+    if (!ORIG(calloc))
     {
         /* Store the chunk length just before the buffer we'll return */
         size_t lsize = size;
@@ -172,7 +172,7 @@ void *NEW(calloc)(size_t nmemb, size_t size)
         return ret;
     }
     ret = ORIG(calloc)(nmemb, size);
-    if(ret == NULL && _zz_memory && errno == ENOMEM)
+    if (ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
     return ret;
 }
@@ -181,7 +181,7 @@ void *NEW(calloc)(size_t nmemb, size_t size)
 void *NEW(malloc)(size_t size)
 {
     void *ret;
-    if(!ORIG(malloc))
+    if (!ORIG(malloc))
     {
         /* Store the chunk length just before the buffer we'll return */
         memcpy(dummy_buffer + dummy_offset, &size, sizeof(size_t));
@@ -202,12 +202,12 @@ void *NEW(malloc)(size_t size)
 #undef free
 void NEW(free)(void *ptr)
 {
-    if((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
+    if ((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
     {
         debug("%s(%p)", __func__, ptr);
         return;
     }
-    if(!ORIG(free))
+    if (!ORIG(free))
     {
         /* FIXME: if free() doesn't exist yet, we have a memory leak */
         debug("%s(%p) IGNORED", __func__, ptr);
@@ -220,7 +220,7 @@ void NEW(free)(void *ptr)
 void *NEW(realloc)(void *ptr, size_t size)
 {
     void *ret;
-    if(!ORIG(realloc)
+    if (!ORIG(realloc)
         || ((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP))
     {
         size_t oldsize;
@@ -297,27 +297,27 @@ int nbmaps = 0;
     do { \
         char *b = MAP_FAILED; \
         LOADSYM(mymmap); \
-        if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
+        if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
              || !_zz_isactive(fd)) \
             return ORIG(mymmap)(start, length, prot, flags, fd, offset); \
         ret = ORIG(mymmap)(NULL, length, prot, flags, fd, offset); \
-        if(ret != MAP_FAILED && length) \
+        if (ret != MAP_FAILED && length) \
         { \
             b = ORIG(mymmap)(start, length, PROT_READ | PROT_WRITE, \
                              MAP_PRIVATE | MAP_ANONYMOUS, -1, 0); \
-            if(b == MAP_FAILED) \
+            if (b == MAP_FAILED) \
             { \
                 munmap(ret, length); \
                 ret = MAP_FAILED; \
             } \
         } \
-        if(b != MAP_FAILED) \
+        if (b != MAP_FAILED) \
         { \
             int i, oldpos; \
-            for(i = 0; i < nbmaps; i += 2) \
-                if(maps[i] == NULL) \
+            for (i = 0; i < nbmaps; i += 2) \
+                if (maps[i] == NULL) \
                     break; \
-            if(i == nbmaps) \
+            if (i == nbmaps) \
             { \
                 nbmaps += 2; \
                 maps = realloc(maps, nbmaps * sizeof(void *)); \
@@ -330,7 +330,7 @@ int nbmaps = 0;
             _zz_fuzz(fd, (uint8_t *)b, length); \
             _zz_setpos(fd, oldpos); \
             ret = b; \
-            if(length >= 4) \
+            if (length >= 4) \
                 debug("%s(%p, %li, %i, %i, %i, %lli) = %p \"%c%c%c%c...", \
                       __func__, start, (long int)length, prot, flags, fd, \
                       (long long int)offset, ret, b[0], b[1], b[2], b[3]); \
@@ -343,7 +343,7 @@ int nbmaps = 0;
             debug("%s(%p, %li, %i, %i, %i, %lli) = %p", \
                   __func__, start, (long int)length, prot, flags, fd, \
                   (long long int)offset, ret); \
-    } while(0)
+    } while (0)
 
 #if defined HAVE_MMAP
 #undef mmap
@@ -367,16 +367,14 @@ void *NEW(mmap64)(void *start, size_t length, int prot, int flags,
 #undef munmap
 int NEW(munmap)(void *start, size_t length)
 {
-    int ret, i;
-
     LOADSYM(munmap);
-    for(i = 0; i < nbmaps; i++)
+    for (int i = 0; i < nbmaps; ++i)
     {
-        if(maps[i] != start)
+        if (maps[i] != start)
             continue;
 
         ORIG(munmap)(start, length);
-        ret = ORIG(munmap)(maps[i + 1], length);
+        int ret = ORIG(munmap)(maps[i + 1], length);
         maps[i] = NULL;
         maps[i + 1] = NULL;
         debug("%s(%p, %li) = %i", __func__, start, (long int)length, ret);
@@ -396,11 +394,11 @@ kern_return_t NEW(map_fd)(int fd, vm_offset_t offset, vm_offset_t *addr,
 
     LOADSYM(map_fd);
     ret = ORIG(map_fd)(fd, offset, addr, find_space, numbytes);
-    if(!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
+    if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
          || !_zz_isactive(fd))
         return ret;
 
-    if(ret == 0 && numbytes)
+    if (ret == 0 && numbytes)
     {
         /* FIXME: do we also have to rewind the filedescriptor like in mmap? */
         char *b = malloc(numbytes);
@@ -411,7 +409,7 @@ kern_return_t NEW(map_fd)(int fd, vm_offset_t offset, vm_offset_t *addr,
          * but I suppose that kind of map should go when the filedescriptor is
          * closed (unlike mmap, which returns a persistent buffer). */
 
-        if(numbytes >= 4)
+        if (numbytes >= 4)
            debug("%s(%i, %lli, &%p, %i, %lli) = %i \"%c%c%c%c", __func__,
                  fd, (long long int)offset, (void *)*addr, (int)find_space,
                  (long long int)numbytes, ret, b[0], b[1], b[2], b[3]);

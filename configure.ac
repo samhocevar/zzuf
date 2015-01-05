@@ -1,4 +1,3 @@
-# $Id: configure.ac 98 2006-09-22 16:27:37Z sam $
 
 AC_INIT(zzuf, 0.13)
 AC_CONFIG_AUX_DIR(.auto)
@@ -25,6 +24,11 @@ fi
 
 AC_C_INLINE
 AC_C_FUNC
+
+# C99 support (mandatory)
+AC_TRY_CFLAGS(-std=c99,
+ [CFLAGS="${CFLAGS} -std=c99"],
+ [AC_MSG_ERROR(support for C99 (-std=c99) required)])
 
 # Library suffix
 AC_MSG_CHECKING(for libzzuf full name)

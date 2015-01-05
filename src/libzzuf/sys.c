@@ -85,7 +85,8 @@ static int modrm_sib_size(uint8_t* code)
     static uint8_t modrm_size[] = { 0, 1, 4, 0 }; /* [reg ...], [reg ... + sbyte], [reg ... + sdword], reg */
     uint8_t modrm = *code;
 
-    if (modrm == 0x05) /* [(rip) + sdword] */ return 1 + 4;
+    if (modrm == 0x05) /* [(rip) + sdword] */
+        return 1 + 4;
 
     /* Does this instruction have a SIB byte ? */
     return 1 + (!!(((modrm & 0x7) == 0x4) && ((modrm >> 6) != 0x3))) + modrm_size[modrm >> 6];
@@ -246,7 +247,8 @@ static int make_trampoline(uint8_t *code, size_t patch_size, uint8_t **trampolin
     }
 #elif _M_IX86
     trampoline = malloc(patch_size + 5);
-    if (trampoline == NULL) return -1;
+    if (trampoline == NULL)
+        return -1;
     memcpy(trampoline, code, patch_size);
     make_jmp32(trampoline + patch_size, code + patch_size, trampoline + patch_size);
 
@@ -387,33 +389,35 @@ static void insert_funcs(void)
         table_win32,
     };
 
-    zzuf_table_t *diversion;
-    HMODULE lib;
-
-    for (diversion = *list; diversion->lib; diversion++)
+    for (zzuf_table_t *diversion = *list; diversion->lib; ++diversion)
     {
-        uint8_t *old_api;
-        uint8_t *trampoline_api;
-
         /* most of the time, the dll is already loaded */
-        if ((lib = GetModuleHandleA(diversion->lib)) == NULL)
+        HMODULE lib = GetModuleHandleA(diversion->lib);
+        if (lib == NULL)
         {
-           if ((lib = LoadLibraryA(diversion->lib)) == NULL)
+           lib = LoadLibraryA(diversion->lib);
+           if (lib == NULL)
            {
                fprintf(stderr, "unable to load %s\n", diversion->lib);
                continue;
            }
         }
-        if ((old_api = (uint8_t *)GetProcAddress(lib, diversion->name)) == NULL)
+
+        uint8_t *old_api = (uint8_t *)GetProcAddress(lib, diversion->name);
+        if (old_api == NULL)
         {
             fprintf(stderr, "unable to get pointer to %s\n", diversion->name);
             continue;
         }
+
+        uint8_t *trampoline_api;
         if (hook_inline(old_api, diversion->new_sym, &trampoline_api) < 0)
         {
-            fprintf(stderr, "hook_inline failed while hooking %s!%s\n", diversion->lib, diversion->name);
+            fprintf(stderr, "hook_inline failed while hooking %s!%s\n",
+                    diversion->lib, diversion->name);
             continue;
         }
+
         *diversion->old_sym = trampoline_api;
     }
 }

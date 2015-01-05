@@ -1,13 +1,13 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2010 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -97,7 +97,7 @@ SIG_T NEW(signal)(int signum, SIG_T handler)
 
     LOADSYM(signal);
 
-    if(!_zz_signal)
+    if (!_zz_signal)
         return ORIG(signal)(signum, handler);
 
     ret = ORIG(signal)(signum, isfatal(signum) ? SIG_DFL : handler);
@@ -116,10 +116,10 @@ int NEW(sigaction)(int signum, const struct sigaction *act,
 
     LOADSYM(sigaction);
 
-    if(!_zz_signal)
+    if (!_zz_signal)
         return ORIG(sigaction)(signum, act, oldact);
 
-    if(act && isfatal(signum))
+    if (act && isfatal(signum))
     {
         struct sigaction newact;
         memcpy(&newact, act, sizeof(struct sigaction));

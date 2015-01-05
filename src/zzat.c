@@ -1,7 +1,7 @@
 /*
  *  zzat - various cat reimplementations for testing purposes
  *
- *  Copyright © 2006—2015 Sam Hocevar <sam@hocevar.net>
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
@@ -60,19 +60,19 @@ static void version(void);
 static void usage(void);
 
 /* Global parameters */
-static int debug = 0;
-static int repeat = 1;
-static char escape_tabs = 0;
-static char escape_ends = 0;
-static char escape_other = 0;
-static char number_lines = 0;
-static char number_nonblank = 0;
-static char squeeze_lines = 0;
+static int g_debug = 0;
+static int g_repeat = 1;
+static char g_escape_tabs = 0;
+static char g_escape_ends = 0;
+static char g_escape_other = 0;
+static char g_number_lines = 0;
+static char g_number_nonblank = 0;
+static char g_squeeze_lines = 0;
 
 /* Global output state */
-static int ncrs = 0;
-static int line = 1;
-static char newline = 1;
+static int g_ncrs = 0;
+static int g_line = 1;
+static char g_newline = 1;
 
 /*
  * Main program.
@@ -81,7 +81,6 @@ static char newline = 1;
 int main(int argc, char *argv[])
 {
     char const *sequence = "repeat(-1, fread(1,32768), feof(1))";
-    int i;
 
     for (;;)
     {
@@ -113,37 +112,37 @@ int main(int argc, char *argv[])
         switch (c)
         {
         case 'A': /* --show-all */
-            escape_tabs = escape_ends = escape_other = 1;
+            g_escape_tabs = g_escape_ends = g_escape_other = 1;
             break;
         case 'b': /* --number-nonblank */
-            number_nonblank = 1;
+            g_number_nonblank = 1;
             break;
         case 'd': /* --debug */
-            debug = 1;
+            g_debug = 1;
             break;
         case 'e':
-            escape_ends = escape_other = 1;
+            g_escape_ends = g_escape_other = 1;
             break;
         case 'E': /* --show-ends */
-            escape_ends = 1;
+            g_escape_ends = 1;
             break;
         case 'n': /* --number */
-            number_lines = 1;
+            g_number_lines = 1;
             break;
         case 'r': /* --repeat */
-            repeat = atoi(caca_optarg);
+            g_repeat = atoi(caca_optarg);
             break;
         case 's': /* --squeeze-blank */
-            squeeze_lines = 1;
+            g_squeeze_lines = 1;
             break;
         case 't':
-            escape_tabs = escape_other = 1;
+            g_escape_tabs = g_escape_other = 1;
             break;
         case 'T': /* --show-tabs */
-            escape_tabs = 1;
+            g_escape_tabs = 1;
             break;
         case 'v': /* --show-nonprinting */
-            escape_tabs = 1;
+            g_escape_tabs = 1;
             break;
         case 'x': /* --execute */
             if (caca_optarg[0] == '=')
@@ -172,8 +171,8 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    while (repeat-- > 0)
-        for (i = caca_optind; i < argc; i++)
+    while (g_repeat-- > 0)
+        for (int i = caca_optind; i < argc; ++i)
         {
             int ret = run(sequence, argv[i]);
             if (ret)
@@ -189,57 +188,55 @@ int main(int argc, char *argv[])
 
 static void output(char const *buf, size_t len)
 {
-    size_t i;
-
     /* If no special features are requested, output directly */
-    if (!(escape_tabs || escape_ends || escape_other
-           || number_lines || number_nonblank || squeeze_lines))
+    if (!(g_escape_tabs || g_escape_ends || g_escape_other
+           || g_number_lines || g_number_nonblank || g_squeeze_lines))
     {
         fwrite(buf, len, 1, stdout);
         return;
     }
 
     /* If any special feature is active, go through every possibility */
-    for (i = 0; i < len; i++)
+    for (size_t i = 0; i < len; ++i)
     {
         int ch = (unsigned int)(unsigned char)buf[i];
 
-        if (squeeze_lines)
+        if (g_squeeze_lines)
         {
             if (ch == '\n')
             {
-                if (++ncrs > 2)
+                if (++g_ncrs > 2)
                     continue;
             }
             else
-                ncrs = 0;
+                g_ncrs = 0;
         }
 
-        if (number_lines || number_nonblank)
+        if (g_number_lines || g_number_nonblank)
         {
-            if (newline)
+            if (g_newline)
             {
-                newline = 0;
-                if (!number_nonblank || ch != '\n')
-                    fprintf(stdout, "% 6i\t", line++);
+                g_newline = 0;
+                if (!g_number_nonblank || ch != '\n')
+                    fprintf(stdout, "% 6i\t", g_line++);
             }
 
             if (ch == '\n')
-                newline = 1;
+                g_newline = 1;
         }
 
-        if (escape_other && ch >= 0x80)
+        if (g_escape_other && ch >= 0x80)
         {
             if (ch - 0x80 < 0x20 || ch - 0x80 == 0x7f)
                 fprintf(stdout, "M-^%c", (ch - 0x80) ^ 0x40);
             else
                 fprintf(stdout, "M-%c", ch - 0x80);
         }
-        else if (escape_tabs && ch == '\t')
+        else if (g_escape_tabs && ch == '\t')
             fprintf(stdout, "^I");
-        else if (escape_ends && ch == '\n')
+        else if (g_escape_ends && ch == '\n')
             puts("$");
-        else if (escape_other && (ch < 0x20 || ch == 0x7f))
+        else if (g_escape_other && (ch < 0x20 || ch == 0x7f))
             fprintf(stdout, "^%c", ch ^ 0x40);
         else
             putchar(ch);
@@ -260,14 +257,14 @@ static void output(char const *buf, size_t len)
         } \
         retoff = 0; \
         sequence = strchr(sequence, ')') + 1; \
-    } while(0)
+    } while (0)
 
 #define MY_FCLOSE(cmd) \
     do { \
         cmd; \
         f = NULL; \
         sequence = strchr(sequence, ')') + 1; \
-    } while(0)
+    } while (0)
 
 #define ROUNDUP(size) (((size) + 0x1000) & ~0xfff)
 
@@ -279,7 +276,7 @@ static void output(char const *buf, size_t len)
             retlen = retoff + _cnt; \
             if (!retbuf || ROUNDUP(retlen) != ROUNDUP(retlen - _cnt)) \
             { \
-                if (debug) \
+                if (g_debug) \
                     fprintf(stderr, "D: zzat: allocating %i bytes for %i\n", \
                             (int)ROUNDUP(retlen), (int)retlen); \
                 retbuf = realloc(retbuf, ROUNDUP(retlen)); \
@@ -287,13 +284,13 @@ static void output(char const *buf, size_t len)
         } \
         if (_cnt > 0) \
         { \
-            if (debug) \
+            if (g_debug) \
                 fprintf(stderr, "D: zzat: writing %i byte%s at offset %i\n", \
                         (int)_cnt, _cnt == 1 ? "" : "s", (int)retoff); \
             memcpy(retbuf + retoff, address, _cnt); \
         } \
         retoff += _off; \
-    } while(0)
+    } while (0)
 
 #define MY_FREAD(cmd, buf, cnt) MY_FCALL(cmd, buf, cnt, cnt)
 #define MY_FSEEK(cmd, off) MY_FCALL(cmd, /* unused */ "", 0, off)
@@ -313,7 +310,7 @@ static void output(char const *buf, size_t len)
         cmd; \
         MERGE(buf, cnt, off); \
         sequence = strchr(sequence, ')') + 1; \
-    } while(0)
+    } while (0)
 
 #define MY_FEOF() \
     do { \
@@ -331,7 +328,7 @@ static void output(char const *buf, size_t len)
         if (feofs >= l1) \
             finish = 1; \
         sequence = strchr(sequence, ')') + 1; \
-    } while(0)
+    } while (0)
 
 /*
  * Command parser. We rewrite fmt by replacing the last character with
@@ -347,11 +344,9 @@ struct parser
 
 static int make_fmt(struct parser *p, char const *fmt, int *nitems)
 {
-    char const *tmp;
-    size_t len;
     int ret = 0;
 
-    len = strlen(fmt);
+    size_t len = strlen(fmt);
     p->lastch = fmt[len - 1];
 
     memcpy(p->tmpfmt, fmt, len - 1);
@@ -359,9 +354,9 @@ static int make_fmt(struct parser *p, char const *fmt, int *nitems)
     p->tmpfmt[len] = 'c';
     p->tmpfmt[len + 1] = '\0';
 
-    for (tmp = p->tmpfmt; *tmp; tmp++)
+    for (char const *tmp = p->tmpfmt; *tmp; ++tmp)
         if (*tmp == '%')
-            tmp++, ret++;
+            ++tmp, ++ret;
 
     *nitems = ret;
 
@@ -407,7 +402,7 @@ static int run(char const *sequence, char const *file)
 
         /* Ignore punctuation */
         if (strchr(" \t,;\r\n", *sequence))
-            sequence++;
+            ++sequence;
 
         /* Loop handling */
         else if (PARSECMD("repeat ( %li ,", &l1))
@@ -415,7 +410,7 @@ static int run(char const *sequence, char const *file)
             sequence = strchr(sequence, ',') + 1;
             loops[nloops].p = sequence;
             loops[nloops].count = l1;
-            nloops++;
+            ++nloops;
         }
         else if (PARSECMD(")"))
         {
@@ -578,7 +573,7 @@ static int run(char const *sequence, char const *file)
         else if (PARSECMD("rewind ( )"))
             MY_FSEEK(rewind(f), -(int)retlen);
         else if (PARSECMD("ungetc ( )"))
-            MY_FSEEK(if(retoff) ungetc((unsigned char)retbuf[retoff - 1], f),
+            MY_FSEEK(if (retoff) ungetc((unsigned char)retbuf[retoff - 1], f),
                      retoff ? -1 : 0);
 
         /* Unrecognised sequence */
@@ -618,9 +613,9 @@ static int zzat_read(char const *name, unsigned char *data, int64_t len,
                       int64_t chunk)
 {
     int i, fd = open(name, O_RDONLY);
-    if(fd < 0)
+    if (fd < 0)
         return EXIT_FAILURE;
-    for(i = 0; i < len; i += chunk)
+    for (i = 0; i < len; i += chunk)
         read(fd, data + i, chunk);
     close(fd);
     return EXIT_SUCCESS;
@@ -630,17 +625,17 @@ static int zzat_read(char const *name, unsigned char *data, int64_t len,
 static int zzat_random_socket(char const *name, unsigned char *data,
                                int64_t len)
 {
-    int i, j, fd = open(name, O_RDONLY);
-    if(fd < 0)
+    int fd = open(name, O_RDONLY);
+    if (fd < 0)
         return EXIT_FAILURE;
-    for(i = 0; i < 128; i++)
+    for (int i = 0; i < 128; ++i)
     {
         lseek(fd, myrand() % len, SEEK_SET);
-        for(j = 0; j < 4; j++)
+        for (int j = 0; j < 4; ++j)
             read(fd, data + lseek(fd, 0, SEEK_CUR), myrand() % 4096);
 #ifdef HAVE_LSEEK64
         lseek64(fd, myrand() % len, SEEK_SET);
-        for(j = 0; j < 4; j++)
+        for (int j = 0; j < 4; ++j)
             read(fd, data + lseek(fd, 0, SEEK_CUR), myrand() % 4096);
 #endif
     }
@@ -653,22 +648,21 @@ static int zzat_random_stream(char const *name, unsigned char *data,
                                int64_t len)
 {
     FILE *stream = fopen(name, "r");
-    int i, j;
-    if(!stream)
+    if (!stream)
         return EXIT_FAILURE;
-    for(i = 0; i < 128; i++)
+    for (int i = 0; i < 128; ++i)
     {
         long int now;
         fseek(stream, myrand() % len, SEEK_SET);
-        for(j = 0; j < 4; j++)
+        for (int j = 0; j < 4; ++j)
             fread(data + ftell(stream),
                   myrand() % (len - ftell(stream)), 1, stream);
         fseek(stream, myrand() % len, SEEK_SET);
         now = ftell(stream);
-        for(j = 0; j < 16; j++)
+        for (int j = 0; j < 16; ++j)
             data[now + j] = getc(stream);
         now = ftell(stream);
-        for(j = 0; j < 16; j++)
+        for (int j = 0; j < 16; ++j)
             data[now + j] = fgetc(stream);
     }
     fclose(stream);
@@ -680,10 +674,10 @@ static int zzat_random_stream(char const *name, unsigned char *data,
 static int zzat_random_mmap(char const *name, unsigned char *data,
                             int64_t len)
 {
-    int i, j, fd = open(name, O_RDONLY);
-    if(fd < 0)
+    int fd = open(name, O_RDONLY);
+    if (fd < 0)
         return EXIT_FAILURE;
-    for(i = 0; i < 128; i++)
+    for (int i = 0; i < 128; ++i)
     {
         char *map;
         int moff, mlen, pgsz = len + 1;
@@ -693,9 +687,9 @@ static int zzat_random_mmap(char const *name, unsigned char *data,
         moff = len < pgsz ? 0 : (myrand() % (len / pgsz)) * pgsz;
         mlen = 1 + (myrand() % (len - moff));
         map = mmap(NULL, mlen, PROT_READ, MAP_PRIVATE, fd, moff);
-        if(map == MAP_FAILED)
+        if (map == MAP_FAILED)
             return EXIT_FAILURE;
-        for(j = 0; j < 128; j++)
+        for (int j = 0; j < 128; ++j)
         {
             int x = myrand() % mlen;
             data[moff + x] = map[x];
@@ -815,11 +809,11 @@ static void syntax(void)
 static void version(void)
 {
     printf("zzat %s\n", PACKAGE_VERSION);
-    printf("Copyright (C) 2002-2010 Sam Hocevar <sam@hocevar.net>\n");
+    printf("Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>\n");
     printf("This program is free software. It comes without any warranty, to the extent\n");
     printf("permitted by applicable law. You can redistribute it and/or modify it under\n");
-    printf("the terms of the Do What The Fuck You Want To Public License, Version 2, as\n");
-    printf("published by Sam Hocevar. See <http://sam.zoy.org/wtfpl/> for more details.\n");
+    printf("the terms of the Do What the Fuck You Want to Public License, Version 2, as\n");
+    printf("published by the WTFPL Task Force. See http://www.wtfpl.net/ for more details.\n");
     printf("\n");
     printf("Written by Sam Hocevar. Report bugs to <sam@hocevar.net>.\n");
 }
