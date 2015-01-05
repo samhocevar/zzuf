@@ -18,6 +18,8 @@
 #include "config.h"
 
 #define _INCLUDE_POSIX_SOURCE /* for STDERR_FILENO on HP-UX */
+#define _POSIX_SOURCE /* for kill() on glibc systems */
+#define _BSD_SOURCE /* for setenv() on glibc systems */
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>

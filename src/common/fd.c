@@ -1,7 +1,7 @@
 /*
  *  zzuf - general purpose fuzzer
  *
- *  Copyright © 2006—2015 Sam Hocevar <sam@hocevar.net>
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
  *              2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
  *
  *  This program is free software. It comes without any warranty, to
