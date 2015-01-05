@@ -1,7 +1,7 @@
 /*
  *  zzuf - general purpose fuzzer
  *
- *  Copyright © 2006—2015 Sam Hocevar <sam@hocevar.net>
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
@@ -101,10 +101,10 @@ static int     (*ORIG(fseek))    (FILE *stream, long offset, int whence);
 static int     (*ORIG(fseeko))   (FILE *stream, off_t offset, int whence);
 #endif
 #if defined HAVE_FSEEKO64
-static int     (*ORIG(fseeko64)) (FILE *stream, off_t offset, int whence);
+static int     (*ORIG(fseeko64)) (FILE *stream, off64_t offset, int whence);
 #endif
 #if defined HAVE___FSEEKO64
-static int     (*ORIG(__fseeko64)) (FILE *stream, off_t offset, int whence);
+static int     (*ORIG(__fseeko64)) (FILE *stream, off64_t offset, int whence);
 #endif
 #if defined HAVE_FSETPOS64
 static int     (*ORIG(fsetpos64))(FILE *stream, const FPOS64_T *pos);
