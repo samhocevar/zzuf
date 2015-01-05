@@ -1,33 +1,39 @@
 /*
  *  zzero - check how many bits zzuf changes in a stream of zeroes
- *  Copyright (c) 2008 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
+ *
+ *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 #include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
-int main(void)
+static inline int countones(uint8_t x)
 {
-    static const int lut[16] =
+    static int const lut[16] =
     {
         0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4
     };
 
-    int ones = 0, ch;
+    return lut[x & 0xf] + lut[x >> 4];
+}
 
-    while((ch = getc(stdin)) != EOF)
-        ones += lut[ch & 0xf] + lut[(ch >> 4) & 0xf];
+int main(void)
+{
+    int total = 0, ch;
 
-    printf("%i\n", ones);
+    while ((ch = getc(stdin)) != EOF)
+        total += countones((uint8_t)ch);
+
+    printf("%i\n", total);
 
     return EXIT_SUCCESS;
 }
