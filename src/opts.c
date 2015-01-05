@@ -36,14 +36,17 @@ void _zz_opts_init(struct opts *opts)
     opts->fuzzing = opts->bytes = opts->list = opts->ports = NULL;
     opts->allow = NULL;
     opts->protect = opts->refuse = NULL;
+
     opts->seed = DEFAULT_SEED;
     opts->endseed = DEFAULT_SEED + 1;
     opts->minratio = opts->maxratio = DEFAULT_RATIO;
-    opts->quiet = 0;
+
+    opts->b_quiet = 0;
+    opts->b_md5 = 0;
+    opts->b_checkexit = 0;
+    opts->b_verbose = 0;
+
     opts->maxbytes = -1;
-    opts->md5 = 0;
-    opts->checkexit = 0;
-    opts->verbose = 0;
     opts->maxmem = DEFAULT_MEM;
     opts->starttime = _zz_time();
     opts->maxtime = 0;

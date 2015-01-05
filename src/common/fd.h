@@ -32,7 +32,7 @@ extern int _zz_mustwatchw(wchar_t const *);
 extern int _zz_iswatched(int);
 extern void _zz_register(int);
 extern void _zz_unregister(int);
-extern void _zz_lock(int);
+extern void _zz_lockfd(int);
 extern void _zz_unlock(int);
 extern int _zz_islocked(int);
 extern int _zz_isactive(int);

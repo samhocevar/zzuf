@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #if defined HAVE_REGEX_H
 #   if _WIN32
-#       include "../com_regexp.hpp"
+#       include "util/regex.h"
 #   else
 #       include <regex.h>
 #   endif
@@ -45,6 +45,7 @@
 #   include "debug.h"
 #   include "network.h"
 #endif
+#include "util/mutex.h"
 
 /* Regex stuff */
 #if defined HAVE_REGEX_H
@@ -74,34 +75,7 @@ static int *fds, static_fds[STATIC_FILES];
 static int maxfd, nfiles;
 
 /* Spinlock. This variable protects the fds variable. */
-#if _WIN32
-static volatile LONG fd_spinlock = 0;
-#elif __GNUC__ || __clang__
-static volatile int fd_spinlock = 0;
-#else
-#   error "No known atomic operations for this platform"
-#endif
-
-static void fd_lock(void)
-{
-#if _WIN32
-    do {}
-    while (InterlockedExchange(&fd_spinlock, 1));
-#elif __GNUC__ || __clang__
-    do {}
-    while (__sync_lock_test_and_set(&fd_spinlock, 1));
-#endif
-}
-
-static void fd_unlock(void)
-{
-#if _WIN32
-    InterlockedExchange(&fd_spinlock, 0);
-#elif __GNUC__ || __clang__
-    fd_spinlock = 0;
-    __sync_synchronize();
-#endif
-}
+static zz_mutex fds_mutex = 0;
 
 /* Create lock. This lock variable is used to disable file descriptor
  * creation wrappers. For instance on Mac OS X, fopen() calls open()
@@ -262,7 +236,7 @@ int _zz_mustwatchw(wchar_t const *file)
 int _zz_iswatched(int fd)
 {
     int ret = 0;
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -270,7 +244,7 @@ int _zz_iswatched(int fd)
     ret = 1;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
     return ret;
 }
 
@@ -278,7 +252,7 @@ void _zz_register(int fd)
 {
     int i;
 
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < 0 || fd > 65535 || (fd < maxfd && fds[fd] != -1))
         goto early_exit;
@@ -348,12 +322,12 @@ void _zz_register(int fd)
     fds[fd] = i;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
 }
 
 void _zz_unregister(int fd)
 {
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -367,12 +341,12 @@ void _zz_unregister(int fd)
     fds[fd] = -1;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
 }
 
-void _zz_lock(int fd)
+void _zz_lockfd(int fd)
 {
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < -1 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -383,12 +357,12 @@ void _zz_lock(int fd)
         files[fds[fd]].locked++;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
 }
 
 void _zz_unlock(int fd)
 {
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < -1 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -399,13 +373,13 @@ void _zz_unlock(int fd)
         files[fds[fd]].locked--;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
 }
 
 int _zz_islocked(int fd)
 {
     int ret = 0;
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < -1 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -416,14 +390,14 @@ int _zz_islocked(int fd)
         ret = files[fds[fd]].locked;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
     return ret;
 }
 
 int _zz_isactive(int fd)
 {
     int ret = 1;
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -431,14 +405,14 @@ int _zz_isactive(int fd)
     ret = files[fds[fd]].active;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
     return ret;
 }
 
 int64_t _zz_getpos(int fd)
 {
     int64_t ret = 0;
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -446,13 +420,13 @@ int64_t _zz_getpos(int fd)
     ret = files[fds[fd]].pos;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
     return ret;
 }
 
 void _zz_setpos(int fd, int64_t pos)
 {
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -460,12 +434,12 @@ void _zz_setpos(int fd, int64_t pos)
     files[fds[fd]].pos = pos;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
 }
 
 void _zz_addpos(int fd, int64_t off)
 {
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -473,12 +447,12 @@ void _zz_addpos(int fd, int64_t off)
     files[fds[fd]].pos += off;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
 }
 
 void _zz_setfuzzed(int fd, int count)
 {
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -496,13 +470,13 @@ void _zz_setfuzzed(int fd, int count)
     files[fds[fd]].already_fuzzed = count;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
 }
 
 int _zz_getfuzzed(int fd)
 {
     int ret = 0;
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -518,14 +492,14 @@ int _zz_getfuzzed(int fd)
                                               - files[fds[fd]].pos);
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
     return ret;
 }
 
 struct fuzz *_zz_getfuzz(int fd)
 {
     struct fuzz *ret = NULL;
-    fd_lock();
+    zz_lock(&fds_mutex);
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -533,7 +507,7 @@ struct fuzz *_zz_getfuzz(int fd)
     ret = &files[fds[fd]].fuzz;
 
 early_exit:
-    fd_unlock();
+    zz_unlock(&fds_mutex);
     return ret;
 }
 

@@ -35,11 +35,9 @@ void _zz_srand(uint32_t seed)
 uint32_t _zz_rand(uint32_t max)
 {
     /* Could be better, but do we care? */
-    long hi, lo, x;
-
-    hi = ctx / 12773L;
-    lo = ctx % 12773L;
-    x = 16807L * lo - 2836L * hi;
+    long hi = ctx / 12773L;
+    long lo = ctx % 12773L;
+    long x = 16807L * lo - 2836L * hi;
     if (x <= 0)
         x += 0x7fffffffL;
     return (ctx = x) % (unsigned long)max;

@@ -173,15 +173,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
-    <ClInclude Include="..\src\caca_getopt.h" />
+    <ClInclude Include="..\src\util\getopt.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\caca_getopt.c" />
+    <ClCompile Include="..\src\util\getopt.c" />
     <ClCompile Include="..\src\zzat.c">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(FileName)1.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(FileName)1.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(FileName)1.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(FileName)1.obj</ObjectFileName>
+      <ObjectFileName>$(IntDir)%(FileName)1.obj</ObjectFileName>
     </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

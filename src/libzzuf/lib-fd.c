@@ -643,7 +643,7 @@ int NEW(aio_read)(struct aiocb *aiocbp)
     if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(aio_read)(aiocbp);
 
-    _zz_lock(fd);
+    _zz_lockfd(fd);
     ret = ORIG(aio_read)(aiocbp);
 
     debug("%s({%i, %i, %i, %p, %li, ..., %li}) = %i", __func__,

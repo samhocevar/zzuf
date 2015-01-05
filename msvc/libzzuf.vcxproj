@@ -199,12 +199,13 @@
     <ClInclude Include="..\src\common\fuzz.h" />
     <ClInclude Include="..\src\common\random.h" />
     <ClInclude Include="..\src\common\ranges.h" />
-    <ClInclude Include="..\src\com_regexp.hpp" />
     <ClInclude Include="..\src\libzzuf\debug.h" />
     <ClInclude Include="..\src\libzzuf\lib-load.h" />
     <ClInclude Include="..\src\libzzuf\libzzuf.h" />
     <ClInclude Include="..\src\libzzuf\network.h" />
     <ClInclude Include="..\src\libzzuf\sys.h" />
+    <ClInclude Include="..\src\util\mutex.h" />
+    <ClInclude Include="..\src\util\regex.h" />
     <ClInclude Include="config.h" />
   </ItemGroup>
   <ItemGroup>
@@ -212,12 +213,6 @@
     <ClCompile Include="..\src\common\fuzz.c" />
     <ClCompile Include="..\src\common\random.c" />
     <ClCompile Include="..\src\common\ranges.c" />
-    <ClCompile Include="..\src\com_regexp.cpp">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
-    </ClCompile>
     <ClCompile Include="..\src\libzzuf\debug.c" />
     <ClCompile Include="..\src\libzzuf\lib-fd.c" />
     <ClCompile Include="..\src\libzzuf\lib-mem.c" />
@@ -227,6 +222,9 @@
     <ClCompile Include="..\src\libzzuf\libzzuf.c" />
     <ClCompile Include="..\src\libzzuf\network.c" />
     <ClCompile Include="..\src\libzzuf\sys.c" />
+    <ClCompile Include="..\src\util\regex.cpp">
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -24,21 +24,21 @@
 #endif
 #include <stdint.h>
 
-#include "caca_getopt.h"
+#include "util/getopt.h"
 
-int   caca_optind = 1;
-char *caca_optarg = NULL;
+int   zz_optind = 1;
+char *zz_optarg = NULL;
 
-int caca_getopt(int argc, char * const _argv[], char const *optstring,
-                struct caca_option const *longopts, int *longindex)
+int zz_getopt(int argc, char * const _argv[], char const *optstring,
+              struct zz_option const *longopts, int *longindex)
 {
 #if defined HAVE_GETOPT_LONG
-    optind = caca_optind;
-    optarg = caca_optarg;
+    optind = zz_optind;
+    optarg = zz_optarg;
     int ret = getopt_long(argc, _argv, optstring,
-                          (struct option const *)longopts, longindex);
-    caca_optind = optind;
-    caca_optarg = optarg;
+                          (struct zz_option const *)longopts, longindex);
+    zz_optind = optind;
+    zz_optarg = optarg;
     return ret;
 
 #else
@@ -48,10 +48,10 @@ int caca_getopt(int argc, char * const _argv[], char const *optstring,
      * programs. */
     char **argv = (char **)(uintptr_t)_argv;
 
-    if (caca_optind >= argc)
+    if (zz_optind >= argc)
         return -1;
 
-    char *flag = argv[caca_optind];
+    char *flag = argv[zz_optind];
 
     if (flag[0] == '-' && flag[1] != '-')
     {
@@ -63,21 +63,21 @@ int caca_getopt(int argc, char * const _argv[], char const *optstring,
         if (!tmp || ret == ':')
             return '?';
 
-        caca_optind++;
+        zz_optind++;
         if (tmp[1] == ':')
         {
             if (flag[2] != '\0')
-                caca_optarg = flag + 2;
+                zz_optarg = flag + 2;
             else
-                caca_optarg = argv[caca_optind++];
+                zz_optarg = argv[zz_optind++];
             return ret;
         }
 
         if (flag[2] != '\0')
         {
             flag[1] = '-';
-            caca_optind--;
-            argv[caca_optind]++;
+            zz_optind--;
+            argv[zz_optind]++;
         }
 
         return ret;
@@ -102,15 +102,15 @@ int caca_getopt(int argc, char * const _argv[], char const *optstring,
                     goto bad_opt;
                 if (longindex)
                     *longindex = i;
-                caca_optind++;
-                caca_optarg = flag + 2 + l + 1;
+                zz_optind++;
+                zz_optarg = flag + 2 + l + 1;
                 return longopts[i].val;
             case '\0':
                 if (longindex)
                     *longindex = i;
-                caca_optind++;
+                zz_optind++;
                 if (longopts[i].has_arg)
-                    caca_optarg = argv[caca_optind++];
+                    zz_optarg = argv[zz_optind++];
                 return longopts[i].val;
             default:
                 break;

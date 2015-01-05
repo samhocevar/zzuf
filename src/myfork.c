@@ -50,7 +50,6 @@
 #include "fd.h"
 #include "fuzz.h"
 #include "myfork.h"
-#include "md5.h"
 #include "timer.h"
 
 /* Handle old libtool versions */

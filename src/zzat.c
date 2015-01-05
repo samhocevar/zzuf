@@ -50,7 +50,7 @@ typedef int ssize_t;
 #include <stdio.h>
 #include <string.h>
 
-#include "caca_getopt.h"
+#include "util/getopt.h"
 
 static int run(char const *sequence, char const *file);
 static void output(char const *buf, size_t len);
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 #define OPTSTR "+AbdeEnr:stTvx:lhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
-        static struct caca_option long_options[] =
+        static struct zz_option long_options[] =
         {
             { "show-all",         0, NULL, 'A' },
             { "number-nonblank",  0, NULL, 'b' },
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
             { "version",          0, NULL, 'V' },
             { NULL,               0, NULL,  0  }
         };
-        int c = caca_getopt(argc, argv, OPTSTR, long_options, &option_index);
+        int c = zz_getopt(argc, argv, OPTSTR, long_options, &option_index);
 
         if (c == -1)
             break;
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
             g_number_lines = 1;
             break;
         case 'r': /* --repeat */
-            g_repeat = atoi(caca_optarg);
+            g_repeat = atoi(zz_optarg);
             break;
         case 's': /* --squeeze-blank */
             g_squeeze_lines = 1;
@@ -145,9 +145,9 @@ int main(int argc, char *argv[])
             g_escape_tabs = 1;
             break;
         case 'x': /* --execute */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            sequence = caca_optarg;
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            sequence = zz_optarg;
             break;
         case 'l': /* --list */
             syntax();
@@ -165,14 +165,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (caca_optind >= argc)
+    if (zz_optind >= argc)
     {
         fprintf(stderr, "E: zzat: too few arguments\n");
         return EXIT_FAILURE;
     }
 
     while (g_repeat-- > 0)
-        for (int i = caca_optind; i < argc; ++i)
+        for (int i = zz_optind; i < argc; ++i)
         {
             int ret = run(sequence, argv[i]);
             if (ret)

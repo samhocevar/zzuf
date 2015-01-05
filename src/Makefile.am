@@ -3,12 +3,12 @@ bin_PROGRAMS = zzuf zzat
 pkglib_LTLIBRARIES = libzzuf.la
 
 ZZUF = \
-    zzuf.c opts.c opts.h md5.c md5.h timer.c timer.h myfork.c myfork.h \
-    caca_getopt.c caca_getopt.h
+    zzuf.c opts.c opts.h timer.c timer.h myfork.c myfork.h \
+    util/getopt.c util/getopt.h util/md5.c util/md5.h
 
 ZZAT = \
     zzat.c \
-    caca_getopt.c caca_getopt.h
+    util/getopt.c util/getopt.h
 
 LIBZZUF = \
     libzzuf/libzzuf.c libzzuf/libzzuf.h \
@@ -23,7 +23,11 @@ COMMON = \
     common/random.c common/random.h \
     common/ranges.c common/ranges.h \
     common/fd.c common/fd.h \
-    common/fuzz.c common/fuzz.h
+    common/fuzz.c common/fuzz.h \
+    util/mutex.h
+
+EXTRA_DIST = \
+    util/regex.cpp util/regex.h
 
 zzuf_SOURCES = $(ZZUF) $(COMMON)
 zzuf_CFLAGS = -DLIBDIR=\"$(libdir)/zzuf\" -I$(srcdir)/common

@@ -172,35 +172,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\caca_getopt.h" />
     <ClInclude Include="..\src\common\common.h" />
     <ClInclude Include="..\src\common\fd.h" />
     <ClInclude Include="..\src\common\fuzz.h" />
     <ClInclude Include="..\src\common\random.h" />
     <ClInclude Include="..\src\common\ranges.h" />
-    <ClInclude Include="..\src\com_regexp.hpp" />
-    <ClInclude Include="..\src\md5.h" />
     <ClInclude Include="..\src\myfork.h" />
     <ClInclude Include="..\src\opts.h" />
     <ClInclude Include="..\src\timer.h" />
+    <ClInclude Include="..\src\util\getopt.h" />
+    <ClInclude Include="..\src\util\md5.h" />
+    <ClInclude Include="..\src\util\mutex.h" />
+    <ClInclude Include="..\src\util\regex.h" />
     <ClInclude Include="config.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\caca_getopt.c" />
     <ClCompile Include="..\src\common\fd.c" />
     <ClCompile Include="..\src\common\fuzz.c" />
     <ClCompile Include="..\src\common\random.c" />
     <ClCompile Include="..\src\common\ranges.c" />
-    <ClCompile Include="..\src\com_regexp.cpp">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\md5.c" />
     <ClCompile Include="..\src\myfork.c" />
     <ClCompile Include="..\src\opts.c" />
     <ClCompile Include="..\src\timer.c" />
+    <ClCompile Include="..\src\util\getopt.c" />
+    <ClCompile Include="..\src\util\md5.c" />
+    <ClCompile Include="..\src\util\regex.cpp">
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
     <ClCompile Include="..\src\zzuf.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

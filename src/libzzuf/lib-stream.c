@@ -267,7 +267,7 @@ static inline void debug_stream(char const *prefix, FILE *stream)
         LOADSYM(myfopen); \
         if (!_zz_ready) \
             return ORIG(myfopen)(path, mode); \
-        _zz_lock(-1); \
+        _zz_lockfd(-1); \
         ret = ORIG(myfopen)(path, mode); \
         _zz_unlock(-1); \
         if (ret && _zz_mustwatch(path)) \
@@ -290,7 +290,7 @@ static inline void debug_stream(char const *prefix, FILE *stream)
             _zz_unregister(fd0); \
             disp = 1; \
         } \
-        _zz_lock(-1); \
+        _zz_lockfd(-1); \
         ret = ORIG(myfreopen)(path, mode, stream); \
         _zz_unlock(-1); \
         if (ret && _zz_mustwatch(path)) \
@@ -376,7 +376,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         oldpos = ZZ_FTELL(stream); \
         oldoff = get_stream_off(stream); \
         oldcnt = get_stream_cnt(stream); \
-        _zz_lock(fd); \
+        _zz_lockfd(fd); \
         ret = ORIG(myfseek)(stream, offset, whence); \
         _zz_unlock(fd); \
         newpos = ZZ_FTELL(stream); \
@@ -414,7 +414,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         oldpos = ZZ_FTELL(stream); \
         oldoff = get_stream_off(stream); \
         oldcnt = get_stream_cnt(stream); \
-        _zz_lock(fd); \
+        _zz_lockfd(fd); \
         ret = ORIG(myfsetpos)(stream, pos); \
         _zz_unlock(fd); \
         newpos = ZZ_FTELL(stream); \
@@ -450,7 +450,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         oldpos = ZZ_FTELL(stream); \
         oldoff = get_stream_off(stream); \
         oldcnt = get_stream_cnt(stream); \
-        _zz_lock(fd); \
+        _zz_lockfd(fd); \
         ORIG(rewind)(stream); \
         _zz_unlock(fd); \
         newpos = ZZ_FTELL(stream); \
@@ -542,7 +542,7 @@ void NEW(rewind)(FILE *stream)
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         oldpos = ZZ_FTELL(stream); \
         oldcnt = get_stream_cnt(stream); \
-        _zz_lock(fd); \
+        _zz_lockfd(fd); \
         ret = ORIG(myfread) myargs; \
         _zz_unlock(fd); \
         newpos = ZZ_FTELL(stream); \
@@ -631,7 +631,7 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
         debug_stream("before", s); \
         oldpos = ZZ_FTELL(s); \
         oldcnt = get_stream_cnt(s); \
-        _zz_lock(fd); \
+        _zz_lockfd(fd); \
         ret = ORIG(myfgetc)(arg); \
         _zz_unlock(fd); \
         newpos = ZZ_FTELL(s); \
@@ -738,7 +738,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
             for (int i = 0; i < size - 1; ++i) \
             { \
                 int chr; \
-                _zz_lock(fd); \
+                _zz_lockfd(fd); \
                 chr = ORIG(myfgetc)(stream); \
                 _zz_unlock(fd); \
                 newpos = oldpos + 1; \
@@ -832,7 +832,7 @@ int NEW(ungetc)(int c, FILE *stream)
 
     debug_stream("before", stream);
     oldpos = ZZ_FTELL(stream);
-    _zz_lock(fd);
+    _zz_lockfd(fd);
     ret = ORIG(ungetc)(c, stream);
     _zz_unlock(fd);
     _zz_setpos(fd, oldpos - 1);
@@ -860,7 +860,7 @@ int NEW(fclose)(FILE *fp)
         return ORIG(fclose)(fp);
 
     debug_stream("before", fp);
-    _zz_lock(fd);
+    _zz_lockfd(fd);
     ret = ORIG(fclose)(fp);
     _zz_unlock(fd);
     debug("%s([%i]) = %i", __func__, fd, ret);
@@ -906,7 +906,7 @@ int NEW(fclose)(FILE *fp)
                 *lineptr = line; \
                 break; \
             } \
-            _zz_lock(fd); \
+            _zz_lockfd(fd); \
             chr = ORIG(fgetc)(stream); \
             _zz_unlock(fd); \
             newpos = oldpos + 1; \
@@ -1011,7 +1011,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     {
         int chr;
 
-        _zz_lock(fd);
+        _zz_lockfd(fd);
         chr = ORIG(fgetc)(stream);
         _zz_unlock(fd);
 
@@ -1079,7 +1079,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
             return ORIG(myrefill)(fp); \
         debug_stream("before", fp); \
         pos = _zz_getpos(fd); \
-        _zz_lock(fd); \
+        _zz_lockfd(fd); \
         ret = ORIG(myrefill)(fp); \
         newpos = lseek(fd, 0, SEEK_CUR); \
         _zz_unlock(fd); \

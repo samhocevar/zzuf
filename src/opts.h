@@ -28,17 +28,22 @@ struct opts
     char **oldargv;
     int oldargc;
     char *fuzzing, *bytes, *list, *ports, *protect, *refuse, *allow;
+
     uint32_t seed;
     uint32_t endseed;
+
     double minratio;
     double maxratio;
-    int quiet;
+
+    int b_md5;
+    int b_checkexit;
+    int b_verbose;
+    int b_quiet;
+
     int maxbytes;
     int maxcpu;
-    int md5;
-    int checkexit;
-    int verbose;
     int maxmem;
+
     int64_t starttime;
     int64_t maxtime;
     int64_t maxusertime;
@@ -65,7 +70,7 @@ struct opts
         int bytes, seed;
         double ratio;
         int64_t date;
-        struct md5 *ctx;
+        struct zz_md5 *md5;
         char **newargv;
     } *child;
 };

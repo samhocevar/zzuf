@@ -16,7 +16,7 @@
 
 struct md5;
 
-extern struct md5 *_zz_md5_init(void);
-extern void _zz_md5_add(struct md5 *ctx, uint8_t *buf, unsigned len);
-extern void _zz_md5_fini(uint8_t *digest, struct md5 *ctx);
+extern struct zz_md5 *zz_md5_init(void);
+extern void zz_md5_add(struct zz_md5 *ctx, uint8_t *buf, unsigned len);
+extern void zz_md5_fini(uint8_t *digest, struct zz_md5 *ctx);
 

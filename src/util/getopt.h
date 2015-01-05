@@ -14,12 +14,7 @@
  *  getopt.h: getopt_long reimplementation
  */
 
-/** \brief Option parsing.
- *
- * This structure contains commandline parsing information for systems
- * where getopt_long() is unavailable.
- */
-struct caca_option
+struct zz_option
 {
     char const *name;
     int has_arg;
@@ -27,14 +22,8 @@ struct caca_option
     int val;
 };
 
-/** \defgroup caca_process libcaca process management
- *
- *  These functions help with various process handling tasks such as
- *  option parsing, DLL injection.
- *
- *  @{ */
-extern int caca_optind;
-extern char *caca_optarg;
-extern int caca_getopt(int, char * const[], char const *,
-                       struct caca_option const *, int *);
+extern int zz_optind;
+extern char *zz_optarg;
+extern int zz_getopt(int, char * const[], char const *,
+                     struct zz_option const *, int *);
 

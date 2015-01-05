@@ -33,7 +33,7 @@
 #endif
 #if defined HAVE_REGEX_H
 #   if _WIN32
-#       include "com_regexp.hpp"
+#       include "util/regex.h"
 #   else
 #       include <regex.h>
 #   endif
@@ -63,9 +63,9 @@
 #include "fd.h"
 #include "fuzz.h"
 #include "myfork.h"
-#include "md5.h"
 #include "timer.h"
-#include "caca_getopt.h"
+#include "util/getopt.h"
+#include "util/md5.h"
 
 #if !defined SIGKILL
 #   define SIGKILL 9
@@ -131,9 +131,9 @@ int main(int argc, char *argv[])
     char *tmp;
 #if defined HAVE_REGEX_H
     char *include = NULL, *exclude = NULL;
-    int has_cmdline = 0;
+    int b_cmdline = 0;
 #endif
-    int debug = 0, has_network = 0;
+    int debug = 0, b_network = 0;
 
 #if defined _WIN32
     InitializeCriticalSection(&_zz_pipe_cs);
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
                 "a:Ab:B:C:dD:e:f:F:ij:l:mnO:p:P:qr:R:s:St:U:vxhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
-        static struct caca_option long_options[] =
+        static struct zz_option long_options[] =
         {
             /* Long option, needs arg, flag, short option */
             { "allow",        1, NULL, 'a' },
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
             { "version",      0, NULL, 'V' },
             { NULL,           0, NULL,  0  }
         };
-        int c = caca_getopt(argc, argv, OPTSTR, long_options, &option_index);
+        int c = zz_getopt(argc, argv, OPTSTR, long_options, &option_index);
 
         if (c == -1)
             break;
@@ -213,28 +213,28 @@ int main(int argc, char *argv[])
         switch (c)
         {
         case 'a': /* --allow */
-            opts->allow = caca_optarg;
+            opts->allow = zz_optarg;
             break;
         case 'A': /* --autoinc */
             setenv("ZZUF_AUTOINC", "1", 1);
             break;
         case 'b': /* --bytes */
-            opts->bytes = caca_optarg;
+            opts->bytes = zz_optarg;
             break;
         case 'B': /* --max-bytes */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            opts->maxbytes = atoi(caca_optarg);
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            opts->maxbytes = atoi(zz_optarg);
             break;
 #if defined HAVE_REGEX_H
         case 'c': /* --cmdline */
-            has_cmdline = 1;
+            b_cmdline = 1;
             break;
 #endif
         case 'C': /* --max-crashes */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            opts->maxcrashes = atoi(caca_optarg);
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            opts->maxcrashes = atoi(zz_optarg);
             if (opts->maxcrashes <= 0)
                 opts->maxcrashes = 0;
             break;
@@ -242,24 +242,24 @@ int main(int argc, char *argv[])
             debug++;
             break;
         case 'D': /* --delay */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            opts->delay = (int64_t)(atof(caca_optarg) * 1000000.0);
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            opts->delay = (int64_t)(atof(zz_optarg) * 1000000.0);
             break;
 #if defined HAVE_REGEX_H
         case 'E': /* --exclude */
-            exclude = merge_regex(exclude, caca_optarg);
+            exclude = merge_regex(exclude, zz_optarg);
             if (!exclude)
             {
                 fprintf(stderr, "%s: invalid regex -- `%s'\n",
-                        argv[0], caca_optarg);
+                        argv[0], zz_optarg);
                 _zz_opts_fini(opts);
                 return EXIT_FAILURE;
             }
             break;
 #endif
         case 'f': /* --fuzzing */
-            opts->fuzzing = caca_optarg;
+            opts->fuzzing = zz_optarg;
             break;
         case 'F':
             fprintf(stderr, "%s: `-F' is deprecated, use `-j'\n", argv[0]);
@@ -270,77 +270,77 @@ int main(int argc, char *argv[])
             break;
 #if defined HAVE_REGEX_H
         case 'I': /* --include */
-            include = merge_regex(include, caca_optarg);
+            include = merge_regex(include, zz_optarg);
             if (!include)
             {
                 fprintf(stderr, "%s: invalid regex -- `%s'\n",
-                        argv[0], caca_optarg);
+                        argv[0], zz_optarg);
                 _zz_opts_fini(opts);
                 return EXIT_FAILURE;
             }
             break;
 #endif
         case 'j': /* --jobs */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            opts->maxchild = atoi(caca_optarg) > 1 ? atoi(caca_optarg) : 1;
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            opts->maxchild = atoi(zz_optarg) > 1 ? atoi(zz_optarg) : 1;
             break;
         case 'l': /* --list */
-            opts->list = caca_optarg;
+            opts->list = zz_optarg;
             break;
         case 'm': /* --md5 */
-            opts->md5 = 1;
+            opts->b_md5 = 1;
             break;
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
         case 'M': /* --max-memory */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            opts->maxmem = atoi(caca_optarg);
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            opts->maxmem = atoi(zz_optarg);
             break;
 #endif
         case 'n': /* --network */
             setenv("ZZUF_NETWORK", "1", 1);
-            has_network = 1;
+            b_network = 1;
             break;
         case 'O': /* --opmode */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            if (!strcmp(caca_optarg, "preload"))
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            if (!strcmp(zz_optarg, "preload"))
                 opts->opmode = OPMODE_PRELOAD;
-            else if (!strcmp(caca_optarg, "copy"))
+            else if (!strcmp(zz_optarg, "copy"))
                 opts->opmode = OPMODE_COPY;
             else
             {
                 fprintf(stderr, "%s: invalid operating mode -- `%s'\n",
-                        argv[0], caca_optarg);
+                        argv[0], zz_optarg);
                 _zz_opts_fini(opts);
                 return EXIT_FAILURE;
             }
             break;
         case 'p': /* --ports */
-            opts->ports = caca_optarg;
+            opts->ports = zz_optarg;
             break;
         case 'P': /* --protect */
-            opts->protect = caca_optarg;
+            opts->protect = zz_optarg;
             break;
         case 'q': /* --quiet */
-            opts->quiet = 1;
+            opts->b_quiet = 1;
             break;
         case 'r': /* --ratio */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            tmp = strchr(caca_optarg, ':');
-            opts->minratio = atof(caca_optarg);
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            tmp = strchr(zz_optarg, ':');
+            opts->minratio = atof(zz_optarg);
             opts->maxratio = tmp ? atof(tmp + 1) : opts->minratio;
             break;
         case 'R': /* --refuse */
-            opts->refuse = caca_optarg;
+            opts->refuse = zz_optarg;
             break;
         case 's': /* --seed */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            tmp = strchr(caca_optarg, ':');
-            opts->seed = atol(caca_optarg);
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            tmp = strchr(zz_optarg, ':');
+            opts->seed = atol(zz_optarg);
             opts->endseed = tmp ? tmp[1] ? (uint32_t)atol(tmp + 1)
                                          : (uint32_t)-1L
                                 : opts->seed + 1;
@@ -349,27 +349,27 @@ int main(int argc, char *argv[])
             setenv("ZZUF_SIGNAL", "1", 1);
             break;
         case 't': /* --max-time */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            opts->maxtime = (int64_t)atoi(caca_optarg) * 1000000;
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            opts->maxtime = (int64_t)atoi(zz_optarg) * 1000000;
             break;
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
         case 'T': /* --max-cputime */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            opts->maxcpu = (int)(atof(caca_optarg) + 0.5);
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            opts->maxcpu = (int)(atof(zz_optarg) + 0.5);
             break;
 #endif
         case 'U': /* --max-usertime */
-            if (caca_optarg[0] == '=')
-                caca_optarg++;
-            opts->maxusertime = (int64_t)(atof(caca_optarg) * 1000000.0);
+            if (zz_optarg[0] == '=')
+                zz_optarg++;
+            opts->maxusertime = (int64_t)(atof(zz_optarg) * 1000000.0);
             break;
         case 'x': /* --check-exit */
-            opts->checkexit = 1;
+            opts->b_checkexit = 1;
             break;
         case 'v': /* --verbose */
-            opts->verbose = 1;
+            opts->b_verbose = 1;
             break;
         case 'h': /* --help */
             usage();
@@ -387,7 +387,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (opts->ports && !has_network)
+    if (opts->ports && !b_network)
     {
         fprintf(stderr, "%s: port option (-p) requires network fuzzing (-n)\n",
                 argv[0]);
@@ -396,7 +396,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    if (opts->allow && !has_network)
+    if (opts->allow && !b_network)
     {
         fprintf(stderr, "%s: allow option (-a) requires network fuzzing (-n)\n",
                 argv[0]);
@@ -425,9 +425,9 @@ int main(int argc, char *argv[])
     /*
      * Mode 1: asked to read from the standard input
      */
-    if (caca_optind >= argc)
+    if (zz_optind >= argc)
     {
-        if (opts->verbose)
+        if (opts->b_verbose)
         {
             finfo(stderr, opts, opts->seed);
             fprintf(stderr, "reading from stdin\n");
@@ -450,11 +450,11 @@ int main(int argc, char *argv[])
     else
     {
 #if defined HAVE_REGEX_H
-        if (has_cmdline)
+        if (b_cmdline)
         {
             int dashdash = 0;
 
-            for (int i = caca_optind + 1; i < argc; ++i)
+            for (int i = zz_optind + 1; i < argc; ++i)
             {
                 if (dashdash)
                     include = merge_file(include, argv[i]);
@@ -512,9 +512,9 @@ int main(int argc, char *argv[])
         opts->oldargv = argv;
         for (int i = 0; i < opts->maxchild; ++i)
         {
-            int len = argc - caca_optind;
+            int len = argc - zz_optind;
             opts->child[i].newargv = malloc((len + 1) * sizeof(char *));
-            memcpy(opts->child[i].newargv, argv + caca_optind,
+            memcpy(opts->child[i].newargv, argv + zz_optind,
                    len * sizeof(char *));
             opts->child[i].newargv[len] = (char *)NULL;
         }
@@ -534,7 +534,7 @@ int main(int argc, char *argv[])
             if (opts->maxcrashes && opts->crashes >= opts->maxcrashes
                  && opts->nchild == 0)
             {
-                if (opts->verbose)
+                if (opts->b_verbose)
                     fprintf(stderr,
                             "zzuf: maximum crash count reached, exiting\n");
                 break;
@@ -543,7 +543,7 @@ int main(int argc, char *argv[])
             if (opts->maxtime && _zz_time() - opts->starttime >= opts->maxtime
                  && opts->nchild == 0)
             {
-                if (opts->verbose)
+                if (opts->b_verbose)
                     fprintf(stderr,
                             "zzuf: maximum running time reached, exiting\n");
                 break;
@@ -564,10 +564,10 @@ int main(int argc, char *argv[])
 
 static void loop_stdin(struct opts *opts)
 {
-    struct md5 *ctx = NULL;
+    struct zz_md5 *md5 = NULL;
 
-    if (opts->md5)
-        ctx = _zz_md5_init();
+    if (opts->b_md5)
+        md5 = zz_md5_init();
 
     _zz_register(0);
 
@@ -593,8 +593,8 @@ static void loop_stdin(struct opts *opts)
         _zz_fuzz(0, buf, ret);
         _zz_addpos(0, ret);
 
-        if (opts->md5)
-            _zz_md5_add(ctx, buf, ret);
+        if (opts->b_md5)
+            zz_md5_add(md5, buf, ret);
         else while (ret)
         {
             int nw = 0;
@@ -605,10 +605,10 @@ static void loop_stdin(struct opts *opts)
         }
     }
 
-    if (opts->md5)
+    if (opts->b_md5)
     {
         uint8_t md5sum[16];
-        _zz_md5_fini(md5sum, ctx);
+        zz_md5_fini(md5sum, md5);
         finfo(stdout, opts, opts->seed);
         fprintf(stdout, "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x"
                 "%.02x%.02x%.02x%.02x%.02x%.02x\n", md5sum[0], md5sum[1],
@@ -715,7 +715,7 @@ static void spawn_children(struct opts *opts)
 
         int k = 0;
 
-        for (int j = caca_optind + 1; j < opts->oldargc; ++j)
+        for (int j = zz_optind + 1; j < opts->oldargc; ++j)
         {
             FILE *fpin = fopen(opts->oldargv[j], "r");
             if (!fpin)
@@ -734,7 +734,7 @@ static void spawn_children(struct opts *opts)
                 continue;
             }
 
-            opts->child[slot].newargv[j - caca_optind] = strdup(tmpname);
+            opts->child[slot].newargv[j - zz_optind] = strdup(tmpname);
 
             _zz_register(k);
             while (!feof(fpin))
@@ -771,10 +771,10 @@ static void spawn_children(struct opts *opts)
     opts->child[slot].seed = opts->seed;
     opts->child[slot].ratio = _zz_getratio();
     opts->child[slot].status = STATUS_RUNNING;
-    if (opts->md5)
-        opts->child[slot].ctx = _zz_md5_init();
+    if (opts->b_md5)
+        opts->child[slot].md5 = zz_md5_init();
 
-    if (opts->verbose)
+    if (opts->b_verbose)
     {
         finfo(stderr, opts, opts->child[slot].seed);
         fprintf(stderr, "launched `%s'\n", opts->child[slot].newargv[0]);
@@ -801,7 +801,7 @@ static void clean_children(struct opts *opts)
             && opts->maxbytes >= 0
             && opts->child[i].bytes > opts->maxbytes)
         {
-            if (opts->verbose)
+            if (opts->b_verbose)
             {
                 finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "data output exceeded, sending SIGTERM\n");
@@ -821,7 +821,7 @@ static void clean_children(struct opts *opts)
              && opts->maxusertime >= 0
              && now > opts->child[i].date + opts->maxusertime)
         {
-            if (opts->verbose)
+            if (opts->b_verbose)
             {
                 finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "running time exceeded, sending SIGTERM\n");
@@ -844,7 +844,7 @@ static void clean_children(struct opts *opts)
         if (opts->child[i].status == STATUS_SIGTERM
             && now > opts->child[i].date + 2000000)
         {
-            if (opts->verbose)
+            if (opts->b_verbose)
             {
                 finfo(stderr, opts, opts->child[i].seed);
                 fprintf(stderr, "not responding, sending SIGKILL\n");
@@ -878,7 +878,7 @@ static void clean_children(struct opts *opts)
         if (pid <= 0)
             continue;
 
-        if (opts->checkexit && WIFEXITED(status) && WEXITSTATUS(status))
+        if (opts->b_checkexit && WIFEXITED(status) && WEXITSTATUS(status))
         {
             finfo(stderr, opts, opts->child[i].seed);
             fprintf(stderr, "exit %i\n", WEXITSTATUS(status));
@@ -904,7 +904,7 @@ static void clean_children(struct opts *opts)
                     WTERMSIG(status), sig2name(WTERMSIG(status)), message);
             opts->crashes++;
         }
-        else if (opts->verbose)
+        else if (opts->b_verbose)
         {
             finfo(stderr, opts, opts->child[i].seed);
             if (WIFSIGNALED(status))
@@ -947,20 +947,20 @@ static void clean_children(struct opts *opts)
 
         if (opts->opmode == OPMODE_COPY)
         {
-            for (int j = caca_optind + 1; j < opts->oldargc; ++j)
+            for (int j = zz_optind + 1; j < opts->oldargc; ++j)
             {
-                if (opts->child[i].newargv[j - caca_optind] != opts->oldargv[j])
+                if (opts->child[i].newargv[j - zz_optind] != opts->oldargv[j])
                 {
-                    unlink(opts->child[i].newargv[j - caca_optind]);
-                    free(opts->child[i].newargv[j - caca_optind]);
-                    opts->child[i].newargv[j - caca_optind] = opts->oldargv[j];
+                    unlink(opts->child[i].newargv[j - zz_optind]);
+                    free(opts->child[i].newargv[j - zz_optind]);
+                    opts->child[i].newargv[j - zz_optind] = opts->oldargv[j];
                 }
             }
         }
 
-        if (opts->md5)
+        if (opts->b_md5)
         {
-            _zz_md5_fini(md5sum, opts->child[i].ctx);
+            zz_md5_fini(md5sum, opts->child[i].md5);
             finfo(stdout, opts, opts->child[i].seed);
             fprintf(stdout, "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x"
                     "%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n", md5sum[0],
@@ -1012,8 +1012,8 @@ static void __stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered,
     if (co->fd_no != 0) /* either out or err fd */
         co->opts->child[co->child_no].bytes += nbr_of_bytes_transfered;
 
-    if (co->opts->md5 && co->fd_no == 2)
-        _zz_md5_add(co->opts->child[co->child_no].ctx, co->buf, nbr_of_bytes_transfered);
+    if (co->opts->b_md5 && co->fd_no == 2)
+        zz_md5_add(co->opts->child[co->child_no].md5, co->buf, nbr_of_bytes_transfered);
 
     free(co); /* clean up allocated data */
 }
@@ -1116,9 +1116,9 @@ static void read_children(struct opts *opts)
             if (j != 0)
                 opts->child[i].bytes += ret;
 
-            if (opts->md5 && j == 2)
-                _zz_md5_add(opts->child[i].ctx, buf, ret);
-            else if (!opts->quiet || j == 0)
+            if (opts->b_md5 && j == 2)
+                zz_md5_add(opts->child[i].md5, buf, ret);
+            else if (!opts->b_quiet || j == 0)
                 write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);
         }
         else if (ret == 0)
