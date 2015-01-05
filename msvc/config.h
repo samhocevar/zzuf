@@ -1,15 +1,13 @@
 /*
  *  zzuf - general purpose fuzzer
- *  Copyright (c) 2006-2009 Sam Hocevar <sam@hocevar.net>
- *                All Rights Reserved
  *
- *  $Id: timer.h 192 2007-01-12 15:47:48Z sam $
+ *  Copyright © 2006—2015 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
- *  and/or modify it under the terms of the Do What The Fuck You Want
- *  To Public License, Version 2, as published by Sam Hocevar. See
- *  http://sam.zoy.org/wtfpl/COPYING for more details.
+ *  and/or modify it under the terms of the Do What the Fuck You Want
+ *  to Public License, Version 2, as published by the WTFPL Task Force.
+ *  See http://www.wtfpl.net/ for more details.
  */
 
 /*
@@ -145,10 +143,10 @@
 /* #undef NO_MINUS_C_MINUS_O */
 #define PACKAGE_BUGREPORT ""
 #define PACKAGE_NAME "zzuf"
-#define PACKAGE_STRING "zzuf 0.12"
+#define PACKAGE_STRING PACKAGE_NAME " " PACKAGE_VERSION
 #define PACKAGE_TARNAME "zzuf"
 #define PACKAGE_URL ""
-#define PACKAGE_VERSION "0.12"
+#define PACKAGE_VERSION "0.13"
 /* #undef READ_USES_SSIZE_T */
 #define RECV_T int
 #define SONAME "libzzuf.dll"
