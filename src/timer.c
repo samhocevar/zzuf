@@ -39,24 +39,15 @@ int64_t _zz_time(void)
     gettimeofday(&tv, NULL);
     return (int64_t)tv.tv_sec * 1000000 + tv.tv_usec;
 #else
-    /* FIXME: use a simple spinlock here instead */
-    static CRITICAL_SECTION cs;
-    static unsigned long int prev;
-    static int64_t tv_base = 0;
+    static zz_mutex mutex = 0;
+    static unsigned long int prev = 0;
 
-    if (tv_base == 0)
-    {
-        tv_base = 1;
-        prev = 0;
-        InitializeCriticalSection(&cs);
-    }
-
-    EnterCriticalSection(&cs);
+    zz_lock(&mutex);
     unsigned long int tv_msec = GetTickCount();
     if (tv_msec < prev)
         tv_base += 0x100000000LL; /* We wrapped */
     prev = tv_msec;
-    LeaveCriticalSection(&cs);
+    zz_unlock(&mutex);
 
     return (tv_base + tv_msec) * 1000;
 #endif
