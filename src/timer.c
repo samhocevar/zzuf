@@ -31,6 +31,7 @@
 #include <time.h>
 
 #include "timer.h"
+#include "util/mutex.h"
 
 int64_t _zz_time(void)
 {
@@ -41,6 +42,7 @@ int64_t _zz_time(void)
 #else
     static zz_mutex mutex = 0;
     static unsigned long int prev = 0;
+    static uint64_t tv_base = 0;
 
     zz_lock(&mutex);
     unsigned long int tv_msec = GetTickCount();
