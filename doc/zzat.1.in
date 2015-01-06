@@ -1,4 +1,4 @@
-.TH zzat 1 "2010-01-07" "zzat @PACKAGE_VERSION@"
+.TH zzat 1 "2015-01-06" "zzat @PACKAGE_VERSION@"
 .SH NAME
 zzat \- concatenate files using different instruction sequences
 .SH SYNOPSIS
@@ -113,13 +113,13 @@ Read f entirely, in chunks of 32768 bytes until end-of-file is reached:
 \fBzzuf(3)\fR, \fBlibzzuf(3)\fR
 .SH AUTHOR
 .PP
-Copyright \(co 2002\-2010 Sam Hocevar <sam@hocevar.net>.
+Copyright \(co 2002\-2015 Sam Hocevar <sam@hocevar.net>.
 .PP
 \fBzzat\fR and this manual page are free software. They come without any
 warranty, to the extent permitted by applicable law. You can redistribute
-them and/or modify them under the terms of the Do What The Fuck You Want
-To Public License, Version 2, as published by Sam Hocevar. See
-\fBhttp://sam.zoy.org/wtfpl/COPYING\fR for more details.
+them and/or modify them under the terms of the Do What the Fuck You Want
+to Public License, Version 2, as published by the WTFPL Task Force. See
+\fBhttp://www.wtfpl.net/\fR for more details.
 .PP
 \fBzzuf\fR's webpage can be found at \fBhttp://caca.zoy.org/wiki/zzuf\fR.
 An overview of the architecture and inner works is at
