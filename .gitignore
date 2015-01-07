@@ -30,7 +30,7 @@ msvc/*.suo
 msvc/*.sdf
 msvc/*.opensdf
 msvc/Debug
-msvc/Releast
+msvc/Release
 # Our binaries
 src/zzuf
 src/zzat
