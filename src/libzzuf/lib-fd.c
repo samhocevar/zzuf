@@ -169,8 +169,9 @@ static int     (*ORIG(close))   (int fd);
 #define ZZ_OPEN(myopen) \
     do \
     { \
-        int mode = 0; \
         LOADSYM(myopen); \
+        \
+        int mode = 0; \
         if (oflag & O_CREAT) \
         { \
             va_list va; \
@@ -224,10 +225,9 @@ int NEW(__open64)(const char *file, int oflag, ...)
 #undef dup
 int NEW(dup)(int oldfd)
 {
-    int ret;
-
     LOADSYM(dup);
-    ret = ORIG(dup)(oldfd);
+
+    int ret = ORIG(dup)(oldfd);
     if (!_zz_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
          || !_zz_isactive(oldfd))
         return ret;
@@ -246,10 +246,9 @@ int NEW(dup)(int oldfd)
 #undef dup2
 int NEW(dup2)(int oldfd, int newfd)
 {
-    int ret;
-
     LOADSYM(dup2);
-    ret = ORIG(dup2)(oldfd, newfd);
+
+    int ret = ORIG(dup2)(oldfd, newfd);
     if (!_zz_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
          || !_zz_isactive(oldfd))
         return ret;
@@ -273,10 +272,9 @@ int NEW(dup2)(int oldfd, int newfd)
 #undef accept
 int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
 {
-    int ret;
-
     LOADSYM(accept);
-    ret = ORIG(accept)(sockfd, addr, addrlen);
+
+    int ret = ORIG(accept)(sockfd, addr, addrlen);
     if (!_zz_ready || _zz_islocked(-1) || !_zz_network
          || !_zz_iswatched(sockfd) || !_zz_isactive(sockfd))
         return ret;
@@ -305,6 +303,7 @@ int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
     do \
     { \
         LOADSYM(myconnect); \
+        \
         ret = ORIG(myconnect)(sockfd, addr, addrlen); \
         if (!_zz_ready || _zz_islocked(-1) || !_zz_network) \
             return ret; \
@@ -357,10 +356,9 @@ int NEW(connect)(int sockfd, const SOCKADDR_T *serv_addr,
 #undef socket
 int NEW(socket)(int domain, int type, int protocol)
 {
-    int ret;
-
     LOADSYM(socket);
-    ret = ORIG(socket)(domain, type, protocol);
+
+    int ret = ORIG(socket)(domain, type, protocol);
     if (!_zz_ready || _zz_islocked(-1) || !_zz_network)
         return ret;
 
@@ -378,6 +376,7 @@ int NEW(socket)(int domain, int type, int protocol)
     do \
     { \
         LOADSYM(myrecv); \
+        \
         ret = ORIG(myrecv) myargs; \
         if (!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
              || _zz_islocked(s) || !_zz_isactive(s)) \
@@ -420,6 +419,7 @@ RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, size_t buflen, int flags)
     do \
     { \
         LOADSYM(myrecvfrom); \
+        \
         ret = ORIG(myrecvfrom) myargs; \
         if (!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
              || _zz_islocked(s) || !_zz_isactive(s)) \
@@ -474,10 +474,9 @@ RECV_T NEW(__recvfrom_chk)(int s, void *buf, size_t len, size_t buflen,
 #undef recvmsg
 RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
 {
-    ssize_t ret;
-
     LOADSYM(recvmsg);
-    ret = ORIG(recvmsg)(s, hdr, flags);
+
+    ssize_t ret = ORIG(recvmsg)(s, hdr, flags);
     if (!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s)
          || _zz_islocked(s) || !_zz_isactive(s))
         return ret;
@@ -493,6 +492,7 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
     do \
     { \
         LOADSYM(myread); \
+        \
         ret = ORIG(myread) myargs; \
         if (!_zz_ready || !_zz_iswatched(fd) || !_zz_hostwatched(fd) \
              || _zz_islocked(fd) || !_zz_isactive(fd)) \
@@ -541,10 +541,9 @@ ssize_t NEW(__read_chk)(int fd, void *buf, size_t count, size_t buflen)
 #undef readv
 ssize_t NEW(readv)(int fd, const struct iovec *iov, int count)
 {
-    ssize_t ret;
-
     LOADSYM(readv);
-    ret = ORIG(readv)(fd, iov, count);
+
+    ssize_t ret = ORIG(readv)(fd, iov, count);
     if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
          || !_zz_isactive(fd))
         return ret;
@@ -561,10 +560,9 @@ ssize_t NEW(readv)(int fd, const struct iovec *iov, int count)
 #undef pread
 ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
 {
-    int ret;
-
     LOADSYM(pread);
-    ret = ORIG(pread)(fd, buf, count, offset);
+
+    int ret = ORIG(pread)(fd, buf, count, offset);
     if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
          || !_zz_isactive(fd))
         return ret;
@@ -598,6 +596,7 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
     do \
     { \
         LOADSYM(mylseek); \
+        \
         ret = ORIG(mylseek)(fd, offset, whence); \
         if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
              || !_zz_isactive(fd)) \
@@ -636,15 +635,14 @@ off64_t NEW(__lseek64)(int fd, off64_t offset, int whence)
 #undef aio_read
 int NEW(aio_read)(struct aiocb *aiocbp)
 {
-    int ret;
-    int fd = aiocbp->aio_fildes;
-
     LOADSYM(aio_read);
+
+    int fd = aiocbp->aio_fildes;
     if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(aio_read)(aiocbp);
 
     _zz_lockfd(fd);
-    ret = ORIG(aio_read)(aiocbp);
+    int ret = ORIG(aio_read)(aiocbp);
 
     debug("%s({%i, %i, %i, %p, %li, ..., %li}) = %i", __func__,
           fd, aiocbp->aio_lio_opcode, aiocbp->aio_reqprio, aiocbp->aio_buf,
@@ -656,14 +654,13 @@ int NEW(aio_read)(struct aiocb *aiocbp)
 #undef aio_return
 ssize_t NEW(aio_return)(struct aiocb *aiocbp)
 {
-    ssize_t ret;
-    int fd = aiocbp->aio_fildes;
-
     LOADSYM(aio_return);
+
+    int fd = aiocbp->aio_fildes;
     if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(aio_return)(aiocbp);
 
-    ret = ORIG(aio_return)(aiocbp);
+    ssize_t ret = ORIG(aio_return)(aiocbp);
     _zz_unlock(fd);
 
     /* FIXME: make sure we’re actually *reading* */
@@ -686,14 +683,13 @@ ssize_t NEW(aio_return)(struct aiocb *aiocbp)
 #undef close
 int NEW(close)(int fd)
 {
-    int ret;
+    LOADSYM(close);
 
     /* Hey, it’s our debug channel! Silently pretend we closed it. */
     if (fd == _zz_debugfd)
         return 0;
 
-    LOADSYM(close);
-    ret = ORIG(close)(fd);
+    int ret = ORIG(close)(fd);
     if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
@@ -731,13 +727,13 @@ static void offset_check(int fd)
 {
     int orig_errno = errno;
 #if defined HAVE_LSEEK64
-    off64_t ret;
     LOADSYM(lseek64);
-    ret = ORIG(lseek64)(fd, 0, SEEK_CUR);
+
+    off64_t ret = ORIG(lseek64)(fd, 0, SEEK_CUR);
 #else
-    off_t ret;
     LOADSYM(lseek);
-    ret = ORIG(lseek)(fd, 0, SEEK_CUR);
+
+    off_t ret = ORIG(lseek)(fd, 0, SEEK_CUR);
 #endif
     if (ret != -1 && ret != _zz_getpos(fd))
         debug("warning: offset inconsistency");

@@ -93,14 +93,12 @@ static int isfatal(int signum)
 #undef signal
 SIG_T NEW(signal)(int signum, SIG_T handler)
 {
-    SIG_T ret;
-
     LOADSYM(signal);
 
     if (!_zz_signal)
         return ORIG(signal)(signum, handler);
 
-    ret = ORIG(signal)(signum, isfatal(signum) ? SIG_DFL : handler);
+    SIG_T ret = ORIG(signal)(signum, isfatal(signum) ? SIG_DFL : handler);
 
     debug("%s(%i, %p) = %p", __func__, signum, handler, ret);
 
@@ -112,12 +110,12 @@ SIG_T NEW(signal)(int signum, SIG_T handler)
 int NEW(sigaction)(int signum, const struct sigaction *act,
                    struct sigaction *oldact)
 {
-    int ret;
-
     LOADSYM(sigaction);
 
     if (!_zz_signal)
         return ORIG(sigaction)(signum, act, oldact);
+
+    int ret;
 
     if (act && isfatal(signum))
     {

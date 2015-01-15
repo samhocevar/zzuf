@@ -156,7 +156,6 @@ void _zz_mem_init(void)
 #undef calloc
 void *NEW(calloc)(size_t nmemb, size_t size)
 {
-    void *ret;
     if (!ORIG(calloc))
     {
         /* Store the chunk length just before the buffer we'll return */
@@ -164,14 +163,15 @@ void *NEW(calloc)(size_t nmemb, size_t size)
         memcpy(dummy_buffer + dummy_offset, &lsize, sizeof(size_t));
         dummy_offset++;
 
-        ret = dummy_buffer + dummy_offset;
+        void *ret = dummy_buffer + dummy_offset;
         memset(ret, 0, nmemb * size);
         dummy_offset += (nmemb * size + DUMMY_ALIGNMENT - 1) / DUMMY_ALIGNMENT;
         debug("%s(%li, %li) = %p", __func__,
               (long int)nmemb, (long int)size, ret);
         return ret;
     }
-    ret = ORIG(calloc)(nmemb, size);
+
+    void *ret = ORIG(calloc)(nmemb, size);
     if (ret == NULL && _zz_memory && errno == ENOMEM)
         raise(SIGKILL);
     return ret;
@@ -219,7 +219,6 @@ void NEW(free)(void *ptr)
 #undef realloc
 void *NEW(realloc)(void *ptr, size_t size)
 {
-    void *ret;
     if (!ORIG(realloc)
         || ((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP))
     {
@@ -229,7 +228,7 @@ void *NEW(realloc)(void *ptr, size_t size)
         memcpy(dummy_buffer + dummy_offset, &size, sizeof(size_t));
         dummy_offset++;
 
-        ret = dummy_buffer + dummy_offset;
+        void *ret = dummy_buffer + dummy_offset;
         if ((uintptr_t)ptr >= DUMMY_START && (uintptr_t)ptr < DUMMY_STOP)
             memcpy(&oldsize, (DUMMY_TYPE *)ptr - 1, sizeof(size_t));
         else
@@ -239,8 +238,10 @@ void *NEW(realloc)(void *ptr, size_t size)
         debug("%s(%p, %li) = %p", __func__, ptr, (long int)size, ret);
         return ret;
     }
+
     LOADSYM(realloc);
-    ret = ORIG(realloc)(ptr, size);
+
+    void *ret = ORIG(realloc)(ptr, size);
     if (_zz_memory && ((!ret && errno == ENOMEM)
                         || (ret && memory_exceeded())))
         raise(SIGKILL);
@@ -251,9 +252,9 @@ void *NEW(realloc)(void *ptr, size_t size)
 #undef valloc
 void *NEW(valloc)(size_t size)
 {
-    void *ret;
     LOADSYM(valloc);
-    ret = ORIG(valloc)(size);
+
+    void *ret = ORIG(valloc)(size);
     if (_zz_memory && ((!ret && errno == ENOMEM)
                         || (ret && memory_exceeded())))
         raise(SIGKILL);
@@ -265,9 +266,9 @@ void *NEW(valloc)(size_t size)
 #undef memalign
 void *NEW(memalign)(size_t boundary, size_t size)
 {
-    void *ret;
     LOADSYM(memalign);
-    ret = ORIG(memalign)(boundary, size);
+
+    void *ret = ORIG(memalign)(boundary, size);
     if (_zz_memory && ((!ret && errno == ENOMEM)
                         || (ret && memory_exceeded())))
         raise(SIGKILL);
@@ -279,9 +280,9 @@ void *NEW(memalign)(size_t boundary, size_t size)
 #undef posix_memalign
 int NEW(posix_memalign)(void **memptr, size_t alignment, size_t size)
 {
-    int ret;
     LOADSYM(posix_memalign);
-    ret = ORIG(posix_memalign)(memptr, alignment, size);
+
+    int ret = ORIG(posix_memalign)(memptr, alignment, size);
     if (_zz_memory && ((!ret && errno == ENOMEM)
                         || (ret && memory_exceeded())))
         raise(SIGKILL);
@@ -295,8 +296,9 @@ int nbmaps = 0;
 
 #define ZZ_MMAP(mymmap, off_t) \
     do { \
-        char *b = MAP_FAILED; \
         LOADSYM(mymmap); \
+        \
+        char *b = MAP_FAILED; \
         if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
              || !_zz_isactive(fd)) \
             return ORIG(mymmap)(start, length, prot, flags, fd, offset); \
@@ -368,6 +370,7 @@ void *NEW(mmap64)(void *start, size_t length, int prot, int flags,
 int NEW(munmap)(void *start, size_t length)
 {
     LOADSYM(munmap);
+
     for (int i = 0; i < nbmaps; ++i)
     {
         if (maps[i] != start)
@@ -390,10 +393,9 @@ int NEW(munmap)(void *start, size_t length)
 kern_return_t NEW(map_fd)(int fd, vm_offset_t offset, vm_offset_t *addr,
                           boolean_t find_space, vm_size_t numbytes)
 {
-    kern_return_t ret;
-
     LOADSYM(map_fd);
-    ret = ORIG(map_fd)(fd, offset, addr, find_space, numbytes);
+
+    kern_return_t ret = ORIG(map_fd)(fd, offset, addr, find_space, numbytes);
     if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
          || !_zz_isactive(fd))
         return ret;
