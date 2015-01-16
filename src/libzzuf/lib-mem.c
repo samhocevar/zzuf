@@ -302,6 +302,7 @@ int nbmaps = 0;
             return ORIG(mymmap)(start, length, prot, flags, fd, offset); \
         \
         char *b = MAP_FAILED; \
+        \
         ret = ORIG(mymmap)(NULL, length, prot, flags, fd, offset); \
         if (ret != MAP_FAILED && length) \
         { \
@@ -326,13 +327,25 @@ int nbmaps = 0;
             } \
             maps[i] = b; \
             maps[i + 1] = ret; \
+            \
+            /* If we requested a memory area larger than the end of the
+             * file, it was not actually allocated, so do not try to
+             * copy data beyond that point. */ \
+            size_t data_length = _zz_bytes_until_eof(fd, offset); \
+            if (data_length > length) \
+                data_length = length; \
+            \
             oldpos = _zz_getpos(fd); \
             _zz_setpos(fd, offset); /* mmap() maps the fd at offset 0 */ \
-            memcpy(b, ret, length); /* FIXME: get rid of this */ \
+            /* FIXME: we should not blindly memcpy() here because the
+             * memory area might be immense; instead, rely on mprotect()
+             * and sigaction() to detect page faults and only copy memory
+             * areas that get accessed. */ \
+            memcpy(b, ret, data_length); \
             _zz_fuzz(fd, (uint8_t *)b, length); \
             _zz_setpos(fd, oldpos); \
             ret = b; \
-            if (length >= 4) \
+            if (data_length >= 4) \
                 debug("%s(%p, %li, %i, %i, %i, %lli) = %p \"%c%c%c%c...", \
                       __func__, start, (long int)length, prot, flags, fd, \
                       (long long int)offset, ret, b[0], b[1], b[2], b[3]); \

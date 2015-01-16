@@ -737,3 +737,28 @@ static void offset_check(int fd)
     errno = orig_errno;
 }
 
+/* Utility function to know how many bytes are left until the end of
+ * the file. */
+size_t _zz_bytes_until_eof(int fd, size_t offset)
+{
+    int orig_errno = errno;
+#if defined HAVE_LSEEK64
+    LOADSYM(lseek64);
+
+    off64_t current = ORIG(lseek64)(fd, 0, SEEK_CUR);
+    off64_t begin = ORIG(lseek64)(fd, offset, SEEK_CUR);
+    off64_t end = ORIG(lseek64)(fd, 0, SEEK_END);
+    ORIG(lseek64)(fd, current, SEEK_SET);
+#else
+    LOADSYM(lseek);
+
+    off_t current = ORIG(lseek)(fd, 0, SEEK_CUR);
+    off_t begin = ORIG(lseek)(fd, offset, SEEK_CUR);
+    off_t end = ORIG(lseek)(fd, 0, SEEK_END);
+    ORIG(lseek)(fd, current, SEEK_SET);
+#endif
+    errno = orig_errno;
+
+    return (begin >= end) ? 0 : (size_t)(end - begin);
+}
+
