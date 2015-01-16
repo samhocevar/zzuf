@@ -298,10 +298,10 @@ int nbmaps = 0;
     do { \
         LOADSYM(mymmap); \
         \
-        char *b = MAP_FAILED; \
-        if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
-             || !_zz_isactive(fd)) \
+        if (!must_fuzz_fd(fd)) \
             return ORIG(mymmap)(start, length, prot, flags, fd, offset); \
+        \
+        char *b = MAP_FAILED; \
         ret = ORIG(mymmap)(NULL, length, prot, flags, fd, offset); \
         if (ret != MAP_FAILED && length) \
         { \
@@ -396,8 +396,7 @@ kern_return_t NEW(map_fd)(int fd, vm_offset_t offset, vm_offset_t *addr,
     LOADSYM(map_fd);
 
     kern_return_t ret = ORIG(map_fd)(fd, offset, addr, find_space, numbytes);
-    if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
-         || !_zz_isactive(fd))
+    if (!must_fuzz_fd(fd))
         return ret;
 
     if (ret == 0 && numbytes)

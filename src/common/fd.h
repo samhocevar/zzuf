@@ -11,6 +11,8 @@
  *  See http://www.wtfpl.net/ for more details.
  */
 
+#pragma once
+
 /*
  *  fd.h: file descriptor functions
  */

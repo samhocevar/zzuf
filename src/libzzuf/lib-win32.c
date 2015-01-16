@@ -192,7 +192,7 @@ BOOL __stdcall NEW(ReadFile)(HANDLE hFile, LPVOID lpBuffer,
     debug("ReadFile(%#08x, %p, %#08x, %#08x, %p) = %s",
         hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped, (ret ? "TRUE" : "FALSE"));
 
-    if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile))
+    if (!must_fuzz_fd(hFile) /*|| !_zz_hostwatched(hFile)*/)
         return ret;
 
     if (ret)
@@ -219,7 +219,7 @@ BOOL __stdcall NEW(ReadFileEx)(HANDLE hFile, LPVOID lpBuffer,
     debug("ReadFileEx(%#08x, %p, %#08x, %p, %p, %p) = %s",
         hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped, lpCompletionRoutine, (ret ? "TRUE" : "FALSE"));
 
-    if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile))
+    if (!must_fuzz_fd(hFile) /*|| !_zz_hostwatched(hFile)*/)
         return ret;
 
     if (ret)
@@ -245,7 +245,7 @@ HANDLE __stdcall NEW(CreateIoCompletionPort)(HANDLE FileHandle, HANDLE ExistingC
           FileHandle, ExistingCompletionPort, CompletionKey,
           NumberOfConcurrentThreads, ret);
 
-    if (!_zz_ready || !_zz_iswatched(FileHandle) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(FileHandle) || !_zz_isactive(FileHandle))
+    if (!must_fuzz_fd(FileHandle) /*|| !_zz_hostwatched(FileHandle)*/)
         return ret;
 
     if (ret != NULL)
@@ -302,7 +302,7 @@ HANDLE __stdcall NEW(CreateFileMappingA)(HANDLE hFile, LPSECURITY_ATTRIBUTES lpA
     if (ret == NULL)
         return ret;
 
-    if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile) || _zz_islocked(-1))
+    if (!must_fuzz_fd(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(-1))
         return ret;
 
     debug("handle %#08x is registered", ret);
@@ -328,7 +328,7 @@ HANDLE __stdcall NEW(CreateFileMappingW)(HANDLE hFile, LPSECURITY_ATTRIBUTES lpA
     if (ret == NULL)
         return ret;
 
-    if (!_zz_ready || !_zz_iswatched(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(hFile) || !_zz_isactive(hFile) || _zz_islocked(-1))
+    if (!must_fuzz_fd(hFile) /*|| !_zz_hostwatched(hFile)*/ || _zz_islocked(-1))
         return ret;
 
     debug("handle %#08x is registered", ret);

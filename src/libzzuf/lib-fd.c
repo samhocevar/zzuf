@@ -378,9 +378,9 @@ int NEW(socket)(int domain, int type, int protocol)
         LOADSYM(myrecv); \
         \
         ret = ORIG(myrecv) myargs; \
-        if (!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
-             || _zz_islocked(s) || !_zz_isactive(s)) \
+        if (!must_fuzz_fd(s) || !_zz_hostwatched(s)) \
             return ret; \
+        \
         if (ret > 0) \
         { \
             char *b = buf; \
@@ -421,9 +421,9 @@ RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, size_t buflen, int flags)
         LOADSYM(myrecvfrom); \
         \
         ret = ORIG(myrecvfrom) myargs; \
-        if (!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s) \
-             || _zz_islocked(s) || !_zz_isactive(s)) \
+        if (!must_fuzz_fd(s) || !_zz_hostwatched(s)) \
             return ret; \
+        \
         if (ret > 0) \
         { \
             char tmp[128]; \
@@ -477,8 +477,7 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
     LOADSYM(recvmsg);
 
     ssize_t ret = ORIG(recvmsg)(s, hdr, flags);
-    if (!_zz_ready || !_zz_iswatched(s) || !_zz_hostwatched(s)
-         || _zz_islocked(s) || !_zz_isactive(s))
+    if (!must_fuzz_fd(s) || !_zz_hostwatched(s))
         return ret;
 
     fuzz_iovec(s, hdr->msg_iov, ret);
@@ -494,9 +493,9 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
         LOADSYM(myread); \
         \
         ret = ORIG(myread) myargs; \
-        if (!_zz_ready || !_zz_iswatched(fd) || !_zz_hostwatched(fd) \
-             || _zz_islocked(fd) || !_zz_isactive(fd)) \
+        if (!must_fuzz_fd(fd) || !_zz_hostwatched(fd)) \
             return ret; \
+        \
         if (ret > 0) \
         { \
             char *b = buf; \
@@ -544,8 +543,7 @@ ssize_t NEW(readv)(int fd, const struct iovec *iov, int count)
     LOADSYM(readv);
 
     ssize_t ret = ORIG(readv)(fd, iov, count);
-    if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
-         || !_zz_isactive(fd))
+    if (!must_fuzz_fd(fd))
         return ret;
 
     fuzz_iovec(fd, iov, ret);
@@ -563,8 +561,7 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
     LOADSYM(pread);
 
     int ret = ORIG(pread)(fd, buf, count, offset);
-    if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd)
-         || !_zz_isactive(fd))
+    if (!must_fuzz_fd(fd))
         return ret;
 
     if (ret > 0)
@@ -598,9 +595,9 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
         LOADSYM(mylseek); \
         \
         ret = ORIG(mylseek)(fd, offset, whence); \
-        if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd) \
-             || !_zz_isactive(fd)) \
+        if (!must_fuzz_fd(fd)) \
             return ret; \
+        \
         debug("%s(%i, %lli, %i) = %lli", __func__, fd, \
               (long long int)offset, whence, (long long int)ret); \
         if (ret != (off_t)-1) \

@@ -10,9 +10,13 @@
  *  See http://www.wtfpl.net/ for more details.
  */
 
+#pragma once
+
 /*
  *  libzzuf.h: preloaded wrapper library
  */
+
+#include "fd.h"
 
 /* Internal variables */
 extern int _zz_ready;
@@ -40,3 +44,10 @@ extern void _zz_mem_init(void);
 #   include <windows.h>
 extern CRITICAL_SECTION _zz_pipe_cs;
 #endif
+
+static inline int must_fuzz_fd(int fd)
+{
+    return _zz_ready && _zz_iswatched(fd)
+            && !_zz_islocked(fd) && _zz_isactive(fd);
+}
+

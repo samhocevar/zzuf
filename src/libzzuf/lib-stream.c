@@ -368,9 +368,9 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         LOADSYM(myfseek); \
         \
         int fd = fileno(stream); \
-        if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
-             || _zz_islocked(fd)) \
+        if (!must_fuzz_fd(fd)) \
             return ORIG(myfseek)(stream, offset, whence); \
+        \
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         int64_t oldpos = ZZ_FTELL(stream); \
@@ -404,9 +404,9 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         LOADSYM(myfsetpos); \
         \
         int fd = fileno(stream); \
-        if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
-             || _zz_islocked(fd)) \
+        if (!must_fuzz_fd(fd)) \
             return ORIG(myfsetpos)(stream, pos); \
+        \
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         int64_t oldpos = ZZ_FTELL(stream); \
@@ -435,8 +435,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         LOADSYM(rewind); \
         \
         int fd = fileno(stream); \
-        if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
-             || _zz_islocked(fd)) \
+        if (!must_fuzz_fd(fd)) \
         { \
             ORIG(rewind)(stream); \
             return; \
@@ -529,9 +528,9 @@ void NEW(rewind)(FILE *stream)
         \
         uint8_t *b = (uint8_t *)ptr; \
         int fd = fileno(stream); \
-        if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
-             || _zz_islocked(fd)) \
+        if (!must_fuzz_fd(fd)) \
             return ORIG(myfread) myargs; \
+        \
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         int64_t oldpos = ZZ_FTELL(stream); \
@@ -617,9 +616,9 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
         LOADSYM(myfgetc); \
         \
         int fd = fileno(s); \
-        if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
-             || _zz_islocked(fd)) \
+        if (!must_fuzz_fd(fd)) \
             return ORIG(myfgetc)(arg); \
+        \
         debug_stream("before", s); \
         int64_t oldpos = ZZ_FTELL(s); \
         int oldcnt = get_stream_cnt(s); \
@@ -712,9 +711,9 @@ int NEW(fgetc_unlocked)(FILE *stream)
         \
         ret = s; \
         int fd = fileno(stream); \
-        if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
-             || _zz_islocked(fd)) \
+        if (!must_fuzz_fd(fd)) \
             return ORIG(myfgets) myargs; \
+        \
         debug_stream("before", stream); \
         int64_t oldpos = ZZ_FTELL(stream); \
         int oldcnt = get_stream_cnt(stream); \
@@ -815,8 +814,7 @@ int NEW(ungetc)(int c, FILE *stream)
     LOADSYM(ungetc);
 
     int fd = fileno(stream);
-    if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)
-         || _zz_islocked(fd))
+    if (!must_fuzz_fd(fd))
         return ORIG(ungetc)(c, stream);
 
     debug_stream("before", stream);
@@ -868,9 +866,9 @@ int NEW(fclose)(FILE *fp)
         LOADSYM(fgetc); \
         \
         int fd = fileno(stream); \
-        if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
-             || _zz_islocked(fd)) \
+        if (!must_fuzz_fd(fd)) \
             return ORIG(getdelim)(lineptr, n, delim, stream); \
+        \
         debug_stream("before", stream); \
         int64_t oldpos = ZZ_FTELL(stream); \
         int oldcnt = get_stream_cnt(stream); \
@@ -976,8 +974,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     LOADSYM(fgetc);
 
     int fd = fileno(stream);
-    if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd)
-         || _zz_islocked(fd))
+    if (!must_fuzz_fd(fd))
         return ORIG(fgetln)(stream, len);
 
     debug_stream("before", stream);
@@ -1052,9 +1049,9 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
         LOADSYM(myrefill); \
         \
         int fd = fileno(fp); \
-        if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd) \
-             || _zz_islocked(fd)) \
+        if (!must_fuzz_fd(fd)) \
             return ORIG(myrefill)(fp); \
+        \
         debug_stream("before", fp); \
         int64_t pos = _zz_getpos(fd); \
         _zz_lockfd(fd); \
