@@ -39,6 +39,7 @@ test/zznop
 test/zzone
 test/bug-div0
 test/bug-memory
+test/bug-mmap
 test/bug-overflow
 # Test suite temporary files
 test/*.log

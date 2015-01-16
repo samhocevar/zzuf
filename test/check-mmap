@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+#  check-mmap - check that zzuf handles mmap() properly
+#
+#  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+#
+#  This program is free software. It comes without any warranty, to
+#  the extent permitted by applicable law. You can redistribute it
+#  and/or modify it under the terms of the Do What the Fuck You Want
+#  to Public License, Version 2, as published by the WTFPL Task Force.
+#  See http://www.wtfpl.net/ for more details.
+#
+
+. "$(dirname "$0")/functions.inc"
+
+ulimit -c 0
+
+PROGRAM="$DIR/bug-mmap"
+if [ ! -f "$PROGRAM" ]; then
+  echo "error: test/bug-mmap is missing"
+  exit 1
+fi
+
+start_test "zzuf buffer overflow test"
+
+new_test "bug-mmap"
+if ! $PROGRAM; then
+    fail_test " unexpected exit status $?"
+else
+    pass_test " OK"
+fi
+
+new_test "zzuf -qi -r0 bug-mmap"
+if ! $ZZUF -r0 -qi "$PROGRAM"; then
+    fail_test " unexpected exit status $?"
+else
+    pass_test " OK"
+fi
+
+stop_test
+
