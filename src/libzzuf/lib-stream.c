@@ -284,7 +284,7 @@ static inline void debug_stream(char const *prefix, FILE *stream)
         { \
             int fd = fileno(ret); \
             _zz_register(fd); \
-            _zz_fuzz(fd, get_stream_ptr(ret), get_stream_cnt(ret)); \
+            _zz_fuzz(fd, get_streambuf_base(ret), get_streambuf_size(ret)); \
             debug_stream("after", ret); \
             debug("%s(\"%s\", \"%s\") = [%i]", __func__, path, mode, fd); \
         } \
@@ -308,7 +308,7 @@ static inline void debug_stream(char const *prefix, FILE *stream)
         { \
             fd1 = fileno(ret); \
             _zz_register(fd1); \
-            _zz_fuzz(fd1, get_stream_ptr(ret), get_stream_cnt(ret)); \
+            _zz_fuzz(fd1, get_streambuf_base(ret), get_streambuf_size(ret)); \
             disp = 1; \
         } \
         if (disp) \
