@@ -4,7 +4,8 @@ pkglib_LTLIBRARIES = libzzuf.la
 
 ZZUF = \
     zzuf.c opts.c opts.h timer.c timer.h myfork.c myfork.h \
-    util/getopt.c util/getopt.h util/md5.c util/md5.h
+    util/getopt.c util/getopt.h util/md5.c util/md5.h \
+    util/hex.c util/hex.h
 
 ZZAT = \
     zzat.c \

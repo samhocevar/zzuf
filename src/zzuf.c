@@ -66,6 +66,7 @@
 #include "timer.h"
 #include "util/getopt.h"
 #include "util/md5.h"
+#include "util/hex.h"
 
 #if !defined SIGKILL
 #   define SIGKILL 9
@@ -159,7 +160,7 @@ int main(int argc, char *argv[])
 #   define OPTSTR_RLIMIT_CPU ""
 #endif
 #define OPTSTR "+" OPTSTR_REGEX OPTSTR_RLIMIT_MEM OPTSTR_RLIMIT_CPU \
-                "a:Ab:B:C:dD:e:f:F:ij:l:mnO:p:P:qr:R:s:St:U:vxhV"
+                "a:Ab:B:C:dD:e:f:F:ij:l:mnO:p:P:qr:R:s:St:U:vxXhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
         static struct zz_option long_options[] =
@@ -201,6 +202,7 @@ int main(int argc, char *argv[])
             { "max-usertime", 1, NULL, 'U' },
             { "verbose",      0, NULL, 'v' },
             { "check-exit",   0, NULL, 'x' },
+            { "hex",          0, NULL, 'X' },
             { "help",         0, NULL, 'h' },
             { "version",      0, NULL, 'V' },
             { NULL,           0, NULL,  0  }
@@ -368,6 +370,9 @@ int main(int argc, char *argv[])
         case 'x': /* --check-exit */
             opts->b_checkexit = 1;
             break;
+        case 'X': /* --hex */
+            opts->b_hex = 1;
+            break;
         case 'v': /* --verbose */
             opts->b_verbose = 1;
             break;
@@ -385,6 +390,15 @@ int main(int argc, char *argv[])
             _zz_opts_fini(opts);
             return EXIT_FAILURE;
         }
+    }
+
+    if (opts->b_md5 && opts->b_hex)
+    {
+        fprintf(stderr, "%s: MD5 hash (-m) and hexadecimal dump (-X) are "
+                        "incompatible\n", argv[0]);
+        printf(MOREINFO, argv[0]);
+        _zz_opts_fini(opts);
+        return EXIT_FAILURE;
     }
 
     if (opts->ports && !b_network)
@@ -565,9 +579,12 @@ int main(int argc, char *argv[])
 static void loop_stdin(struct opts *opts)
 {
     struct zz_md5 *md5 = NULL;
+    struct zz_hex *hex = NULL;
 
     if (opts->b_md5)
         md5 = zz_md5_init();
+    else if (opts->b_hex)
+        hex = zz_hex_init();
 
     _zz_register(0);
 
@@ -595,6 +612,8 @@ static void loop_stdin(struct opts *opts)
 
         if (opts->b_md5)
             zz_md5_add(md5, buf, ret);
+        else if (opts->b_hex)
+            zz_hex_add(hex, buf, ret);
         else while (ret)
         {
             int nw = 0;
@@ -616,6 +635,10 @@ static void loop_stdin(struct opts *opts)
                 md5sum[7], md5sum[8], md5sum[9], md5sum[10], md5sum[11],
                 md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
         fflush(stdout);
+    }
+    else if (opts->b_hex)
+    {
+        zz_hex_fini(hex);
     }
 
     _zz_unregister(0);
@@ -773,6 +796,8 @@ static void spawn_children(struct opts *opts)
     opts->child[slot].status = STATUS_RUNNING;
     if (opts->b_md5)
         opts->child[slot].md5 = zz_md5_init();
+    else if (opts->b_hex)
+        opts->child[slot].hex = zz_hex_init();
 
     if (opts->b_verbose)
     {
@@ -969,6 +994,10 @@ static void clean_children(struct opts *opts)
                     md5sum[11], md5sum[12], md5sum[13], md5sum[14], md5sum[15]);
             fflush(stdout);
         }
+        else if (opts->b_hex)
+        {
+            zz_hex_fini(opts->child[i].hex);
+        }
         opts->child[i].status = STATUS_FREE;
         opts->nchild--;
     }
@@ -1014,6 +1043,8 @@ static void __stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered,
 
     if (co->opts->b_md5 && co->fd_no == 2)
         zz_md5_add(co->opts->child[co->child_no].md5, co->buf, nbr_of_bytes_transfered);
+    else if (co->opts->b_hex && co->fd_no == 2)
+        zz_hex_add(co->opts->child[co->child_no].hex, co->buf, nbr_of_bytes_transfered);
 
     free(co); /* clean up allocated data */
 }
@@ -1118,6 +1149,8 @@ static void read_children(struct opts *opts)
 
             if (opts->b_md5 && j == 2)
                 zz_md5_add(opts->child[i].md5, buf, ret);
+            else if (opts->b_hex && j == 2)
+                zz_hex_add(opts->child[i].hex, buf, ret);
             else if (!opts->b_quiet || j == 0)
                 write((j < 2) ? STDERR_FILENO : STDOUT_FILENO, buf, ret);
         }
@@ -1266,6 +1299,7 @@ static void usage(void)
     printf("  -U, --max-usertime <n>    kill children that run for more than <n> seconds\n");
     printf("  -v, --verbose             print information during the run\n");
     printf("  -x, --check-exit          report processes that exit with a non-zero status\n");
+    printf("  -X, --hex                 convert program output to hexadecimal\n");
     printf("  -h, --help                display this help and exit\n");
     printf("  -V, --version             output version information and exit\n");
     printf("\n");

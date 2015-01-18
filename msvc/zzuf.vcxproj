@@ -181,6 +181,7 @@
     <ClInclude Include="..\src\opts.h" />
     <ClInclude Include="..\src\timer.h" />
     <ClInclude Include="..\src\util\getopt.h" />
+    <ClInclude Include="..\src\util\hex.h" />
     <ClInclude Include="..\src\util\md5.h" />
     <ClInclude Include="..\src\util\mutex.h" />
     <ClInclude Include="..\src\util\regex.h" />
@@ -195,6 +196,7 @@
     <ClCompile Include="..\src\opts.c" />
     <ClCompile Include="..\src\timer.c" />
     <ClCompile Include="..\src\util\getopt.c" />
+    <ClCompile Include="..\src\util\hex.c" />
     <ClCompile Include="..\src\util\md5.c" />
     <ClCompile Include="..\src\util\regex.cpp">
       <CompileAs>CompileAsCpp</CompileAs>

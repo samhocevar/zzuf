@@ -174,7 +174,7 @@ considered by the \fB\-l\fR flag.
 \fB\-m\fR, \fB\-\-md5\fR
 Instead of displaying the program's \fIstandard output\fR, just print its MD5
 digest to \fBzzuf\fR's standard output. The standard error channel is left
-untouched.
+untouched. See also the \fB\-X\fR flag.
 .TP
 \fB\-M\fR, \fB\-\-max\-memory\fR=\fImebibytes\fR
 Specify the maximum amount of memory, in mebibytes (1 MiB = 1,048,576 bytes),
@@ -353,6 +353,10 @@ get run, their exit status, etc.
 \fB\-x\fR, \fB\-\-check\-exit\fR
 Report processes that exit with a non-zero status. By default only processes
 that crash due to a signal are reported.
+.TP
+\fB\-X\fR, \fB\-\-hex\fR
+Convert the fuzzed program's \fIstandard output\fR to hexadecimal. The standard
+error channel is left untouched. See also the \fB\-m\fR flag.
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Display a short help message and exit.

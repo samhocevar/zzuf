@@ -36,6 +36,7 @@ struct opts
     double maxratio;
 
     int b_md5;
+    int b_hex;
     int b_checkexit;
     int b_verbose;
     int b_quiet;
@@ -71,6 +72,7 @@ struct opts
         double ratio;
         int64_t date;
         struct zz_md5 *md5;
+        struct zz_hex *hex;
         char **newargv;
     } *child;
 };

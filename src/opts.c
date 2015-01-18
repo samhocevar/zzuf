@@ -43,6 +43,7 @@ void _zz_opts_init(struct opts *opts)
 
     opts->b_quiet = 0;
     opts->b_md5 = 0;
+    opts->b_hex = 0;
     opts->b_checkexit = 0;
     opts->b_verbose = 0;
 
