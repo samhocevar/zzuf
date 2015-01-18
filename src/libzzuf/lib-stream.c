@@ -611,21 +611,21 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
  * been invalidated, so we fuzz whatever's preloaded in it.
  */
 
-#define ZZ_FGETC(myfgetc, s, arg) \
+#define ZZ_FGETC(myfgetc, stream, arg) \
     do { \
         LOADSYM(myfgetc); \
         \
-        int fd = fileno(s); \
+        int fd = fileno(stream); \
         if (!must_fuzz_fd(fd)) \
             return ORIG(myfgetc)(arg); \
         \
-        debug_stream("before", s); \
-        int64_t oldpos = ZZ_FTELL(s); \
-        int oldcnt = get_stream_cnt(s); \
+        debug_stream("before", stream); \
+        int64_t oldpos = ZZ_FTELL(stream); \
+        int oldcnt = get_stream_cnt(stream); \
         _zz_lockfd(fd); \
         ret = ORIG(myfgetc)(arg); \
         _zz_unlock(fd); \
-        int64_t newpos = ZZ_FTELL(s); \
+        int64_t newpos = ZZ_FTELL(stream); \
         if (oldcnt == 0 && ret != EOF) \
         { \
             /* Fuzz returned data that wasn't in the old internal buffer */ \
@@ -637,12 +637,12 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
         if (newpos >= oldpos + oldcnt) \
         { \
             /* Fuzz the internal stream buffer */ \
-            _zz_setpos(fd, newpos - get_stream_off(s)); \
-            _zz_fuzz(fd, get_stream_ptr(s) - get_stream_off(s), \
-                         get_stream_cnt(s) + get_stream_off(s)); \
+            _zz_setpos(fd, newpos - get_stream_off(stream)); \
+            _zz_fuzz(fd, get_stream_ptr(stream) - get_stream_off(stream), \
+                         get_stream_cnt(stream) + get_stream_off(stream)); \
         } \
         _zz_setpos(fd, newpos); \
-        debug_stream("after", s); \
+        debug_stream("after", stream); \
         if (ret == EOF) \
             debug("%s([%i]) = EOF", __func__, fd); \
         else \
