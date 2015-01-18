@@ -204,7 +204,7 @@ static inline uint8_t * get_streambuf_base(FILE *stream)
 #endif
 }
 
-static inline uint8_t *get_stream_ptr(FILE *stream)
+static inline uint8_t *get_streambuf_pos(FILE *stream)
 {
 #if defined HAVE_GLIBC_FILE
     return (uint8_t *)stream->_IO_read_ptr;
@@ -218,12 +218,7 @@ static inline uint8_t *get_stream_ptr(FILE *stream)
 #endif
 }
 
-static inline int get_stream_off(FILE *stream)
-{
-    return (int)(get_stream_ptr(stream) - get_streambuf_base(stream));
-}
-
-static inline int get_stream_cnt(FILE *stream)
+static inline int get_streambuf_count(FILE *stream)
 {
 #if defined HAVE_GLIBC_FILE
     return (int)((uint8_t *)stream->_IO_read_end
@@ -238,9 +233,14 @@ static inline int get_stream_cnt(FILE *stream)
 #endif
 }
 
+static inline int get_streambuf_offset(FILE *stream)
+{
+    return (int)(get_streambuf_pos(stream) - get_streambuf_base(stream));
+}
+
 static inline int get_streambuf_size(FILE *stream)
 {
-    return get_stream_off(stream) + get_stream_cnt(stream);
+    return get_streambuf_offset(stream) + get_streambuf_count(stream);
 }
 
 static char const *get_seek_mode_name(int mode)
@@ -258,8 +258,8 @@ static char const *get_seek_mode_name(int mode)
 static inline void debug_stream(char const *prefix, FILE *stream)
 {
     debug2("... %s: stream([%i], %p + %i + %i)", prefix, fileno(stream),
-           get_streambuf_base(stream), get_stream_off(stream),
-           get_stream_cnt(stream));
+           get_streambuf_base(stream), get_streambuf_offset(stream),
+           get_streambuf_count(stream));
 }
 
 /*
@@ -383,8 +383,8 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         int64_t oldpos = ZZ_FTELL(stream); \
-        int oldoff = get_stream_off(stream); \
-        int oldcnt = get_stream_cnt(stream); \
+        int oldoff = get_streambuf_offset(stream); \
+        int oldcnt = get_streambuf_count(stream); \
         _zz_lockfd(fd); \
         ret = ORIG(myfseek)(stream, offset, whence); \
         _zz_unlock(fd); \
@@ -392,7 +392,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         int64_t newpos = ZZ_FTELL(stream); \
         if (newpos >= oldpos + oldcnt || newpos < oldpos - oldoff) \
         { \
-            _zz_setpos(fd, newpos - get_stream_off(stream)); \
+            _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
         } \
         _zz_setpos(fd, newpos); \
@@ -419,8 +419,8 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         int64_t oldpos = ZZ_FTELL(stream); \
-        int oldoff = get_stream_off(stream); \
-        int oldcnt = get_stream_cnt(stream); \
+        int oldoff = get_streambuf_offset(stream); \
+        int oldcnt = get_streambuf_count(stream); \
         _zz_lockfd(fd); \
         ret = ORIG(myfsetpos)(stream, pos); \
         _zz_unlock(fd); \
@@ -428,7 +428,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         int64_t newpos = ZZ_FTELL(stream); \
         if (newpos >= oldpos + oldcnt || newpos < oldpos - oldoff) \
         { \
-            _zz_setpos(fd, newpos - get_stream_off(stream)); \
+            _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
         } \
         _zz_setpos(fd, FPOS_T_TO_INT64_T(*pos)); \
@@ -452,8 +452,8 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         int64_t oldpos = ZZ_FTELL(stream); \
-        int oldoff = get_stream_off(stream); \
-        int oldcnt = get_stream_cnt(stream); \
+        int oldoff = get_streambuf_offset(stream); \
+        int oldcnt = get_streambuf_count(stream); \
         _zz_lockfd(fd); \
         ORIG(rewind)(stream); \
         _zz_unlock(fd); \
@@ -461,7 +461,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         int64_t newpos = ZZ_FTELL(stream); \
         if (newpos >= oldpos + oldcnt || newpos < oldpos - oldoff) \
         { \
-            _zz_setpos(fd, newpos - get_stream_off(stream)); \
+            _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
         } \
         _zz_setpos(fd, newpos); \
@@ -543,7 +543,7 @@ void NEW(rewind)(FILE *stream)
         debug_stream("before", stream); \
         /* FIXME: ftell() will return -1 on a pipe such as stdin */ \
         int64_t oldpos = ZZ_FTELL(stream); \
-        int oldcnt = get_stream_cnt(stream); \
+        int oldcnt = get_streambuf_count(stream); \
         _zz_lockfd(fd); \
         ret = ORIG(myfread) myargs; \
         _zz_unlock(fd); \
@@ -553,7 +553,7 @@ void NEW(rewind)(FILE *stream)
         { \
             /* The internal stream buffer is completely different, so we need
              * to fuzz it entirely. */ \
-            _zz_setpos(fd, newpos - get_stream_off(stream)); \
+            _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
             /* Fuzz returned data that wasn't in the old internal buffer */ \
             _zz_setpos(fd, oldpos + oldcnt); \
@@ -631,7 +631,7 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
         \
         debug_stream("before", stream); \
         int64_t oldpos = ZZ_FTELL(stream); \
-        int oldcnt = get_stream_cnt(stream); \
+        int oldcnt = get_streambuf_count(stream); \
         _zz_lockfd(fd); \
         ret = ORIG(myfgetc)(arg); \
         _zz_unlock(fd); \
@@ -648,7 +648,7 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
         if (newpos >= oldpos + oldcnt) \
         { \
             /* Fuzz the internal stream buffer */ \
-            _zz_setpos(fd, newpos - get_stream_off(stream)); \
+            _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
         } \
         _zz_setpos(fd, newpos); \
@@ -726,7 +726,7 @@ int NEW(fgetc_unlocked)(FILE *stream)
         \
         debug_stream("before", stream); \
         int64_t oldpos = ZZ_FTELL(stream); \
-        int oldcnt = get_stream_cnt(stream); \
+        int oldcnt = get_streambuf_count(stream); \
         int64_t newpos = oldpos; \
         if (size <= 0) \
             ret = NULL; \
@@ -752,12 +752,12 @@ int NEW(fgetc_unlocked)(FILE *stream)
                 if (newpos >= oldpos + oldcnt) \
                 { \
                     /* Fuzz the internal stream buffer, if necessary */ \
-                    _zz_setpos(fd, newpos - get_stream_off(stream)); \
+                    _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
                     _zz_fuzz(fd, get_streambuf_base(stream), \
                                  get_streambuf_size(stream)); \
                 } \
                 oldpos = newpos; \
-                oldcnt = get_stream_cnt(stream); \
+                oldcnt = get_streambuf_count(stream); \
                 if (chr == EOF) \
                 { \
                     s[i] = '\0'; \
@@ -881,7 +881,7 @@ int NEW(fclose)(FILE *fp)
         \
         debug_stream("before", stream); \
         int64_t oldpos = ZZ_FTELL(stream); \
-        int oldcnt = get_stream_cnt(stream); \
+        int oldcnt = get_streambuf_count(stream); \
         int64_t newpos = oldpos; \
         char *line = *lineptr; \
         ssize_t size = line ? *n : 0; \
@@ -915,12 +915,12 @@ int NEW(fclose)(FILE *fp)
             if (newpos >= oldpos + oldcnt) \
             { \
                 /* Fuzz the internal stream buffer, if necessary */ \
-                _zz_setpos(fd, newpos - get_stream_off(stream)); \
+                _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
                 _zz_fuzz(fd, get_streambuf_base(stream), \
                              get_streambuf_size(stream)); \
             } \
             oldpos = newpos; \
-            oldcnt = get_stream_cnt(stream); \
+            oldcnt = get_streambuf_count(stream); \
             if (chr == EOF) \
             { \
                 finished = 1; \
@@ -989,8 +989,8 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
 
     debug_stream("before", stream);
     int64_t oldpos = ZZ_FTELL(stream);
-    int oldoff = get_stream_off(stream);
-    int oldcnt = get_stream_cnt(stream);
+    int oldoff = get_streambuf_offset(stream);
+    int oldcnt = get_streambuf_count(stream);
     int64_t newpos = oldpos;
 
     struct fuzz *fuzz = _zz_getfuzz(fd);
@@ -1016,12 +1016,12 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
         if (newpos >= oldpos + oldcnt)
         {
             /* Fuzz the internal stream buffer, if necessary */
-            _zz_setpos(fd, newpos - get_stream_off(stream));
+            _zz_setpos(fd, newpos - get_streambuf_offset(stream));
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream));
         }
         oldpos = newpos;
-        oldoff = get_stream_off(stream);
-        oldcnt = get_stream_cnt(stream);
+        oldoff = get_streambuf_offset(stream);
+        oldcnt = get_streambuf_count(stream);
 
         if (chr == EOF)
             break;
@@ -1075,26 +1075,26 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
             { \
                 uint8_t ch = (uint8_t)(unsigned int)ret; \
                 if (newpos != -1) \
-                    _zz_setpos(fd, newpos - get_stream_cnt(fp) - 1); \
+                    _zz_setpos(fd, newpos - get_streambuf_count(fp) - 1); \
                 already_fuzzed = _zz_getfuzzed(fd); \
                 _zz_fuzz(fd, &ch, 1); \
-                ret = get_stream_ptr(fp)[-1] = ch; \
-                _zz_setfuzzed(fd, get_stream_cnt(fp) + 1); \
+                ret = get_streambuf_pos(fp)[-1] = ch; \
+                _zz_setfuzzed(fd, get_streambuf_count(fp) + 1); \
                 _zz_addpos(fd, 1); \
             } \
             else \
             { \
-                _zz_setfuzzed(fd, get_stream_cnt(fp)); \
+                _zz_setfuzzed(fd, get_streambuf_count(fp)); \
                 if (newpos != -1) \
-                    _zz_setpos(fd, newpos - get_stream_cnt(fp)); \
+                    _zz_setpos(fd, newpos - get_streambuf_count(fp)); \
             } \
-            if (get_stream_cnt(fp) > already_fuzzed) \
+            if (get_streambuf_count(fp) > already_fuzzed) \
             { \
                 _zz_addpos(fd, already_fuzzed); \
-                _zz_fuzz(fd, get_stream_ptr(fp), \
-                             get_stream_cnt(fp) - already_fuzzed); \
+                _zz_fuzz(fd, get_streambuf_pos(fp), \
+                             get_streambuf_count(fp) - already_fuzzed); \
             } \
-            _zz_addpos(fd, get_stream_cnt(fp) - already_fuzzed); \
+            _zz_addpos(fd, get_streambuf_count(fp) - already_fuzzed); \
         } \
         _zz_setpos(fd, pos); /* FIXME: do we always need to do this? */ \
         debug_stream("after", fp); \
