@@ -22,130 +22,132 @@ HAVE___FREAD_CHK=$("$ZZAT" -l | grep >/dev/null 2>&1 '^  __fread_chk(' && echo "
 checkutils()
 {
     r=$1
-    for type in 00 ff text random; do
-        file="$DIR/file-$type"
-        ZZOPTS="-s $seed -r $r"
-        case $file in
-          *text*) ZZOPTS="$ZZOPTS -P '\\n' -R '\\000'" ;;
-        esac
-        echo "*** file $file, ratio $r ***"
-        REFMD5=""
-        if [ $r = 0.0 -a $type = 00 ]; then
-            check="bb7df04e1b0a2570657527a7e108ae23"
-            echo "*** should be $check ***"
-            check "$ZZOPTS" "< $file" "zzuf" "$check"
-        else
-            check "$ZZOPTS" "< $file" "zzuf"
+    f=$2
+
+    file="$DIR/file-$f"
+    ZZOPTS="-s $seed -r $r"
+    case $file in
+      *text*) ZZOPTS="$ZZOPTS -P '\\n' -R '\\000'" ;;
+    esac
+    echo "*** file $file, ratio $r ***"
+    REFMD5=""
+    if [ $r = 0.0 -a $f = 00 ]; then
+        check="bb7df04e1b0a2570657527a7e108ae23"
+        echo "*** should be $check ***"
+        check "$ZZOPTS" "< $file" "zzuf" "$check"
+    else
+        check "$ZZOPTS" "< $file" "zzuf"
+    fi
+    if [ "$STATIC_CAT" = "" ]; then
+        check "$ZZOPTS" "cat $file" "cat"
+        check "$ZZOPTS" "-i cat < $file" "|cat"
+    fi
+    if [ "$STATIC_DD" = "" ]; then
+        check "$ZZOPTS" "dd bs=65536 if=$file" "dd(bs=65536)"
+        check "$ZZOPTS" "dd bs=1111 if=$file" "dd(bs=1111)"
+        check "$ZZOPTS" "dd bs=1024 if=$file" "dd(bs=1024)"
+        check "$ZZOPTS" "dd bs=1 if=$file" "dd(bs=1)"
+    fi
+    case $file in
+      *text*)
+        # We don't include grep or sed when the input is not text, because
+        # they put a newline at the end of their input if it was not there
+        # initially. (Linux sed doesn't, but OS X sed does.)
+        check "$ZZOPTS" "head -n 9999 $file" "head -n 9999"
+        check "$ZZOPTS" "${TAILN}9999 $file" "${TAILN}9999"
+        check "$ZZOPTS" "${TAILP}1 $file" "${TAILP}1"
+        if grep -a '' /dev/null >/dev/null 2>&1; then
+            check "$ZZOPTS" "grep -a '' $file" "grep -a ''"
         fi
-        if [ "$STATIC_CAT" = "" ]; then
-            check "$ZZOPTS" "cat $file" "cat"
-            check "$ZZOPTS" "-i cat < $file" "|cat"
+        check "$ZZOPTS" "sed -e n $file" "sed -e n"
+        #check "$ZZOPTS" "cut -b1- $file" "cut -b1-"
+        check "$ZZOPTS" "-i head -n 9999 < $file" "|head -n 9999"
+        check "$ZZOPTS" "-i ${TAILN}9999 < $file" "|${TAILN}9999"
+        check "$ZZOPTS" "-i ${TAILP}1 < $file" "|${TAILP}1"
+        if grep -a '' /dev/null >/dev/null 2>&1; then
+            check "$ZZOPTS" "-i grep -a '' < $file" "|grep -a ''"
         fi
-        if [ "$STATIC_DD" = "" ]; then
-            check "$ZZOPTS" "dd bs=65536 if=$file" "dd(bs=65536)"
-            check "$ZZOPTS" "dd bs=1111 if=$file" "dd(bs=1111)"
-            check "$ZZOPTS" "dd bs=1024 if=$file" "dd(bs=1024)"
-            check "$ZZOPTS" "dd bs=1 if=$file" "dd(bs=1)"
-        fi
-        case $file in
-          *text*)
-            # We don't include grep or sed when the input is not text, because
-            # they put a newline at the end of their input if it was not there
-            # initially. (Linux sed doesn't, but OS X sed does.)
-            check "$ZZOPTS" "head -n 9999 $file" "head -n 9999"
-            check "$ZZOPTS" "${TAILN}9999 $file" "${TAILN}9999"
-            check "$ZZOPTS" "${TAILP}1 $file" "${TAILP}1"
-            if grep -a '' /dev/null >/dev/null 2>&1; then
-                check "$ZZOPTS" "grep -a '' $file" "grep -a ''"
-            fi
-            check "$ZZOPTS" "sed -e n $file" "sed -e n"
-            #check "$ZZOPTS" "cut -b1- $file" "cut -b1-"
-            check "$ZZOPTS" "-i head -n 9999 < $file" "|head -n 9999"
-            check "$ZZOPTS" "-i ${TAILN}9999 < $file" "|${TAILN}9999"
-            check "$ZZOPTS" "-i ${TAILP}1 < $file" "|${TAILP}1"
-            if grep -a '' /dev/null >/dev/null 2>&1; then
-                check "$ZZOPTS" "-i grep -a '' < $file" "|grep -a ''"
-            fi
-            check "$ZZOPTS" "-i sed -e n < $file" "|sed -e n"
-            #check "$ZZOPTS" "-i cut -b1- < $file" "|cut -b1-"
-            ;;
-        esac
-        # Regression tests for stuff that used to break
-        check "$ZZOPTS" "$ZZAT -x \"fread(1,33000) fseek(1,SEEK_SET) fread(1,1) fseek(4093,SEEK_CUR) fread(1,1) fseek(1,SEEK_CUR) fread(1,1)\" $file" \
-              "eglibc (2.9-21) bug regression"
-        if [ "$HAVE_GETC_UNLOCKED $HAVE_GETLINE" = "y y" ]; then
-          check "$ZZOPTS" "$ZZAT -x \"repeat(33000,getc_unlocked(),feof(10),ungetc(),getline())\" $file" \
-                "sed getc_unlocked() bug regression"
-        fi
-        if [ "$HAVE___FREAD_CHK" = "y" ]; then
-          check "$ZZOPTS" "$ZZAT -x \"repeat(-1,__fread_chk(1,1000),feof(1))\" $file" \
-                "Gentoo __fread_chk() bug regression"
-        fi
-        # Misc tests
+        check "$ZZOPTS" "-i sed -e n < $file" "|sed -e n"
+        #check "$ZZOPTS" "-i cut -b1- < $file" "|cut -b1-"
+        ;;
+    esac
+    # Regression tests for stuff that used to break
+    check "$ZZOPTS" "$ZZAT -x \"fread(1,33000) fseek(1,SEEK_SET) fread(1,1) fseek(4093,SEEK_CUR) fread(1,1) fseek(1,SEEK_CUR) fread(1,1)\" $file" \
+          "eglibc (2.9-21) bug regression"
+    if [ "$HAVE_GETC_UNLOCKED $HAVE_GETLINE" = "y y" ]; then
+      check "$ZZOPTS" "$ZZAT -x \"repeat(33000,getc_unlocked(),feof(10),ungetc(),getline())\" $file" \
+            "sed getc_unlocked() bug regression"
+    fi
+    if [ "$HAVE___FREAD_CHK" = "y" ]; then
+      check "$ZZOPTS" "$ZZAT -x \"repeat(-1,__fread_chk(1,1000),feof(1))\" $file" \
+            "Gentoo __fread_chk() bug regression"
+    fi
+    check "$ZZOPTS" "$ZZAT -x \"fread(1,32768) fseek(-100,SEEK_END) fread(1,1) fseek(-1,SEEK_END) fread(1,1) fseek(-100,SEEK_CUR) fread(1,100)\" $file" \
+          "fread(1) before EOF bug regression"
+    # Misc tests
+    for n in \
+      "fread(1,33000)" \
+      "repeat(-1,fread(1,1000),feof(1))" \
+      "repeat(-1,fread(1,33),feof(1))" \
+      "getc() fread(1,33000)" \
+      "fgetc() fread(1,33000)" \
+      "getc() ungetc() fread(1,33000)" \
+      "fgetc() ungetc() fread(1,33000)" \
+      "repeat(-1,getc(),feof(10))" \
+      "repeat(-1,fgetc(),feof(10))" \
+      "repeat(8000,getc()) fread(1,33000)" \
+      "repeat(8000,fgetc()) fread(1,33000)" \
+      "fread(1,100) fseek(50,SEEK_SET) fread(1,33000)" \
+      "fread(1,100) rewind() fseek(50,SEEK_CUR) fread(1,33000)" \
+      "fread(1,33000) rewind() repeat(-1,fseek(1,SEEK_CUR),fread(1,1),feof(1))" \
+      "fread(1,33000) rewind() repeat(-1,fseek(2,SEEK_CUR),fread(1,2),feof(1))" \
+      "fread(1,33000) rewind() repeat(-1,fseek(3,SEEK_CUR),fread(1,3),feof(1))" \
+      "fread(1,33000) rewind() repeat(-1,fseek(4,SEEK_CUR),fread(1,4),feof(1))" \
+      "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,fread(1,2),feof(10))" \
+      "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,getc(),feof(10))" \
+      "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,fgetc(),feof(10))" \
+      ; do
+        check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
+    done
+    # Platform-specific tests
+    if [ "$HAVE_GETLINE" = "y" ]; then
         for n in \
-          "fread(1,33000)" \
-          "repeat(-1,fread(1,1000),feof(1))" \
-          "repeat(-1,fread(1,33),feof(1))" \
-          "getc() fread(1,33000)" \
-          "fgetc() fread(1,33000)" \
-          "getc() ungetc() fread(1,33000)" \
-          "fgetc() ungetc() fread(1,33000)" \
-          "repeat(-1,getc(),feof(10))" \
-          "repeat(-1,fgetc(),feof(10))" \
-          "repeat(8000,getc()) fread(1,33000)" \
-          "repeat(8000,fgetc()) fread(1,33000)" \
-          "fread(1,100) fseek(50,SEEK_SET) fread(1,33000)" \
-          "fread(1,100) rewind() fseek(50,SEEK_CUR) fread(1,33000)" \
-          "fread(1,33000) rewind() repeat(-1,fseek(1,SEEK_CUR),fread(1,1),feof(1))" \
-          "fread(1,33000) rewind() repeat(-1,fseek(2,SEEK_CUR),fread(1,2),feof(1))" \
-          "fread(1,33000) rewind() repeat(-1,fseek(3,SEEK_CUR),fread(1,3),feof(1))" \
-          "fread(1,33000) rewind() repeat(-1,fseek(4,SEEK_CUR),fread(1,4),feof(1))" \
-          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,fread(1,2),feof(10))" \
-          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,getc(),feof(10))" \
-          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,fgetc(),feof(10))" \
+          "repeat(10,getline()) fread(1,33000)" \
+          "repeat(-1,getc(),feof(10),ungetc(),getline())" \
+          "repeat(-1,fgetc(),feof(10),ungetc(),getline())" \
           ; do
             check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
         done
-        # Platform-specific tests
-        if [ "$HAVE_GETLINE" = "y" ]; then
-            for n in \
-              "repeat(10,getline()) fread(1,33000)" \
-              "repeat(-1,getc(),feof(10),ungetc(),getline())" \
-              "repeat(-1,fgetc(),feof(10),ungetc(),getline())" \
-              ; do
-                check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
-            done
-        fi
-        if [ "$HAVE_GETDELIM" = "y" ]; then
-            for n in \
-              "repeat(10,getdelim(0)) fread(1,33000)" \
-              "repeat(10,getdelim(' ')) fread(1,33000)" \
-              ; do
-                check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
-            done
-        fi
-        if [ "$HAVE_GETC_UNLOCKED" = "y" ]; then
-            for n in \
-              "getc_unlocked() fread(1,33000)" \
-              "getc_unlocked() ungetc() fread(1,33000)" \
-              "repeat(-1,getc_unlocked(),feof(10))" \
-              "repeat(8000,getc_unlocked()) fread(1,33000)" \
-              "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,getc_unlocked(),feof(10))" \
-              ; do
-                check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
-            done
-        fi
-        if [ "$HAVE_FGETC_UNLOCKED" = "y" ]; then
-            for n in \
-              "fgetc_unlocked() fread(1,33000)" \
-              "fgetc_unlocked() ungetc() fread(1,33000)" \
-              "repeat(-1,fgetc_unlocked(),feof(10))" \
-              "repeat(8000,fgetc_unlocked()) fread(1,33000)" \
-              ; do
-                check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
-            done
-        fi
-    done
+    fi
+    if [ "$HAVE_GETDELIM" = "y" ]; then
+        for n in \
+          "repeat(10,getdelim(0)) fread(1,33000)" \
+          "repeat(10,getdelim(' ')) fread(1,33000)" \
+          ; do
+            check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
+        done
+    fi
+    if [ "$HAVE_GETC_UNLOCKED" = "y" ]; then
+        for n in \
+          "getc_unlocked() fread(1,33000)" \
+          "getc_unlocked() ungetc() fread(1,33000)" \
+          "repeat(-1,getc_unlocked(),feof(10))" \
+          "repeat(8000,getc_unlocked()) fread(1,33000)" \
+          "fread(1,33000) fseek(1000,SEEK_CUR) repeat(-1,getc_unlocked(),feof(10))" \
+          ; do
+            check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
+        done
+    fi
+    if [ "$HAVE_FGETC_UNLOCKED" = "y" ]; then
+        for n in \
+          "fgetc_unlocked() fread(1,33000)" \
+          "fgetc_unlocked() ungetc() fread(1,33000)" \
+          "repeat(-1,fgetc_unlocked(),feof(10))" \
+          "repeat(8000,fgetc_unlocked()) fread(1,33000)" \
+          ; do
+            check "$ZZOPTS" "$ZZAT -x \"$n\" $file" "$n"
+        done
+    fi
 }
 
 check()
@@ -170,10 +172,10 @@ check()
 }
 
 start_test "zzuf utils test suite"
-
-checkutils 0.0
-checkutils 0.001
-checkutils 1.0
-
+for r in 0.0 0.001 1.0; do
+    for f in 00 ff text random; do
+        checkutils $r $f
+    done
+done
 stop_test
 
