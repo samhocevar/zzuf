@@ -34,6 +34,7 @@
 
 #include "debug.h"
 #include "libzzuf.h"
+#include "util/mutex.h"
 
 static void mydebug(char const *format, va_list args);
 
@@ -62,8 +63,9 @@ static void mydebug(char const *format, va_list args);
     } while (0)
 
 /* Temporary buffer for deferred output */
-char debugbuffer[BUFSIZ];
-size_t debugcount = 1;
+static zz_mutex debug_mutex = 0;
+static char debug_buffer[BUFSIZ];
+static size_t debug_count = 1;
 
 #ifdef _WIN32
 
@@ -161,10 +163,13 @@ void _zz_debug2(char const *format, ...)
  */
 static inline void append(void const *data, size_t count)
 {
-    if (debugcount + count <= sizeof(debugbuffer))
+    if (debug_count + count > sizeof(debug_buffer))
+        count = sizeof(debug_buffer) - debug_count;
+
+    if (count > 0)
     {
-        memcpy(debugbuffer + debugcount, data, count);
-        debugcount += count;
+        memcpy(debug_buffer + debug_count, data, count);
+        debug_count += count;
     }
 }
 
@@ -172,13 +177,15 @@ static void mydebug(char const *format, va_list args)
 {
     static char const *hex2char = "0123456789abcdef";
 
+    zz_lock(&debug_mutex);
+
     int saved_errno = errno;
 
     /* If there is spare data and the debug fd is open, we send the data */
-    if (debugcount && _zz_debugfd >= 0)
+    if (debug_count && _zz_debugfd >= 0)
     {
-        write(_zz_debugfd, debugbuffer, debugcount);
-        debugcount = 0;
+        write(_zz_debugfd, debug_buffer, debug_count);
+        debug_count = 0;
     }
 
     append("** zzuf debug ** ", 17);
@@ -318,9 +325,11 @@ static void mydebug(char const *format, va_list args)
     /* If the debug fd is open, we send the data */
     if (_zz_debugfd >= 0)
     {
-        write(_zz_debugfd, debugbuffer, debugcount);
-        debugcount = 0;
+        write(_zz_debugfd, debug_buffer, debug_count);
+        debug_count = 0;
     }
+
+    zz_unlock(&debug_mutex);
 
     errno = saved_errno;
 }
