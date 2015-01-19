@@ -125,7 +125,7 @@ HANDLE __stdcall NEW(CreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess,
           lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
           dwFlagsAndAttributes, (int)ret);
 
-    if (!_zz_ready || _zz_islocked(-1))
+    if (!g_libzzuf_ready || _zz_islocked(-1))
         return ret;
     if (ret != INVALID_HANDLE_VALUE && dwCreationDisposition == OPEN_EXISTING && _zz_mustwatch(lpFileName))
     {
@@ -150,7 +150,7 @@ HANDLE __stdcall NEW(CreateFileW)(LPCWSTR lpFileName, DWORD dwDesiredAccess,
           lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition,
           dwFlagsAndAttributes, (int)ret);
 
-    if (!_zz_ready || _zz_islocked(-1))
+    if (!g_libzzuf_ready || _zz_islocked(-1))
         return ret;
     if (ret != INVALID_HANDLE_VALUE && dwCreationDisposition == OPEN_EXISTING
          && _zz_mustwatchw(lpFileName))
@@ -368,7 +368,7 @@ BOOL __stdcall NEW(CloseHandle)(HANDLE hObject)
 
     ret = ORIG(CloseHandle)(hObject);
     debug("CloseHandle(%#08x) = %s", (int)hObject, (ret ? "TRUE" : "FALSE"));
-    if (!_zz_ready || !_zz_iswatched(hObject) || _zz_islocked(hObject))
+    if (!g_libzzuf_ready || !_zz_iswatched(hObject) || _zz_islocked(hObject))
         return ret;
     _zz_unregister(hObject);
     return ret;

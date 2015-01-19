@@ -54,7 +54,7 @@ static unsigned char protect[256];
 static unsigned char refuse[256];
 
 /* Local prototypes */
-static void readchars(unsigned char *, char const *);
+static void add_char_range(unsigned char *, char const *);
 
 extern void _zz_fuzzing(char const *mode)
 {
@@ -72,14 +72,14 @@ void _zz_bytes(char const *list)
     ranges = _zz_allocrange(list, static_ranges);
 }
 
-void _zz_protect(char const *list)
+void zzuf_protect_range(char const *list)
 {
-    readchars(protect, list);
+    add_char_range(protect, list);
 }
 
-void _zz_refuse(char const *list)
+void zzuf_refuse_range(char const *list)
 {
-    readchars(refuse, list);
+    add_char_range(refuse, list);
 }
 
 void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
@@ -92,7 +92,7 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
 #endif
 
     volatile uint8_t *aligned_buf = buf - pos;
-    struct fuzz *fuzz = _zz_getfuzz(fd);
+    fuzz_context_t *fuzz = _zz_getfuzz(fd);
 
     for (int64_t i = pos / CHUNKBYTES;
          i < (pos + len + CHUNKBYTES - 1) / CHUNKBYTES;
@@ -109,17 +109,17 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
             chunkseed ^= fuzz->seed;
             chunkseed += (uint32_t)(i * MAGIC3);
 
-            _zz_srand(chunkseed);
+            zzuf_srand(chunkseed);
 
             memset(fuzz->data, 0, CHUNKBYTES);
 
             /* Add some random dithering to handle ratio < 1.0/CHUNKBYTES */
             int todo = (int)((fuzz->ratio * (8 * CHUNKBYTES) * 1000000.0
-                                + _zz_rand(1000000)) / 1000000.0);
+                                + zzuf_rand(1000000)) / 1000000.0);
             while (todo--)
             {
-                unsigned int idx = _zz_rand(CHUNKBYTES);
-                uint8_t bit = (1 << _zz_rand(8));
+                unsigned int idx = zzuf_rand(CHUNKBYTES);
+                uint8_t bit = (1 << zzuf_rand(8));
 
                 fuzz->data[idx] ^= bit;
             }
@@ -149,7 +149,7 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
             if (!fuzzbyte)
                 continue;
 
-            switch(fuzzing)
+            switch (fuzzing)
             {
             case FUZZING_XOR:
                 byte ^= fuzzbyte;
@@ -178,7 +178,7 @@ void _zz_fuzz(int fd, volatile uint8_t *buf, int64_t len)
     }
 }
 
-static void readchars(unsigned char *table, char const *list)
+static void add_char_range(unsigned char *table, char const *list)
 {
     static char const hex[] = "0123456789abcdef0123456789ABCDEF";
     char const *tmp;

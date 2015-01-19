@@ -30,7 +30,7 @@
 
 #include "util/md5.h"
 
-struct zz_md5
+struct zzuf_md5sum
 {
     uint32_t buf[4];
     uint32_t bits[2];
@@ -40,9 +40,9 @@ struct zz_md5
 static void swapwords(uint32_t *buf, unsigned words);
 static void transform(uint32_t buf[4], uint32_t in[16]);
 
-struct zz_md5 *zz_md5_init(void)
+zzuf_md5sum_t *zzuf_create_md5(void)
 {
-    struct zz_md5 *ctx = malloc(sizeof(struct zz_md5));
+    zzuf_md5sum_t *ctx = malloc(sizeof(zzuf_md5sum_t));
 
     ctx->buf[0] = 0x67452301;
     ctx->buf[1] = 0xefcdab89;
@@ -55,7 +55,7 @@ struct zz_md5 *zz_md5_init(void)
     return ctx;
 }
 
-void zz_md5_add(struct zz_md5 *ctx, uint8_t *buf, unsigned len)
+void zz_md5_add(zzuf_md5sum_t *ctx, uint8_t *buf, unsigned len)
 {
     uint32_t t = ctx->bits[0];
     if ((ctx->bits[0] = t + ((uint32_t)len << 3)) < t)
@@ -93,7 +93,7 @@ void zz_md5_add(struct zz_md5 *ctx, uint8_t *buf, unsigned len)
     memcpy(ctx->in, buf, len);
 }
 
-void zz_md5_fini(uint8_t *digest, struct zz_md5 *ctx)
+void zzuf_destroy_md5(uint8_t *digest, zzuf_md5sum_t *ctx)
 {
     unsigned count = (ctx->bits[0] >> 3) & 0x3F;
     uint8_t *p = (uint8_t *)ctx->in + count;

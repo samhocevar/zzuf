@@ -184,7 +184,7 @@ static int     (*ORIG(close))   (int fd);
         { \
             ret = ORIG(myopen)(file, oflag); \
         } \
-        if (!_zz_ready || _zz_islocked(-1)) \
+        if (!g_libzzuf_ready || _zz_islocked(-1)) \
             return ret; \
         if (ret >= 0 \
             && ((oflag & (O_RDONLY | O_RDWR | O_WRONLY)) != O_WRONLY) \
@@ -228,7 +228,7 @@ int NEW(dup)(int oldfd)
     LOADSYM(dup);
 
     int ret = ORIG(dup)(oldfd);
-    if (!_zz_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
+    if (!g_libzzuf_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
          || !_zz_isactive(oldfd))
         return ret;
 
@@ -249,7 +249,7 @@ int NEW(dup2)(int oldfd, int newfd)
     LOADSYM(dup2);
 
     int ret = ORIG(dup2)(oldfd, newfd);
-    if (!_zz_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
+    if (!g_libzzuf_ready || _zz_islocked(-1) || !_zz_iswatched(oldfd)
          || !_zz_isactive(oldfd))
         return ret;
 
@@ -275,7 +275,7 @@ int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
     LOADSYM(accept);
 
     int ret = ORIG(accept)(sockfd, addr, addrlen);
-    if (!_zz_ready || _zz_islocked(-1) || !_zz_network
+    if (!g_libzzuf_ready || _zz_islocked(-1) || !g_network_fuzzing
          || !_zz_iswatched(sockfd) || !_zz_isactive(sockfd))
         return ret;
 
@@ -305,13 +305,13 @@ int NEW(accept)(int sockfd, SOCKADDR_T *addr, SOCKLEN_T *addrlen)
         LOADSYM(myconnect); \
         \
         ret = ORIG(myconnect)(sockfd, addr, addrlen); \
-        if (!_zz_ready || _zz_islocked(-1) || !_zz_network) \
+        if (!g_libzzuf_ready || _zz_islocked(-1) || !g_network_fuzzing) \
             return ret; \
         if (ret >= 0) \
         { \
             struct sockaddr_in in; \
             long int port; \
-            switch(addr->sa_family) \
+            switch (addr->sa_family) \
             { \
             case AF_INET: \
             case_AF_INET6 \
@@ -359,7 +359,7 @@ int NEW(socket)(int domain, int type, int protocol)
     LOADSYM(socket);
 
     int ret = ORIG(socket)(domain, type, protocol);
-    if (!_zz_ready || _zz_islocked(-1) || !_zz_network)
+    if (!g_libzzuf_ready || _zz_islocked(-1) || !g_network_fuzzing)
         return ret;
 
     if (ret >= 0)
@@ -635,7 +635,7 @@ int NEW(aio_read)(struct aiocb *aiocbp)
     LOADSYM(aio_read);
 
     int fd = aiocbp->aio_fildes;
-    if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
+    if (!g_libzzuf_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(aio_read)(aiocbp);
 
     _zz_lockfd(fd);
@@ -654,7 +654,7 @@ ssize_t NEW(aio_return)(struct aiocb *aiocbp)
     LOADSYM(aio_return);
 
     int fd = aiocbp->aio_fildes;
-    if (!_zz_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
+    if (!g_libzzuf_ready || !_zz_iswatched(fd) || !_zz_isactive(fd))
         return ORIG(aio_return)(aiocbp);
 
     ssize_t ret = ORIG(aio_return)(aiocbp);
@@ -683,11 +683,11 @@ int NEW(close)(int fd)
     LOADSYM(close);
 
     /* Hey, it’s our debug channel! Silently pretend we closed it. */
-    if (fd == _zz_debugfd)
+    if (fd == g_debug_fd)
         return 0;
 
     int ret = ORIG(close)(fd);
-    if (!_zz_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
+    if (!g_libzzuf_ready || !_zz_iswatched(fd) || _zz_islocked(fd))
         return ret;
 
     debug("%s(%i) = %i", __func__, fd, ret);

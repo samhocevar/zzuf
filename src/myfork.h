@@ -14,5 +14,5 @@
  *  myfork.h: process handling functions
  */
 
-int myfork(struct child *child, struct opts *opts);
+int myfork(zzuf_child_t *child, zzuf_opts_t *opts);
 

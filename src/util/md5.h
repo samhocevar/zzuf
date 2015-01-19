@@ -14,7 +14,9 @@
  *  md5.h: MD5 computation
  */
 
-extern struct zz_md5 *zz_md5_init(void);
-extern void zz_md5_add(struct zz_md5 *ctx, uint8_t *buf, unsigned len);
-extern void zz_md5_fini(uint8_t *digest, struct zz_md5 *ctx);
+typedef struct zzuf_md5sum zzuf_md5sum_t;
+
+extern zzuf_md5sum_t *zzuf_create_md5(void);
+extern void zz_md5_add(zzuf_md5sum_t *ctx, uint8_t *buf, unsigned len);
+extern void zzuf_destroy_md5(uint8_t *digest, zzuf_md5sum_t *ctx);
 

@@ -30,8 +30,10 @@
 #include "timer.h"
 #include "opts.h"
 
-void _zz_opts_init(struct opts *opts)
+zzuf_opts_t *zzuf_create_opts(void)
 {
+    zzuf_opts_t *opts = malloc(sizeof(zzuf_opts_t));
+
     opts->opmode = OPMODE_PRELOAD;
     opts->fuzzing = opts->bytes = opts->list = opts->ports = NULL;
     opts->allow = NULL;
@@ -49,7 +51,7 @@ void _zz_opts_init(struct opts *opts)
 
     opts->maxbytes = -1;
     opts->maxmem = DEFAULT_MEM;
-    opts->starttime = _zz_time();
+    opts->starttime = zzuf_time();
     opts->maxtime = 0;
     opts->maxusertime = -1;
     opts->maxcpu = -1;
@@ -61,9 +63,11 @@ void _zz_opts_init(struct opts *opts)
     opts->maxcrashes = 1;
     opts->crashes = 0;
     opts->child = NULL;
+
+    return opts;
 }
 
-void _zz_opts_fini(struct opts *opts)
+void zzuf_destroy_opts(zzuf_opts_t *opts)
 {
     if (opts->child)
     {
@@ -72,5 +76,7 @@ void _zz_opts_fini(struct opts *opts)
                 free(opts->child[i].newargv);
         free(opts->child);
     }
+
+    free(opts);
 }
 

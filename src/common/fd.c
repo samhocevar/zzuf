@@ -68,14 +68,14 @@ static struct files
     int managed, locked, active, already_fuzzed;
     int64_t pos, already_pos;
     /* Public stuff */
-    struct fuzz fuzz;
+    fuzz_context_t fuzz;
 }
 *files, static_files[STATIC_FILES];
 static int *fds, static_fds[STATIC_FILES];
 static int maxfd, nfiles;
 
 /* Spinlock. This variable protects the fds variable. */
-static zz_mutex fds_mutex = 0;
+static zzuf_mutex_t fds_mutex = 0;
 
 /* Create lock. This lock variable is used to disable file descriptor
  * creation wrappers. For instance on Mac OS X, fopen() calls open()
@@ -88,7 +88,7 @@ static double  minratio = DEFAULT_RATIO;
 static double  maxratio = DEFAULT_RATIO;
 static int     autoinc = 0;
 
-void _zz_include(char const *regex)
+void zzuf_include_pattern(char const *regex)
 {
 #if defined HAVE_REGEX_H
     if (regcomp(&re_include, regex, REG_EXTENDED) == 0)
@@ -98,7 +98,7 @@ void _zz_include(char const *regex)
 #endif
 }
 
-void _zz_exclude(char const *regex)
+void zzuf_exclude_pattern(char const *regex)
 {
 #if defined HAVE_REGEX_H
     if (regcomp(&re_exclude, regex, REG_EXTENDED) == 0)
@@ -113,12 +113,12 @@ void _zz_list(char const *fdlist)
     list = _zz_allocrange(fdlist, static_list);
 }
 
-void _zz_setseed(int32_t s)
+void zzuf_set_seed(int32_t s)
 {
     seed = s;
 }
 
-void _zz_setratio(double r0, double r1)
+void zzuf_set_ratio(double r0, double r1)
 {
     if (r0 == 0.0 && r1 == 0.0)
     {
@@ -132,7 +132,7 @@ void _zz_setratio(double r0, double r1)
         maxratio = minratio;
 }
 
-double _zz_getratio(void)
+double zzuf_get_ratio(void)
 {
     uint8_t const shuffle[16] =
     { 0, 12, 2, 10,
@@ -158,7 +158,7 @@ double _zz_getratio(void)
     return exp(cur);
 }
 
-void _zz_setautoinc(void)
+void zzuf_set_auto_increment(void)
 {
     autoinc = 1;
 }
@@ -236,7 +236,7 @@ int _zz_mustwatchw(wchar_t const *file)
 int _zz_iswatched(int fd)
 {
     int ret = 0;
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
     if (fd < 0 || fd >= maxfd || fds[fd] == -1)
         goto early_exit;
@@ -244,7 +244,7 @@ int _zz_iswatched(int fd)
     ret = 1;
 
 early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
     return ret;
 }
 
@@ -252,7 +252,7 @@ void _zz_register(int fd)
 {
     int i;
 
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
     if (fd < 0 || fd > 65535 || (fd < maxfd && fds[fd] != -1))
         goto early_exit;
@@ -299,7 +299,7 @@ void _zz_register(int fd)
     files[i].locked = 0;
     files[i].pos = 0;
     files[i].fuzz.seed = seed;
-    files[i].fuzz.ratio = _zz_getratio();
+    files[i].fuzz.ratio = zzuf_get_ratio();
     files[i].fuzz.cur = -1;
 #if defined HAVE_FGETLN
     files[i].fuzz.tmp = NULL;
@@ -322,192 +322,180 @@ void _zz_register(int fd)
     fds[fd] = i;
 
 early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
 }
 
 void _zz_unregister(int fd)
 {
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
-
-    files[fds[fd]].managed = 0;
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        files[fds[fd]].managed = 0;
 #if defined HAVE_FGETLN
-    if (files[fds[fd]].fuzz.tmp)
-        free(files[fds[fd]].fuzz.tmp);
+        if (files[fds[fd]].fuzz.tmp)
+            free(files[fds[fd]].fuzz.tmp);
 #endif
 
-    fds[fd] = -1;
+        fds[fd] = -1;
+    }
 
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
 }
 
 void _zz_lockfd(int fd)
 {
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < -1 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        if (fd == -1)
+            ++create_lock;
+        else
+            ++files[fds[fd]].locked;
+    }
 
-    if (fd == -1)
-        create_lock++;
-    else
-        files[fds[fd]].locked++;
-
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
 }
 
 void _zz_unlock(int fd)
 {
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < -1 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        if (fd == -1)
+            --create_lock;
+        else
+            --files[fds[fd]].locked;
+    }
 
-    if (fd == -1)
-        create_lock--;
-    else
-        files[fds[fd]].locked--;
-
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
 }
 
 int _zz_islocked(int fd)
 {
     int ret = 0;
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < -1 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        if (fd == -1)
+            ret = create_lock;
+        else
+            ret = files[fds[fd]].locked;
+    }
 
-    if (fd == -1)
-        ret = create_lock;
-    else
-        ret = files[fds[fd]].locked;
-
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
     return ret;
 }
 
 int _zz_isactive(int fd)
 {
     int ret = 1;
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        ret = files[fds[fd]].active;
+    }
 
-    ret = files[fds[fd]].active;
-
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
     return ret;
 }
 
 int64_t _zz_getpos(int fd)
 {
     int64_t ret = 0;
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        ret = files[fds[fd]].pos;
+    }
 
-    ret = files[fds[fd]].pos;
-
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
     return ret;
 }
 
 void _zz_setpos(int fd, int64_t pos)
 {
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        files[fds[fd]].pos = pos;
+    }
 
-    files[fds[fd]].pos = pos;
-
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
 }
 
 void _zz_addpos(int fd, int64_t off)
 {
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        files[fds[fd]].pos += off;
+    }
 
-    files[fds[fd]].pos += off;
-
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
 }
 
 void _zz_setfuzzed(int fd, int count)
 {
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
-
-    /* FIXME: what if we just slightly advanced? */
-    if (files[fds[fd]].pos == files[fds[fd]].already_pos
-        && count <= files[fds[fd]].already_fuzzed)
-        goto early_exit;
-
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        /* FIXME: what if we just slightly advanced? */
+        if (files[fds[fd]].pos != files[fds[fd]].already_pos
+            || count > files[fds[fd]].already_fuzzed)
+        {
 #if defined LIBZZUF
-    debug2("setfuzzed(%i, %i)", fd, count);
+            debug2("setfuzzed(%i, %i)", fd, count);
 #endif
 
-    files[fds[fd]].already_pos = files[fds[fd]].pos;
-    files[fds[fd]].already_fuzzed = count;
+            files[fds[fd]].already_pos = files[fds[fd]].pos;
+            files[fds[fd]].already_fuzzed = count;
+        }
+    }
 
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
 }
 
 int _zz_getfuzzed(int fd)
 {
     int ret = 0;
-    zz_lock(&fds_mutex);
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        if (files[fds[fd]].pos >= files[fds[fd]].already_pos
+             && files[fds[fd]].pos < files[fds[fd]].already_pos
+                                      + files[fds[fd]].already_fuzzed)
+            ret = (int)(files[fds[fd]].already_fuzzed
+                      + files[fds[fd]].already_pos
+                      - files[fds[fd]].pos);
+    }
 
-    if (files[fds[fd]].pos < files[fds[fd]].already_pos)
-        goto early_exit;
-
-    if (files[fds[fd]].pos >= files[fds[fd]].already_pos
-                               + files[fds[fd]].already_fuzzed)
-        goto early_exit;
-
-    ret = (int)(files[fds[fd]].already_fuzzed + files[fds[fd]].already_pos
-                                              - files[fds[fd]].pos);
-
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
     return ret;
 }
 
-struct fuzz *_zz_getfuzz(int fd)
+/* FIXME: this is not safe because once we unlock fds_mutex the structure
+ * may become invalid */
+fuzz_context_t *_zz_getfuzz(int fd)
 {
-    struct fuzz *ret = NULL;
-    zz_lock(&fds_mutex);
+    fuzz_context_t *ret = NULL;
+    zzuf_mutex_lock(&fds_mutex);
 
-    if (fd < 0 || fd >= maxfd || fds[fd] == -1)
-        goto early_exit;
+    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    {
+        ret = &files[fds[fd]].fuzz;
+    }
 
-    ret = &files[fds[fd]].fuzz;
-
-early_exit:
-    zz_unlock(&fds_mutex);
+    zzuf_mutex_unlock(&fds_mutex);
     return ret;
 }
 

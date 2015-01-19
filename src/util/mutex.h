@@ -15,14 +15,14 @@
  */
 
 #if _WIN32
-typedef volatile LONG zz_mutex;
+typedef volatile LONG zzuf_mutex_t;
 #elif __GNUC__ || __clang__
-typedef volatile int zz_mutex;
+typedef volatile int zzuf_mutex_t;
 #else
 #   error "No known atomic operations for this platform"
 #endif
 
-static inline void zz_lock(zz_mutex *l)
+static inline void zzuf_mutex_lock(zzuf_mutex_t *l)
 {
 #if _WIN32
     do {}
@@ -33,7 +33,7 @@ static inline void zz_lock(zz_mutex *l)
 #endif
 }
 
-static inline void zz_unlock(zz_mutex *l)
+static inline void zzuf_mutex_unlock(zzuf_mutex_t *l)
 {
 #if _WIN32
     InterlockedExchange(l, 0);

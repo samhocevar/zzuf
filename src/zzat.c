@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 #define OPTSTR "+AbdeEnr:stTvx:lhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
-        static struct zz_option long_options[] =
+        static zzuf_option_t long_options[] =
         {
             { "show-all",         0, NULL, 'A' },
             { "number-nonblank",  0, NULL, 'b' },

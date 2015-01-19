@@ -57,21 +57,21 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD, PVOID);
 /**
  * Is libzzuf fully initialised?
  */
-int _zz_ready = 0;
+int g_libzzuf_ready = 0;
 
 /**
  * The debugging level that libzzuf should use. 0 means no debugging,
  * 1 means minimal debugging, 2 means verbose debugging. Its value is set
  * by the ZZUF_DEBUG environment variable.
  */
-int _zz_debuglevel = 0;
+int g_debug_level = 0;
 
 /**
  * The file descriptor used by libzzuf for communication with the main
  * zzuf program in debug mode. Its value is set by the ZZUF_DEBUGFD
  * environment variable.
  */
-int _zz_debugfd = -1;
+int g_debug_fd = -1;
 
 /**
  * If set to 1, this boolean variable will prevent the called application
@@ -79,7 +79,7 @@ int _zz_debugfd = -1;
  * SDL applications often do that when not using SDL_INIT_NOPARACHUTE, for
  * instance. Its value is set by the ZZUF_SIGNAL environment variable.
  */
-int _zz_signal = 0;
+int g_disable_sighandlers = 0;
 
 /**
  * If set to a positive value, this value will indicate the maximum number
@@ -87,14 +87,14 @@ int _zz_signal = 0;
  * allowed to allocate. Its value is set by the ZZUF_MEMORY environment
  * variable.
  */
-uint64_t _zz_memory = 0;
+uint64_t g_memory_limit = 0;
 
 /**
  * If set to 1, this boolean will tell libzzuf to fuzz network file
  * descriptors, too. Its value is set by the ZZUF_NETWORK environment
  * variable.
  */
-int _zz_network = 0;
+int g_network_fuzzing = 0;
 
 /**
  * Library initialisation routine.
@@ -105,7 +105,7 @@ int _zz_network = 0;
  * other functions we need such as dlsym() require them), file descriptor
  * functions and stream functions.
  */
-void _zz_init(void)
+void libzzuf_init(void)
 {
     static int initializing = 0;
     char *tmp, *tmp2;
@@ -116,14 +116,14 @@ void _zz_init(void)
 
     tmp = getenv("ZZUF_DEBUG");
     if (tmp)
-        _zz_debuglevel = atoi(tmp);
+        g_debug_level = atoi(tmp);
 
     tmp = getenv("ZZUF_DEBUGFD");
     if (tmp)
 #if defined _WIN32
-        _zz_debugfd = _open_osfhandle((long)atoi(tmp), 0);
+        g_debug_fd = _open_osfhandle((long)atoi(tmp), 0);
 #else
-        _zz_debugfd = atoi(tmp);
+        g_debug_fd = atoi(tmp);
 #endif
 
     /* We need this as soon as possible */
@@ -131,16 +131,16 @@ void _zz_init(void)
 
     tmp = getenv("ZZUF_SEED");
     if (tmp && *tmp)
-        _zz_setseed(atol(tmp));
+        zzuf_set_seed(atol(tmp));
 
     tmp = getenv("ZZUF_MINRATIO");
     tmp2 = getenv("ZZUF_MAXRATIO");
     if (tmp && *tmp && tmp2 && *tmp2)
-        _zz_setratio(atof(tmp), atof(tmp2));
+        zzuf_set_ratio(atof(tmp), atof(tmp2));
 
     tmp = getenv("ZZUF_AUTOINC");
     if (tmp && *tmp == '1')
-        _zz_setautoinc();
+        zzuf_set_auto_increment();
 
     tmp = getenv("ZZUF_BYTES");
     if (tmp && *tmp)
@@ -164,31 +164,31 @@ void _zz_init(void)
 
     tmp = getenv("ZZUF_PROTECT");
     if (tmp && *tmp)
-        _zz_protect(tmp);
+        zzuf_protect_range(tmp);
 
     tmp = getenv("ZZUF_REFUSE");
     if (tmp && *tmp)
-        _zz_refuse(tmp);
+        zzuf_refuse_range(tmp);
 
     tmp = getenv("ZZUF_INCLUDE");
     if (tmp && *tmp)
-        _zz_include(tmp);
+        zzuf_include_pattern(tmp);
 
     tmp = getenv("ZZUF_EXCLUDE");
     if (tmp && *tmp)
-        _zz_exclude(tmp);
+        zzuf_exclude_pattern(tmp);
 
     tmp = getenv("ZZUF_SIGNAL");
     if (tmp && *tmp == '1')
-        _zz_signal = 1;
+        g_disable_sighandlers = 1;
 
     tmp = getenv("ZZUF_MEMORY");
     if (tmp)
-        _zz_memory = atoi(tmp);
+        g_memory_limit = atoi(tmp);
 
     tmp = getenv("ZZUF_NETWORK");
     if (tmp && *tmp == '1')
-        _zz_network = 1;
+        g_network_fuzzing = 1;
 
     _zz_fd_init();
     _zz_network_init();
@@ -198,7 +198,7 @@ void _zz_init(void)
     if (tmp && *tmp == '1')
         _zz_register(0);
 
-    _zz_ready = 1;
+    g_libzzuf_ready = 1;
 
     debug("libzzuf initialised for PID %li", (long int)getpid());
 }
@@ -208,9 +208,9 @@ void _zz_init(void)
  *
  * Free all the memory allocated by libzzuf during its lifetime.
  */
-void _zz_fini(void)
+void libzzuf_fini(void)
 {
-    if (!_zz_ready)
+    if (!g_libzzuf_ready)
         return;
 
     debug("libzzuf finishing for PID %li", (long int)getpid());
@@ -218,7 +218,7 @@ void _zz_fini(void)
     _zz_fd_fini();
     _zz_network_fini();
 
-    _zz_ready = 0;
+    g_libzzuf_ready = 0;
 }
 
 #if defined HAVE_WINDOWS_H
@@ -227,15 +227,13 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, PVOID impLoad)
     (void)hinst;   /* unused */
     (void)impLoad; /* unused */
 
-    switch(reason)
+    switch (reason)
     {
         case DLL_PROCESS_ATTACH:
-            InitializeCriticalSection(&_zz_pipe_cs);
-            _zz_init();
+            libzzuf_init();
             break;
         case DLL_PROCESS_DETACH:
-            //_zz_fini();
-            DeleteCriticalSection(&_zz_pipe_cs);
+            //libzzuf_fini();
             break;
     }
 

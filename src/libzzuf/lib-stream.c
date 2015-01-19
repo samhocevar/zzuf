@@ -275,7 +275,7 @@ static inline void debug_stream(char const *prefix, FILE *stream)
     { \
         LOADSYM(myfopen); \
         \
-        if (!_zz_ready) \
+        if (!g_libzzuf_ready) \
             return ORIG(myfopen)(path, mode); \
         _zz_lockfd(-1); \
         ret = ORIG(myfopen)(path, mode); \
@@ -296,7 +296,7 @@ static inline void debug_stream(char const *prefix, FILE *stream)
         LOADSYM(myfreopen); \
         \
         int fd0 = -1, fd1 = -1, disp = 0; \
-        if (_zz_ready && (fd0 = fileno(stream)) >= 0 && _zz_iswatched(fd0)) \
+        if (g_libzzuf_ready && (fd0 = fileno(stream)) >= 0 && _zz_iswatched(fd0)) \
         { \
             _zz_unregister(fd0); \
             disp = 1; \
@@ -852,7 +852,7 @@ int NEW(fclose)(FILE *fp)
     LOADSYM(fclose);
 
     int fd = fileno(fp);
-    if (!_zz_ready || !_zz_iswatched(fd))
+    if (!g_libzzuf_ready || !_zz_iswatched(fd))
         return ORIG(fclose)(fp);
 
     debug_stream("before", fp);
@@ -993,7 +993,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
     int oldcnt = get_streambuf_count(stream);
     int64_t newpos = oldpos;
 
-    struct fuzz *fuzz = _zz_getfuzz(fd);
+    fuzz_context_t *fuzz = _zz_getfuzz(fd);
 
     size_t i = 0, size = 0;
     do

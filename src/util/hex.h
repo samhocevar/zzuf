@@ -14,7 +14,9 @@
  *  hex.h: hexadecimal data dump
  */
 
-extern struct zz_hex *zz_hex_init(void);
-extern void zz_hex_add(struct zz_hex *ctx, uint8_t *buf, unsigned len);
-extern void zz_hex_fini(struct zz_hex *ctx);
+typedef struct zzuf_hexdump zzuf_hexdump_t;
+
+extern zzuf_hexdump_t *zzuf_create_hex(void);
+extern void zz_hex_add(zzuf_hexdump_t *ctx, uint8_t *buf, unsigned len);
+extern void zzuf_destroy_hex(zzuf_hexdump_t *ctx);
 

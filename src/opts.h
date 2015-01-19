@@ -10,15 +10,50 @@
  *  See http://www.wtfpl.net/ for more details.
  */
 
+#pragma once
+
 /*
  *  opts.h: configuration handling
  */
+
+#include "util/hex.h"
+#include "util/md5.h"
 
 #ifdef _WIN32
 #   include <windows.h>
 #endif
 
-struct opts
+typedef struct zzuf_opts zzuf_opts_t;
+typedef struct zzuf_child zzuf_child_t;
+
+zzuf_opts_t *zzuf_create_opts(void);
+void zzuf_destroy_opts(zzuf_opts_t *);
+
+struct zzuf_child
+{
+    enum status
+    {
+        STATUS_FREE,
+        STATUS_RUNNING,
+        STATUS_SIGTERM,
+        STATUS_SIGKILL,
+        STATUS_EOF,
+    } status;
+
+    pid_t pid;
+#ifdef _WIN32
+    HANDLE process_handle;
+#endif
+    int fd[3]; /* 0 is debug, 1 is stderr, 2 is stdout */
+    int bytes, seed;
+    double ratio;
+    int64_t date;
+    zzuf_md5sum_t *md5;
+    zzuf_hexdump_t *hex;
+    char **newargv;
+};
+
+struct zzuf_opts
 {
     enum opmode
     {
@@ -52,31 +87,7 @@ struct opts
     int64_t lastlaunch;
 
     int maxchild, nchild, maxcrashes, crashes;
-    struct child
-    {
-        enum status
-        {
-            STATUS_FREE,
-            STATUS_RUNNING,
-            STATUS_SIGTERM,
-            STATUS_SIGKILL,
-            STATUS_EOF,
-        } status;
 
-        pid_t pid;
-#ifdef _WIN32
-        HANDLE process_handle;
-#endif
-        int fd[3]; /* 0 is debug, 1 is stderr, 2 is stdout */
-        int bytes, seed;
-        double ratio;
-        int64_t date;
-        struct zz_md5 *md5;
-        struct zz_hex *hex;
-        char **newargv;
-    } *child;
+    zzuf_child_t *child;
 };
-
-void _zz_opts_init(struct opts *);
-void _zz_opts_fini(struct opts *);
 

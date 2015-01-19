@@ -14,5 +14,5 @@
  *  timer.h: timing functions
  */
 
-int64_t _zz_time(void);
+int64_t zzuf_time(void);
 

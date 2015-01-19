@@ -17,8 +17,8 @@
 extern void _zz_fuzzing(char const *);
 extern void _zz_bytes(char const *);
 extern void _zz_list(char const *);
-extern void _zz_protect(char const *);
-extern void _zz_refuse(char const *);
+extern void zzuf_protect_range(char const *);
+extern void zzuf_refuse_range(char const *);
 
 extern void _zz_fuzz(int, volatile uint8_t *, int64_t);
 

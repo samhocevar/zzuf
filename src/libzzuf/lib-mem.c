@@ -139,7 +139,7 @@ static int memory_exceeded(void)
 
     if (task_info(mach_task_self(), TASK_BASIC_INFO,
                   (task_info_t)&tbi, &mmtn) == KERN_SUCCESS
-         && (int64_t)tbi.resident_size / 1048576 > (int64_t)_zz_memory)
+         && (int64_t)tbi.resident_size / 1048576 > (int64_t)g_memory_limit)
         return 1;
 #endif
     return 0;
@@ -172,7 +172,7 @@ void *NEW(calloc)(size_t nmemb, size_t size)
     }
 
     void *ret = ORIG(calloc)(nmemb, size);
-    if (ret == NULL && _zz_memory && errno == ENOMEM)
+    if (ret == NULL && g_memory_limit && errno == ENOMEM)
         raise(SIGKILL);
     return ret;
 }
@@ -193,7 +193,7 @@ void *NEW(malloc)(size_t size)
         return ret;
     }
     ret = ORIG(malloc)(size);
-    if (_zz_memory && ((!ret && errno == ENOMEM)
+    if (g_memory_limit && ((!ret && errno == ENOMEM)
                         || (ret && memory_exceeded())))
         raise(SIGKILL);
     return ret;
@@ -242,7 +242,7 @@ void *NEW(realloc)(void *ptr, size_t size)
     LOADSYM(realloc);
 
     void *ret = ORIG(realloc)(ptr, size);
-    if (_zz_memory && ((!ret && errno == ENOMEM)
+    if (g_memory_limit && ((!ret && errno == ENOMEM)
                         || (ret && memory_exceeded())))
         raise(SIGKILL);
     return ret;
@@ -255,7 +255,7 @@ void *NEW(valloc)(size_t size)
     LOADSYM(valloc);
 
     void *ret = ORIG(valloc)(size);
-    if (_zz_memory && ((!ret && errno == ENOMEM)
+    if (g_memory_limit && ((!ret && errno == ENOMEM)
                         || (ret && memory_exceeded())))
         raise(SIGKILL);
     return ret;
@@ -269,7 +269,7 @@ void *NEW(memalign)(size_t boundary, size_t size)
     LOADSYM(memalign);
 
     void *ret = ORIG(memalign)(boundary, size);
-    if (_zz_memory && ((!ret && errno == ENOMEM)
+    if (g_memory_limit && ((!ret && errno == ENOMEM)
                         || (ret && memory_exceeded())))
         raise(SIGKILL);
     return ret;
@@ -283,7 +283,7 @@ int NEW(posix_memalign)(void **memptr, size_t alignment, size_t size)
     LOADSYM(posix_memalign);
 
     int ret = ORIG(posix_memalign)(memptr, alignment, size);
-    if (_zz_memory && ((!ret && errno == ENOMEM)
+    if (g_memory_limit && ((!ret && errno == ENOMEM)
                         || (ret && memory_exceeded())))
         raise(SIGKILL);
     return ret;

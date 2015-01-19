@@ -63,23 +63,20 @@ static void mydebug(char const *format, va_list args);
     } while (0)
 
 /* Temporary buffer for deferred output */
-static zz_mutex debug_mutex = 0;
+static zzuf_mutex_t debug_mutex = 0;
 static char debug_buffer[BUFSIZ];
 static size_t debug_count = 1;
 
 #ifdef _WIN32
-
-CRITICAL_SECTION _zz_pipe_cs; /* Initialized in DllMain */
-
-void _zz_debug(char const *format, ...)
+void zzuf_debug(char const *format, ...)
 {
     va_list args;
     char buf[0x100];
     DWORD written;
     va_start(args, format);
-    //if (_zz_debuglevel >= 1) // LATER:
+    //if (g_debug_level >= 1) // LATER:
     {
-        HANDLE dbg_hdl = (HANDLE)_get_osfhandle(_zz_debugfd);
+        HANDLE dbg_hdl = (HANDLE)_get_osfhandle(g_debug_fd);
         int ret = _vsnprintf(buf, sizeof(buf), format, args);
 
         if (ret <= 0)
@@ -93,23 +90,23 @@ void _zz_debug(char const *format, ...)
             ret = (int)sizeof(buf) - 1;
         buf[ret++] = '\n';
 
-        EnterCriticalSection(&_zz_pipe_cs);
+        zzuf_mutex_lock(&debug_mutex);
         WriteFile(dbg_hdl, buf, ret, &written, NULL);
-        LeaveCriticalSection(&_zz_pipe_cs);
+        zzuf_mutex_unlock(&debug_mutex);
     }
     va_end(args);
     fflush(NULL); /* flush all streams to make sure zzuf gotta catch 'em all */
 }
 
-void _zz_debug2(char const *format, ...)
+void zzuf_debug2(char const *format, ...)
 {
     va_list args;
     char buf[0x100];
     DWORD written;
     va_start(args, format);
-    //if (_zz_debuglevel >= 1) // LATER:
+    //if (g_debug_level >= 1) // LATER:
     {
-        HANDLE dbg_hdl = (HANDLE)_get_osfhandle(_zz_debugfd);
+        HANDLE dbg_hdl = (HANDLE)_get_osfhandle(g_debug_fd);
         int ret = _vsnprintf(buf, sizeof(buf), format, args);
 
         if (ret <= 0)
@@ -123,28 +120,28 @@ void _zz_debug2(char const *format, ...)
             ret = (int)sizeof(buf) - 1;
         buf[ret++] = '\n';
 
-        EnterCriticalSection(&_zz_pipe_cs);
+        zzuf_mutex_lock(&debug_mutex);
         WriteFile(dbg_hdl, buf, ret, &written, NULL);
-        LeaveCriticalSection(&_zz_pipe_cs);
+        zzuf_mutex_unlock(&debug_mutex);
     }
     va_end(args);
     fflush(NULL); /* flush all streams to make sure zzuf gotta catch 'em all */
 }
 #else
-void _zz_debug(char const *format, ...)
+void zzuf_debug(char const *format, ...)
 {
     va_list args;
     va_start(args, format);
-    if (_zz_debuglevel >= 1)
+    if (g_debug_level >= 1)
         mydebug(format, args);
     va_end(args);
 }
 
-void _zz_debug2(char const *format, ...)
+void zzuf_debug2(char const *format, ...)
 {
     va_list args;
     va_start(args, format);
-    if (_zz_debuglevel >= 2)
+    if (g_debug_level >= 2)
         mydebug(format, args);
     va_end(args);
 }
@@ -152,7 +149,7 @@ void _zz_debug2(char const *format, ...)
 
 /**
  * Format a string, printf-like, and write the resulting data to zzuf's
- * debug file descriptor _zz_debugfd. If the debug file descriptor is
+ * debug file descriptor g_debug_fd. If the debug file descriptor is
  * still -1, this function does nothing.
  *
  * This function's code is roughly equivalent to the following *printf
@@ -177,14 +174,14 @@ static void mydebug(char const *format, va_list args)
 {
     static char const *hex2char = "0123456789abcdef";
 
-    zz_lock(&debug_mutex);
+    zzuf_mutex_lock(&debug_mutex);
 
     int saved_errno = errno;
 
     /* If there is spare data and the debug fd is open, we send the data */
-    if (debug_count && _zz_debugfd >= 0)
+    if (debug_count && g_debug_fd >= 0)
     {
-        write(_zz_debugfd, debug_buffer, debug_count);
+        write(g_debug_fd, debug_buffer, debug_count);
         debug_count = 0;
     }
 
@@ -323,13 +320,13 @@ static void mydebug(char const *format, va_list args)
     append("\n", 1);
 
     /* If the debug fd is open, we send the data */
-    if (_zz_debugfd >= 0)
+    if (g_debug_fd >= 0)
     {
-        write(_zz_debugfd, debug_buffer, debug_count);
+        write(g_debug_fd, debug_buffer, debug_count);
         debug_count = 0;
     }
 
-    zz_unlock(&debug_mutex);
+    zzuf_mutex_unlock(&debug_mutex);
 
     errno = saved_errno;
 }

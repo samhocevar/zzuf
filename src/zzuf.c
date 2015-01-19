@@ -88,11 +88,11 @@
 #   undef ZZUF_RLIMIT_CPU
 #endif
 
-static void loop_stdin(struct opts *);
+static void loop_stdin(zzuf_opts_t *);
 
-static void spawn_children(struct opts *);
-static void clean_children(struct opts *);
-static void read_children(struct opts *);
+static void spawn_children(zzuf_opts_t *);
+static void clean_children(zzuf_opts_t *);
+static void read_children(zzuf_opts_t *);
 
 #if !defined HAVE_SETENV
 static void setenv(char const *, char const *, int);
@@ -100,7 +100,7 @@ static void setenv(char const *, char const *, int);
 #if defined HAVE_WAITPID
 static char const *sig2name(int);
 #endif
-static void finfo(FILE *, struct opts *, uint32_t);
+static void finfo(FILE *, zzuf_opts_t *, uint32_t);
 #if defined HAVE_REGEX_H
 static char *merge_regex(char *, char *);
 static char *merge_file(char *, char *);
@@ -120,15 +120,11 @@ static void usage(void);
     ((fd >= 0) && (FD_ISSET(fd, p_fdset)))
 
 #if defined _WIN32
-#   include <windows.h>
-#   include <fcntl.h> /* _O_RDWR */
-#   include <io.h> /* _open */
-static CRITICAL_SECTION _zz_pipe_cs;
+static zzuf_mutex_t pipe_mutex = 0;
 #endif
 
 int main(int argc, char *argv[])
 {
-    struct opts _opts, *opts = &_opts;
     char *tmp;
 #if defined HAVE_REGEX_H
     char *include = NULL, *exclude = NULL;
@@ -136,11 +132,7 @@ int main(int argc, char *argv[])
 #endif
     int debug = 0, b_network = 0;
 
-#if defined _WIN32
-    InitializeCriticalSection(&_zz_pipe_cs);
-#endif
-
-    _zz_opts_init(opts);
+    zzuf_opts_t *opts = zzuf_create_opts();
 
     for (;;)
     {
@@ -163,7 +155,7 @@ int main(int argc, char *argv[])
                 "a:Ab:B:C:dD:e:f:F:ij:l:mnO:p:P:qr:R:s:St:U:vxXhV"
 #define MOREINFO "Try `%s --help' for more information.\n"
         int option_index = 0;
-        static struct zz_option long_options[] =
+        static zzuf_option_t long_options[] =
         {
             /* Long option, needs arg, flag, short option */
             { "allow",        1, NULL, 'a' },
@@ -255,7 +247,7 @@ int main(int argc, char *argv[])
             {
                 fprintf(stderr, "%s: invalid regex -- `%s'\n",
                         argv[0], zz_optarg);
-                _zz_opts_fini(opts);
+                zzuf_destroy_opts(opts);
                 return EXIT_FAILURE;
             }
             break;
@@ -265,7 +257,7 @@ int main(int argc, char *argv[])
             break;
         case 'F':
             fprintf(stderr, "%s: `-F' is deprecated, use `-j'\n", argv[0]);
-            _zz_opts_fini(opts);
+            zzuf_destroy_opts(opts);
             return EXIT_FAILURE;
         case 'i': /* --stdin */
             setenv("ZZUF_STDIN", "1", 1);
@@ -277,7 +269,7 @@ int main(int argc, char *argv[])
             {
                 fprintf(stderr, "%s: invalid regex -- `%s'\n",
                         argv[0], zz_optarg);
-                _zz_opts_fini(opts);
+                zzuf_destroy_opts(opts);
                 return EXIT_FAILURE;
             }
             break;
@@ -315,7 +307,7 @@ int main(int argc, char *argv[])
             {
                 fprintf(stderr, "%s: invalid operating mode -- `%s'\n",
                         argv[0], zz_optarg);
-                _zz_opts_fini(opts);
+                zzuf_destroy_opts(opts);
                 return EXIT_FAILURE;
             }
             break;
@@ -378,16 +370,16 @@ int main(int argc, char *argv[])
             break;
         case 'h': /* --help */
             usage();
-            _zz_opts_fini(opts);
+            zzuf_destroy_opts(opts);
             return 0;
         case 'V': /* --version */
             version();
-            _zz_opts_fini(opts);
+            zzuf_destroy_opts(opts);
             return 0;
         default:
             fprintf(stderr, "%s: invalid option -- %c\n", argv[0], c);
             printf(MOREINFO, argv[0]);
-            _zz_opts_fini(opts);
+            zzuf_destroy_opts(opts);
             return EXIT_FAILURE;
         }
     }
@@ -397,7 +389,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "%s: MD5 hash (-m) and hexadecimal dump (-X) are "
                         "incompatible\n", argv[0]);
         printf(MOREINFO, argv[0]);
-        _zz_opts_fini(opts);
+        zzuf_destroy_opts(opts);
         return EXIT_FAILURE;
     }
 
@@ -406,7 +398,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "%s: port option (-p) requires network fuzzing (-n)\n",
                 argv[0]);
         printf(MOREINFO, argv[0]);
-        _zz_opts_fini(opts);
+        zzuf_destroy_opts(opts);
         return EXIT_FAILURE;
     }
 
@@ -415,12 +407,12 @@ int main(int argc, char *argv[])
         fprintf(stderr, "%s: allow option (-a) requires network fuzzing (-n)\n",
                 argv[0]);
         printf(MOREINFO, argv[0]);
-        _zz_opts_fini(opts);
+        zzuf_destroy_opts(opts);
         return EXIT_FAILURE;
     }
 
-    _zz_setratio(opts->minratio, opts->maxratio);
-    _zz_setseed(opts->seed);
+    zzuf_set_ratio(opts->minratio, opts->maxratio);
+    zzuf_set_seed(opts->seed);
 
     if (opts->fuzzing)
         _zz_fuzzing(opts->fuzzing);
@@ -429,9 +421,9 @@ int main(int argc, char *argv[])
     if (opts->list)
         _zz_list(opts->list);
     if (opts->protect)
-        _zz_protect(opts->protect);
+        zzuf_protect_range(opts->protect);
     if (opts->refuse)
-        _zz_refuse(opts->refuse);
+        zzuf_refuse_range(opts->refuse);
 
     /* Needed for stdin mode and for copy opmode. */
     _zz_fd_init();
@@ -452,7 +444,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "%s: seed ranges are incompatible with "
                             "stdin fuzzing\n", argv[0]);
             printf(MOREINFO, argv[0]);
-            _zz_opts_fini(opts);
+            zzuf_destroy_opts(opts);
             return EXIT_FAILURE;
         }
 
@@ -513,7 +505,7 @@ int main(int argc, char *argv[])
 #endif
 
         /* Allocate memory for children handling */
-        opts->child = malloc(opts->maxchild * sizeof(struct child));
+        opts->child = malloc(opts->maxchild * sizeof(zzuf_child_t));
         for (int i = 0; i < opts->maxchild; ++i)
         {
             opts->child[i].status = STATUS_FREE;
@@ -554,7 +546,7 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            if (opts->maxtime && _zz_time() - opts->starttime >= opts->maxtime
+            if (opts->maxtime && zzuf_time() - opts->starttime >= opts->maxtime
                  && opts->nchild == 0)
             {
                 if (opts->b_verbose)
@@ -565,26 +557,24 @@ int main(int argc, char *argv[])
         }
     }
 
+    int ret = opts->crashes ? EXIT_FAILURE : EXIT_SUCCESS;
+
     /* Clean up */
     _zz_fd_fini();
-    _zz_opts_fini(opts);
+    zzuf_destroy_opts(opts);
 
-#if defined _WIN32
-    DeleteCriticalSection(&_zz_pipe_cs);
-#endif
-
-    return opts->crashes ? EXIT_FAILURE : EXIT_SUCCESS;
+    return ret;
 }
 
-static void loop_stdin(struct opts *opts)
+static void loop_stdin(zzuf_opts_t *opts)
 {
-    struct zz_md5 *md5 = NULL;
-    struct zz_hex *hex = NULL;
+    zzuf_md5sum_t *md5 = NULL;
+    zzuf_hexdump_t *hex = NULL;
 
     if (opts->b_md5)
-        md5 = zz_md5_init();
+        md5 = zzuf_create_md5();
     else if (opts->b_hex)
-        hex = zz_hex_init();
+        hex = zzuf_create_hex();
 
     _zz_register(0);
 
@@ -627,7 +617,7 @@ static void loop_stdin(struct opts *opts)
     if (opts->b_md5)
     {
         uint8_t md5sum[16];
-        zz_md5_fini(md5sum, md5);
+        zzuf_destroy_md5(md5sum, md5);
         finfo(stdout, opts, opts->seed);
         fprintf(stdout, "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x"
                 "%.02x%.02x%.02x%.02x%.02x%.02x\n", md5sum[0], md5sum[1],
@@ -638,13 +628,13 @@ static void loop_stdin(struct opts *opts)
     }
     else if (opts->b_hex)
     {
-        zz_hex_fini(hex);
+        zzuf_destroy_hex(hex);
     }
 
     _zz_unregister(0);
 }
 
-static void finfo(FILE *fp, struct opts *opts, uint32_t seed)
+static void finfo(FILE *fp, zzuf_opts_t *opts, uint32_t seed)
 {
     if (opts->minratio == opts->maxratio)
         fprintf(fp, "zzuf[s=%i,r=%g]: ", seed, opts->minratio);
@@ -703,9 +693,9 @@ static char *merge_regex(char *regex, char *string)
 }
 #endif
 
-static void spawn_children(struct opts *opts)
+static void spawn_children(zzuf_opts_t *opts)
 {
-    int64_t now = _zz_time();
+    int64_t now = zzuf_time();
 
     if (opts->nchild == opts->maxchild)
         return; /* no slot */
@@ -792,12 +782,12 @@ static void spawn_children(struct opts *opts)
     opts->child[slot].date = now;
     opts->child[slot].bytes = 0;
     opts->child[slot].seed = opts->seed;
-    opts->child[slot].ratio = _zz_getratio();
+    opts->child[slot].ratio = zzuf_get_ratio();
     opts->child[slot].status = STATUS_RUNNING;
     if (opts->b_md5)
-        opts->child[slot].md5 = zz_md5_init();
+        opts->child[slot].md5 = zzuf_create_md5();
     else if (opts->b_hex)
-        opts->child[slot].hex = zz_hex_init();
+        opts->child[slot].hex = zzuf_create_hex();
 
     if (opts->b_verbose)
     {
@@ -809,13 +799,13 @@ static void spawn_children(struct opts *opts)
     opts->nchild++;
     opts->seed++;
 
-    _zz_setseed(opts->seed);
+    zzuf_set_seed(opts->seed);
 }
 
-static void clean_children(struct opts *opts)
+static void clean_children(zzuf_opts_t *opts)
 {
 #if defined HAVE_KILL || defined HAVE_WINDOWS_H
-    int64_t now = _zz_time();
+    int64_t now = zzuf_time();
 #endif
 
 #if defined HAVE_KILL || defined HAVE_WINDOWS_H
@@ -985,7 +975,7 @@ static void clean_children(struct opts *opts)
 
         if (opts->b_md5)
         {
-            zz_md5_fini(md5sum, opts->child[i].md5);
+            zzuf_destroy_md5(md5sum, opts->child[i].md5);
             finfo(stdout, opts, opts->child[i].seed);
             fprintf(stdout, "%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x%.02x"
                     "%.02x%.02x%.02x%.02x%.02x%.02x%.02x\n", md5sum[0],
@@ -996,7 +986,7 @@ static void clean_children(struct opts *opts)
         }
         else if (opts->b_hex)
         {
-            zz_hex_fini(opts->child[i].hex);
+            zzuf_destroy_hex(opts->child[i].hex);
         }
         opts->child[i].status = STATUS_FREE;
         opts->nchild--;
@@ -1010,7 +1000,7 @@ struct child_overlapped
 {
     OVERLAPPED overlapped;
     uint8_t buf[BUFSIZ];
-    struct opts * opts;
+    zzuf_opts_t * opts;
     int child_no;
     int fd_no;
 };
@@ -1025,7 +1015,7 @@ static void __stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered,
     if (err_code != ERROR_SUCCESS)
         return;
 
-    EnterCriticalSection(&_zz_pipe_cs);
+    zzuf_mutex_lock(&pipe_mutex);
     switch (co->fd_no)
     {
     case 0: /* debug fd */
@@ -1036,7 +1026,7 @@ static void __stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered,
         write(2, co->buf, nbr_of_bytes_transfered); break;
     default: break;
     }
-    LeaveCriticalSection(&_zz_pipe_cs);
+    zzuf_mutex_unlock(&pipe_mutex);
 
     if (co->fd_no != 0) /* either out or err fd */
         co->opts->child[co->child_no].bytes += nbr_of_bytes_transfered;
@@ -1050,7 +1040,7 @@ static void __stdcall read_child(DWORD err_code, DWORD nbr_of_bytes_transfered,
 }
 
 /* Since on windows select doesn't support file HANDLE, we use IOCP */
-static void read_children(struct opts *opts)
+static void read_children(zzuf_opts_t *opts)
 {
     HANDLE *children_handle, * cur_child_handle;
     size_t fd_number = opts->maxchild * 3;
@@ -1103,7 +1093,7 @@ static void read_children(struct opts *opts)
 }
 
 #else
-static void read_children(struct opts *opts)
+static void read_children(zzuf_opts_t *opts)
 {
     struct timeval tv;
     fd_set fdset;

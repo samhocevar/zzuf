@@ -14,6 +14,6 @@
  *  ranges.c: range handling helper functions
  */
 
-int64_t *_zz_allocrange(char const *, int64_t *);
+int64_t *_zz_allocrange(char const *, int64_t[256]);
 int _zz_isinrange(int64_t, int64_t const *);
 

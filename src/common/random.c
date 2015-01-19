@@ -27,12 +27,12 @@
 
 static unsigned long ctx = 1;
 
-void _zz_srand(uint32_t seed)
+void zzuf_srand(uint32_t seed)
 {
     ctx = (seed ^ 0x12345678);
 }
 
-uint32_t _zz_rand(uint32_t max)
+uint32_t zzuf_rand(uint32_t max)
 {
     /* Could be better, but do we care? */
     long hi = ctx / 12773L;

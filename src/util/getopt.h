@@ -14,7 +14,7 @@
  *  getopt.h: getopt_long reimplementation
  */
 
-struct zz_option
+struct zzuf_option
 {
     char const *name;
     int has_arg;
@@ -22,8 +22,10 @@ struct zz_option
     int val;
 };
 
+typedef struct zzuf_option zzuf_option_t;
+
 extern int zz_optind;
 extern char *zz_optarg;
 extern int zz_getopt(int, char * const[], char const *,
-                     struct zz_option const *, int *);
+                     zzuf_option_t const *, int *);
 

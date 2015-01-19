@@ -30,7 +30,7 @@
 
 #include "util/hex.h"
 
-struct zz_hex
+struct zzuf_hexdump
 {
     /* Buffered line */
     uint8_t current_line[16];
@@ -40,16 +40,16 @@ struct zz_hex
     int64_t count;
 };
 
-struct zz_hex *zz_hex_init(void)
+zzuf_hexdump_t *zzuf_create_hex(void)
 {
-    struct zz_hex *ctx = malloc(sizeof(struct zz_hex));
+    zzuf_hexdump_t *ctx = malloc(sizeof(zzuf_hexdump_t));
 
     ctx->count = 0;
 
     return ctx;
 }
 
-static void print_hex(struct zz_hex *ctx, unsigned len)
+static void print_hex(zzuf_hexdump_t *ctx, unsigned len)
 {
     uint8_t *buf = ctx->current_line;
     uint32_t address = (uint32_t)(ctx->count - len);
@@ -73,7 +73,7 @@ static void print_hex(struct zz_hex *ctx, unsigned len)
     printf("%08x  %s  |%s|\n", address, hex, ascii);
 }
 
-void zz_hex_add(struct zz_hex *ctx, uint8_t *buf, unsigned len)
+void zz_hex_add(zzuf_hexdump_t *ctx, uint8_t *buf, unsigned len)
 {
     unsigned buffered_len = (unsigned)(ctx->count & 15);
 
@@ -101,7 +101,7 @@ void zz_hex_add(struct zz_hex *ctx, uint8_t *buf, unsigned len)
     fflush(stdout);
 }
 
-void zz_hex_fini(struct zz_hex *ctx)
+void zzuf_destroy_hex(zzuf_hexdump_t *ctx)
 {
     /* Print the last line, if non-empty */
     if (ctx->count & 15)

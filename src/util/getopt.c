@@ -30,13 +30,13 @@ int   zz_optind = 1;
 char *zz_optarg = NULL;
 
 int zz_getopt(int argc, char * const _argv[], char const *optstring,
-              struct zz_option const *longopts, int *longindex)
+              zzuf_option_t const *longopts, int *longindex)
 {
 #if defined HAVE_GETOPT_LONG
     optind = zz_optind;
     optarg = zz_optarg;
     int ret = getopt_long(argc, _argv, optstring,
-                          (struct zz_option const *)longopts, longindex);
+                          (zzuf_option_t const *)longopts, longindex);
     zz_optind = optind;
     zz_optarg = optarg;
     return ret;

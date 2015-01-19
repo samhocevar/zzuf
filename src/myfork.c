@@ -74,7 +74,7 @@
 #endif
 
 static int mypipe(int pipefd[2]);
-static int run_process(struct child *child, struct opts *, int[][2]);
+static int run_process(zzuf_child_t *child, zzuf_opts_t *, int[][2]);
 
 #if defined HAVE_WINDOWS_H
 static int dll_inject(PROCESS_INFORMATION *, char const *);
@@ -86,7 +86,7 @@ static void *get_proc_address(void *, DWORD, char const *);
  * child PID is stored in the child structure, and a communication channel
  * is set up using pipes.
  */
-int myfork(struct child *child, struct opts *opts)
+int myfork(zzuf_child_t *child, zzuf_opts_t *opts)
 {
     /* Prepare communication pipes */
     int pipefds[3][2];
@@ -201,7 +201,7 @@ static void setenv(char const *name, char const *value, int overwrite)
 }
 #endif
 
-static int run_process(struct child *child, struct opts *opts, int pipes[][2])
+static int run_process(zzuf_child_t *child, zzuf_opts_t *opts, int pipes[][2])
 {
 #if defined HAVE_FORK
 #   if defined __APPLE__

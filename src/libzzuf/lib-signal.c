@@ -57,7 +57,7 @@ static int isfatal(int signum);
 
 static int isfatal(int signum)
 {
-    switch(signum)
+    switch (signum)
     {
         case SIGABRT:
         case SIGFPE:
@@ -95,7 +95,7 @@ SIG_T NEW(signal)(int signum, SIG_T handler)
 {
     LOADSYM(signal);
 
-    if (!_zz_signal)
+    if (!g_disable_sighandlers)
         return ORIG(signal)(signum, handler);
 
     SIG_T ret = ORIG(signal)(signum, isfatal(signum) ? SIG_DFL : handler);
@@ -112,7 +112,7 @@ int NEW(sigaction)(int signum, const struct sigaction *act,
 {
     LOADSYM(sigaction);
 
-    if (!_zz_signal)
+    if (!g_disable_sighandlers)
         return ORIG(sigaction)(signum, act, oldact);
 
     int ret;

@@ -17,15 +17,17 @@
  *  fd.h: file descriptor functions
  */
 
+#include "common/common.h"
+
 #include <stdint.h>
 #include <wchar.h>
 
-extern void _zz_include(char const *);
-extern void _zz_exclude(char const *);
-extern void _zz_setseed(int32_t);
-extern void _zz_setratio(double, double);
-extern double _zz_getratio(void);
-extern void _zz_setautoinc(void);
+extern void zzuf_include_pattern(char const *);
+extern void zzuf_exclude_pattern(char const *);
+extern void zzuf_set_seed(int32_t);
+extern void zzuf_set_ratio(double, double);
+extern double zzuf_get_ratio(void);
+extern void zzuf_set_auto_increment(void);
 extern void _zz_fd_init(void);
 extern void _zz_fd_fini(void);
 
@@ -44,5 +46,5 @@ extern void _zz_addpos(int, int64_t);
 extern void _zz_setfuzzed(int, int);
 extern int _zz_getfuzzed(int);
 
-extern struct fuzz *_zz_getfuzz(int);
+extern fuzz_context_t *_zz_getfuzz(int);
 

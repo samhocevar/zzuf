@@ -14,6 +14,6 @@
  *  random.h: pseudorandom number generator
  */
 
-void _zz_srand(uint32_t);
-uint32_t _zz_rand(uint32_t);
+void zzuf_srand(uint32_t);
+uint32_t zzuf_rand(uint32_t);
 

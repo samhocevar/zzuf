@@ -32,7 +32,7 @@
  * If more than 256 slots are required, new memory is allocated, otherwise
  * the static array static_ranges is used. It is the caller's duty to call
  * free() if the returned value is not static_ranges. */
-int64_t *_zz_allocrange(char const *list, int64_t *static_ranges)
+int64_t *_zz_allocrange(char const *list, int64_t static_ranges[256])
 {
     char const *parser;
     int64_t *ranges;

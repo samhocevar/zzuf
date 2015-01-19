@@ -19,22 +19,21 @@
 #include "fd.h"
 
 /* Internal variables */
-extern int _zz_ready;
-extern int _zz_disabled;
-extern int _zz_debuglevel;
-extern int _zz_debugfd;
-extern int _zz_signal;
-extern uint64_t _zz_memory;
-extern int _zz_network;
-extern int _zz_autoinc;
+extern int g_libzzuf_ready;
+extern int g_debug_level;
+extern int g_debug_fd;
+extern int g_disable_sighandlers;
+extern uint64_t g_memory_limit;
+extern int g_network_fuzzing;
+extern int g_auto_increment;
 
 /* Library initialisation shit */
 #if defined __GNUC__
-extern void _zz_init(void) __attribute__((constructor));
-extern void _zz_fini(void) __attribute__((destructor));
+extern void libzzuf_init(void) __attribute__((constructor));
+extern void libzzuf_fini(void) __attribute__((destructor));
 #elif defined HAVE_PRAGMA_INIT
-#   pragma INIT "_zz_init"
-#   pragma FINI "_zz_fini"
+#   pragma INIT "libzzuf_init"
+#   pragma FINI "libzzuf_fini"
 #endif
 
 /* This function is needed to initialise memory functions */
@@ -43,14 +42,9 @@ extern void _zz_mem_init(void);
 /* This function lets us know where the end of a file is. */
 extern size_t _zz_bytes_until_eof(int fd, size_t offset);
 
-#ifdef _WIN32
-#   include <windows.h>
-extern CRITICAL_SECTION _zz_pipe_cs;
-#endif
-
 static inline int must_fuzz_fd(int fd)
 {
-    return _zz_ready && _zz_iswatched(fd)
+    return g_libzzuf_ready && _zz_iswatched(fd)
             && !_zz_islocked(fd) && _zz_isactive(fd);
 }
 

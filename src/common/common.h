@@ -10,6 +10,8 @@
  *  See http://www.wtfpl.net/ for more details.
  */
 
+#pragma once
+
 /*
  *  common.h: default fuzzing settings
  */
@@ -36,7 +38,7 @@
 /* We use file descriptor 17 as the debug channel on Unix */
 #define DEBUG_FILENO 17
 
-struct fuzz
+struct fuzz_context
 {
     uint32_t seed;
     double ratio;
@@ -47,4 +49,6 @@ struct fuzz
     int uflag; int64_t upos; uint8_t uchar; /* ungetc stuff */
     uint8_t data[CHUNKBYTES];
 };
+
+typedef struct fuzz_context fuzz_context_t;
 
