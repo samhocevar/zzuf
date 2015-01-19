@@ -25,7 +25,8 @@ checkutils()
     f=$2
 
     file="$DIR/file-$f"
-    ZZOPTS="-s $seed -r $r"
+    # add -d on purpose here so we can detect bugs in debug() calls
+    ZZOPTS="-d -s $seed -r $r"
     case $file in
       *text*) ZZOPTS="$ZZOPTS -P '\\n' -R '\\000'" ;;
     esac
