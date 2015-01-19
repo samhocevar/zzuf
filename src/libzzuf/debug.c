@@ -338,8 +338,15 @@ void zzuf_debug_str(char *str, uint8_t const *buffer,
     *str++ = '"';
 
     /* Print as many escaped characters as possible */
-    for (unsigned i = 0; i < len && i < maxlen; ++i)
+    for (unsigned i = 0; i < len; ++i)
     {
+        if (len > maxlen && i == maxlen / 2)
+        {
+            strcpy(str, "…");
+            str += strlen("…");
+            i = len - maxlen + maxlen / 2;
+        }
+
         if (buffer[i] >= 0x20 && buffer[i] < 0x7f
              && buffer[i] != '\\' && buffer[i] != '\"')
         {
@@ -365,6 +372,7 @@ void zzuf_debug_str(char *str, uint8_t const *buffer,
     }
 
     /* Close the double quotes */
-    strcpy(str, len > maxlen ? "…\"" : "\"");
+    *str++ = '"';
+    *str++ = '\0';
 }
 
