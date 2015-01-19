@@ -383,20 +383,14 @@ int NEW(socket)(int domain, int type, int protocol)
         \
         if (ret > 0) \
         { \
-            char *b = buf; \
             _zz_fuzz(s, buf, ret); \
             _zz_addpos(s, ret); \
-            if (ret >= 4) \
-                debug("%s(%i, %p, %li, 0x%x) = %i \"%c%c%c%c...", __func__, \
-                      s, buf, (long int)len, flags, ret, \
-                      b[0], b[1], b[2], b[3]); \
-            else \
-                debug("%s(%i, %p, %li, 0x%x) = %i \"%c...", __func__, \
-                      s, buf, (long int)len, flags, ret, b[0]); \
         } \
-        else \
-            debug("%s(%i, %p, %li, 0x%x) = %i", __func__, \
-                  s, buf, (long int)len, flags, ret); \
+        \
+        char tmp[128]; \
+        debug_str(tmp, buf, ret, 8); \
+        debug("%s(%i, %p, %li, 0x%x) = %i %s", __func__, \
+              s, buf, (long int)len, flags, ret, tmp); \
     } while (0);
 
 #if defined HAVE_RECV
@@ -426,26 +420,20 @@ RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, size_t buflen, int flags)
         \
         if (ret > 0) \
         { \
-            char tmp[128]; \
-            char *b = buf; \
             _zz_fuzz(s, buf, ret); \
             _zz_addpos(s, ret); \
-            if (fromlen) \
-                sprintf(tmp, "&%i", (int)*fromlen); \
-            else \
-                strcpy(tmp, "NULL"); \
-            if (ret >= 4) \
-                debug("%s(%i, %p, %li, 0x%x, %p, %s) = %i \"%c%c%c%c...", \
-                      __func__, s, buf, (long int)len, flags, from, tmp, \
-                      ret, b[0], b[1], b[2], b[3]); \
-            else \
-                debug("%s(%i, %p, %li, 0x%x, %p, %s) = %i \"%c...", \
-                      __func__, s, buf, (long int)len, flags, from, tmp, \
-                      ret, b[0]); \
         } \
+        \
+        char tmp[128], tmp2[128]; \
+        if (ret > 0 && fromlen) \
+            sprintf(tmp, "&%i", (int)*fromlen); \
+        else if (ret > 0) \
+            strcpy(tmp, "NULL"); \
         else \
-            debug("%s(%i, %p, %li, 0x%x, %p, %p) = %i", __func__, \
-                  s, buf, (long int)len, flags, from, fromlen, ret); \
+            tmp[0] = '\0'; \
+        debug_str(tmp2, buf, ret, 8); \
+        debug("%s(%i, %p, %li, 0x%x, %p, %s) = %i %s", __func__, \
+              s, buf, (long int)len, flags, from, tmp, ret, tmp2); \
     } while (0)
 
 #if defined HAVE_RECVFROM
@@ -498,19 +486,15 @@ RECV_T NEW(recvmsg)(int s, struct msghdr *hdr, int flags)
         \
         if (ret > 0) \
         { \
-            char *b = buf; \
             _zz_fuzz(fd, buf, ret); \
             _zz_addpos(fd, ret); \
-            if (ret >= 4) \
-                debug("%s(%i, %p, %li) = %i \"%c%c%c%c...", __func__, fd, \
-                      buf, (long int)count, ret, b[0], b[1], b[2], b[3]); \
-            else \
-                debug("%s(%i, %p, %li) = %i \"%c...", __func__, fd, \
-                      buf, (long int)count, ret, b[0]); \
         } \
-        else \
-            debug("%s(%i, %p, %li) = %i", __func__, fd, \
-                  buf, (long int)count, ret); \
+        \
+        char tmp[128]; \
+        debug_str(tmp, buf, ret, 8); \
+        debug("%s(%i, %p, %li) = %i %s", __func__, \
+              fd, buf, (long int)count, ret, tmp); \
+        \
         offset_check(fd); \
     } while (0)
 
@@ -567,23 +551,16 @@ ssize_t NEW(pread)(int fd, void *buf, size_t count, off_t offset)
     if (ret > 0)
     {
         long int curoff = _zz_getpos(fd);
-        char *b = buf;
 
         _zz_setpos(fd, offset);
         _zz_fuzz(fd, buf, ret);
         _zz_setpos(fd, curoff);
-
-        if (ret >= 4)
-            debug("%s(%i, %p, %li, %li) = %i \"%c%c%c%c...", __func__, fd, buf,
-                  (long int)count, (long int)offset, ret,
-                  b[0], b[1], b[2], b[3]);
-        else
-            debug("%s(%i, %p, %li, %li) = %i \"%c...", __func__, fd, buf,
-                  (long int)count, (long int)offset, ret, b[0]);
     }
-    else
-        debug("%s(%i, %p, %li, %li) = %i", __func__, fd, buf,
-              (long int)count, (long int)offset, ret);
+
+    char tmp[128];
+    debug_str(tmp, buf, ret, 8);
+    debug("%s(%i, %p, %li, %li) = %i %s", __func__,
+          fd, buf, (long int)count, (long int)offset, ret, tmp);
 
     return ret;
 }
@@ -733,7 +710,8 @@ static void offset_check(int fd)
     off_t ret = ORIG(lseek)(fd, 0, SEEK_CUR);
 #endif
     if (ret != -1 && ret != _zz_getpos(fd))
-        debug("warning: offset inconsistency");
+        debug("warning: lseek(%d, 0, SEEK_CUR) = %lli (expected %lli)",
+              fd, (long long int)ret, (long long int)_zz_getpos(fd));
     errno = orig_errno;
 }
 

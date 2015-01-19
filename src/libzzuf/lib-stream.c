@@ -561,17 +561,11 @@ void NEW(rewind)(FILE *stream)
         } \
         _zz_setpos(fd, newpos); \
         debug_stream("after", stream); \
-        if (newpos >= oldpos + 4) \
-            debug("%s(%p, %li, %li, [%i]) = %li \"%c%c%c%c...", __func__, \
-                  ptr, (long int)size, (long int)nmemb, fd, \
-                  (long int)ret, b[0], b[1], b[2], b[3]); \
-        else if (newpos > oldpos) \
-            debug("%s(%p, %li, %li, [%i]) = %li \"%c...", __func__, ptr, \
-                  (long int)size, (long int)nmemb, fd, \
-                  (long int)ret, b[0]); \
-        else \
-            debug("%s(%p, %li, %li, [%i]) = %li", __func__, ptr, \
-                  (long int)size, (long int)nmemb, fd, (long int)ret); \
+        \
+        char tmp[128]; \
+        debug_str(tmp, b, newpos - oldpos, 8); \
+        debug("%s(%p, %li, %li, [%i]) = %li %s", __func__, ptr, \
+              (long int)size, (long int)nmemb, fd, (long int)ret, tmp); \
     } while (0)
 
 #undef fread

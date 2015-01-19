@@ -314,6 +314,8 @@ int nbmaps = 0;
                 ret = MAP_FAILED; \
             } \
         } \
+        \
+        size_t data_length = 0; \
         if (b != MAP_FAILED) \
         { \
             int i, oldpos; \
@@ -331,7 +333,7 @@ int nbmaps = 0;
             /* If we requested a memory area larger than the end of the
              * file, it was not actually allocated, so do not try to
              * copy data beyond that point. */ \
-            size_t data_length = _zz_bytes_until_eof(fd, offset); \
+            data_length = _zz_bytes_until_eof(fd, offset); \
             if (data_length > length) \
                 data_length = length; \
             \
@@ -345,19 +347,13 @@ int nbmaps = 0;
             _zz_fuzz(fd, (uint8_t *)b, length); \
             _zz_setpos(fd, oldpos); \
             ret = b; \
-            if (data_length >= 4) \
-                debug("%s(%p, %li, %i, %i, %i, %lli) = %p \"%c%c%c%c...", \
-                      __func__, start, (long int)length, prot, flags, fd, \
-                      (long long int)offset, ret, b[0], b[1], b[2], b[3]); \
-            else \
-                debug("%s(%p, %li, %i, %i, %i, %lli) = %p \"%c...", \
-                      __func__, start, (long int)length, prot, flags, fd, \
-                      (long long int)offset, ret, b[0]); \
         } \
-        else \
-            debug("%s(%p, %li, %i, %i, %i, %lli) = %p", \
-                  __func__, start, (long int)length, prot, flags, fd, \
-                  (long long int)offset, ret); \
+        \
+        char tmp[128]; \
+        debug_str(tmp, (uint8_t *)b, (unsigned)data_length, 8); \
+        debug("%s(%p, %li, %i, %i, %i, %lli) = %p %s", __func__, start, \
+              (long int)length, prot, flags, fd, (long long int)offset, \
+              ret, tmp); \
     } while (0)
 
 #if defined HAVE_MMAP
@@ -412,7 +408,10 @@ kern_return_t NEW(map_fd)(int fd, vm_offset_t offset, vm_offset_t *addr,
     if (!must_fuzz_fd(fd))
         return ret;
 
-    if (ret == 0 && numbytes)
+    if (ret != 0)
+        numbytes = 0;
+
+    if (numbytes)
     {
         /* FIXME: do we also have to rewind the filedescriptor like in mmap? */
         char *b = malloc(numbytes);
@@ -422,20 +421,13 @@ kern_return_t NEW(map_fd)(int fd, vm_offset_t offset, vm_offset_t *addr,
         /* FIXME: the map is never freed; there is no such thing as unmap_fd,
          * but I suppose that kind of map should go when the filedescriptor is
          * closed (unlike mmap, which returns a persistent buffer). */
-
-        if (numbytes >= 4)
-           debug("%s(%i, %lli, &%p, %i, %lli) = %i \"%c%c%c%c", __func__,
-                 fd, (long long int)offset, (void *)*addr, (int)find_space,
-                 (long long int)numbytes, ret, b[0], b[1], b[2], b[3]);
-        else
-           debug("%s(%i, %lli, &%p, %i, %lli) = %i \"%c", __func__, fd,
-                 (long long int)offset, (void *)*addr, (int)find_space,
-                 (long long int)numbytes, ret, b[0]);
     }
-    else
-        debug("%s(%i, %lli, &%p, %i, %lli) = %i", __func__, fd,
-              (long long int)offset, (void *)*addr, (int)find_space,
-              (long long int)numbytes, ret);
+
+    char tmp[128];
+    debug_str(tmp, (uint8_t *)*addr, numbytes, 8);
+    debug("%s(%i, %lli, &%p, %i, %lli) = %i %s", __func__, fd,
+          (long long int)offset, (void *)*addr, (int)find_space,
+          (long long int)numbytes, ret, tmp);
 
     return ret;
 }

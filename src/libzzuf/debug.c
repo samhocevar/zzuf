@@ -38,6 +38,8 @@
 
 static void mydebug(char const *format, va_list args);
 
+static char const *hex2char = "0123456789abcdef";
+
 /**
  * Helper macro to write an integer value to a given file descriptor,
  * either in base 10 or in hexadecimal.
@@ -172,8 +174,6 @@ static inline void append(void const *data, size_t count)
 
 static void mydebug(char const *format, va_list args)
 {
-    static char const *hex2char = "0123456789abcdef";
-
     zzuf_mutex_lock(&debug_mutex);
 
     int saved_errno = errno;
@@ -329,5 +329,42 @@ static void mydebug(char const *format, va_list args)
     zzuf_mutex_unlock(&debug_mutex);
 
     errno = saved_errno;
+}
+
+void zzuf_debug_str(char *str, uint8_t const *buffer,
+                    unsigned len, unsigned maxlen)
+{
+    /* Open the double quotes */
+    *str++ = '"';
+
+    /* Print as many escaped characters as possible */
+    for (unsigned i = 0; i < len && i < maxlen; ++i)
+    {
+        if (buffer[i] >= 0x20 && buffer[i] < 0x7f
+             && buffer[i] != '\\' && buffer[i] != '\"')
+        {
+            *str++ = buffer[i];
+        }
+        else
+        {
+            *str++ = '\\';
+            *str++ = buffer[i] == '\0' ? '0'
+                   : buffer[i] == '\n' ? 'n'
+                   : buffer[i] == '\t' ? 't'
+                   : buffer[i] == '\r' ? 'r'
+                   : buffer[i] == '\\' ? '\\'
+                   : buffer[i] == '\"' ? '\"'
+                   : 'x';
+
+            if (str[-1] == 'x')
+            {
+                *str++ = hex2char[(buffer[i] & 0xf0) >> 4];
+                *str++ = hex2char[buffer[i] & 0x0f];
+            }
+        }
+    }
+
+    /* Close the double quotes */
+    strcpy(str, len > maxlen ? "…\"" : "\"");
 }
 

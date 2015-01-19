@@ -14,14 +14,18 @@
  *  debug.h: debugging support
  */
 
-extern void zzuf_debug(const char *format, ...) ATTRIBUTE_PRINTF(1,2);
-extern void zzuf_debug2(const char *format, ...) ATTRIBUTE_PRINTF(1,2);
+extern void zzuf_debug(char const *format, ...) ATTRIBUTE_PRINTF(1,2);
+extern void zzuf_debug2(char const *format, ...) ATTRIBUTE_PRINTF(1,2);
+extern void zzuf_debug_str(char *str, uint8_t const *buffer,
+                           unsigned len, unsigned maxlen);
 
 #ifdef LIBZZUF
 #   define debug zzuf_debug
 #   define debug2 zzuf_debug2
+#   define debug_str zzuf_debug_str
 #else
 #   define debug(...) do {} while (0)
 #   define debug2(...) do {} while (0)
+#   define debug_str(...) do {} while (0)
 #endif
 
