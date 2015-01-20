@@ -83,8 +83,10 @@ checkutils()
       check "$ZZOPTS" "$ZZAT -x \"repeat(-1,__fread_chk(1,1000),feof(1))\" $file" \
             "Gentoo __fread_chk() bug regression"
     fi
+    check "$ZZOPTS" "$ZZAT -x \"fread(1,4095) fread(1,1) fseek(0,SEEK_SET) fread(1,33000)\" $file" \
+          "streambuf end bug regression"
     check "$ZZOPTS" "$ZZAT -x \"fread(1,32768) fseek(-100,SEEK_END) fread(1,1) fseek(-1,SEEK_END) fread(1,1) fseek(-100,SEEK_CUR) fread(1,100)\" $file" \
-          "fread(1) before EOF bug regression"
+          "streambuf end bug regression"
     # Misc tests
     for n in \
       "fread(1,33000)" \
