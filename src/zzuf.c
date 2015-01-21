@@ -179,7 +179,9 @@ int main(int argc, char *argv[])
             { "jobs",         1, NULL, 'j' },
             { "list",         1, NULL, 'l' },
             { "md5",          0, NULL, 'm' },
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_MEM
             { "max-memory",   1, NULL, 'M' },
+#endif
             { "network",      0, NULL, 'n' },
             { "opmode",       1, NULL, 'O' },
             { "ports",        1, NULL, 'p' },
@@ -190,7 +192,9 @@ int main(int argc, char *argv[])
             { "seed",         1, NULL, 's' },
             { "signal",       0, NULL, 'S' },
             { "max-time",     1, NULL, 't' },
+#if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
             { "max-cputime",  1, NULL, 'T' },
+#endif
             { "max-usertime", 1, NULL, 'U' },
             { "verbose",      0, NULL, 'v' },
             { "check-exit",   0, NULL, 'x' },
