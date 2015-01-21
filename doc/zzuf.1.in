@@ -2,15 +2,15 @@
 .SH NAME
 zzuf \- multiple purpose fuzzer
 .SH SYNOPSIS
-\fBzzuf\fR [\fB\-aAcdimnqSvx\fR]
+\fBzzuf\fR [\fB\-AcdimnqSvxX\fR]
 [\fB\-s\fR \fIseed\fR|\fB\-s\fR \fIstart:stop\fR]
 [\fB\-r\fR \fIratio\fR|\fB\-r\fR \fImin:max\fR]
 [\fB\-f\fR \fIfuzzing\fR] [\fB\-D\fR \fIdelay\fR] [\fB\-j\fR \fIjobs\fR]
 [\fB\-C\fR \fIcrashes\fR] [\fB\-B\fR \fIbytes\fR] [\fB\-t\fR \fIseconds\fR]
 [\fB\-T\fR \fIseconds\fR] [\fB\-U\fR \fIseconds\fR] [\fB\-M\fR \fImebibytes\fR]
 [\fB\-b\fR \fIranges\fR] [\fB\-p\fR \fIports\fR] [\fB\-P\fR \fIprotect\fR]
-[\fB\-R\fR \fIrefuse\fR] [\fB\-l\fR \fIlist\fR] [\fB\-I\fR \fIinclude\fR]
-[\fB\-E\fR \fIexclude\fR] [\fB\-O\fR \fIopmode\fR]
+[\fB\-R\fR \fIrefuse\fR] [\fB\-a\fR \fIlist\fR] [\fB\-l\fR \fIlist\fR]
+[\fB\-I\fR \fIinclude\fR] [\fB\-E\fR \fIexclude\fR] [\fB\-O\fR \fIopmode\fR]
 [\fIPROGRAM\fR [\fIARGS\fR]...]
 .br
 \fBzzuf \-h\fR | \fB\-\-help\fR
@@ -40,87 +40,14 @@ if the \fBcat\fR utility had been called:
 .PP
 \fB    zzuf < /dev/zero\fR
 .SH OPTIONS
+.SS "Generic program information"
 .TP
-\fB\-a\fR, \fB\-\-allow\fR=\fIlist\fR
-Only fuzz network input for IPs in \fIlist\fR, a comma-separated list of
-IP addresses. If the list starts with \fB!\fR, the flag meaning is reversed
-and all addresses are fuzzed except the ones in the list.
-
-As of now, this flag only understands INET (IPv4) addresses.
-
-This option requires network fuzzing to be activated using \fB\-n\fR.
+\fB\-h\fR, \fB\-\-help\fR
+Display a short help message and exit.
 .TP
-\fB\-A\fR, \fB\-\-autoinc\fR
-Increment random seed each time a new file is opened. This is only required
-if one instance of the application is expected to open the same file several
-times and you want to test a different seed each time.
-.TP
-\fB\-b\fR, \fB\-\-bytes\fR=\fIranges\fR
-Restrict fuzzing to bytes whose offsets in the file are within \fIranges\fR.
-
-Range values start at zero and are inclusive. Use dashes between range values
-and commas between ranges. If the right-hand part of a range is ommited, it
-means end of file. For instance, to restrict fuzzing to bytes 0, 3, 4, 5 and
-all bytes after offset 31, use \(oq\fB\-b0,3\-5,31\-\fR\(cq.
-
-This option is useful to preserve file headers or corrupt only a specific
-portion of a file.
-.TP
-\fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
-Automatically stop after \fIn\fR bytes have been output.
-
-This either terminates child processes that output more than \fIn\fR bytes
-on the standard output and standard error channels, or stop reading from
-standard input if no program is being fuzzed.
-
-This is useful to detect infinite loops. See also the \fB\-U\fR and \fB\-T\fR
-flags.
-.TP
-\fB\-c\fR, \fB\-\-cmdline\fR
-Only fuzz files whose name is specified in the target application's command
-line. This is mostly a shortcut to avoid specifying the argument twice:
-
-\fB    zzuf \-c cat file.txt\fR
-
-has the same effect as
-
-\fB    zzuf \-I \(aq^file\\.txt$\(aq cat file.txt\fR
-
-See the \fB\-I\fR flag for more information on restricting fuzzing to
-specific files.
-.TP
-\fB\-C\fR, \fB\-\-max\-crashes\fR=\fIn\fR
-Stop forking when at least \fIn\fR children have crashed. The default value
-is 1, meaning \fBzzuf\fR will stop as soon as one child has crashed. A value
-of 0 tells \fBzzuf\fR to never stop.
-
-Note that \fBzzuf\fR will not kill any remaining children once \fIn\fR is
-reached. To ensure that processes do not last forever, see the \fB\-U\fR
-flag.
-
-A process is considered to have crashed if any signal (such as, but not limited
-to, \fBSIGSEGV\fR) caused it to exit. If the \fB\-x\fR flag is used, this will
-also include processes that exit with a non-zero status.
-
-This option is only relevant if the \fB\-s\fR flag is used with a range
-argument. See also the \fB\-t\fR flag.
-.TP
-\fB\-d\fR, \fB\-\-debug\fR
-Activate the display of debug messages. Can be specified multiple times for
-increased verbosity.
-.TP
-\fB\-D\fR, \fB\-\-delay\fR=\fIdelay\fR
-Do not launch more than one process every \fIdelay\fR seconds. This option
-should be used together with \fB\-j\fR to avoid fork bombs.
-.TP
-\fB\-E\fR, \fB\-\-exclude\fR=\fIregex\fR
-Do not fuzz files whose name matches the \fIregex\fR regular expression. This
-option supersedes anything that is specified by the \fB\-I\fR flag. Use this
-for instance if you are unsure of what files your application is going to read
-and do not want it to fuzz files in the \fB/etc\fR directory.
-
-Multiple \fB\-E\fR flags can be specified, in which case files matching any one
-of the regular expressions will be ignored.
+\fB\-V\fR, \fB\-\-version\fR
+Output version information and exit.
+.SS "Operating mode"
 .TP
 \fB\-f\fR, \fB\-\-fuzzing\fR=\fImode\fR
 Select how the input is fuzzed. Valid values for \fImode\fR are:
@@ -138,63 +65,6 @@ only unset bits
 .IP
 The default value for \fImode\fR is \fBxor\fR.
 .TP
-\fB\-j\fR, \fB\-\-jobs\fR=\fIjobs\fR
-Specify the number of simultaneous children that can be run. By default,
-\fBzzuf\fR only launches one process at a time.
-
-This option is only relevant if the \fB\-s\fR flag is used with a range
-argument. See also the \fB\-D\fR flag.
-.TP
-\fB\-i\fR, \fB\-\-stdin\fR
-Fuzz the application's standard input. By default \fBzzuf\fR only fuzzes files.
-.TP
-\fB\-I\fR, \fB\-\-include\fR=\fIregex\fR
-Only fuzz files whose name matches the \fIregex\fR regular expression. Use
-this for instance if your application reads configuration files at startup
-and you only want specific files to be fuzzed.
-
-Multiple \fB\-I\fR flags can be specified, in which case files matching any one
-of the regular expressions will be fuzzed. See also the \fB\-c\fR flag.
-.TP
-\fB\-l\fR, \fB\-\-list\fR=\fIlist\fR
-Cherry-pick the list of file descriptors that get fuzzed. The Nth descriptor
-will really be fuzzed only if N is in \fIlist\fR.
-
-Values start at 1 and ranges are inclusive. Use dashes between values and
-commas between ranges. If the right-hand part of a range is ommited, it means
-all subsequent file descriptors. For instance, to restrict fuzzing to the
-first opened descriptor and all descriptors starting from the 10th, use
-\(oq\fB\-l1,10\-\fR\(cq.
-
-Note that this option only affects file descriptors that would otherwise be
-fuzzed. Even if 10 write-only descriptors are opened at the beginning of the
-program, only the next descriptor with a read flag will be the first one
-considered by the \fB\-l\fR flag.
-.TP
-\fB\-m\fR, \fB\-\-md5\fR
-Instead of displaying the program's \fIstandard output\fR, just print its MD5
-digest to \fBzzuf\fR's standard output. The standard error channel is left
-untouched. See also the \fB\-X\fR flag.
-.TP
-\fB\-M\fR, \fB\-\-max\-memory\fR=\fImebibytes\fR
-Specify the maximum amount of memory, in mebibytes (1 MiB = 1,048,576 bytes),
-that children are allowed to allocate. This is useful to detect infinite loops
-that eat up a lot of memory.
-
-The value should be set reasonably high so as not to interfer with normal
-program operation. By default, it is set to 1024 MiB in order to avoid
-accidental excessive swapping. To disable the limitation, set the maximum
-memory usage to -1 instead.
-
-\fBzzuf\fR uses the \fBsetrlimit\fR() call to set memory usage limitations and
-relies on the operating system's ability to enforce such limitations.
-.TP
-\fB\-n\fR, \fB\-\-network\fR
-Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
-
-Only INET (IPv4) and INET6 (IPv6) connections are fuzzed. Other protocol
-families are not yet supported.
-.TP
 \fB\-O\fR, \fB\-\-opmode\fR=\fImode\fR
 Use operating mode \fImode\fR. Valid values for \fImode\fR are:
 .RS
@@ -211,62 +81,24 @@ The default value for \fImode\fR is \fBpreload\fR. \fBcopy\fR is useful on
 platforms that do not support dynamic linker injection, for instance when
 fuzzing a Cocoa application on Mac OS X.
 .TP
-\fB\-p\fR, \fB\-\-ports\fR=\fIranges\fR
-Only fuzz network ports that are in \fIranges\fR. By default \fBzzuf\fR
-fuzzes all ports. The port considered is the listening port if the socket
-is listening and the destination port if the socket is connecting, because
-most of the time the source port cannot be predicted.
+\fB\-s\fR, \fB\-\-seed\fR=\fIseed\fR
+.PD 0
+.TP
+\fB\-s\fR, \fB\-\-seed\fR=\fIstart:\fR
+.PD 0
+.TP
+\fB\-s\fR, \fB\-\-seed\fR=\fIstart:stop\fR
+.PD
+Specify the random seed to use for fuzzing, or a range of random seeds.
+Running \fBzzuf\fR twice with the same random seed will fuzz the files exactly
+the same way, even with a different target application. The purpose of this is
+to use simple utilities such as \fBcat\fR or \fBcp\fR to generate a file that
+causes the target application to crash.
 
-Range values start at zero and are inclusive. Use dashes between range values
-and commas between ranges. If the right-hand part of a range is ommited, it
-means end of file. For instance, to restrict fuzzing to the HTTP and HTTPS
-ports and to all unprivileged ports, use \(oq\fB\-p80,443,1024\-\fR\(cq.
-
-This option requires network fuzzing to be activated using \fB\-n\fR.
-.TP
-\fB\-P\fR, \fB\-\-protect\fR=\fIlist\fR
-Protect a list of characters so that if they appear in input data that would
-normally be fuzzed, they are left unmodified instead.
-
-Characters in \fIlist\fR can be expressed verbatim or through escape sequences.
-The sequences interpreted by \fBzzuf\fR are:
-.RS
-.TP
-\fB\\n\fR
-new line
-.TP
-\fB\\r\fR
-return
-.TP
-\fB\\t\fR
-tabulation
-.TP
-\fB\\\fR\fINNN\fR
-the byte whose octal value is \fINNN\fR
-.TP
-\fB\\x\fR\fINN\fR
-the byte whose hexadecimal value is \fINN\fR
-.TP
-\fB\\\\\fR
-backslash (\(oq\\\(cq)
-.RE
-.IP
-You can use \(oq\fB\-\fR\(cq to specify ranges. For instance, to protect all
-bytes from \(oq\\001\(cq to \(oq/\(cq, use \(oq\fB\-P\ \(aq\\001\-/\(aq\fR\(cq.
-
-The statistical outcome of this option should not be overlooked: if characters
-are protected, the effect of the \(oq\fB\-r\fR\(cq flag will vary depending
-on the data being fuzzed. For instance, asking to fuzz 1% of input bits
-(\fB\-r0.01\fR) and to protect lowercase characters (\fB\-P\ a\-z\fR) will
-result in an actual average fuzzing ratio of 0.9% with truly random data,
-0.3% with random ASCII data and 0.2% with standard English text.
-
-See also the \fB\-R\fR flag.
-.TP
-\fB\-q\fR, \fB\-\-quiet\fR
-Hide the output of the fuzzed application. This is useful if the application
-is very verbose but only its exit code or signaled status is really useful to
-you.
+If a range is specified, \fBzzuf\fR will run the application several times,
+each time with a different seed, and report the behaviour of each run. If no
+\(oqstop\(cq is specified after \(oq:\(cq, \fBzzuf\fR will increment the seed
+value indefinitely.
 .TP
 \fB\-r\fR, \fB\-\-ratio\fR=\fIratio\fR
 .PD 0
@@ -283,28 +115,84 @@ A range can also be specified. When doing so, \fBzzuf\fR will pick ratio
 values from the interval. The choice is deterministic and only depends on
 the interval bounds and the current seed.
 .TP
-\fB\-R\fR, \fB\-\-refuse\fR=\fIlist\fR
-Refuse a list of characters by not fuzzing bytes that would otherwise be
-changed to a character that is in \fIlist\fR. This does not prevent characters
-from appearing in the output if the original byte was already in \fIlist\fR.
-
-See the \fB\-P\fR option for a description of \fIlist\fR.
+\fB\-A\fR, \fB\-\-autoinc\fR
+Increment random seed each time a new file is opened. This is only required
+if one instance of the application is expected to open the same file several
+times and you want to test a different seed each time.
+.SS "Output"
 .TP
-\fB\-s\fR, \fB\-\-seed\fR=\fIseed\fR
-.PD 0
+\fB\-d\fR, \fB\-\-debug\fR
+Activate the display of debug messages. Can be specified multiple times for
+increased verbosity.
 .TP
-\fB\-s\fR, \fB\-\-seed\fR=\fIstart:stop\fR
-.PD
-Specify the random seed to use for fuzzing, or a range of random seeds.
-Running \fBzzuf\fR twice with the same random seed will fuzz the files exactly
-the same way, even with a different target application. The purpose of this is
-to use simple utilities such as \fBcat\fR or \fBcp\fR to generate a file that
-causes the target application to crash.
+\fB\-q\fR, \fB\-\-quiet\fR
+Hide the output of the fuzzed application. This is useful if the application
+is very verbose but only its exit code or signaled status is really useful to
+you.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Print information during the run, such as the current seed, what processes
+get run, their exit status, etc.
+.TP
+\fB\-m\fR, \fB\-\-md5\fR
+Instead of displaying the program's \fIstandard output\fR, just print its MD5
+digest to \fBzzuf\fR's standard output. The standard error channel is left
+untouched. See also the \fB\-X\fR flag.
+.TP
+\fB\-X\fR, \fB\-\-hex\fR
+Convert the fuzzed program's \fIstandard output\fR to hexadecimal. The standard
+error channel is left untouched. See also the \fB\-m\fR flag.
+.SS "Process control"
+.TP
+\fB\-B\fR, \fB\-\-max\-bytes\fR=\fIn\fR
+Automatically stop after \fIn\fR bytes have been output.
 
-If a range is specified, \fBzzuf\fR will run the application several times,
-each time with a different seed, and report the behaviour of each run. If the
-\(oq:\(cq character is used but the second part of the range is omitted,
-\fBzzuf\fR will increment the seed value indefinitely.
+This either terminates child processes that output more than \fIn\fR bytes
+on the standard output and standard error channels, or stop reading from
+standard input if no program is being fuzzed.
+
+This is useful to detect infinite loops. See also the \fB\-U\fR and \fB\-T\fR
+flags.
+.TP
+\fB\-C\fR, \fB\-\-max\-crashes\fR=\fIn\fR
+Stop forking when at least \fIn\fR children have crashed. The default value
+is 1, meaning \fBzzuf\fR will stop as soon as one child has crashed. A value
+of 0 tells \fBzzuf\fR to never stop.
+
+Note that \fBzzuf\fR will not kill any remaining children once \fIn\fR is
+reached. To ensure that processes do not last forever, see the \fB\-U\fR
+flag.
+
+A process is considered to have crashed if any signal (such as, but not limited
+to, \fBSIGSEGV\fR) caused it to exit. If the \fB\-x\fR flag is used, this will
+also include processes that exit with a non-zero status.
+
+This option is only relevant if the \fB\-s\fR flag is used with a range
+argument. See also the \fB\-t\fR flag.
+.TP
+\fB\-D\fR, \fB\-\-delay\fR=\fIdelay\fR
+Do not launch more than one process every \fIdelay\fR seconds. This option
+should be used together with \fB\-j\fR to avoid fork bombs.
+.TP
+\fB\-j\fR, \fB\-\-jobs\fR=\fIjobs\fR
+Specify the number of simultaneous children that can be run. By default,
+\fBzzuf\fR only launches one process at a time.
+
+This option is only relevant if the \fB\-s\fR flag is used with a range
+argument. See also the \fB\-D\fR flag.
+.TP
+\fB\-M\fR, \fB\-\-max\-memory\fR=\fImebibytes\fR
+Specify the maximum amount of memory, in mebibytes (1 MiB = 1,048,576 bytes),
+that children are allowed to allocate. This is useful to detect infinite loops
+that eat up a lot of memory.
+
+The value should be set reasonably high so as not to interfer with normal
+program operation. By default, it is set to 1024 MiB in order to avoid
+accidental excessive swapping. To disable the limitation, set the maximum
+memory usage to -1 instead.
+
+\fBzzuf\fR uses the \fBsetrlimit\fR() call to set memory usage limitations and
+relies on the operating system's ability to enforce such limitations.
 .TP
 \fB\-S\fR, \fB\-\-signal\fR
 Prevent children from installing signal handlers for signals that usually
@@ -346,23 +234,144 @@ Automatically terminate child processes that run for more than \fIn\fR
 seconds. This is useful to detect infinite loops or processes stuck in other
 situations. See also the \fB\-B\fR and \fB\-T\fR flags.
 .TP
-\fB\-v\fR, \fB\-\-verbose\fR
-Print information during the run, such as the current seed, what processes
-get run, their exit status, etc.
-.TP
 \fB\-x\fR, \fB\-\-check\-exit\fR
 Report processes that exit with a non-zero status. By default only processes
 that crash due to a signal are reported.
+.SS "Filtering"
 .TP
-\fB\-X\fR, \fB\-\-hex\fR
-Convert the fuzzed program's \fIstandard output\fR to hexadecimal. The standard
-error channel is left untouched. See also the \fB\-m\fR flag.
+\fB\-a\fR, \fB\-\-allow\fR=\fIlist\fR
+Only fuzz network input for IPs in \fIlist\fR, a comma-separated list of
+IP addresses. If the list starts with \fB!\fR, the flag meaning is reversed
+and all addresses are fuzzed except the ones in the list.
+
+As of now, this flag only understands INET (IPv4) addresses.
+
+This option requires network fuzzing to be activated using \fB\-n\fR.
 .TP
-\fB\-h\fR, \fB\-\-help\fR
-Display a short help message and exit.
+\fB\-b\fR, \fB\-\-bytes\fR=\fIranges\fR
+Restrict fuzzing to bytes whose offsets in the file are within \fIranges\fR.
+
+Range values start at zero and are inclusive. Use dashes between range values
+and commas between ranges. If the right-hand part of a range is ommited, it
+means end of file. For instance, to restrict fuzzing to bytes 0, 3, 4, 5 and
+all bytes after offset 31, use \(oq\fB\-b0,3\-5,31\-\fR\(cq.
+
+This option is useful to preserve file headers or corrupt only a specific
+portion of a file.
 .TP
-\fB\-V\fR, \fB\-\-version\fR
-Output version information and exit.
+\fB\-c\fR, \fB\-\-cmdline\fR
+Only fuzz files whose name is specified in the target application's command
+line. This is mostly a shortcut to avoid specifying the argument twice:
+
+\fB    zzuf \-c cat file.txt\fR
+
+has the same effect as
+
+\fB    zzuf \-I \(aq^file\\.txt$\(aq cat file.txt\fR
+
+See the \fB\-I\fR flag for more information on restricting fuzzing to
+specific files.
+.TP
+\fB\-E\fR, \fB\-\-exclude\fR=\fIregex\fR
+Do not fuzz files whose name matches the \fIregex\fR regular expression. This
+option supersedes anything that is specified by the \fB\-I\fR flag. Use this
+for instance if you are unsure of what files your application is going to read
+and do not want it to fuzz files in the \fB/etc\fR directory.
+
+Multiple \fB\-E\fR flags can be specified, in which case files matching any one
+of the regular expressions will be ignored.
+.TP
+\fB\-i\fR, \fB\-\-stdin\fR
+Fuzz the application's standard input. By default \fBzzuf\fR only fuzzes files.
+.TP
+\fB\-I\fR, \fB\-\-include\fR=\fIregex\fR
+Only fuzz files whose name matches the \fIregex\fR regular expression. Use
+this for instance if your application reads configuration files at startup
+and you only want specific files to be fuzzed.
+
+Multiple \fB\-I\fR flags can be specified, in which case files matching any one
+of the regular expressions will be fuzzed. See also the \fB\-c\fR flag.
+.TP
+\fB\-l\fR, \fB\-\-list\fR=\fIlist\fR
+Cherry-pick the list of file descriptors that get fuzzed. The Nth descriptor
+will really be fuzzed only if N is in \fIlist\fR.
+
+Values start at 1 and ranges are inclusive. Use dashes between values and
+commas between ranges. If the right-hand part of a range is ommited, it means
+all subsequent file descriptors. For instance, to restrict fuzzing to the
+first opened descriptor and all descriptors starting from the 10th, use
+\(oq\fB\-l1,10\-\fR\(cq.
+
+Note that this option only affects file descriptors that would otherwise be
+fuzzed. Even if 10 write-only descriptors are opened at the beginning of the
+program, only the next descriptor with a read flag will be the first one
+considered by the \fB\-l\fR flag.
+.TP
+\fB\-P\fR, \fB\-\-protect\fR=\fIlist\fR
+Protect a list of characters so that if they appear in input data that would
+normally be fuzzed, they are left unmodified instead.
+
+Characters in \fIlist\fR can be expressed verbatim or through escape sequences.
+The sequences interpreted by \fBzzuf\fR are:
+.RS
+.TP
+\fB\\n\fR
+new line
+.TP
+\fB\\r\fR
+return
+.TP
+\fB\\t\fR
+tabulation
+.TP
+\fB\\\fR\fINNN\fR
+the byte whose octal value is \fINNN\fR
+.TP
+\fB\\x\fR\fINN\fR
+the byte whose hexadecimal value is \fINN\fR
+.TP
+\fB\\\\\fR
+backslash (\(oq\\\(cq)
+.RE
+.IP
+You can use \(oq\fB\-\fR\(cq to specify ranges. For instance, to protect all
+bytes from \(oq\\001\(cq to \(oq/\(cq, use \(oq\fB\-P\ \(aq\\001\-/\(aq\fR\(cq.
+
+The statistical outcome of this option should not be overlooked: if characters
+are protected, the effect of the \(oq\fB\-r\fR\(cq flag will vary depending
+on the data being fuzzed. For instance, asking to fuzz 1% of input bits
+(\fB\-r0.01\fR) and to protect lowercase characters (\fB\-P\ a\-z\fR) will
+result in an actual average fuzzing ratio of 0.9% with truly random data,
+0.3% with random ASCII data and 0.2% with standard English text.
+
+See also the \fB\-R\fR flag.
+.TP
+\fB\-R\fR, \fB\-\-refuse\fR=\fIlist\fR
+Refuse a list of characters by not fuzzing bytes that would otherwise be
+changed to a character that is in \fIlist\fR. This does not prevent characters
+from appearing in the output if the original byte was already in \fIlist\fR.
+
+See the \fB\-P\fR option for a description of \fIlist\fR.
+.SS "Network"
+.TP
+\fB\-n\fR, \fB\-\-network\fR
+Fuzz the application's network input. By default \fBzzuf\fR only fuzzes files.
+
+Only INET (IPv4) and INET6 (IPv6) connections are fuzzed. Other protocol
+families are not yet supported.
+.TP
+\fB\-p\fR, \fB\-\-ports\fR=\fIranges\fR
+Only fuzz network ports that are in \fIranges\fR. By default \fBzzuf\fR
+fuzzes all ports. The port considered is the listening port if the socket
+is listening and the destination port if the socket is connecting, because
+most of the time the source port cannot be predicted.
+
+Range values start at zero and are inclusive. Use dashes between range values
+and commas between ranges. If the right-hand part of a range is ommited, it
+means end of file. For instance, to restrict fuzzing to the HTTP and HTTPS
+ports and to all unprivileged ports, use \(oq\fB\-p80,443,1024\-\fR\(cq.
+
+This option requires network fuzzing to be activated using \fB\-n\fR.
 .SH DIAGNOSTICS
 .PP
 Exit status is zero if no child process crashed. If one or several children
