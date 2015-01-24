@@ -331,14 +331,14 @@ static void mydebug(char const *format, va_list args)
     errno = saved_errno;
 }
 
-void zzuf_debug_str(char *str, uint8_t const *buffer,
-                    unsigned len, unsigned maxlen)
+void zzuf_debug_str(char *str, uint8_t const *buffer, int len, int maxlen)
 {
     /* Open the double quotes */
-    *str++ = '"';
+    if (len >= 0)
+        *str++ = '"';
 
     /* Print as many escaped characters as possible */
-    for (unsigned i = 0; i < len; ++i)
+    for (int i = 0; i < len; ++i)
     {
         if (len > maxlen && i == maxlen / 2)
         {
@@ -372,7 +372,8 @@ void zzuf_debug_str(char *str, uint8_t const *buffer,
     }
 
     /* Close the double quotes */
-    *str++ = '"';
+    if (len >= 0)
+        *str++ = '"';
     *str++ = '\0';
 }
 

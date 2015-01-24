@@ -17,7 +17,7 @@
 extern void zzuf_debug(char const *format, ...) ATTRIBUTE_PRINTF(1,2);
 extern void zzuf_debug2(char const *format, ...) ATTRIBUTE_PRINTF(1,2);
 extern void zzuf_debug_str(char *str, uint8_t const *buffer,
-                           unsigned len, unsigned maxlen);
+                           int len, int maxlen);
 
 #ifdef LIBZZUF
 #   define debug zzuf_debug
