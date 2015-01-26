@@ -22,6 +22,8 @@
 
 /* Use this to get lseek64() on glibc systems */
 #define _LARGEFILE64_SOURCE
+/* Use this to get pread() on glibc systems */
+#define _POSIX_C_SOURCE 200809L
 /* Use this to get off64_t() on Solaris systems */
 #define _LARGEFILE_SOURCE
 /* Use this to get proper prototypes on HP-UX systems */
@@ -215,6 +217,7 @@ int NEW(open64)(const char *file, int oflag, ...)
 
 #if defined HAVE___OPEN64
 #undef __open64
+extern int __open64(const char *file, int oflag, ...);
 int NEW(__open64)(const char *file, int oflag, ...)
 {
     int ret; ZZ_OPEN(__open64); return ret;
@@ -403,6 +406,8 @@ RECV_T NEW(recv)(int s, void *buf, size_t len, int flags)
 
 #if defined HAVE___RECV_CHK
 #undef __recv_chk
+extern RECV_T __recv_chk(int s, void *buf, size_t len,
+                         size_t buflen, int flags);
 RECV_T NEW(__recv_chk)(int s, void *buf, size_t len, size_t buflen, int flags)
 {
     int ret; ZZ_RECV(__recv_chk, (s, buf, len, buflen, flags)); return ret;
@@ -449,6 +454,8 @@ RECV_T NEW(recvfrom)(int s, void *buf, size_t len, int flags,
 
 #if defined HAVE___RECVFROM_CHK
 #undef __recvfrom_chk
+extern RECV_T __recvfrom_chk(int s, void *buf, size_t len, size_t buflen,
+                             int flags, SOCKADDR_T *from, SOCKLEN_T *fromlen);
 RECV_T NEW(__recvfrom_chk)(int s, void *buf, size_t len, size_t buflen,
                            int flags, SOCKADDR_T *from, SOCKLEN_T *fromlen)
 {
@@ -514,6 +521,7 @@ int NEW(read)(int fd, void *buf, unsigned int count)
 
 #if defined HAVE___READ_CHK
 #undef __read_chk
+extern ssize_t __read_chk(int fd, void *buf, size_t count, size_t buflen);
 ssize_t NEW(__read_chk)(int fd, void *buf, size_t count, size_t buflen)
 {
     int ret; ZZ_READ(__read_chk, (fd, buf, count, buflen)); return (ssize_t)ret;

@@ -598,6 +598,8 @@ size_t NEW(fread_unlocked)(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 #if defined HAVE___FREAD_CHK
 #undef __fread_chk
+extern size_t __fread_chk(void *ptr, size_t ptrlen, size_t size,
+                          size_t nmemb, FILE *stream);
 size_t NEW(__fread_chk)(void *ptr, size_t ptrlen, size_t size, size_t nmemb,
                         FILE *stream)
 {
@@ -609,6 +611,8 @@ size_t NEW(__fread_chk)(void *ptr, size_t ptrlen, size_t size, size_t nmemb,
 
 #if defined HAVE___FREAD_UNLOCKED_CHK
 #undef __fread_unlocked_chk
+extern size_t __fread_unlocked_chk(void *ptr, size_t ptrlen, size_t size,
+                                   size_t nmemb, FILE *stream);
 size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
                                  size_t nmemb, FILE *stream)
 {
@@ -806,6 +810,7 @@ char *NEW(fgets_unlocked)(char *s, int size, FILE *stream)
 
 #if defined HAVE___FGETS_CHK
 #undef __fgets_chk
+extern char *__fgets_chk(char *s, size_t ptrlen, int size, FILE *stream);
 char *NEW(__fgets_chk)(char *s, size_t ptrlen, int size, FILE *stream)
 {
     char *ret;
@@ -816,7 +821,10 @@ char *NEW(__fgets_chk)(char *s, size_t ptrlen, int size, FILE *stream)
 
 #if defined HAVE___FGETS_UNLOCKED_CHK
 #undef __fgets_unlocked_chk
-char *NEW(__fgets_unlocked_chk)(char *s, size_t ptrlen, int size, FILE *stream)
+extern char *__fgets_unlocked_chk(char *s, size_t ptrlen, int size,
+                                  FILE *stream);
+char *NEW(__fgets_unlocked_chk)(char *s, size_t ptrlen, int size,
+                                FILE *stream)
 {
     char *ret;
     ZZ_FGETS(__fgets_unlocked_chk, fgetc_unlocked, (s, ptrlen, size, stream));
