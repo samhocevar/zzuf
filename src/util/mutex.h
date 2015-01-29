@@ -14,6 +14,10 @@
  *  mutex.h: very simple spinlock routines
  */
 
+#if HAVE_WINDOWS_H
+#   include <windows.h>
+#endif
+
 #if _WIN32
 typedef volatile LONG zzuf_mutex_t;
 #elif __GNUC__ || __clang__

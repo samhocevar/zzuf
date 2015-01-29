@@ -418,8 +418,9 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
 #   define LoaderRegister       Rcx
 #   define LoadLibraryAOffset   0x15
 
-    /* This payload allows us to load arbitrary module located at the end of this buffer */
-    static uint8_t const ldr[] =
+    /* This payload allows us to load arbitrary module located
+     * at the end of this buffer */
+    static uint8_t const loader[] =
     {
         "\x55"                          /* push rbp              */
         "\x48\x89\xE5"                  /* mov rbp,rsp           */
@@ -440,11 +441,12 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
 #   define StackPointer         Esp
 #   define LoaderRegister       Eax /* It seems the Windows loader store the oep as the first param
                                      * but by a side effect it's also contained in eax register */
-#   define ldr                  ldr32
+#   define loader               loader32
 #   define LoadLibraryAOffset   0x04
 
-    /* This payload allows us to load arbitrary module located at the end of this buffer */
-    static uint8_t const ldr[] =
+    /* This payload allows us to load arbitrary module located
+     * at the end of this buffer */
+    static uint8_t const loader[] =
     {
         "\x60"                  /* pushad               */
         "\xEB\x0E"              /* jmp short 0x11       */
@@ -461,102 +463,114 @@ static int dll_inject(PROCESS_INFORMATION *pinfo, char const *lib)
 #   error Unimplemented architecture !
 #endif
 
-    int res = -1;
-
-    /* We use this code to make the targeted process waits for us */
+    /* We use this code to make the targeted process wait for us */
     static uint8_t const wait[] = "\xeb\xfe"; /* jmp $-1 */
     size_t wait_len = sizeof(wait) - 1;
-    uint8_t orig_data[2];
 
-    void *process   = pinfo->hProcess;
-    void *thread    = pinfo->hThread;
-    DWORD pid       = pinfo->dwProcessId;
-    void *rldlib    = NULL;
-    SIZE_T written  = 0;
+    void *process = pinfo->hProcess;
+    void *thread = pinfo->hThread;
+    SIZE_T written = 0;
+    BOOL tmp;
 
     /* Payload */
-    void *rpl       = NULL;
-    uint8_t *pl     = NULL;
-    size_t pl_len   = sizeof(ldr) - 1 + strlen(lib) + 1;
-
-    CONTEXT ctxt;
-    DWORD_PTR oep; /* Original Entry Point */
+    size_t payload_len = sizeof(loader) - 1 + strlen(lib) + 1;
+    uint8_t *payload = malloc(payload_len);
+    if (payload == NULL)
+        goto error;
 
     /* Use the main thread to inject our library */
+    CONTEXT ctxt;
     ctxt.ContextFlags = CONTEXT_FULL;
     if (!GetThreadContext(thread, &ctxt))
-        goto _return;
+        goto error;
 
-    /* Make the target program waits when it reachs the original entry point, because we can't do many thing from the windows loader */
-    oep = ctxt.LoaderRegister;
-    if (!ReadProcessMemory(process, (LPVOID)oep, orig_data, sizeof(orig_data), &written) || written != sizeof(orig_data))
-        goto _return; /* save original opcode */
-    if (!WriteProcessMemory(process, (LPVOID)oep, wait, wait_len , &written) || written != wait_len)
-        goto _return;                      /* write jmp short $-1 */
+    /* Make the target program wait when it reaches the original entry
+     * point, because we can't do many thing from the Windows loader */
+
+    DWORD_PTR oep = ctxt.LoaderRegister; /* Original Entry Point */
+    uint8_t orig_data[2];
+    tmp = ReadProcessMemory(process, (LPVOID)oep, orig_data,
+                            sizeof(orig_data), &written);
+    if (!tmp || written != sizeof(orig_data))
+        goto error; /* save original opcode */
+
+    tmp = WriteProcessMemory(process, (LPVOID)oep, wait, wait_len, &written);
+    if (!tmp || written != wait_len)
+        goto error; /* write jmp short $-1 */
     if (!FlushInstructionCache(process, (LPVOID)oep, wait_len))
-        goto _return;
+        goto error;
     if (ResumeThread(thread) == (DWORD)-1)
-        goto _return;
+        goto error;
 
-    /* Stop when the program reachs the oep */
+    /* Stop when the program reachse the oep */
     while (oep != ctxt.InstructionPointer)
     {
         if (!GetThreadContext(thread, &ctxt))
-            goto _return;
+            goto error;
         Sleep(10);
     }
 
     if (SuspendThread(thread) == (DWORD)-1)
-        goto _return;
+        goto error;
 
     /* Resolve LoadLibraryA from the target process memory context */
-    if ((rldlib = get_proc_address(process, pid, "LoadLibraryA")) == NULL)
-        goto _return;
+    DWORD pid = pinfo->dwProcessId;
+    void *rldlib = get_proc_address(process, pid, "LoadLibraryA");
+    if (rldlib == NULL)
+        goto error;
 
-    if ((rpl = VirtualAllocEx(process, NULL, pl_len, MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == NULL)
-        goto _return;
+    void *rpl = VirtualAllocEx(process, NULL, payload_len,
+                               MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    if (rpl == NULL)
+        goto error;
 
-    /* Emulate a call to the ldr code, thus the ret instruction from ldr will get (e|r)ip back to the original entry point */
+    /* Emulate a call to the loader code, thus the ret instruction from
+     * loader will get (e|r)ip back to the original entry point */
     ctxt.StackPointer -= sizeof(oep);
-    if (!WriteProcessMemory(process, (LPVOID)ctxt.StackPointer, &oep, sizeof(oep), &written) || written != sizeof(oep))
-        goto _return;
+    tmp = WriteProcessMemory(process, (LPVOID)ctxt.StackPointer,
+                             &oep, sizeof(oep), &written);
+    if (!tmp || written != sizeof(oep))
+        goto error;
     ctxt.InstructionPointer = (DWORD_PTR)rpl;
     if (!SetThreadContext(thread, &ctxt))
-        goto _return;
+        goto error;
 
     /* Forge the payload */
-    if ((pl = (uint8_t *)malloc(pl_len)) == NULL)
-        goto _return;
-    memcpy(pl, ldr, sizeof(ldr) - 1);
-    memcpy(pl + LoadLibraryAOffset, &rldlib, sizeof(rldlib));        /* Write the address of LoadLibraryA         */
-    strcpy((char *)(pl + sizeof(ldr) - 1), lib);                    /* Write the first parameter of LoadLibraryA */
+    memcpy(payload, loader, sizeof(loader) - 1);
+    /* Write the address of LoadLibraryA */
+    memcpy(payload + LoadLibraryAOffset, &rldlib, sizeof(rldlib));
+    /* Write the first parameter of LoadLibraryA */
+    strcpy((char *)(payload + sizeof(loader) - 1), lib);
 
-    if (!WriteProcessMemory(process, rpl, pl, pl_len, &written) || written != pl_len)
-        goto _return;
+    tmp = WriteProcessMemory(process, rpl, payload, payload_len, &written);
+    if (!tmp || written != payload_len)
+        goto error;
 
     /* Restore original opcode */
-    if (!WriteProcessMemory(process, (LPVOID)oep, orig_data, sizeof(orig_data), &written) || written != sizeof(orig_data))
-        goto _return;
+    tmp = WriteProcessMemory(process, (LPVOID)oep, orig_data,
+                             sizeof(orig_data), &written);
+    if (!tmp || written != sizeof(orig_data))
+        goto error;
 
-    if (!FlushInstructionCache(process, rpl, pl_len))
-        goto _return;
+    if (!FlushInstructionCache(process, rpl, payload_len))
+        goto error;
     if (!FlushInstructionCache(process, (LPVOID)oep, sizeof(orig_data)))
-        goto _return;
-
-    res = 0;
-_return:
-    if (pl != NULL)
-        free(pl);
+        goto error;
 
     /* We must not free remote allocated memory since they will be used
      * after the process will be resumed */
-    return res;
+    free(payload);
+    return 0;
+
+error:
+    free(payload);
+    return -1;
+}
 
 #undef InstructionPointer
 #undef StackPointer
 #undef LoaderRegister
 #undef LoadLibraryAOffset
-}
 
 static void *get_proc_address(void *process, DWORD pid, const char *func)
 {
