@@ -49,6 +49,7 @@
 #include "network.h"
 #include "sys.h"
 #include "fuzz.h"
+#include "util/mutex.h"
 
 #if defined HAVE_WINDOWS_H
 BOOL WINAPI DllMain(HINSTANCE, DWORD, PVOID);
@@ -107,14 +108,19 @@ int g_network_fuzzing = 0;
  */
 void libzzuf_init(void)
 {
-    static int initializing = 0;
-    char *tmp, *tmp2;
-
     /* Make sure we don't get initialised more than once */
-    if (initializing++)
+    static zzuf_mutex_t mutex = 0;
+    static int initialised = 0;
+    zzuf_mutex_lock(&mutex);
+    if (initialised++)
+    {
+        zzuf_mutex_unlock(&mutex);
         return;
+    }
+    zzuf_mutex_unlock(&mutex);
 
-    tmp = getenv("ZZUF_DEBUG");
+    /* Open the debug channel */
+    char *tmp = getenv("ZZUF_DEBUG");
     if (tmp)
         g_debug_level = atoi(tmp);
 
@@ -126,7 +132,7 @@ void libzzuf_init(void)
         g_debug_fd = atoi(tmp);
 #endif
 
-    /* We need this as soon as possible */
+    /* We need malloc() and a few others as soon as possible */
     _zz_mem_init();
 
     tmp = getenv("ZZUF_SEED");
@@ -134,7 +140,7 @@ void libzzuf_init(void)
         zzuf_set_seed(atol(tmp));
 
     tmp = getenv("ZZUF_MINRATIO");
-    tmp2 = getenv("ZZUF_MAXRATIO");
+    char *tmp2 = getenv("ZZUF_MAXRATIO");
     if (tmp && *tmp && tmp2 && *tmp2)
         zzuf_set_ratio(atof(tmp), atof(tmp2));
 
