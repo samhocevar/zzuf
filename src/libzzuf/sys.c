@@ -51,6 +51,10 @@ void *_zz_dl_lib = RTLD_NEXT;
 static void insert_funcs(void);
 #endif
 
+#if __GNUC__ || __clang__
+extern void __asan_init_v3(void) __attribute__((weak));
+#endif
+
 void _zz_sys_init(void)
 {
 #if defined HAVE_WINDOWS_H
@@ -62,15 +66,27 @@ void _zz_sys_init(void)
      * way we are sure that the symbols we load are the most recent version,
      * or we may get weird problems. We choose fileno as a random symbol to
      * get, because we know we don't divert it. */
-#   if HAVE_DLADDR
-    Dl_info di;
-    if (dladdr(&fileno, &di) != 0)
-    {
-        void *lib = dlopen(di.dli_fname, RTLD_NOW);
-        if (lib)
-            _zz_dl_lib = lib;
-    }
+
+#   if __GNUC__ || __clang__
+    /* XXX: for some reason we conflict with libasan. We would like to avoid
+     * RTLD_NEXT because it causes problems with versioned symbols. However,
+     * if we do that, libasan enters infinite recursion. So we just disable
+     * this workaround if libasan is detected.
+     * If we don’t do this, here’s a program that crashes when fuzzed:
+     *  echo 'int main() {}' | gcc -xc -g -ggdb -fsanitize=address -   */
+    if (&__asan_init_v3 == NULL)
 #   endif
+    {
+#   if HAVE_DLADDR
+        Dl_info di;
+        if (dladdr(&fprintf, &di) != 0)
+        {
+            void *lib = dlopen(di.dli_fname, RTLD_NOW);
+            if (lib)
+                _zz_dl_lib = lib;
+        }
+#   endif
+    }
 #else
     /* Nothing to do on our platform */
 #endif
