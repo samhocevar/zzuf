@@ -417,6 +417,7 @@ static int run(char const *sequence, char const *file)
             if (nloops == 0)
             {
                 fprintf(stderr, "E: zzat: ')' outside a loop\n");
+                free(tmp);
                 return EXIT_FAILURE;
             }
             if (loops[nloops - 1].count == 1 || finish)

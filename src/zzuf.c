@@ -739,7 +739,7 @@ static void spawn_children(zzuf_opts_t *opts)
                 continue;
 
 #ifdef _WIN32
-            sprintf(tmpname, "%s/zzuf.$i.XXXXXX", tmpdir, GetCurrentProcessId());
+            sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, GetCurrentProcessId());
             int fdout = _open(mktemp(tmpname), _O_RDWR, 0600);
 #else
             sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, (int)getpid());

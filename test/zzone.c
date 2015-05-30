@@ -47,6 +47,8 @@ int main(int argc, char *argv[])
     uint8_t *tmp = malloc(size);
     if (!buf || !tmp)
     {
+        free(buf);
+        free(tmp);
         fprintf(stderr, "zzone: cannot alloc memory\n");
         return EXIT_FAILURE;
     }

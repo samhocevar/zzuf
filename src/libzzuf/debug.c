@@ -82,9 +82,9 @@ void zzuf_debug(char const *format, ...)
         int ret = _vsnprintf(buf, sizeof(buf), format, args);
 
         if (ret <= 0)
-            return; /* if _snprintf failed, we send nothing */
+            goto abort; /* if _snprintf failed, we send nothing */
         if (buf[0] == '\0')
-            return; /* if buf is empty, we don't bother to send it to zzuf */
+            goto abort; /* if buf is empty, we don't send it */
 
         /* If len >= count, no null-terminator is appended, so we need to
          * erase the last character */
@@ -96,8 +96,9 @@ void zzuf_debug(char const *format, ...)
         WriteFile(dbg_hdl, buf, ret, &written, NULL);
         zzuf_mutex_unlock(&debug_mutex);
     }
+    fflush(NULL); /* flush all streams */
+abort:
     va_end(args);
-    fflush(NULL); /* flush all streams to make sure zzuf gotta catch 'em all */
 }
 
 void zzuf_debug2(char const *format, ...)
@@ -112,9 +113,9 @@ void zzuf_debug2(char const *format, ...)
         int ret = _vsnprintf(buf, sizeof(buf), format, args);
 
         if (ret <= 0)
-            return; /* if _snprintf failed, we send nothing */
+            goto abort; /* if _snprintf failed, we send nothing */
         if (buf[0] == '\0')
-            return; /* if buf is empty, we don't bother to send it to zzuf */
+            goto abort; /* if buf is empty, we don't send it */
 
         /* If len >= count, no null-terminator is appended, so we need to
          * erase the last character */
@@ -126,8 +127,9 @@ void zzuf_debug2(char const *format, ...)
         WriteFile(dbg_hdl, buf, ret, &written, NULL);
         zzuf_mutex_unlock(&debug_mutex);
     }
+    fflush(NULL); /* flush all streams */
+abort:
     va_end(args);
-    fflush(NULL); /* flush all streams to make sure zzuf gotta catch 'em all */
 }
 #else
 void zzuf_debug(char const *format, ...)
