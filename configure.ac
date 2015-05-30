@@ -1,5 +1,5 @@
 
-AC_INIT(zzuf, 0.13)
+AC_INIT(zzuf, 0.14)
 AC_CONFIG_AUX_DIR(.auto)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE([subdir-objects no-define tar-ustar silent-rules])

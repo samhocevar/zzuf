@@ -146,7 +146,7 @@
 #define PACKAGE_STRING PACKAGE_NAME " " PACKAGE_VERSION
 #define PACKAGE_TARNAME "zzuf"
 #define PACKAGE_URL ""
-#define PACKAGE_VERSION "0.13"
+#define PACKAGE_VERSION "0.14"
 /* #undef READ_USES_SSIZE_T */
 #define RECV_T int
 #define SONAME "libzzuf.dll"
