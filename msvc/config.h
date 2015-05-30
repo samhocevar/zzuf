@@ -158,16 +158,7 @@
  * warning about fucking ISO C++ when we fucking compile fucking C. */
 #pragma warning(disable: 4996)
 
-/* Win32-specific, of course. */
-typedef signed long long int int64_t;
-typedef unsigned long long int uint64_t;
-typedef signed int int32_t;
-typedef unsigned int uint32_t;
-typedef signed short int16_t;
-typedef unsigned short uint16_t;
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-
+#include <stdint.h> /* Has uint32_t etc. */
 #include <stddef.h> /* Has uintptr_t etc. */
 typedef int pid_t;
 
