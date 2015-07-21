@@ -1052,7 +1052,7 @@ char *NEW(fgetln)(FILE *stream, size_t *len)
 
         fuzz->tmp[i] = (char)(unsigned char)chr;
     }
-    while (fuzz->tmp[i++] != '\n')
+    while (fuzz->tmp[i++] != '\n');
 
     *len = i;
     char *ret = fuzz->tmp;
