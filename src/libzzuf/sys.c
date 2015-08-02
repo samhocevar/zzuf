@@ -51,7 +51,7 @@ void *_zz_dl_lib = RTLD_NEXT;
 static void insert_funcs(void);
 #endif
 
-#if __GNUC__ || __clang__
+#if HAVE_DLFCN_H && HAVE_DLADDR && (__GNUC__ || __clang__)
 extern void __asan_init_v3(void) __attribute__((weak));
 #endif
 
@@ -67,7 +67,7 @@ void _zz_sys_init(void)
      * or we may get weird problems. We choose fileno as a random symbol to
      * get, because we know we don't divert it. */
 
-#   if __GNUC__ || __clang__
+#if HAVE_DLADDR && (__GNUC__ || __clang__)
     /* XXX: for some reason we conflict with libasan. We would like to avoid
      * RTLD_NEXT because it causes problems with versioned symbols. However,
      * if we do that, libasan enters infinite recursion. So we just disable
