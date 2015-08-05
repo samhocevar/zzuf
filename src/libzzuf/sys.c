@@ -51,7 +51,7 @@ void *_zz_dl_lib = RTLD_NEXT;
 static void insert_funcs(void);
 #endif
 
-#if HAVE_DLFCN_H && HAVE_DLADDR && (__GNUC__ || __clang__)
+#if HAVE_DLFCN_H && HAVE_DLADDR && !__APPLE__ && (__GNUC__ || __clang__)
 extern void __asan_init_v3(void) __attribute__((weak));
 #endif
 
@@ -61,7 +61,7 @@ void _zz_sys_init(void)
 
     insert_funcs();
 
-#elif defined HAVE_DLFCN_H
+#elif HAVE_DLFCN_H && !__APPLE__
     /* If glibc is recent enough, we use dladdr() to get its address. This
      * way we are sure that the symbols we load are the most recent version,
      * or we may get weird problems. We choose fileno as a random symbol to
