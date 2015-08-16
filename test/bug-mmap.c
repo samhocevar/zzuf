@@ -32,7 +32,7 @@
 
 int main(void)
 {
-#if defined _SC_PAGE_SIZE
+#if defined _SC_PAGE_SIZE && defined MAP_POPULATE
     int fd = open("/etc/hosts", O_RDONLY);
     mmap(0, sysconf(_SC_PAGE_SIZE) * 2, PROT_READ,
          MAP_PRIVATE | MAP_POPULATE, fd, 0);
