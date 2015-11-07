@@ -10,6 +10,8 @@
  *  See http://www.wtfpl.net/ for more details.
  */
 
+#pragma once
+
 /*
  *  ranges.c: range handling helper functions
  */

@@ -10,6 +10,8 @@
  *  See http://www.wtfpl.net/ for more details.
  */
 
+#pragma once
+
 /*
  *  mutex.h: very simple spinlock routines
  */
