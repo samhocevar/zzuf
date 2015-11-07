@@ -13,6 +13,9 @@ EXTRA_DIST = bootstrap build-osx build-win32 AUTHORS \
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = foreign dist-bzip2
 
+# Travis CI uses “make test” instead of “make check”
+test: check
+
 echo-dirs: ; echo src test
 
 FORCE:

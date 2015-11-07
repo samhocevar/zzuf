@@ -1,8 +1,12 @@
+sudo: false
 language: c
 
+addons:
+  apt:
+    packages:
+      - build-essential
+
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get -q install build-essential
   - ./bootstrap
 
 compiler:
