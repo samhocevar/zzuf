@@ -1,9 +1,6 @@
 sudo: false
 language: c
-
-os:
-  - linux
-  - osx
+env: VERBOSE=1
 
 addons:
   apt:
@@ -12,6 +9,10 @@ addons:
 
 before_install:
   - ./bootstrap
+
+os:
+  - linux
+  - osx
 
 compiler:
   - gcc
