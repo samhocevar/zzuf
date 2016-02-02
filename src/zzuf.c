@@ -726,14 +726,20 @@ static void spawn_children(zzuf_opts_t *opts)
     {
         char tmpname[4096];
         char *tmpdir;
+        char *extension;
         tmpdir = getenv("TEMP");
         if (!tmpdir || !*tmpdir)
             tmpdir = "/tmp";
 
-        int k = 0;
+        int k = 0, extlen;
 
         for (int j = zz_optind + 1; j < opts->oldargc; ++j)
         {
+            extension = strrchr(opts->oldargv[j],'.');
+            if (!extension)
+                extlen=0;
+            else
+                extlen=strlen(extension);
             FILE *fpin = fopen(opts->oldargv[j], "r");
             if (!fpin)
                 continue;
@@ -742,8 +748,8 @@ static void spawn_children(zzuf_opts_t *opts)
             sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, GetCurrentProcessId());
             int fdout = _open(mktemp(tmpname), _O_RDWR, 0600);
 #else
-            sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, (int)getpid());
-            int fdout = mkstemp(tmpname);
+            sprintf(tmpname, "%s/zzuf.%i.XXXXXX%s", tmpdir, (int)getpid(), extension);
+            int fdout = mkstemps(tmpname, extlen);
 #endif
             if (fdout < 0)
             {
