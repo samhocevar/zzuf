@@ -59,6 +59,7 @@ struct zzuf_opts
     {
         OPMODE_PRELOAD,
         OPMODE_COPY,
+        OPMODE_NULL,
     } opmode;
     char **oldargv;
     int oldargc;

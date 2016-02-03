@@ -307,6 +307,8 @@ int main(int argc, char *argv[])
                 opts->opmode = OPMODE_PRELOAD;
             else if (!strcmp(zz_optarg, "copy"))
                 opts->opmode = OPMODE_COPY;
+            else if (!strcmp(zz_optarg, "null"))
+                opts->opmode = OPMODE_NULL;
             else
             {
                 fprintf(stderr, "%s: invalid operating mode -- `%s'\n",
@@ -1278,7 +1280,7 @@ static void usage(void)
     printf("  -M, --max-memory <n>      maximum child virtual memory in MiB (default %u)\n", DEFAULT_MEM);
 #endif
     printf("  -n, --network             fuzz network input\n");
-    printf("  -O, --opmode <mode>       use operating mode <mode> ([preload] copy)\n");
+    printf("  -O, --opmode <mode>       use operating mode <mode> ([preload] copy null)\n");
     printf("  -p, --ports <list>        only fuzz network destination ports in <list>\n");
     printf("  -P, --protect <list>      protect bytes and characters in <list>\n");
     printf("  -q, --quiet               do not print children's messages\n");
