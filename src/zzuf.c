@@ -47,6 +47,8 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <libgen.h>
+#include <alloca.h>
 #if defined HAVE_SYS_TIME_H
 #   include <sys/time.h>
 #endif
@@ -732,7 +734,7 @@ static void spawn_children(zzuf_opts_t *opts)
         if (!tmpdir || !*tmpdir)
             tmpdir = "/tmp";
 
-        int k = 0;
+        int k = 0, extlen;
 
         for (int j = zz_optind + 1; j < opts->oldargc; ++j)
         {
@@ -740,12 +742,24 @@ static void spawn_children(zzuf_opts_t *opts)
             if (!fpin)
                 continue;
 
+            // Copy the path name since basename() might clobber it
+            char *tmpcopy = alloca(strlen(opts->oldargv[j])+1);
+            strcpy(tmpcopy, opts->oldargv[j]);
+            char *fbasename = basename(tmpcopy);
+            char *extension = strrchr(fbasename, '.');
+            if (!extension) {
+                extlen = 0;
+                extension = "";
+            }
+            else
+                extlen = strlen(extension);
+
 #ifdef _WIN32
             sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, GetCurrentProcessId());
             int fdout = _open(mktemp(tmpname), _O_RDWR, 0600);
 #else
-            sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, (int)getpid());
-            int fdout = mkstemp(tmpname);
+            sprintf(tmpname, "%s/zzuf.%i.XXXXXX%s", tmpdir, (int)getpid(), extension);
+            int fdout = mkstemps(tmpname, extlen);
 #endif
             if (fdout < 0)
             {
