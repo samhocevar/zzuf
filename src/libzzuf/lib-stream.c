@@ -398,6 +398,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         if (newpos > oldpos + oldcnt || newpos < oldpos - oldoff \
              || (newpos == oldpos + oldcnt && newcnt != 0)) \
         { \
+            debug2("... streambuf change detected!"); \
             _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
         } \
@@ -436,6 +437,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         if (newpos > oldpos + oldcnt || newpos < oldpos - oldoff \
              || (newpos == oldpos + oldcnt && newcnt != 0)) \
         { \
+            debug2("... streambuf change detected!"); \
             _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
         } \
@@ -471,6 +473,7 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         if (newpos > oldpos + oldcnt || newpos < oldpos - oldoff \
              || (newpos == oldpos + oldcnt && newcnt != 0)) \
         { \
+            debug2("... streambuf change detected!"); \
             _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
         } \
@@ -563,6 +566,7 @@ void NEW(rewind)(FILE *stream)
         if (newpos > oldpos + oldcnt \
              || (newpos == oldpos + oldcnt && newcnt != 0)) \
         { \
+            debug2("... streambuf change detected!"); \
             /* The internal stream buffer is completely different, so we need
              * to fuzz it entirely. */ \
             _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
@@ -659,6 +663,7 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
         if (newpos > oldpos + oldcnt \
              || (newpos == oldpos + oldcnt && newcnt != 0)) \
         { \
+            debug2("... streambuf change detected!"); \
             /* Fuzz the internal stream buffer */ \
             _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
