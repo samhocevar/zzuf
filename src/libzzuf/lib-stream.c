@@ -38,6 +38,7 @@
 #   include <inttypes.h>
 #endif
 #include <stdlib.h>
+#include <string.h> /* Needed for memcpy */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -364,6 +365,31 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
 }
 #endif
 
+/* Quick shuffle table:
+ * strings /dev/urandom | grep . -nm256 | sort -k2 -t: | sed 's|:.*|,|'
+ * Then just replace “256” with “0”. */
+static int const shuffle[256] =
+{
+    111, 14, 180, 186, 221, 114, 219, 79, 66, 46, 152, 81, 246, 200,
+    141, 172, 85, 244, 112, 92, 34, 106, 218, 205, 236, 7, 121, 115,
+    109, 131, 10, 96, 188, 148, 17, 107, 94, 182, 235, 163, 143, 63,
+    248, 202, 52, 154, 37, 241, 53, 129, 25, 159, 242, 38, 171, 213,
+    6, 203, 255, 193, 42, 209, 28, 176, 210, 60, 54, 144, 3, 71, 89,
+    116, 12, 237, 67, 216, 252, 178, 174, 164, 98, 234, 32, 26, 175,
+    24, 130, 128, 113, 99, 212, 62, 11, 75, 185, 73, 93, 31, 30, 44,
+    122, 173, 139, 91, 136, 162, 194, 41, 56, 101, 68, 69, 211, 151,
+    97, 55, 83, 33, 50, 119, 156, 149, 208, 157, 253, 247, 161, 133,
+    230, 166, 225, 204, 224, 13, 110, 123, 142, 64, 65, 155, 215, 9,
+    197, 140, 58, 77, 214, 126, 195, 179, 220, 232, 125, 147, 8, 39,
+    187, 27, 217, 100, 134, 199, 88, 206, 231, 250, 74, 2, 135, 120,
+    21, 245, 118, 243, 82, 183, 238, 150, 158, 61, 4, 177, 146, 153,
+    117, 249, 254, 233, 90, 222, 207, 48, 15, 18, 20, 16, 47, 0, 51,
+    165, 138, 127, 169, 72, 1, 201, 145, 191, 192, 239, 49, 19, 160,
+    226, 228, 84, 181, 251, 36, 87, 22, 43, 70, 45, 105, 5, 189, 95,
+    40, 196, 59, 57, 190, 80, 104, 167, 78, 124, 103, 240, 184, 170,
+    137, 29, 23, 223, 108, 102, 86, 198, 227, 35, 229, 76, 168, 132,
+};
+
 /*
  * fseek, fseeko etc.
  * fsetpos64, __fsetpos64
@@ -389,16 +415,42 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         int64_t oldpos = ZZ_FTELL(stream); \
         int oldoff = get_streambuf_offset(stream); \
         int oldcnt = get_streambuf_count(stream); \
+        \
+        /* backup the internal stream buffer and replace it with
+         * some random data in order to detect possible changes. */ \
+        uint8_t seed = shuffle[(fd + rand()) & 0xff]; \
+        uint8_t oldbuf[oldoff + oldcnt]; \
+        uint8_t *buf = get_streambuf_base(stream); \
+        for (int i = 0; i < oldoff + oldcnt; ++i) \
+        { \
+            oldbuf[i] = buf[i]; \
+            buf[i] = shuffle[(i + seed) & 0xff]; \
+        } \
+        \
         _zz_lockfd(fd); \
         ret = ORIG(myfseek)(stream, offset, whence); \
         _zz_unlock(fd); \
-        debug_stream("during", stream); \
+        \
         int64_t newpos = ZZ_FTELL(stream); \
+        int newoff = get_streambuf_offset(stream); \
         int newcnt = get_streambuf_count(stream); \
-        if (newpos > oldpos + oldcnt || newpos < oldpos - oldoff \
-             || (newpos == oldpos + oldcnt && newcnt != 0)) \
+        int changed = (newpos > oldpos + oldcnt || newpos < oldpos - oldoff \
+             || (newpos == oldpos + oldcnt && newcnt != 0) \
+             || (newoff + newcnt != oldoff + oldcnt)); \
+        \
+        /* check whether the buffer contents have changed */ \
+        uint8_t *newbuf = get_streambuf_base(stream); \
+        for (int i = 0; !changed && i < newoff + newcnt; ++i) \
+            if (newbuf[i] != shuffle[(i + seed) & 0xff]) \
+                changed = 1; \
+        \
+        /* if the internal buffer has not changed, restore it */ \
+        if (!changed) \
+            memcpy(newbuf, oldbuf, newoff + newcnt); \
+        \
+        debug_stream(changed ? "modified" : "unchanged", stream); \
+        if (changed) \
         { \
-            debug2("... streambuf change detected!"); \
             _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
         } \
@@ -431,13 +483,13 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         _zz_lockfd(fd); \
         ret = ORIG(myfsetpos)(stream, pos); \
         _zz_unlock(fd); \
-        debug_stream("during", stream); \
         int64_t newpos = ZZ_FTELL(stream); \
         int newcnt = get_streambuf_count(stream); \
-        if (newpos > oldpos + oldcnt || newpos < oldpos - oldoff \
-             || (newpos == oldpos + oldcnt && newcnt != 0)) \
+        int changed = (newpos > oldpos + oldcnt || newpos < oldpos - oldoff \
+             || (newpos == oldpos + oldcnt && newcnt != 0)); \
+        debug_stream(changed ? "modified" : "unchanged", stream); \
+        if (changed) \
         { \
-            debug2("... streambuf change detected!"); \
             _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
         } \
@@ -467,13 +519,13 @@ FILE *NEW(__freopen64)(const char *path, const char *mode, FILE *stream)
         _zz_lockfd(fd); \
         ORIG(rewind)(stream); \
         _zz_unlock(fd); \
-        debug_stream("during", stream); \
         int64_t newpos = ZZ_FTELL(stream); \
         int newcnt = get_streambuf_count(stream); \
-        if (newpos > oldpos + oldcnt || newpos < oldpos - oldoff \
-             || (newpos == oldpos + oldcnt && newcnt != 0)) \
+        int changed = (newpos > oldpos + oldcnt || newpos < oldpos - oldoff \
+             || (newpos == oldpos + oldcnt && newcnt != 0)); \
+        debug_stream(changed ? "modified" : "unchanged", stream); \
+        if (changed) \
         { \
-            debug2("... streambuf change detected!"); \
             _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
         } \
@@ -560,13 +612,13 @@ void NEW(rewind)(FILE *stream)
         _zz_lockfd(fd); \
         ret = ORIG(myfread) myargs; \
         _zz_unlock(fd); \
-        debug_stream("during", stream); \
         int64_t newpos = ZZ_FTELL(stream); \
         int newcnt = get_streambuf_count(stream); \
-        if (newpos > oldpos + oldcnt \
-             || (newpos == oldpos + oldcnt && newcnt != 0)) \
+        int changed = (newpos > oldpos + oldcnt \
+             || (newpos == oldpos + oldcnt && newcnt != 0)); \
+        debug_stream(changed ? "modified" : "unchanged", stream); \
+        if (changed) \
         { \
-            debug2("... streambuf change detected!"); \
             /* The internal stream buffer is completely different, so we need
              * to fuzz it entirely. */ \
             _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
@@ -650,7 +702,10 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
         ret = ORIG(myfgetc)(arg); \
         _zz_unlock(fd); \
         int64_t newpos = ZZ_FTELL(stream); \
-        debug_stream("during", stream); \
+        int newcnt = get_streambuf_count(stream); \
+        int changed = (newpos > oldpos + oldcnt \
+             || (newpos == oldpos + oldcnt && newcnt != 0)); \
+        debug_stream(changed ? "modified" : "unchanged", stream); \
         if (oldcnt == 0 && ret != EOF) \
         { \
             /* Fuzz returned data that wasn't in the old internal buffer */ \
@@ -659,11 +714,8 @@ size_t NEW(__fread_unlocked_chk)(void *ptr, size_t ptrlen, size_t size,
             _zz_fuzz(fd, &ch, 1); \
             ret = ch; \
         } \
-        int newcnt = get_streambuf_count(stream); \
-        if (newpos > oldpos + oldcnt \
-             || (newpos == oldpos + oldcnt && newcnt != 0)) \
+        if (changed) \
         { \
-            debug2("... streambuf change detected!"); \
             /* Fuzz the internal stream buffer */ \
             _zz_setpos(fd, newpos - get_streambuf_offset(stream)); \
             _zz_fuzz(fd, get_streambuf_base(stream), get_streambuf_size(stream)); \
