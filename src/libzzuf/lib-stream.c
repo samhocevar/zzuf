@@ -399,6 +399,12 @@ static int const shuffle[256] =
  * status, then call the original function. If the new file position
  * lies outside the previous internal buffer, it means the buffer has
  * been invalidated, so we fuzz whatever's preloaded in it.
+ *
+ * It may also happen that the internal buffer is re-filled for no
+ * reason, as is the case on glibc versions from ca. 2015. Since we
+ * have no robust way of detecting this, we save the internal buffer
+ * to a temporary area and replace it with pseudorandom data, then
+ * check the data for changes after the fseek() call.
  */
 
 #define ZZ_FSEEK(myfseek) \
@@ -418,7 +424,7 @@ static int const shuffle[256] =
         \
         /* backup the internal stream buffer and replace it with
          * some random data in order to detect possible changes. */ \
-        uint8_t seed = shuffle[(fd + rand()) & 0xff]; \
+        uint8_t seed = shuffle[fd & 0xff]; \
         uint8_t oldbuf[oldoff + oldcnt]; \
         uint8_t *buf = get_streambuf_base(stream); \
         for (int i = 0; i < oldoff + oldcnt; ++i) \
