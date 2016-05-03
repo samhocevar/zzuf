@@ -2,7 +2,7 @@
 SUBDIRS = src test doc
 DIST_SUBDIRS = $(SUBDIRS)
 
-EXTRA_DIST = bootstrap build-osx build-win32 AUTHORS \
+EXTRA_DIST = bootstrap build-osx build-win32 AUTHORS README.md \
 	m4/cflags.m4 m4/func.m4 \
 	msvc/config.h \
 	msvc/libzzuf.vcxproj \
