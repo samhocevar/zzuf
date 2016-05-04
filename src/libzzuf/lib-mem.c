@@ -20,6 +20,7 @@
 #define _GNU_SOURCE
 /* Need this for MAP_ANON and valloc() on FreeBSD (together with cdefs.h) */
 #define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #if defined HAVE_SYS_CDEFS_H
 #   include <sys/cdefs.h>
 #endif

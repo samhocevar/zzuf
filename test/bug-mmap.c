@@ -14,6 +14,7 @@
 #include "config.h"
 
 #define _BSD_SOURCE 1 /* for MAP_POPULATE */
+#define _DEFAULT_SOURCE
 
 #if HAVE_SYS_MMAN_H
 #   include <sys/mman.h>

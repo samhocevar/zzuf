@@ -19,6 +19,7 @@
 
 #define _INCLUDE_POSIX_SOURCE /* for STDERR_FILENO on HP-UX */
 #define _BSD_SOURCE /* for setenv on glibc systems */
+#define _DEFAULT_SOURCE
 
 #if defined HAVE_STDINT_H
 #   include <stdint.h>
