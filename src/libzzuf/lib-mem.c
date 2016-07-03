@@ -331,15 +331,15 @@ int nbmaps = 0;
             maps[i] = b; \
             maps[i + 1] = ret; \
             \
+            oldpos = _zz_getpos(fd); \
+            _zz_setpos(fd, offset); /* mmap() maps the fd at offset 0 */ \
             /* If we requested a memory area larger than the end of the
              * file, it was not actually allocated, so do not try to
              * copy data beyond that point. */ \
-            data_length = _zz_bytes_until_eof(fd, offset); \
+            data_length = _zz_bytes_until_eof(fd, offset - oldpos); \
             if (data_length > length) \
                 data_length = length; \
             \
-            oldpos = _zz_getpos(fd); \
-            _zz_setpos(fd, offset); /* mmap() maps the fd at offset 0 */ \
             /* FIXME: we should not blindly memcpy() here because the
              * memory area might be immense; instead, rely on mprotect()
              * and sigaction() to detect page faults and only copy memory
@@ -352,9 +352,9 @@ int nbmaps = 0;
         \
         char tmp[128]; \
         debug_str(tmp, (uint8_t *)b, (unsigned)data_length, 8); \
-        debug("%s(%p, %li, %i, %i, %i, %lli) = %p %s", __func__, start, \
+        debug("%s(%p, %li, %i, %i, %i, %lli) = %p %s [%li]", __func__, start, \
               (long int)length, prot, flags, fd, (long long int)offset, \
-              ret, tmp); \
+              ret, tmp, (long int)data_length); \
     } while (0)
 
 #if defined HAVE_MMAP
