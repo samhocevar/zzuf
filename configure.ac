@@ -63,6 +63,9 @@ esac
 AC_SUBST(WINSOCK2_LIBS)
 AC_SUBST(DLL_LDFLAGS)
 
+AC_CHECK_HEADERS(getopt.h)
+AC_CHECK_FUNCS(getopt_long)
+
 AC_CHECK_HEADERS(unistd.h inttypes.h stdint.h endian.h libc.h)
 AC_CHECK_HEADERS(windows.h winsock2.h process.h)
 AC_CHECK_HEADERS(malloc.h dlfcn.h regex.h sys/cdefs.h sys/socket.h)
