@@ -1,7 +1,7 @@
 /*
  *  zzuf - general purpose fuzzer
  *
- *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+ *  Copyright © 2002—2016 Sam Hocevar <sam@hocevar.net>
  *              2012 Kévin Szkudłapski <kszkudlapski@quarkslab.com>
  *
  *  This program is free software. It comes without any warranty, to
@@ -1248,8 +1248,8 @@ static void usage(void)
 #else
     printf("Usage: zzuf [-aAdimnqSvx] [-s seed|-s start:stop] [-r ratio|-r min:max]\n");
 #endif
-    printf("              [-f mode] [-D delay] [-j jobs] [-C crashes] [-B bytes] [-a list]\n");
-    printf("              [-t seconds]");
+    printf("            [-f mode] [-D delay] [-j jobs] [-C crashes] [-B bytes] [-a list]\n");
+    printf("            [-t seconds]");
 #if defined HAVE_SETRLIMIT && defined ZZUF_RLIMIT_CPU
     printf(                          " [-T seconds]");
 #endif
@@ -1257,13 +1257,12 @@ static void usage(void)
     printf(                                       " [-M mebibytes]");
 #endif
     printf(                                                      " [-b ranges] [-p ports]\n");
-    printf("              [-P protect] [-R refuse] [-l list]");
+    printf("            [-P protect] [-R refuse] [-l list]");
 #if defined HAVE_REGEX_H
     printf(                                                " [-I include] [-E exclude]");
 #endif
-    printf("              [-O mode]\n");
     printf("\n");
-    printf("              [PROGRAM [--] [ARGS]...]\n");
+    printf("            [-O mode] [PROGRAM [--] [ARGS]...]\n");
     printf("       zzuf -h | --help\n");
     printf("       zzuf -V | --version\n");
     printf("Run PROGRAM with optional arguments ARGS and fuzz its input.\n");
