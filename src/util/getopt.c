@@ -1,7 +1,7 @@
 /*
  *  zzuf - general purpose fuzzer
  *
- *  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+ *  Copyright © 2002—2016 Sam Hocevar <sam@hocevar.net>
  *
  *  This program is free software. It comes without any warranty, to
  *  the extent permitted by applicable law. You can redistribute it
@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#if defined HAVE_GETOPT_H && defined HAVE_GETOPT_LONG
+#if HAVE_GETOPT_H && HAVE_GETOPT_LONG
 #   include <getopt.h>
 #endif
 #include <stdint.h>
@@ -32,7 +32,7 @@ char *zz_optarg = NULL;
 int zz_getopt(int argc, char * const _argv[], char const *optstring,
               zzuf_option_t const *longopts, int *longindex)
 {
-#if defined HAVE_GETOPT_LONG
+#if HAVE_GETOPT_LONG
     optind = zz_optind;
     optarg = zz_optarg;
     int ret = getopt_long(argc, _argv, optstring,
@@ -68,8 +68,10 @@ int zz_getopt(int argc, char * const _argv[], char const *optstring,
         {
             if (flag[2] != '\0')
                 zz_optarg = flag + 2;
-            else
+            else if (zz_optind < argc)
                 zz_optarg = argv[zz_optind++];
+            else
+                goto too_few;
             return ret;
         }
 
@@ -110,7 +112,12 @@ int zz_getopt(int argc, char * const _argv[], char const *optstring,
                     *longindex = i;
                 zz_optind++;
                 if (longopts[i].has_arg)
-                    zz_optarg = argv[zz_optind++];
+                {
+                    if (zz_optind < argc)
+                        zz_optarg = argv[zz_optind++];
+                    else
+                        goto too_few;
+                }
                 return longopts[i].val;
             default:
                 break;
@@ -118,6 +125,11 @@ int zz_getopt(int argc, char * const _argv[], char const *optstring,
         }
     bad_opt:
         fprintf(stderr, "%s: unrecognized option `%s'\n", argv[0], flag);
+        return '?';
+
+    too_few:
+        fprintf(stderr, "%s: option `%s' requires an argument\n",
+                argv[0], flag);
         return '?';
     }
 
