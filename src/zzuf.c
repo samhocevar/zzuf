@@ -731,6 +731,7 @@ static void spawn_children(zzuf_opts_t *opts)
     {
         char tmpname[4096];
         char *tmpdir;
+        char *extension;
         tmpdir = getenv("TEMP");
         if (!tmpdir || !*tmpdir)
             tmpdir = "/tmp";
@@ -739,6 +740,11 @@ static void spawn_children(zzuf_opts_t *opts)
 
         for (int j = zz_optind + 1; j < opts->oldargc; ++j)
         {
+            extension = strrchr(opts->oldargv[j],'.');
+            if (!extension)
+                extlen=0;
+            else
+                extlen=strlen(extension);
             FILE *fpin = fopen(opts->oldargv[j], "r");
             if (!fpin)
                 continue;
