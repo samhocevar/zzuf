@@ -52,6 +52,9 @@
 #if defined HAVE_ALLOCA_H
 #  include <alloca.h>
 #endif
+#if defined HAVE_SYS_SELECT_H
+#   include <sys/select.h>
+#endif
 #if defined HAVE_SYS_TIME_H
 #   include <sys/time.h>
 #endif
