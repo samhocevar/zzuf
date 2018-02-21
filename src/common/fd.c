@@ -347,7 +347,7 @@ void _zz_lockfd(int fd)
 {
     zzuf_mutex_lock(&fds_mutex);
 
-    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    if (fd >= -1 && fd < maxfd && fds[fd] != -1)
     {
         if (fd == -1)
             ++create_lock;
@@ -362,7 +362,7 @@ void _zz_unlock(int fd)
 {
     zzuf_mutex_lock(&fds_mutex);
 
-    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    if (fd >= -1 && fd < maxfd && fds[fd] != -1)
     {
         if (fd == -1)
             --create_lock;
@@ -378,7 +378,7 @@ int _zz_islocked(int fd)
     int ret = 0;
     zzuf_mutex_lock(&fds_mutex);
 
-    if (fd >= 0 && fd < maxfd && fds[fd] != -1)
+    if (fd >= -1 && fd < maxfd && fds[fd] != -1)
     {
         if (fd == -1)
             ret = create_lock;
