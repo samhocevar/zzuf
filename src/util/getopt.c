@@ -36,7 +36,7 @@ int zz_getopt(int argc, char * const _argv[], char const *optstring,
     optind = zz_optind;
     optarg = zz_optarg;
     int ret = getopt_long(argc, _argv, optstring,
-                          (zzuf_option_t const *)longopts, longindex);
+                          (struct option const *)longopts, longindex);
     zz_optind = optind;
     zz_optarg = optarg;
     return ret;
