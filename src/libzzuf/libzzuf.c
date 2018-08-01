@@ -148,6 +148,10 @@ void libzzuf_init(void)
     if (tmp && *tmp == '1')
         zzuf_set_auto_increment();
 
+    tmp = getenv("ZZUF_FUZZING");
+    if (tmp && *tmp)
+        _zz_fuzzing(tmp);
+
     tmp = getenv("ZZUF_BYTES");
     if (tmp && *tmp)
         _zz_bytes(tmp);
