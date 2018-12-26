@@ -45,11 +45,18 @@
 #if defined HAVE_IO_H
 #   include <io.h>
 #endif
+#if defined HAVE_FCNTL_H
+#   include <fcntl.h>
+#endif
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <libgen.h>
-#include <alloca.h>
+//#include <libgen.h>
+#if defined HAVE_ALLOCA_H
+#   include <alloca.h>
+#else
+#   define alloca _alloca
+#endif
 #if defined HAVE_SYS_TIME_H
 #   include <sys/time.h>
 #endif
@@ -68,6 +75,7 @@
 #include "myfork.h"
 #include "timer.h"
 #include "util/getopt.h"
+#include "util/mutex.h"
 #include "util/md5.h"
 #include "util/hex.h"
 
@@ -746,6 +754,11 @@ static void spawn_children(zzuf_opts_t *opts)
             // Copy the path name since basename() might clobber it
             char *tmpcopy = alloca(strlen(opts->oldargv[j])+1);
             strcpy(tmpcopy, opts->oldargv[j]);
+#if _WIN32
+            char extension[MAX_PATH];
+            _splitpath(tmpcopy, NULL, NULL, NULL, extension);
+            extlen = strlen(extension);
+#else
             char *fbasename = basename(tmpcopy);
             char *extension = strrchr(fbasename, '.');
             if (!extension) {
@@ -754,6 +767,7 @@ static void spawn_children(zzuf_opts_t *opts)
             }
             else
                 extlen = strlen(extension);
+#endif
 
 #ifdef _WIN32
             sprintf(tmpname, "%s/zzuf.%i.XXXXXX", tmpdir, GetCurrentProcessId());

@@ -20,6 +20,7 @@
 #define HAVE_ACCEPT 1
 /* #undef HAVE_AIO_H */
 /* #undef HAVE_AIO_READ */
+/* #undef HAVE_ALLOCA_H */
 #define HAVE_ALLOCCONSOLE 1
 /* #undef HAVE_ARPA_INET_H */
 #define HAVE_ATTACHCONSOLE 1
@@ -38,6 +39,7 @@
 #define HAVE_DUP 1
 #define HAVE_DUP2 1
 /* #undef HAVE_ENDIAN_H */
+#define HAVE_FCNTL_H 1
 /* #undef HAVE_FGETC_UNLOCKED */
 /* #undef HAVE_FGETLN */
 /* #undef HAVE_FGETS_UNLOCKED */

@@ -68,10 +68,10 @@ AC_CHECK_FUNCS(getopt_long)
 
 AC_CHECK_HEADERS(unistd.h inttypes.h stdint.h endian.h libc.h)
 AC_CHECK_HEADERS(windows.h winsock2.h process.h)
-AC_CHECK_HEADERS(malloc.h dlfcn.h regex.h sys/cdefs.h sys/socket.h)
+AC_CHECK_HEADERS(malloc.h alloca.h dlfcn.h regex.h sys/cdefs.h sys/socket.h)
 AC_CHECK_HEADERS(netinet/in.h arpa/inet.h sys/uio.h aio.h)
 AC_CHECK_HEADERS(sys/mman.h sys/wait.h sys/resource.h sys/time.h)
-AC_CHECK_HEADERS(io.h mach/task.h)
+AC_CHECK_HEADERS(io.h fcntl.h mach/task.h)
 
 AC_CHECK_FUNCS(setenv waitpid setrlimit gettimeofday fork kill pipe _pipe)
 AC_CHECK_FUNCS(regexec regwexec)

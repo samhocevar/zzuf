@@ -26,11 +26,13 @@ m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
 # Visual Studio cruft
+msvc/.vs
 msvc/*.suo
 msvc/*.sdf
 msvc/*.opensdf
 msvc/Debug
 msvc/Release
+*.vcxproj.user
 # Our binaries
 src/zzuf
 src/zzat

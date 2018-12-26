@@ -28,7 +28,6 @@
 #if defined _MSC_VER
 #   include <io.h>
 typedef int ssize_t;
-#   define snprintf sprintf_s
 #   define close _close
 #endif
 

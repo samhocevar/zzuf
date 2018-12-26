@@ -45,6 +45,11 @@
 #if defined HAVE_UNISTD_H
 #   include <unistd.h> /* Needed for __srefill’s lseek() call */
 #endif
+#if defined HAVE_ALLOCA_H
+#   include <alloca.h>
+#else
+#   define alloca _alloca
+#endif
 
 #include "common.h"
 #include "libzzuf.h"
@@ -425,7 +430,7 @@ static int const shuffle[256] =
         /* backup the internal stream buffer and replace it with
          * some random data in order to detect possible changes. */ \
         uint8_t seed = shuffle[fd & 0xff]; \
-        uint8_t oldbuf[oldoff + oldcnt]; \
+        uint8_t *oldbuf = (uint8_t *)alloca(oldoff + oldcnt); \
         uint8_t *buf = get_streambuf_base(stream); \
         for (int i = 0; i < oldoff + oldcnt; ++i) \
         { \
