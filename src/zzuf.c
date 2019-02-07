@@ -22,10 +22,10 @@
 #define _BSD_SOURCE /* for setenv() on glibc systems */
 #define _DEFAULT_SOURCE
 
-#if defined HAVE_STDINT_H
-#   include <stdint.h>
-#elif defined HAVE_INTTYPES_H
+#if defined HAVE_INTTYPES_H
 #   include <inttypes.h>
+#elif defined HAVE_STDINT_H
+#   include <stdint.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -654,10 +654,17 @@ static void loop_stdin(zzuf_opts_t *opts)
 static void finfo(FILE *fp, zzuf_opts_t *opts, uint32_t seed)
 {
     if (opts->minratio == opts->maxratio)
-        fprintf(fp, "zzuf[s=%i,r=%g]: ", seed, opts->minratio);
+#if defined HAVE_INTTYPES_H
+        fprintf(fp, "zzuf[s=%"PRIu32",r=%g]: ", seed, opts->minratio);
     else
-        fprintf(fp, "zzuf[s=%i,r=%g:%g]: ", seed,
+        fprintf(fp, "zzuf[s=%"PRIu32",r=%g:%g]: ", seed,
                 opts->minratio, opts->maxratio);
+#else
+        fprintf(fp, "zzuf[s=%u,r=%g]: ", seed, opts->minratio);
+    else
+        fprintf(fp, "zzuf[s=%u,r=%g:%g]: ", seed,
+                opts->minratio, opts->maxratio);
+#endif
 }
 
 #if defined HAVE_REGEX_H
