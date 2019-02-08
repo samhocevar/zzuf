@@ -21,10 +21,10 @@
 #define _BSD_SOURCE /* for setenv on glibc systems */
 #define _DEFAULT_SOURCE
 
-#if defined HAVE_STDINT_H
-#   include <stdint.h>
-#elif defined HAVE_INTTYPES_H
+#if defined HAVE_INTTYPES_H
 #   include <inttypes.h>
+#elif defined HAVE_STDINT_H
+#   include <stdint.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h> /* for setenv */
@@ -286,7 +286,11 @@ static int run_process(zzuf_child_t *child, zzuf_opts_t *opts, int pipes[][2])
     sprintf(buf, "%i", pipes[0][1]);
 #endif
     setenv("ZZUF_DEBUGFD", buf, 1);
-    sprintf(buf, "%i", opts->seed);
+#if defined HAVE_INTTYPES_H
+    sprintf(buf, "%"PRIu32, opts->seed);
+#else
+    sprintf(buf, "%u", opts->seed);
+#endif
     setenv("ZZUF_SEED", buf, 1);
     sprintf(buf, "%g", opts->minratio);
     setenv("ZZUF_MINRATIO", buf, 1);
