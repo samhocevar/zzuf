@@ -51,7 +51,9 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-//#include <libgen.h>
+#ifndef _WIN32
+#include <libgen.h>
+#endif
 #if defined HAVE_ALLOCA_H
 #   include <alloca.h>
 #else
