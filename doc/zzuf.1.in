@@ -252,7 +252,7 @@ This option requires network fuzzing to be activated using \fB\-n\fR.
 Restrict fuzzing to bytes whose offsets in the file are within \fIranges\fR.
 
 Range values start at zero and are inclusive. Use dashes between range values
-and commas between ranges. If the right-hand part of a range is ommited, it
+and commas between ranges. If the right-hand part of a range is omitted, it
 means end of file. For instance, to restrict fuzzing to bytes 0, 3, 4, 5 and
 all bytes after offset 31, use \(oq\fB\-b0,3\-5,31\-\fR\(cq.
 
@@ -297,7 +297,7 @@ Cherry-pick the list of file descriptors that get fuzzed. The Nth descriptor
 will really be fuzzed only if N is in \fIlist\fR.
 
 Values start at 1 and ranges are inclusive. Use dashes between values and
-commas between ranges. If the right-hand part of a range is ommited, it means
+commas between ranges. If the right-hand part of a range is omitted, it means
 all subsequent file descriptors. For instance, to restrict fuzzing to the
 first opened descriptor and all descriptors starting from the 10th, use
 \(oq\fB\-l1,10\-\fR\(cq.
@@ -367,7 +367,7 @@ is listening and the destination port if the socket is connecting, because
 most of the time the source port cannot be predicted.
 
 Range values start at zero and are inclusive. Use dashes between range values
-and commas between ranges. If the right-hand part of a range is ommited, it
+and commas between ranges. If the right-hand part of a range is omitted, it
 means end of file. For instance, to restrict fuzzing to the HTTP and HTTPS
 ports and to all unprivileged ports, use \(oq\fB\-p80,443,1024\-\fR\(cq.
 
