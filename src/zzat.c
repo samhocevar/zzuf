@@ -49,6 +49,13 @@ typedef int ssize_t;
 #include <stdio.h>
 #include <string.h>
 
+#if defined HAVE__IO_GETC
+/* This function is no longer declared in glibc header files, but
+   still available for linking (as of glibc 2.36).  It is an alias of
+   getc.  */
+extern int _IO_getc (FILE *);
+#endif
+
 #include "util/getopt.h"
 
 static int run(char const *sequence, char const *file);
